@@ -131,7 +131,7 @@ bool MaterialMeta::check_params(){
 	if( p.str_vals.count( "type" )==0 ){ printf("Material Error: No str type!"); return false; }
 	diffuse = vec(.5,.5,.5);
 	specular = vec(0,0,0);
-	exponent = 64;
+	exponent = 0;
 
 	// Make color 0 to 1
 	if( p.vec3_vals.count("diffuse")>0 ){
@@ -157,7 +157,7 @@ bool MaterialMeta::check_params(){
 		specular = c;
 	}}
 
-	if( p.float_vals.count("exponent")>0 ){ exponent = p.float_vals["exponent"].back(); }
+	if( p.float_vals.count("exponent")>0 ){ exponent = std::fabs(p.float_vals["exponent"].back()); }
 
 	return true;
 }

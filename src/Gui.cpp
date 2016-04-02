@@ -35,7 +35,7 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 		MaterialMeta flat_gray;
 		flat_gray.name = "base_mat";
 		flat_gray.type = "diffuse";
-		flat_gray.p.vec3_vals["diffuse"].push_back( trimesh::vec( 0.5, 0.5, 0.5 ) );
+		flat_gray.diffuse = trimesh::vec( 0.5, 0.5, 0.5 );
 		scene->materials.push_back( flat_gray );
 		scene->material_map[ "base_mat" ] = 0;
 	}
@@ -179,21 +179,23 @@ void Gui::clear_screen(){
 void Gui::setup_lighting( MaterialMeta *material ){
 
 	// Diffuse color
-	if( material->p.vec3_vals.count("diffuse")>0 ){
-		trimesh::vec c = material->p.vec3_vals["diffuse"].back();
-		glColor3f(c[0],c[1],c[2]);
+	if( trimesh::len2(material->diffuse)>0 ){
+		glColor3f(material->diffuse[0],material->diffuse[1],material->diffuse[2]);
 	}
 	else{ glColor3f(0.5f,0.5f,0.5f); }
 
 	// Specular color
 	GLfloat mat_specular[4] = { 0.f, 0.f, 0.f, 0.f };
-	if( material->p.vec3_vals.count("specular")>0 ){
-		trimesh::vec c = material->p.vec3_vals["specular"].back();
+	if( trimesh::len2(material->specular)>0 ){
+		trimesh::vec c = material->specular;
 		double w = (c[0]+c[1]+c[2])/3.f;
 		mat_specular[0]=c[0]; mat_specular[1]=c[1]; mat_specular[2]=c[2]; mat_specular[3]=w;
 	}
 
+	// shininess
 	GLfloat mat_shininess[] = { 64 };
+	if( material->exponent > 0 ){ mat_shininess[0]=material->exponent; }
+
 	GLfloat global_ambient[] = { 0.02f, 0.02f, 0.05f, 0.05f };
 	GLfloat light0_ambient[] = { 0, 0, 0, 0 };
 	GLfloat light0_diffuse[] = { 0.85f, 0.85f, 0.8f, 0.85f };
