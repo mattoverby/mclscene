@@ -12,7 +12,7 @@
 # linking
 
 	The best way to include mclscene in your project is to check it out in a subdirectory,
-	call add\_subdirectory, then use the ${MCLSCENE\_LIBRARIES} and ${MCLSCENE\_INCLUDE\_DIRS}
+	call add_subdirectory, then use the ${MCLSCENE_LIBRARIES} and ${MCLSCENE_INCLUDE_DIRS}
 	that are set during compilation.
 
 # TODO
