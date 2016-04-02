@@ -19,6 +19,7 @@
 
 	- Cleanup headers
 	- Render generic objects (sphere/box/plane/etc...)
+	- Support for textures
 	- Mesh instancing
 	- Use parsed cameras in viewer
 	- Use parsed lights in viewer
