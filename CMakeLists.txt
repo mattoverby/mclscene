@@ -28,7 +28,7 @@ set( CMAKE_BUILD_TYPE Debug )
 #
 #	compilation options
 #
-option(BUILD_SAMPLES "Build mclscene samples" ON)
+option(MCL_BUILD_SAMPLES "Build mcl library samples" ON)
 
 
 #
