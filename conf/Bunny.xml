@@ -17,7 +17,6 @@
 	<Object name="bunny1" >
 		<Type type="string" value="TriMesh" />
 
-		<!-- File path is relative to location of config file -->
 		<File type="string" value="bunny.ply" />
 
 		<XForm type="scale" value="1  1  1" />
@@ -31,7 +30,7 @@
 	<Material name="red_spec" >
 		<Type type="string" value="specular" />
 		<Diffuse type="vec3" value="255  120  120" />
-		<Specular type="vec3" value=".18 .18 .18" />
+		<Specular type="vec3" value=".2 .2 .2" />
 	</Material>
 
 	<Material name="blue_diff" >

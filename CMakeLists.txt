@@ -89,7 +89,7 @@ endif(HasParent)
 #	samples
 #
 
-if(BUILD_SAMPLES)
+if(MCL_BUILD_SAMPLES)
 
 	# sample loader
 	add_executable( load_test samples/LoadTest.cpp )
@@ -104,4 +104,4 @@ if(BUILD_SAMPLES)
 		target_link_libraries( mesh_viewer ${MCLSCENE_LIBRARIES} )
 	endif(SFML_FOUND AND OPENGL_FOUND)
 
-endif(BUILD_SAMPLES)
+endif(MCL_BUILD_SAMPLES)

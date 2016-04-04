@@ -199,11 +199,7 @@ void Gui::setup_lighting( MaterialMeta *material ){
 	GLfloat global_ambient[] = { 0.02f, 0.02f, 0.05f, 0.05f };
 	GLfloat light0_ambient[] = { 0, 0, 0, 0 };
 	GLfloat light0_diffuse[] = { 0.85f, 0.85f, 0.8f, 0.85f };
-//	if (current_mesh >= 0 && id != current_mesh) {
-//		light0_diffuse[0] *= 0.5f;
-//		light0_diffuse[1] *= 0.5f;
-//		light0_diffuse[2] *= 0.5f;
-//	}
+
 	GLfloat light1_diffuse[] = { -0.01f, -0.01f, -0.03f, -0.03f };
 	GLfloat light0_specular[] = { 0.85f, 0.85f, 0.85f, 0.85f };
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
