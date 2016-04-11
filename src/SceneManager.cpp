@@ -72,6 +72,7 @@ void SceneManager::build_boundary(){
 	bsphere.center = mb.center();
 	bsphere.r = sqrt(mb.squared_radius());
 	bsphere.valid = true;
+
 }
 
 
@@ -109,18 +110,18 @@ bool SceneManager::load( std::string xmlfile ){
 			cam.name = name;
 
 			// Set defaults
-			cam.p.str_vals[ "type" ].push_back( "perspective" );
-			cam.p.vec3_vals[ "position" ].push_back( vec3(0,0,0) );
-			cam.p.vec3_vals[ "direction" ].push_back( vec3(0,0,-1) );
-			cam.p.vec3_vals[ "up" ].push_back( vec3(0,1,0) );
+			cam.add_param( Param( "type", "perspective", "string" ) );
+			cam.add_param( Param( "position", "vec3", "0 0 0" ) );
+			cam.add_param( Param( "direction", "vec3", "0 0 -1" ) );
+			cam.add_param( Param( "up", "vec3", "0 1 0" ) );
 
 			// Load parameters
-			if( !cam.p.load_params( curr_node ) ){ return false; }
+			if( !cam.load_params( curr_node ) ){ return false; }
 
 			// Check the parameters and store the data
 			if( !cam.check_params() ){ printf("\n**SceneManager Error: Camera check_params\n"); return false; }
+			camera_map[ name ] = cameras.size();
 			cameras.push_back( cam );
-//			camera_map[name] = &cameras.back();
 
 		} // end parse camera
 
@@ -133,17 +134,17 @@ bool SceneManager::load( std::string xmlfile ){
 			light.name = name;
 
 			// Set defaults
-			light.p.str_vals[ "type" ].push_back( "point" );
-			light.p.vec3_vals[ "position" ].push_back( vec(0,0,0) );
-			light.p.vec3_vals[ "intensity" ].push_back( vec(1,1,1) );
+			light.add_param( Param( "type", "string", "point" ) );
+			light.add_param( Param( "position", "vec3", "0 0 0" ) );
+			light.add_param( Param( "intensity", "vec3", "1 1 1" ) );
 
 			// Load parameters
-			if( !light.p.load_params( curr_node ) ){ return false; }
+			if( !light.load_params( curr_node ) ){ return false; }
 
 			// Check the parameters and store the data
 			if( !light.check_params() ){ printf("\n**SceneManager Error: Light check_params\n"); return false; }
+			light_map[ name ] = lights.size();
 			lights.push_back( light );
-//			light_map[name] = &lights.back();
 
 		} // end parse light
 
@@ -156,15 +157,15 @@ bool SceneManager::load( std::string xmlfile ){
 			mat.name = name;
 
 			// Set defaults
-			mat.p.str_vals[ "type" ].push_back( "diffuse" );
+			mat.add_param( Param( "type", "string", "diffuse" ) );
 
 			// Load parameters
-			if( !mat.p.load_params( curr_node ) ){ return false; }
+			if( !mat.load_params( curr_node ) ){ return false; }
 
 			// Check the parameters and store the data
 			if( !mat.check_params() ){ printf("\n**SceneManager Error: Material check_params\n"); return false; }
+			material_map[ name ] = materials.size();
 			materials.push_back( mat );
-			material_map[name] = materials.size()-1;
 
 		} // end parse material
 
@@ -177,25 +178,22 @@ bool SceneManager::load( std::string xmlfile ){
 			object.name = name;
 
 			// Set defaults
-			object.p.str_vals[ "type" ].push_back( "none" );
+			object.add_param( Param( "type", "string", "none" ) );
 
 			// Load parameters
-			if( !object.p.load_params( curr_node ) ){ return false; }
+			if( !object.load_params( curr_node ) ){ return false; }
 
 			// If there is a file, append the full path
-			if( object.p.str_vals.count("file")>0 ){
-				for( int fi=0; fi<object.p.str_vals["file"].size(); ++fi ){
-					std::string file = object.p.str_vals["file"][fi];
-					std::string full_path = xmldir + file;
-					object.p.str_vals["file"][fi] = full_path;
-				}
+			if( object.param_map.count("file")>0 ){
+				std::string file = object.param_vec[ object.param_map["file"] ].as_string();
+				std::string full_path = xmldir + file;
+				object.param_vec[ object.param_map["file"] ].value = full_path;
 			}
 
 			// Check the parameters and store the data
 			if( !object.check_params() ){ printf("\n**SceneManager Error: Object check_params\n"); return false; }
-
+			object_map[ name ] = objects.size();
 			objects.push_back( object );
-//			object_map[name] = &objects.back();
 
 		} // end parse object
 

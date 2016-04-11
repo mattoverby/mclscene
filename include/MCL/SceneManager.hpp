@@ -45,6 +45,8 @@ class SceneManager {
 
 		// bool save( std::string xmlfile ); // TODO
 
+		// BaseMeta operator[]( const std::string name ) const; // TODO
+
 		// Vectors of scene components
 		std::vector< CameraMeta > cameras;
 		std::vector< ObjectMeta > objects;
@@ -54,9 +56,9 @@ class SceneManager {
 		// Because each component has a unique name, we can
 		// use maps to access the data directly.
 		// name -> index in the above vectors
-//		std::unordered_map< std::string, CameraMeta* > camera_map;
-//		std::unordered_map< std::string, ObjectMeta* > object_map;
-//		std::unordered_map< std::string, LightMeta* > light_map;
+		std::unordered_map< std::string, int > camera_map;
+		std::unordered_map< std::string, int > object_map;
+		std::unordered_map< std::string, int > light_map;
 		std::unordered_map< std::string, int > material_map;
 
 	protected:

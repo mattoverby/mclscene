@@ -25,9 +25,48 @@ using namespace mcl;
 using namespace trimesh;
 
 
-bool Parameters::load_params( const pugi::xml_node &curr_node ){
+double Param::as_double() const { std::stringstream ss(value); double v; ss>>v; return v; }
 
-//	centralize[3]=0.f;
+char Param::as_char() const { std::stringstream ss(value); char v; ss>>v; return v; }
+
+std::string Param::as_string() const { return value; }
+
+int Param::as_int() const { std::stringstream ss(value); int v; ss>>v; return v; }
+
+long Param::as_long() const { std::stringstream ss(value); long v; ss>>v; return v; }
+
+bool Param::as_bool() const { std::stringstream ss(value); bool v; ss>>v; return v; }
+
+float Param::as_float() const { std::stringstream ss(value); float v; ss>>v; return v; }
+
+trimesh::vec Param::as_vec3() const {
+	std::stringstream ss(value);
+	trimesh::vec v;
+	for( int i=0; i<3; ++i ){ ss>>v[i]; }
+	return v;
+}
+
+void Param::normalize(){
+	if( type != "vec3" ){ return; }
+	trimesh::vec v = as_vec3();
+	trimesh::normalize( v );
+	std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2];
+	value = ss.str();
+}
+
+void Param::fix_color(){
+	if( type != "vec3" ){ return; }
+	trimesh::vec c = as_vec3();
+	for( int ci=0; ci<3; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
+	if( c[0] > 1.0 || c[1] > 1.0 || c[2] > 1.0 ){
+		for( int ci=0; ci<3; ++ci ){ c[ci]/=255.f; } // from 0-255 to 0-1
+	}
+	std::stringstream ss; ss << c[0] << ' ' << c[1] << ' ' << c[2];
+	value = ss.str();
+}
+
+
+bool BaseMeta::load_params( const pugi::xml_node &curr_node ){
 
 	pugi::xml_node::iterator param = curr_node.begin();
 	for( param; param != curr_node.end(); ++param ) {
@@ -36,11 +75,12 @@ bool Parameters::load_params( const pugi::xml_node &curr_node ){
 		std::string name = parse::to_lower( curr_param.name() );
 		std::string type_id = curr_param.attribute("type").value();
 		std::string value = curr_param.attribute("value").value();
+		Param newP( name, value, type_id );
 
 		if( name == "xform" ){
 
 			std::stringstream ss( value );
-			vec v; ss >> v[0] >> v[1] >> v[2];
+			trimesh::vec v; ss >> v[0] >> v[1] >> v[2];
 
 			if( parse::to_lower(type_id) == "scale" ){
 				trimesh::xform scale = trimesh::xform::scale(v[0],v[1],v[2]);
@@ -58,69 +98,53 @@ bool Parameters::load_params( const pugi::xml_node &curr_node ){
 				rot = rot * trimesh::xform::rot( v[2], trimesh::vec(0.f,0.f,1.f) );
 				x_form = x_form * rot;
 			}
-//			else if( parse::to_lower(type_id) == "centralize" ){
-//				centralize[0]=v[0]; centralize[1]=v[1]; centralize[2]=v[2];
-//				centralize[3]=1.f;
-//			}
 		}
 		else{
-
-			std::stringstream ss( value );
-			if( type_id == "d" || type_id == "double" ){
-				double val; ss >> val; dbl_vals[name].push_back(val); }
-			else if( type_id == "f" || type_id == "float" ){
-				float val; ss >> val; float_vals[name].push_back(val); }
-			else if( type_id == "b" || type_id == "bool" ){
-				bool val; ss >> val; bool_vals[name].push_back(val); }
-			else if( type_id == "c" || type_id == "char" ){
-				char val; ss >> val; char_vals[name].push_back(val); }
-			else if( type_id == "i" || type_id == "int" ){
-				int val; ss >> val; int_vals[name].push_back(val); }
-			else if( type_id == "l" || type_id == "long" ){
-				long val; ss >> val; long_vals[name].push_back(val); }
-			else if( type_id == "Ss" || type_id == "string" ){
-				std::string val; ss >> val; str_vals[name].push_back(val); }
-			else if( type_id == "vec3" ){
-				vec v; ss >> v[0] >> v[1] >> v[2]; vec3_vals[name].push_back(v); }
-			else{ std::cerr << "\nParameters Error: Unknown type \"" << type_id << "\"" << std::endl; return false; }
-
+			param_map[ name ] = param_vec.size();
+			param_vec.push_back( newP );	
 		}
 
 	} // end loop params
 
 	return true;
+
+}
+
+
+Param BaseMeta::operator[]( const std::string tag ) const {
+	std::unordered_map< std::string, int >::const_iterator it = param_map.find(tag);
+	assert( it != param_map.end() ); assert( it->second < param_vec.size() );
+	return param_vec[ it->second ];
+}
+
+void BaseMeta::add_param( const Param &p ){
+	param_map[ p.name ] = param_vec.size();
+	param_vec.push_back( p );	
 }
 
 
 bool CameraMeta::check_params(){
 
-	if( p.vec3_vals.count( "position" )==0 ){ printf("Camera Error: No vec3 position!"); return false; }
-	if( p.vec3_vals.count( "up" )==0 ){ printf("Camera Error: No vec3 up!"); return false; }
-	if( p.vec3_vals.count( "lookat" )==0 && p.vec3_vals.count( "direction" )==0 ){ printf("Camera Error: No vec3 direction/lookat!"); return false; }
-	if( p.str_vals.count( "type" )==0 ){ printf("Camera Error: No str type!"); return false; }
-	if( p.vec3_vals.count( "lookat" )>0 && p.vec3_vals.count( "direction" )>0 ){ printf("Camera Error: Both direction lookat set!"); return false; }
-
-
+	if( param_map.count( "position" )==0 ){ printf("Camera Error: No vec3 position!"); return false; }
+	if( param_map.count( "up" )==0 ){ printf("Camera Error: No vec3 up!"); return false; }
+	if( param_map.count( "lookat" )==0 && param_map.count( "direction" )==0 ){ printf("Camera Error: No vec3 direction/lookat!"); return false; }
+	if( param_map.count( "type" )==0 ){ printf("Camera Error: No str type!"); return false; }
+	if( param_map.count( "lookat" )>0 && param_map.count( "direction" )>0 ){ printf("Camera Error: Both direction and lookat set!"); return false; }
 
 	// Normalize directions
-	if( p.vec3_vals.count( "direction" )>0 ){
-		for( int i=0; i<p.vec3_vals["direction"].size(); ++i ){
-			normalize( p.vec3_vals["direction"][i] );
-		}
+	if( param_map.count( "direction" )>0 ){
+		param_vec[ param_map[ "direction" ] ].normalize();
+		dir = param_vec[ param_map[ "direction" ] ].as_vec3();
+		lookat = pos+dir;
+	}
+	else if( param_map.count( "lookat" )>0 ){
+		lookat = param_vec[ param_map[ "lookat" ] ].as_vec3();
+		dir = lookat-pos; normalize(dir);
 	}
 
 	// Set members
-	pos = p.vec3_vals["position"].back();
-	type = p.str_vals["type"].back();
-
-	if( p.vec3_vals.count( "lookat" )==0 ){
-		dir = p.vec3_vals["direction"].back();
-		lookat = pos+dir;
-	}
-	else if( p.vec3_vals.count( "direction" )==0 ){
-		lookat = p.vec3_vals["lookat"].back();
-		dir = lookat-pos; normalize(dir);
-	}
+	pos = param_vec[ param_map[ "position" ] ].as_vec3();
+	type = param_vec[ param_map[ "type" ] ].as_string();
 
 	return true;
 }
@@ -128,36 +152,24 @@ bool CameraMeta::check_params(){
 
 bool MaterialMeta::check_params(){
 
-	if( p.str_vals.count( "type" )==0 ){ printf("Material Error: No str type!"); return false; }
+	if( param_map.count( "type" )==0 ){ printf("Material Error: No str type!"); return false; }
+
+	type = param_vec[ param_map[ "type" ] ].as_string();
 	diffuse = vec(.5,.5,.5);
 	specular = vec(0,0,0);
 	exponent = 0;
 
-	// Make color 0 to 1
-	if( p.vec3_vals.count("diffuse")>0 ){
-	for( int i=0; i<p.vec3_vals["diffuse"].size(); ++i ){
-		vec c = p.vec3_vals[ "diffuse" ][i];
-		for( int ci=0; ci<3; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
-		if( c[0] > 1.0 || c[1] > 1.0 || c[2] > 1.0 ){
-			for( int ci=0; ci<3; ++ci ){ c[ci]/=255.f; } // from 0-255 to 0-1
-		}
-		p.vec3_vals[ "diffuse" ][i]=c;
-		diffuse = c;
-	}}
+	if( param_map.count( "diffuse" )>0 ){
+		param_vec[ param_map[ "diffuse" ] ].fix_color();
+		diffuse = param_vec[ param_map[ "diffuse" ] ].as_vec3();
+	}
 
-	// Make color 0 to 1
-	if( p.vec3_vals.count("specular")>0 ){
-	for( int i=0; i<p.vec3_vals["specular"].size(); ++i ){
-		vec c = p.vec3_vals[ "specular" ][i];
-		for( int ci=0; ci<3; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
-		if( c[0] > 1.0 || c[1] > 1.0 || c[2] > 1.0 ){
-			for( int ci=0; ci<3; ++ci ){ c[ci]/=255.f; } // from 0-255 to 0-1
-		}
-		p.vec3_vals[ "specular" ][i]=c;
-		specular = c;
-	}}
+	if( param_map.count( "specular" )>0 ){
+		param_vec[ param_map[ "specular" ] ].fix_color();
+		specular = param_vec[ param_map[ "specular" ] ].as_vec3();
+	}
 
-	if( p.float_vals.count("exponent")>0 ){ exponent = std::fabs(p.float_vals["exponent"].back()); }
+	if( param_map.count("exponent")>0 ){ exponent = param_vec[ param_map[ "exponent" ] ].as_double(); }
 
 	return true;
 }
@@ -165,38 +177,24 @@ bool MaterialMeta::check_params(){
 
 bool LightMeta::check_params(){
 
-	if( p.str_vals.count( "type" )==0 ){ printf("Light Error: No str type!"); return false; }
-	if( p.vec3_vals.count( "intensity" )==0 ){ printf("Light Error: No vec3 intensity!"); return false; }
+	if( param_map.count( "type" )==0 ){ printf("Light Error: No str type!"); return false; }
+	if( param_map.count( "intensity" )==0 ){ printf("Light Error: No vec3 intensity!"); return false; }
+	type = param_vec[ param_map[ "type" ] ].as_string();
 
 	if( type == "directional" ){
-		if( p.vec3_vals.count( "direction" )==0 ){ printf("Light Error: No vec3 direction!"); return false; }
+		if( param_map.count( "direction" )==0 ){ printf("Light Error: No vec3 direction!"); return false; }
 
 		// Normalize direction
-		if( p.vec3_vals.count( "direction" )>0 ){
-			for( int i=0; i<p.vec3_vals["direction"].size(); ++i ){
-				normalize( p.vec3_vals["direction"][i] );
-			}
-		}
+		param_vec[ param_map[ "direction" ] ].normalize();
+		dir = param_vec[ param_map[ "direction" ] ].as_vec3();
 	}
 	else if( type == "point" ){
-		if( p.vec3_vals.count( "position" )==0 ){ printf("Light Error: No vec3 position!"); return false; }
+		if( param_map.count( "position" )==0 ){ printf("Light Error: No vec3 position!"); return false; }
+		pos = param_vec[ param_map[ "position" ] ].as_vec3();
 	}
 
-	// Make color 0 to 1
-	for( int i=0; i<p.vec3_vals["intensity"].size(); ++i ){
-		vec c = p.vec3_vals[ "intensity" ][i];
-		for( int ci=0; ci<3; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
-		if( c[0] > 1.0 || c[1] > 1.0 || c[2] > 1.0 ){
-			for( int ci=0; ci<3; ++ci ){ c[ci]/=255.f; } // from 0-255 to 0-1
-		}
-		p.vec3_vals[ "intensity" ][i]=c;
-	}
-
-	// Set members
-	pos = p.vec3_vals["position"].back();
-	type = p.str_vals["type"].back();
-	intensity = p.vec3_vals["intensity"].back();
-	if( p.vec3_vals.count( "direction" )>0 ){ dir = p.vec3_vals["direction"].back(); }
+	param_vec[ param_map[ "intensity" ] ].fix_color();
+	intensity = param_vec[ param_map[ "intensity" ] ].as_vec3();
 
 	return true;
 }
@@ -204,12 +202,10 @@ bool LightMeta::check_params(){
 
 bool ObjectMeta::check_params(){
 
-	if( p.str_vals.count( "type" )==0 ){ printf("Object Error: No str type!"); return false; }
+	if( param_map.count( "type" )==0 ){ printf("\nObject Error: No str type!"); return false; }
+	type = param_vec[ param_map[ "type" ] ].as_string();
 
-	if( p.str_vals.count( "material" )>0 ){ material = p.str_vals["material"].back(); }
-
-	// Set members
-	type = p.str_vals["type"].back();
+	if( param_map.count( "material" )>0 ){ material = param_vec[ param_map[ "material" ] ].as_string(); }
 
 	return true;
 }
@@ -217,23 +213,23 @@ bool ObjectMeta::check_params(){
 
 std::shared_ptr<trimesh::TriMesh> ObjectMeta::as_TriMesh(){
 
-	if( type != "TriMesh" ){ printf("Object Error: Not type TriMesh!"); return NULL; }
+	if( parse::to_lower(type) != "trimesh" ){ printf("\nObject Error: Not type TriMesh!"); assert(false); }
 	if( built_TriMesh != NULL ){ return built_TriMesh; }
 
-	if( p.str_vals.count("file")==0 ){ printf("TriMesh Error: No file specified"); return NULL; }
+	if( param_map.count("file")==0 ){ printf("TriMesh Error: No file specified"); assert(false); }
 
-	std::string file = p.str_vals["file"].back();
+	std::string file = param_vec[ param_map[ "file" ] ].as_string();
 
 	// Try to load the trimesh
 	std::shared_ptr<trimesh::TriMesh> newMesh( trimesh::TriMesh::read( file.c_str() ) );
-	if( !newMesh.get() ){ printf("Trimesh Error: Could not load %s", file.c_str() ); return NULL; }
+	if( !newMesh.get() ){ printf("Trimesh Error: Could not load %s", file.c_str() ); assert(false); }
 	newMesh.get()->set_verbose(0);
 
 	// Now clean the mesh
 	trimesh::remove_unused_vertices( newMesh.get() );
 
 	// Apply transformation matrix
-	trimesh::apply_xform( newMesh.get(), p.x_form );
+	trimesh::apply_xform( newMesh.get(), x_form );
 
 	// Create triangle strip for rendering
 	newMesh.get()->need_normals();
@@ -249,17 +245,17 @@ std::shared_ptr<trimesh::TriMesh> ObjectMeta::as_TriMesh(){
 
 std::shared_ptr<TetMesh> ObjectMeta::as_TetMesh(){
 
-	if( type != "TetMesh" ){ printf("Object Error: Not type TetMesh!"); return NULL; }
+	if( parse::to_lower(type) != "tetmesh" ){ printf("\nObject Error: Not type TetMesh!"); assert(false); }
 	if( built_TetMesh != NULL ){ return built_TetMesh; }
 
-	if( p.str_vals.count("file")==0 ){ printf("TetMesh Error: No file specified"); return NULL; }
+	if( param_map.count("file")==0 ){ printf("\nTetMesh Error: No file specified"); assert(false); }
 
-	std::string file = p.str_vals["file"].back();
+	std::string file = param_vec[ param_map[ "file" ] ].as_string();
 
 	std::shared_ptr<TetMesh> newMesh( new TetMesh() );
 
-	if( !newMesh.get()->load( file ) ){ return NULL; }
-	newMesh.get()->apply_xform( p.x_form );
+	if( !newMesh.get()->load( file ) ){ assert(false); }
+	newMesh.get()->apply_xform( x_form );
 
 	// Store the trimesh for later
 	built_TetMesh = newMesh;

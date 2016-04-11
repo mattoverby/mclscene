@@ -52,45 +52,81 @@ namespace parse {
 	}
 };
 
-//
-//	Parameter list included in every meta type
-//
-//	See the check_params functions for required parameters
-//
-class Parameters {
-public:
-	// Returns true on success
-	bool load_params( const pugi::xml_node &curr_node );
 
-	// Parameter list
-	//	Parameter label -> vector of value
-	//	Order is preserved for names, but not across types.
-	//
-	std::unordered_map< std::string, std::vector< double > > dbl_vals;
-	std::unordered_map< std::string, std::vector< char > > char_vals;
-	std::unordered_map< std::string, std::vector< std::string > > str_vals;
-	std::unordered_map< std::string, std::vector< int > > int_vals;
-	std::unordered_map< std::string, std::vector< long > > long_vals;
-	std::unordered_map< std::string, std::vector< bool > > bool_vals;
-	std::unordered_map< std::string, std::vector< float > > float_vals;
-	std::unordered_map< std::string, std::vector< trimesh::vec > > vec3_vals;
+//
+//	A parameter parsed from the scene file, stored as a string.
+//	Has casting functions for convenience, but assumes the type
+//	has an overloaded stream operator (with exception of trimesh::vec).
+//	I'm really just copying what pugixml does.
+//
+class Param {
+public:
+	Param( std::string n, std::string v, std::string t ) : name(n), value(v), type(t) {}
+	double as_double() const;
+	char as_char() const;
+	std::string as_string() const;
+	int as_int() const;
+	long as_long() const;
+	bool as_bool() const;
+	float as_float() const;
+	trimesh::vec as_vec3() const;
+
+	// Stores the parsed data
+	std::string name;
+	std::string value; // string value
+	std::string type; // string type
+
+	// Some useful vec3 functions:
+	void normalize();
+	void fix_color(); // if 0-255, sets 0-1
+};
+
+
+//
+//	Base
+//
+class BaseMeta {
+public:
+	virtual ~BaseMeta(){}
+	std::string name;
+
+	// Load parameters and store in the vector/maps.
+	virtual bool load_params( const pugi::xml_node &curr_node );
+
+	// Check params is called after an object is parsed to set
+	// member data for the derived types.
+	virtual bool check_params() { return true; }
+
+	// Returns a parameter with the given tag so long as the parameter
+	// is unique (exists only once in the meta). Otherwise it returns
+	// the last meta to be added.
+	// E.g. <mass type="int" value="1" /> would be
+	// int mass = myMeta[mass].as_int()
+	virtual Param operator[]( const std::string tag ) const;
+
+	// Adds a parameter to the meta object
+	void add_param( const Param &p );
+
+	// Map of parameter indices (in param_vec) with unique names
+	std::unordered_map< std::string, int > param_map;
+
+	// Vector of all parameters in the order they were parsed.
+	std::vector< Param > param_vec;
 
 	// Transforms are unique in which they are constructed
 	// as they are parsed so that order is preserved.
 	// The value portion is always a vec3.
 	// Their xml syntax is:
 	// 	<XForm type="scale/translate/rotate" value="0 100 0" />
-	trimesh::xform x_form;
+	trimesh::xform x_form;	
 };
+
 
 //
 //	Camera
 //
-class CameraMeta {
+class CameraMeta : public BaseMeta {
 public:
-	Parameters p;
-	std::string name;
-
 	bool check_params();
 
 	// Set by check_params:
@@ -98,14 +134,12 @@ public:
 	trimesh::vec pos, dir, lookat;
 };
 
+
 //
 //	Material
 //
-class MaterialMeta {
+class MaterialMeta : public BaseMeta {
 public:
-	Parameters p;
-	std::string name;
-
 	bool check_params();
 
 	// Set by check_params:
@@ -114,20 +148,20 @@ public:
 	float exponent; // i.e. shininess
 };
 
+
 //
 //	Light
 //
-class LightMeta {
+// TODO: Area light
+class LightMeta : public BaseMeta {
 public:
-	Parameters p;
-	std::string name;
-
 	bool check_params();
 
 	// Set by check_params:
-	std::string type;
+	std::string type; // point or directional
 	trimesh::vec pos, intensity, dir;
 };
+
 
 //
 //	Object
@@ -136,11 +170,9 @@ public:
 //	it can build and create certain objects. When built, this
 //	data is cached and return on subsequent build calls
 //
-class ObjectMeta {
+class ObjectMeta : public BaseMeta {
 public:
 	ObjectMeta() : built_TriMesh(NULL), built_TetMesh(NULL) {}
-	Parameters p;
-	std::string name;
 
 	bool check_params();
 
@@ -160,6 +192,7 @@ protected:
 	friend class SceneManager;
 	#endif
 };
+
 
 
 } // end namespace mcl

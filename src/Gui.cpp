@@ -62,6 +62,7 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 	global_xf = trimesh::xform::trans(0, 0, -10.0f * bsphere.r) *
 		    trimesh::xform::trans(-bsphere.center);
 	cam.setupGL( global_xf * bsphere.center, bsphere.r );
+
 }
 
 
@@ -156,6 +157,7 @@ void Gui::check_mouse( const sf::Event &event, const float screen_dt ){
 
 	cam.mouse( mouse_pos.x, mouse_pos.y, b, global_xf*bsphere.center, bsphere.r, global_xf );
 	bsphere = scene->get_bsphere(true);
+
 }
 
 
@@ -249,6 +251,7 @@ void Gui::draw_tstrips( const trimesh::TriMesh *themesh ){
 			t += striplen;
 		}
 	}
+
 }
 
 
@@ -338,6 +341,7 @@ void Gui::draw_trimesh( const trimesh::TriMesh *themesh ){
 	}
 
 	glPopMatrix();
+
 }
 
 
