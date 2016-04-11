@@ -301,6 +301,17 @@ std::shared_ptr<trimesh::TriMesh> ObjectMeta::as_TriMesh(){
 		built_TriMesh = newMesh;
 	}
 
+	//
+	//	TetMesh Type
+	//
+	else if( parse::to_lower(type) == "tetmesh" ){
+
+		// Build a tetmesh (saves built_TetMesh)
+		std::shared_ptr<TetMesh> temp = as_TetMesh();
+
+		built_TriMesh = temp.get()->as_TriMesh();
+	}
+
 	else{ printf("\nObject Error: Cannot convert to TriMesh!"); assert(false); }
 
 	return built_TriMesh;
