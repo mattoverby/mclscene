@@ -20,14 +20,14 @@ void TriMesh::need_bbox()
 	if (vertices.empty() || bbox.valid)
 		return;
 
-	dprintf("Computing bounding box... ");
+//	dprintf("Computing bounding box... ");
 
 	for (size_t i = 0; i < vertices.size(); i++)
 		bbox += vertices[i];
 
-	dprintf("Done.\n  x = %g .. %g, y = %g .. %g, z = %g .. %g\n",
-		bbox.min[0], bbox.max[0], bbox.min[1],
-		bbox.max[1], bbox.min[2], bbox.max[2]);
+//	dprintf("Done.\n  x = %g .. %g, y = %g .. %g, z = %g .. %g\n",
+//		bbox.min[0], bbox.max[0], bbox.min[1],
+//		bbox.max[1], bbox.min[2], bbox.max[2]);
 }
 
 

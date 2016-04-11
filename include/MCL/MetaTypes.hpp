@@ -34,6 +34,7 @@
 #include <sstream>
 #include <vector>
 #include <map>
+#include "Object.hpp"
 
 ///
 ///	Metadata structs loaded from the config file

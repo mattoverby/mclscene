@@ -19,51 +19,73 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_GUI_H
-#define MCLSCENE_GUI_H 1
+#ifndef MCLSCENE_OBJECT_H
+#define MCLSCENE_OBJECT_H 1
 
-#include "SFML/OpenGL.hpp"
-#include "SceneManager.hpp"
-#include <png.h>
-#include "SFML/Window.hpp"
-#include "GLCamera.h"
+#include "TriMesh.h"
+#include "TriMesh_algo.h"
+#include "TriMeshBuilder.h"
+#include "XForm.h"
 
+///
+///	Simple object types
+///
 namespace mcl {
 
-class Gui {
+
+//
+//	Base
+//
+class BaseObject {
 public:
-	Gui( SceneManager *scene_ );
-	virtual ~Gui() {}
-
-	// Opens the GUI window and begins the display.
-	// Returns when window closes.
-	virtual void display();
-
-protected:
-	virtual bool update( const float screen_dt );
-	virtual bool draw( const float screen_dt );
-	virtual void clear_screen();
-	virtual void setup_lighting( MaterialMeta *material );
-	virtual void draw_tstrips( const trimesh::TriMesh *themesh );
-	virtual void draw_trimesh( const trimesh::TriMesh *themesh );
-	virtual void check_mouse( const sf::Event &event, const float screen_dt );
-
-	// Trimeshes and tetmeshes are pointers to their instance in SceneManager
-	std::vector< std::shared_ptr<trimesh::TriMesh> > trimeshes;
-	std::vector< int > trimesh_materials;
-	std::vector< std::shared_ptr<TetMesh> > tetmeshes;
-	std::vector< int > tetmesh_materials;
-
-	trimesh::xform global_xf;
-	trimesh::TriMesh::BSphere bsphere;
-	sf::Clock clock;
-	SceneManager *scene;
-	trimesh::GLCamera cam;
-	std::shared_ptr<sf::Window> window;
-
-	bool draw_edges = false;
-	bool draw_points = false;
+	virtual ~BaseObject(){}
+	std::string material;
+	trimesh::xform x_form;
 };
+
+
+//
+//	Sphere
+//
+class Sphere : public BaseObject {
+public:
+	Sphere( trimesh::vec pos, double rad ) : center(pos), radius(rad) {}
+	trimesh::vec center;
+	double radius;
+};
+
+
+//
+//	Box, represented by a trimesh
+//
+class Box : public BaseObject {
+public:
+	Box( trimesh::vec boxmin, trimesh::vec boxmax, int tess=1 ){ build_trimesh(boxmin,boxmax,tess); }
+	trimesh::TriMesh tris;
+private:
+	void build_trimesh( trimesh::vec boxmin, trimesh::vec boxmax, int tess ){
+		using namespace trimesh;
+
+		// First create a boring cube
+		make_cube( &tris, tess ); // tess=1 -> 12 tris
+		tris.need_bbox();
+
+		// Now translate it so boxmins are the same
+		vec offset = tris.bbox.min - boxmin;
+		xform t_xf = xform::trans(offset[0],offset[1],offset[2]);
+		apply_xform(&tris, t_xf);
+		tris.bbox.valid = false;
+		tris.need_bbox();
+
+		// Now scale so that boxmaxes are the same
+		vec size = tris.bbox.max - boxmax;
+		xform s_xf = xform::scale(size[0],size[1],size[2]);
+		apply_xform(&tris, s_xf);
+		tris.bbox.valid = false;
+		tris.need_bbox();
+	}
+};
+
 
 } // end namespace mcl
 

@@ -27,8 +27,11 @@ using namespace mcl;
 Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 
 	// Set up the window and create the opengl context.
-	window = std::shared_ptr<sf::Window>( new sf::Window(sf::VideoMode(1024, 768), "Viewer", sf::Style::Default, sf::ContextSettings(32)) );
+	window = std::shared_ptr<sf::Window>( new sf::Window(sf::VideoMode(1024, 768), "Viewer",
+		sf::Style::Default, sf::ContextSettings(32)) );
 	window.get()->setVerticalSyncEnabled(true);
+
+	std::cout << "Gui Warning: Ignoring lights and camera settings" << std::endl;
 
 	// If there aren't any materials, create a default one
 	if( scene->materials.size()==0 ){
