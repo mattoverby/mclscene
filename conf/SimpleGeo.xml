@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<mclScene>
+
+	<Object name="box1" >
+		<Type type="string" value="box" />
+
+		<boxmin type="vec3" value="0 0 0" />
+		<boxmax type="vec3" value="1 1 1" />
+
+
+
+		<center type="vec3" value="0 0 0" />
+		<radius type="double" value="2" />
+
+
+		<XForm type="scale" value="1  1  1" />
+		<XForm type="translate" value="0  0  0" />
+		<XForm type="rotate" value="0  0  0" />
+
+		<Material type="string" value="red_spec" />
+	</Object>
+
+	<Material name="blue_diff" >
+		<Type type="string" value="diffuse" />
+		<Diffuse type="vec3" value="120  120  255" />
+	</Material>
+
+</mclScene>

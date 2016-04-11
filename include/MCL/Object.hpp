@@ -34,13 +34,13 @@ namespace mcl {
 
 
 //
-//	Base
+//	Base, pure virtual
 //
 class BaseObject {
 public:
 	virtual ~BaseObject(){}
+	virtual std::shared_ptr<trimesh::TriMesh> as_TriMesh() = 0;
 	std::string material;
-	trimesh::xform x_form;
 };
 
 
@@ -49,9 +49,17 @@ public:
 //
 class Sphere : public BaseObject {
 public:
-	Sphere( trimesh::vec pos, double rad ) : center(pos), radius(rad) {}
+	Sphere( trimesh::vec cent, double rad, int tess=32 ) : tris(NULL), center(cent), radius(rad) { build_trimesh(tess,tess); }
+	std::shared_ptr<trimesh::TriMesh> as_TriMesh(){ assert(tris!=NULL); return tris; }
 	trimesh::vec center;
 	double radius;
+private:
+	std::shared_ptr<trimesh::TriMesh> tris;
+	void build_trimesh( int tess_ph, int tess_th ){
+		using namespace trimesh;
+		tris = std::shared_ptr<trimesh::TriMesh>( new TriMesh() );
+		make_sphere_polar(tris.get(), tess_ph, tess_th);
+	}
 };
 
 
@@ -60,29 +68,36 @@ public:
 //
 class Box : public BaseObject {
 public:
-	Box( trimesh::vec boxmin, trimesh::vec boxmax, int tess=1 ){ build_trimesh(boxmin,boxmax,tess); }
-	trimesh::TriMesh tris;
+	Box( trimesh::vec boxmin, trimesh::vec boxmax, int tess=1 ) : tris(NULL) { build_trimesh(boxmin,boxmax,tess); }
+	std::shared_ptr<trimesh::TriMesh> as_TriMesh(){ assert(tris!=NULL); return tris; }
 private:
+	std::shared_ptr<trimesh::TriMesh> tris;
+
 	void build_trimesh( trimesh::vec boxmin, trimesh::vec boxmax, int tess ){
 		using namespace trimesh;
 
+		tris = std::shared_ptr<trimesh::TriMesh>( new TriMesh() );
+
 		// First create a boring cube
-		make_cube( &tris, tess ); // tess=1 -> 12 tris
-		tris.need_bbox();
+		make_cube( tris.get(), tess ); // tess=1 -> 12 tris
+		tris.get()->need_bbox();
 
 		// Now translate it so boxmins are the same
-		vec offset = tris.bbox.min - boxmin;
+		vec offset = tris.get()->bbox.min - boxmin;
 		xform t_xf = xform::trans(offset[0],offset[1],offset[2]);
-		apply_xform(&tris, t_xf);
-		tris.bbox.valid = false;
-		tris.need_bbox();
+		apply_xform(tris.get(), t_xf);
+		tris.get()->bbox.valid = false;
+		tris.get()->need_bbox();
 
 		// Now scale so that boxmaxes are the same
-		vec size = tris.bbox.max - boxmax;
+		vec size = tris.get()->bbox.max - boxmax;
 		xform s_xf = xform::scale(size[0],size[1],size[2]);
-		apply_xform(&tris, s_xf);
-		tris.bbox.valid = false;
-		tris.need_bbox();
+		apply_xform(tris.get(), s_xf);
+		tris.get()->bbox.valid = false;
+		tris.get()->need_bbox();
+
+		tris.get()->need_normals();
+		tris.get()->need_tstrips();
 	}
 };
 

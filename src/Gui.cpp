@@ -47,13 +47,14 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 	for( int i=0; i<scene->objects.size(); ++i ){
 
 		std::string mat = scene->objects[i].material;
+		std::string type = parse::to_lower(scene->objects[i].type);
 
-		if( scene->objects[i].type == "TriMesh" ){
+		if( type == "trimesh" || type == "box" || type == "sphere" ){
 			trimeshes.push_back( scene->objects[i].as_TriMesh() );
 			if( mat.size()==0 ){ trimesh_materials.push_back( 0 ); }
 			else{ trimesh_materials.push_back( scene->material_map[mat] ); }
 		}
-		else if( scene->objects[i].type == "TetMesh" ){
+		else if( type == "tetmesh" ){
 			tetmeshes.push_back( scene->objects[i].as_TetMesh() );
 			if( mat.size()==0 ){ tetmesh_materials.push_back( 0 ); }
 			else{ tetmesh_materials.push_back( scene->material_map[mat] ); }

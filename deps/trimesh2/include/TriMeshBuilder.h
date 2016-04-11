@@ -258,6 +258,48 @@ static inline void make_cube(trimesh::TriMesh *mesh, int tess)
 	}
 }
 
+
+static inline void make_sphere_polar(TriMesh* mesh, int tess_ph, int tess_th)
+{
+	if (tess_th < 3)
+		tess_th = 3;
+	if (tess_ph < 3)
+		tess_ph = 3;
+
+	mesh->vertices.reserve(2+tess_ph*(tess_th-1));
+
+	mkpoint(mesh, 0, 0, -1);
+	for (int j = 1; j < tess_th; j++) {
+		float th = M_PIf * j / tess_th;
+		float z = -cos(th);
+		float r = sin(th);
+		for (int i = 0; i < tess_ph; i++) {
+			float ph = M_TWOPIf * i / tess_ph;
+			mkpoint(mesh, r*cos(ph), r*sin(ph), z);
+		}
+	}
+	mkpoint(mesh, 0, 0, 1);
+
+	mesh->faces.reserve(2*tess_th*tess_ph - 2*tess_ph);
+
+	for (int i = 0; i < tess_ph; i++)
+		mkface(mesh, 0, ((i+1)%tess_ph)+1, i+1);
+
+	for (int j = 0; j < tess_th-2; j++) {
+		int base = 1 + j * tess_ph;
+		for (int i = 0; i < tess_ph; i++) {
+			int i1 = (i+1)%tess_ph;
+			mkquad(mesh, base + i, base + i1,
+				base+tess_ph+i, base+tess_ph+i1);
+		}
+	}
+
+	int base = 1 + (tess_th-2)*tess_ph;
+	for (int i = 0; i < tess_ph; i++)
+		mkface(mesh, base+i, base+((i+1)%tess_ph), base+tess_ph);
+
+}
+
 /*
 TriMesh *make_disc(int tess_th, int tess_r)
 {
@@ -617,50 +659,6 @@ TriMesh *make_helix(int tess_th, int tess_ph, float turns, float r = 0.25f)
 						      r*sin(ph)*ydir;
 		}
 	}
-	return mesh;
-}
-
-
-TriMesh *make_sphere_polar(int tess_ph, int tess_th)
-{
-	if (tess_th < 3)
-		tess_th = 3;
-	if (tess_ph < 3)
-		tess_ph = 3;
-
-	TriMesh *mesh = new TriMesh;
-	mesh->vertices.reserve(2+tess_ph*(tess_th-1));
-
-	mkpoint(mesh, 0, 0, -1);
-	for (int j = 1; j < tess_th; j++) {
-		float th = M_PIf * j / tess_th;
-		float z = -cos(th);
-		float r = sin(th);
-		for (int i = 0; i < tess_ph; i++) {
-			float ph = M_TWOPIf * i / tess_ph;
-			mkpoint(mesh, r*cos(ph), r*sin(ph), z);
-		}
-	}
-	mkpoint(mesh, 0, 0, 1);
-
-	mesh->faces.reserve(2*tess_th*tess_ph - 2*tess_ph);
-
-	for (int i = 0; i < tess_ph; i++)
-		mkface(mesh, 0, ((i+1)%tess_ph)+1, i+1);
-
-	for (int j = 0; j < tess_th-2; j++) {
-		int base = 1 + j * tess_ph;
-		for (int i = 0; i < tess_ph; i++) {
-			int i1 = (i+1)%tess_ph;
-			mkquad(mesh, base + i, base + i1,
-				base+tess_ph+i, base+tess_ph+i1);
-		}
-	}
-
-	int base = 1 + (tess_th-2)*tess_ph;
-	for (int i = 0; i < tess_ph; i++)
-		mkface(mesh, base+i, base+((i+1)%tess_ph), base+tess_ph);
-
 	return mesh;
 }
 

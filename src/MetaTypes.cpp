@@ -213,32 +213,97 @@ bool ObjectMeta::check_params(){
 
 std::shared_ptr<trimesh::TriMesh> ObjectMeta::as_TriMesh(){
 
-	if( parse::to_lower(type) != "trimesh" ){ printf("\nObject Error: Not type TriMesh!"); assert(false); }
 	if( built_TriMesh != NULL ){ return built_TriMesh; }
 
-	if( param_map.count("file")==0 ){ printf("TriMesh Error: No file specified"); assert(false); }
+	//
+	//	Sphere Type
+	//
+	if( parse::to_lower(type) == "sphere" ){
 
-	std::string file = param_vec[ param_map[ "file" ] ].as_string();
+		if( param_map.count( "radius" )==0 ){ printf("\nObject Error: No radius!"); assert(false); }
+		if( param_map.count( "center" )==0 ){ printf("\nObject Error: No vec3 center!"); assert(false); }
 
-	// Try to load the trimesh
-	std::shared_ptr<trimesh::TriMesh> newMesh( trimesh::TriMesh::read( file.c_str() ) );
-	if( !newMesh.get() ){ printf("Trimesh Error: Could not load %s", file.c_str() ); assert(false); }
-	newMesh.get()->set_verbose(0);
+		double rad = param_vec[ param_map[ "radius" ] ].as_double();
+		trimesh::vec center = param_vec[ param_map[ "center" ] ].as_vec3();
 
-	// Now clean the mesh
-	trimesh::remove_unused_vertices( newMesh.get() );
+		int tess = 32;
+		if( param_map.count( "tess" )>0 ){ param_vec[ param_map[ "tess" ] ].as_int(); }
 
-	// Apply transformation matrix
-	trimesh::apply_xform( newMesh.get(), x_form );
+		// Create a sphere (which creates a trimesh)
+		built_obj = std::shared_ptr<BaseObject>( new Sphere( center, rad, tess ) );
+		built_TriMesh = built_obj.get()->as_TriMesh();
 
-	// Create triangle strip for rendering
-	newMesh.get()->need_normals();
-	newMesh.get()->need_tstrips();
+		// Apply transformation matrix
+		trimesh::apply_xform( built_TriMesh.get(), x_form );
 
-	// Store the trimesh for later
-	built_TriMesh = newMesh;
+		// Reset normals/tstrips
+		built_TriMesh.get()->normals.clear();
+		built_TriMesh.get()->tstrips.clear();
+		built_TriMesh.get()->need_normals();
+		built_TriMesh.get()->need_tstrips();
 
-	return newMesh;
+	}
+
+	//
+	//	Box Type
+	//
+	else if( parse::to_lower(type) == "box" ){
+
+		if( param_map.count( "boxmin" )==0 ){ printf("\nObject Error: No vec3 boxmin!"); assert(false); }
+		if( param_map.count( "boxmax" )==0 ){ printf("\nObject Error: No vec3 boxmax!"); assert(false); }
+
+		trimesh::vec boxmin = param_vec[ param_map[ "boxmin" ] ].as_vec3();
+		trimesh::vec boxmax = param_vec[ param_map[ "boxmax" ] ].as_vec3();
+
+		int tess = 1;
+		if( param_map.count( "tess" )>0 ){ param_vec[ param_map[ "tess" ] ].as_int(); }
+
+		// Create a box (which creates a trimesh)
+		built_obj = std::shared_ptr<BaseObject>( new Box( boxmin, boxmax, tess ) );
+		built_TriMesh = built_obj.get()->as_TriMesh();
+
+		// Apply transformation matrix
+		trimesh::apply_xform( built_TriMesh.get(), x_form );
+
+		// Reset normals/tstrips
+		built_TriMesh.get()->normals.clear();
+		built_TriMesh.get()->tstrips.clear();
+		built_TriMesh.get()->need_normals();
+		built_TriMesh.get()->need_tstrips();
+
+	}
+
+	//
+	//	TriMesh Type
+	//
+	else if( parse::to_lower(type) == "trimesh" ){
+
+		if( param_map.count("file")==0 ){ printf("TriMesh Error: No file specified"); assert(false); }
+
+		std::string file = param_vec[ param_map[ "file" ] ].as_string();
+
+		// Try to load the trimesh
+		std::shared_ptr<trimesh::TriMesh> newMesh( trimesh::TriMesh::read( file.c_str() ) );
+		if( !newMesh.get() ){ printf("Trimesh Error: Could not load %s", file.c_str() ); assert(false); }
+		newMesh.get()->set_verbose(0);
+
+		// Now clean the mesh
+		trimesh::remove_unused_vertices( newMesh.get() );
+
+		// Apply transformation matrix
+		trimesh::apply_xform( newMesh.get(), x_form );
+
+		// Create triangle strip for rendering
+		newMesh.get()->need_normals();
+		newMesh.get()->need_tstrips();
+
+		// Store the trimesh for later
+		built_TriMesh = newMesh;
+	}
+
+	else{ printf("\nObject Error: Cannot convert to TriMesh!"); assert(false); }
+
+	return built_TriMesh;
 
 } // end build trimesh
 

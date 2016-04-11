@@ -188,6 +188,7 @@ public:
 protected:
 	std::shared_ptr<trimesh::TriMesh> built_TriMesh;
 	std::shared_ptr<TetMesh> built_TetMesh;
+	std::shared_ptr<BaseObject> built_obj;
 
 	#if MCLSCENE_SCENEMANAGER_H
 	friend class SceneManager;
