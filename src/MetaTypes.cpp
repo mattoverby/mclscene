@@ -84,11 +84,11 @@ void BaseMeta::add_param( const Param &p ){
 
 bool CameraMeta::check_params(){
 
-	if( param_map.count( "position" )==0 ){ printf("Camera Error: No vec3 position!"); return false; }
-	if( param_map.count( "up" )==0 ){ printf("Camera Error: No vec3 up!"); return false; }
-	if( param_map.count( "lookat" )==0 && param_map.count( "direction" )==0 ){ printf("Camera Error: No vec3 direction/lookat!"); return false; }
-	if( param_map.count( "type" )==0 ){ printf("Camera Error: No str type!"); return false; }
-	if( param_map.count( "lookat" )>0 && param_map.count( "direction" )>0 ){ printf("Camera Error: Both direction and lookat set!"); return false; }
+	if( param_map.count( "position" )==0 ){ printf("\nCamera Error: No vec3 position!"); return false; }
+	if( param_map.count( "up" )==0 ){ printf("\nCamera Error: No vec3 up!"); return false; }
+	if( param_map.count( "lookat" )==0 && param_map.count( "direction" )==0 ){ printf("\nCamera Error: No vec3 direction/lookat!"); return false; }
+	if( param_map.count( "type" )==0 ){ printf("\nCamera Error: No str type!"); return false; }
+	if( param_map.count( "lookat" )>0 && param_map.count( "direction" )>0 ){ printf("\nCamera Error: Both direction and lookat set!"); return false; }
 
 	// Normalize directions
 	if( param_map.count( "direction" )>0 ){
@@ -111,7 +111,7 @@ bool CameraMeta::check_params(){
 
 bool MaterialMeta::check_params(){
 
-	if( param_map.count( "type" )==0 ){ printf("Material Error: No str type!"); return false; }
+	if( param_map.count( "type" )==0 ){ printf("\nMaterial Error: No str type!"); return false; }
 
 	type = param_vec[ param_map[ "type" ] ].as_string();
 	diffuse = vec(.5,.5,.5);
@@ -121,6 +121,10 @@ bool MaterialMeta::check_params(){
 	if( param_map.count( "diffuse" )>0 ){
 		param_vec[ param_map[ "diffuse" ] ].fix_color();
 		diffuse = param_vec[ param_map[ "diffuse" ] ].as_vec3();
+	}
+
+	if( param_map.count( "edges" )>0 ){
+		param_vec[ param_map[ "edges" ] ].fix_color();
 	}
 
 	if( param_map.count( "specular" )>0 ){
@@ -136,19 +140,19 @@ bool MaterialMeta::check_params(){
 
 bool LightMeta::check_params(){
 
-	if( param_map.count( "type" )==0 ){ printf("Light Error: No str type!"); return false; }
-	if( param_map.count( "intensity" )==0 ){ printf("Light Error: No vec3 intensity!"); return false; }
+	if( param_map.count( "type" )==0 ){ printf("\nLight Error: No str type!"); return false; }
+	if( param_map.count( "intensity" )==0 ){ printf("\nLight Error: No vec3 intensity!"); return false; }
 	type = param_vec[ param_map[ "type" ] ].as_string();
 
 	if( type == "directional" ){
-		if( param_map.count( "direction" )==0 ){ printf("Light Error: No vec3 direction!"); return false; }
+		if( param_map.count( "direction" )==0 ){ printf("\nLight Error: No vec3 direction!"); return false; }
 
 		// Normalize direction
 		param_vec[ param_map[ "direction" ] ].normalize();
 		dir = param_vec[ param_map[ "direction" ] ].as_vec3();
 	}
 	else if( type == "point" ){
-		if( param_map.count( "position" )==0 ){ printf("Light Error: No vec3 position!"); return false; }
+		if( param_map.count( "position" )==0 ){ printf("\nLight Error: No vec3 position!"); return false; }
 		pos = param_vec[ param_map[ "position" ] ].as_vec3();
 	}
 

@@ -16,7 +16,7 @@
 
 
 		<XForm type="scale" value="1  1  1" />
-		<XForm type="translate" value="0  0  0" />
+		<XForm type="translate" value="0  30  0" />
 		<XForm type="rotate" value="0  0  0" />
 
 		<Material type="string" value="red_spec" />
@@ -25,6 +25,7 @@
 	<Material name="blue_diff" >
 		<Type type="string" value="diffuse" />
 		<Diffuse type="vec3" value="120  120  255" />
+		<edges type="vec3" value="190  190  255" />
 	</Material>
 
 </mclScene>

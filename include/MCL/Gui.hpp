@@ -45,7 +45,7 @@ protected:
 	virtual void clear_screen();
 	virtual void setup_lighting( MaterialMeta *material, const std::vector<LightMeta> &lights );
 	virtual void draw_tstrips( const trimesh::TriMesh *themesh );
-	virtual void draw_trimesh( const trimesh::TriMesh *themesh );
+	virtual void draw_trimesh( MaterialMeta *material, const trimesh::TriMesh *themesh );
 	virtual void check_mouse( const sf::Event &event, const float screen_dt );
 
 	// Trimeshes and tetmeshes are pointers to their instance in SceneManager
@@ -59,7 +59,6 @@ protected:
 	trimesh::GLCamera cam;
 	std::shared_ptr<sf::Window> window;
 
-	bool draw_edges = false;
 	bool draw_points = false;
 };
 

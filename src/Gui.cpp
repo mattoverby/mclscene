@@ -35,10 +35,15 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 
 	// If there aren't any materials, create a default one
 	if( scene->materials.size()==0 ){
+
 		MaterialMeta flat_gray;
 		flat_gray.name = "base_mat";
-		flat_gray.type = "diffuse";
-		flat_gray.diffuse = trimesh::vec( 0.5, 0.5, 0.5 );
+
+		flat_gray.add_param( Param("type", "string", "diffuse") );
+		flat_gray.add_param( Param("diffuse", "vec3", "0.5 0.5 0.5") );
+		flat_gray.add_param( Param("diffuse", "vec3", "0.5 0.5 0.5") );
+		flat_gray.add_param( Param("edges", "vec3", "0.9 0.9 0.9") );
+
 		scene->materials.push_back( flat_gray );
 		scene->material_map[ "base_mat" ] = 0;
 	}
@@ -115,8 +120,9 @@ bool Gui::draw( const float screen_dt ){
 
 	// Draw the meshes
 	for( int i=0; i<trimeshes.size(); ++i ){
-		setup_lighting( &scene->materials[ trimesh_materials[i] ], scene->lights );
-		draw_trimesh( trimeshes[i].get() );
+		MaterialMeta *mat = &scene->materials[ trimesh_materials[i] ]; 
+		setup_lighting( mat, scene->lights );
+		draw_trimesh( mat, trimeshes[i].get() );
 	}
 
 	glPopMatrix();
@@ -250,12 +256,15 @@ void Gui::draw_tstrips( const trimesh::TriMesh *themesh ){
 
 
 // Draw the mesh, by Szymon Rusinkiewicz
-void Gui::draw_trimesh( const trimesh::TriMesh *themesh ){
-
+void Gui::draw_trimesh( MaterialMeta *material, const trimesh::TriMesh *themesh ){
 	bool draw_falsecolor = false;
 	bool draw_index = false;
 	bool draw_2side = false;
 	int point_size = 1, line_width = 1;
+
+	// Not efficient but yolo
+	std::unordered_map< std::string, int >::const_iterator edge_color = material->param_map.find("edges");
+	bool draw_edges = edge_color != material->param_map.end();
 
 	glPushMatrix();
 //	glMultMatrixd(xforms[i]);
@@ -315,6 +324,7 @@ void Gui::draw_trimesh( const trimesh::TriMesh *themesh ){
 
 	// Edge drawing pass
 	if (draw_edges) {
+		trimesh::vec edge_c = material->param_vec[ edge_color->second ].as_vec3();
 		glPolygonMode(GL_FRONT, GL_LINE);
 		glLineWidth(float(line_width));
 		glDisableClientState(GL_COLOR_ARRAY);
@@ -327,7 +337,7 @@ void Gui::draw_trimesh( const trimesh::TriMesh *themesh ){
 		glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
 		glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
 		glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular);
-		GLfloat mat_diffuse[4] = { .90f, .90f, .90f, 1.0f };
+		GLfloat mat_diffuse[4] = { edge_c[0], edge_c[1], edge_c[2], 1.0f };
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mat_diffuse);
 		glColor3f(0, 0, 1); // Used iff unlit
 		draw_tstrips(themesh);
