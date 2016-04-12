@@ -65,6 +65,8 @@ set( MCLSCENE_SRCS
 	include/MCL/SceneManager.hpp	src/SceneManager.cpp
 	include/MCL/MetaTypes.hpp	src/MetaTypes.cpp
 	include/MCL/TetMesh.hpp		src/TetMesh.cpp
+	include/MCL/Param.hpp		src/Param.cpp
+	include/MCL/Object.hpp		src/Object.cpp
 	include/MCL/VertexSort.hpp
 )
 

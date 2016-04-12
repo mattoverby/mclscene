@@ -19,52 +19,46 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_GUI_H
-#define MCLSCENE_GUI_H 1
+#include "MCL/Param.hpp"
 
-#include "SFML/OpenGL.hpp"
-#include "SceneManager.hpp"
-#include <png.h>
-#include "SFML/Window.hpp"
-#include "GLCamera.h"
+using namespace mcl;
 
-namespace mcl {
+double Param::as_double() const { std::stringstream ss(value); double v; ss>>v; return v; }
 
-class Gui {
-public:
-	Gui( SceneManager *scene_ );
-	virtual ~Gui() {}
+char Param::as_char() const { std::stringstream ss(value); char v; ss>>v; return v; }
 
-	// Opens the GUI window and begins the display.
-	// Returns when window closes.
-	virtual void display();
+std::string Param::as_string() const { return value; }
 
-protected:
-	virtual bool update( const float screen_dt );
-	virtual bool draw( const float screen_dt );
-	virtual void clear_screen();
-	virtual void setup_lighting( MaterialMeta *material );
-	virtual void draw_tstrips( const trimesh::TriMesh *themesh );
-	virtual void draw_trimesh( const trimesh::TriMesh *themesh );
-	virtual void check_mouse( const sf::Event &event, const float screen_dt );
+int Param::as_int() const { std::stringstream ss(value); int v; ss>>v; return v; }
 
-	// Trimeshes and tetmeshes are pointers to their instance in SceneManager
-	std::vector< std::shared_ptr<trimesh::TriMesh> > trimeshes;
-	std::vector< int > trimesh_materials;
-//	std::vector< std::shared_ptr<TetMesh> > tetmeshes;
-//	std::vector< int > tetmesh_materials;
+long Param::as_long() const { std::stringstream ss(value); long v; ss>>v; return v; }
 
-	trimesh::xform global_xf;
-	trimesh::TriMesh::BSphere bsphere;
-	sf::Clock clock;
-	SceneManager *scene;
-	trimesh::GLCamera cam;
-	std::shared_ptr<sf::Window> window;
+bool Param::as_bool() const { std::stringstream ss(value); bool v; ss>>v; return v; }
 
-	bool draw_edges = false;
-	bool draw_points = false;
-};
+float Param::as_float() const { std::stringstream ss(value); float v; ss>>v; return v; }
 
-} // end namespace mcl
+trimesh::vec Param::as_vec3() const {
+	std::stringstream ss(value);
+	trimesh::vec v;
+	for( int i=0; i<3; ++i ){ ss>>v[i]; }
+	return v;
+}
 
-#endif
+void Param::normalize(){
+	if( type != "vec3" ){ return; }
+	trimesh::vec v = as_vec3();
+	trimesh::normalize( v );
+	std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2];
+	value = ss.str();
+}
+
+void Param::fix_color(){
+	if( type != "vec3" ){ return; }
+	trimesh::vec c = as_vec3();
+	for( int ci=0; ci<3; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
+	if( c[0] > 1.0 || c[1] > 1.0 || c[2] > 1.0 ){
+		for( int ci=0; ci<3; ++ci ){ c[ci]/=255.f; } // from 0-255 to 0-1
+	}
+	std::stringstream ss; ss << c[0] << ' ' << c[1] << ' ' << c[2];
+	value = ss.str();
+}

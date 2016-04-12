@@ -54,18 +54,13 @@ void SceneManager::build_boundary(){
 	}
 
 	for( int i=0; i<objects.size(); ++i ){
-		if( objects[i].built_TriMesh != NULL ){
-			for( int j=0; j<objects[i].built_TriMesh.get()->vertices.size(); ++j ){
-				bbox += objects[i].built_TriMesh.get()->vertices[j];
-			}
-			mb.check_in( objects[i].built_TriMesh.get()->vertices.begin(), objects[i].built_TriMesh.get()->vertices.end() );
+		std::shared_ptr<BaseObject> obj = objects[i].as_object();
+		std::shared_ptr<trimesh::TriMesh> tmesh = obj.get()->as_TriMesh();
+
+		for( int j=0; j<tmesh.get()->vertices.size(); ++j ){
+			bbox += tmesh.get()->vertices[j];
 		}
-		if( objects[i].built_TetMesh != NULL ){
-			for( int j=0; j<objects[i].built_TetMesh.get()->vertices.size(); ++j ){
-				bbox += objects[i].built_TetMesh.get()->vertices[j];
-			}
-			mb.check_in( objects[i].built_TetMesh.get()->vertices.begin(), objects[i].built_TetMesh.get()->vertices.end() );
-		}
+		mb.check_in( tmesh.get()->vertices.begin(), tmesh.get()->vertices.end() );
 	}
 
 	mb.build();

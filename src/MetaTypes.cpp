@@ -25,47 +25,6 @@ using namespace mcl;
 using namespace trimesh;
 
 
-double Param::as_double() const { std::stringstream ss(value); double v; ss>>v; return v; }
-
-char Param::as_char() const { std::stringstream ss(value); char v; ss>>v; return v; }
-
-std::string Param::as_string() const { return value; }
-
-int Param::as_int() const { std::stringstream ss(value); int v; ss>>v; return v; }
-
-long Param::as_long() const { std::stringstream ss(value); long v; ss>>v; return v; }
-
-bool Param::as_bool() const { std::stringstream ss(value); bool v; ss>>v; return v; }
-
-float Param::as_float() const { std::stringstream ss(value); float v; ss>>v; return v; }
-
-trimesh::vec Param::as_vec3() const {
-	std::stringstream ss(value);
-	trimesh::vec v;
-	for( int i=0; i<3; ++i ){ ss>>v[i]; }
-	return v;
-}
-
-void Param::normalize(){
-	if( type != "vec3" ){ return; }
-	trimesh::vec v = as_vec3();
-	trimesh::normalize( v );
-	std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2];
-	value = ss.str();
-}
-
-void Param::fix_color(){
-	if( type != "vec3" ){ return; }
-	trimesh::vec c = as_vec3();
-	for( int ci=0; ci<3; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
-	if( c[0] > 1.0 || c[1] > 1.0 || c[2] > 1.0 ){
-		for( int ci=0; ci<3; ++ci ){ c[ci]/=255.f; } // from 0-255 to 0-1
-	}
-	std::stringstream ss; ss << c[0] << ' ' << c[1] << ' ' << c[2];
-	value = ss.str();
-}
-
-
 bool BaseMeta::load_params( const pugi::xml_node &curr_node ){
 
 	pugi::xml_node::iterator param = curr_node.begin();
@@ -211,110 +170,27 @@ bool ObjectMeta::check_params(){
 }
 
 
+std::shared_ptr<BaseObject> ObjectMeta::as_object(){
+
+	if( built_obj != NULL ){ return built_obj; }
+	std::string ltype = parse::to_lower(type);
+
+	if( ltype == "sphere" ){ built_obj = std::shared_ptr<BaseObject>( new Sphere() ); }
+	else if( ltype == "box" ){ built_obj = std::shared_ptr<BaseObject>( new Box() ); }
+	else if( ltype == "trimesh" ){ built_obj = std::shared_ptr<BaseObject>( new TriangleMesh() ); }
+	else if( ltype == "tetmesh" ){ built_obj = std::shared_ptr<BaseObject>( new TetMesh() ); }
+
+	built_obj.get()->init( param_vec );
+	built_obj.get()->apply_xform( x_form );
+	return built_obj;
+}
+
+
 std::shared_ptr<trimesh::TriMesh> ObjectMeta::as_TriMesh(){
 
-	if( built_TriMesh != NULL ){ return built_TriMesh; }
-
-	//
-	//	Sphere Type
-	//
-	if( parse::to_lower(type) == "sphere" ){
-
-		if( param_map.count( "radius" )==0 ){ printf("\nObject Error: No radius!"); assert(false); }
-		if( param_map.count( "center" )==0 ){ printf("\nObject Error: No vec3 center!"); assert(false); }
-
-		double rad = param_vec[ param_map[ "radius" ] ].as_double();
-		trimesh::vec center = param_vec[ param_map[ "center" ] ].as_vec3();
-
-		int tess = 32;
-		if( param_map.count( "tess" )>0 ){ param_vec[ param_map[ "tess" ] ].as_int(); }
-
-		// Create a sphere (which creates a trimesh)
-		built_obj = std::shared_ptr<BaseObject>( new Sphere( center, rad, tess ) );
-		built_TriMesh = built_obj.get()->as_TriMesh();
-
-		// Apply transformation matrix
-		trimesh::apply_xform( built_TriMesh.get(), x_form );
-
-		// Reset normals/tstrips
-		built_TriMesh.get()->normals.clear();
-		built_TriMesh.get()->tstrips.clear();
-		built_TriMesh.get()->need_normals();
-		built_TriMesh.get()->need_tstrips();
-
-	}
-
-	//
-	//	Box Type
-	//
-	else if( parse::to_lower(type) == "box" ){
-
-		if( param_map.count( "boxmin" )==0 ){ printf("\nObject Error: No vec3 boxmin!"); assert(false); }
-		if( param_map.count( "boxmax" )==0 ){ printf("\nObject Error: No vec3 boxmax!"); assert(false); }
-
-		trimesh::vec boxmin = param_vec[ param_map[ "boxmin" ] ].as_vec3();
-		trimesh::vec boxmax = param_vec[ param_map[ "boxmax" ] ].as_vec3();
-
-		int tess = 1;
-		if( param_map.count( "tess" )>0 ){ param_vec[ param_map[ "tess" ] ].as_int(); }
-
-		// Create a box (which creates a trimesh)
-		built_obj = std::shared_ptr<BaseObject>( new Box( boxmin, boxmax, tess ) );
-		built_TriMesh = built_obj.get()->as_TriMesh();
-
-		// Apply transformation matrix
-		trimesh::apply_xform( built_TriMesh.get(), x_form );
-
-		// Reset normals/tstrips
-		built_TriMesh.get()->normals.clear();
-		built_TriMesh.get()->tstrips.clear();
-		built_TriMesh.get()->need_normals();
-		built_TriMesh.get()->need_tstrips();
-
-	}
-
-	//
-	//	TriMesh Type
-	//
-	else if( parse::to_lower(type) == "trimesh" ){
-
-		if( param_map.count("file")==0 ){ printf("TriMesh Error: No file specified"); assert(false); }
-
-		std::string file = param_vec[ param_map[ "file" ] ].as_string();
-
-		// Try to load the trimesh
-		std::shared_ptr<trimesh::TriMesh> newMesh( trimesh::TriMesh::read( file.c_str() ) );
-		if( !newMesh.get() ){ printf("Trimesh Error: Could not load %s", file.c_str() ); assert(false); }
-		newMesh.get()->set_verbose(0);
-
-		// Now clean the mesh
-		trimesh::remove_unused_vertices( newMesh.get() );
-
-		// Apply transformation matrix
-		trimesh::apply_xform( newMesh.get(), x_form );
-
-		// Create triangle strip for rendering
-		newMesh.get()->need_normals();
-		newMesh.get()->need_tstrips();
-
-		// Store the trimesh for later
-		built_TriMesh = newMesh;
-	}
-
-	//
-	//	TetMesh Type
-	//
-	else if( parse::to_lower(type) == "tetmesh" ){
-
-		// Build a tetmesh (saves built_TetMesh)
-		std::shared_ptr<TetMesh> temp = as_TetMesh();
-
-		built_TriMesh = temp.get()->as_TriMesh();
-	}
-
-	else{ printf("\nObject Error: Cannot convert to TriMesh!"); assert(false); }
-
-	return built_TriMesh;
+	// If the object has not been created yet, do so
+	if( built_obj == NULL ){ built_obj = as_object(); }
+	return built_obj.get()->as_TriMesh();
 
 } // end build trimesh
 

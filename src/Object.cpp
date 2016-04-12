@@ -19,52 +19,6 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_GUI_H
-#define MCLSCENE_GUI_H 1
+#include "MCL/Object.hpp"
 
-#include "SFML/OpenGL.hpp"
-#include "SceneManager.hpp"
-#include <png.h>
-#include "SFML/Window.hpp"
-#include "GLCamera.h"
-
-namespace mcl {
-
-class Gui {
-public:
-	Gui( SceneManager *scene_ );
-	virtual ~Gui() {}
-
-	// Opens the GUI window and begins the display.
-	// Returns when window closes.
-	virtual void display();
-
-protected:
-	virtual bool update( const float screen_dt );
-	virtual bool draw( const float screen_dt );
-	virtual void clear_screen();
-	virtual void setup_lighting( MaterialMeta *material );
-	virtual void draw_tstrips( const trimesh::TriMesh *themesh );
-	virtual void draw_trimesh( const trimesh::TriMesh *themesh );
-	virtual void check_mouse( const sf::Event &event, const float screen_dt );
-
-	// Trimeshes and tetmeshes are pointers to their instance in SceneManager
-	std::vector< std::shared_ptr<trimesh::TriMesh> > trimeshes;
-	std::vector< int > trimesh_materials;
-//	std::vector< std::shared_ptr<TetMesh> > tetmeshes;
-//	std::vector< int > tetmesh_materials;
-
-	trimesh::xform global_xf;
-	trimesh::TriMesh::BSphere bsphere;
-	sf::Clock clock;
-	SceneManager *scene;
-	trimesh::GLCamera cam;
-	std::shared_ptr<sf::Window> window;
-
-	bool draw_edges = false;
-	bool draw_points = false;
-};
-
-} // end namespace mcl
-
-#endif
+using namespace mcl;

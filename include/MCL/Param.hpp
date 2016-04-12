@@ -19,50 +19,53 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_GUI_H
-#define MCLSCENE_GUI_H 1
+#ifndef MCLSCENE_PARAM_H
+#define MCLSCENE_PARAM_H 1
 
-#include "SFML/OpenGL.hpp"
-#include "SceneManager.hpp"
-#include <png.h>
-#include "SFML/Window.hpp"
-#include "GLCamera.h"
+#include "Vec.h"
+#include <string>
+#include <sstream>
 
 namespace mcl {
 
-class Gui {
+// Nice utility functions for parsing
+namespace parse {
+
+	static std::string to_lower( std::string s ){ std::transform( s.begin(), s.end(), s.begin(), ::tolower ); return s; }
+
+	// Returns directory to a file
+	static std::string fileDir( std::string fname ){
+		size_t pos = fname.find_last_of('/');
+		return (std::string::npos == pos) ? "" : fname.substr(0, pos)+'/';
+	}
+};
+
+//
+//	A parameter parsed from the scene file, stored as a string.
+//	Has casting functions for convenience, but assumes the type
+//	has an overloaded stream operator (with exception of trimesh::vec).
+//	I'm really just copying what pugixml does.
+//
+class Param {
 public:
-	Gui( SceneManager *scene_ );
-	virtual ~Gui() {}
+	Param( std::string n, std::string v, std::string t ) : name(n), value(v), type(t) {}
+	double as_double() const;
+	char as_char() const;
+	std::string as_string() const;
+	int as_int() const;
+	long as_long() const;
+	bool as_bool() const;
+	float as_float() const;
+	trimesh::vec as_vec3() const;
 
-	// Opens the GUI window and begins the display.
-	// Returns when window closes.
-	virtual void display();
+	// Stores the parsed data
+	std::string name;
+	std::string value; // string value
+	std::string type; // string type
 
-protected:
-	virtual bool update( const float screen_dt );
-	virtual bool draw( const float screen_dt );
-	virtual void clear_screen();
-	virtual void setup_lighting( MaterialMeta *material );
-	virtual void draw_tstrips( const trimesh::TriMesh *themesh );
-	virtual void draw_trimesh( const trimesh::TriMesh *themesh );
-	virtual void check_mouse( const sf::Event &event, const float screen_dt );
-
-	// Trimeshes and tetmeshes are pointers to their instance in SceneManager
-	std::vector< std::shared_ptr<trimesh::TriMesh> > trimeshes;
-	std::vector< int > trimesh_materials;
-//	std::vector< std::shared_ptr<TetMesh> > tetmeshes;
-//	std::vector< int > tetmesh_materials;
-
-	trimesh::xform global_xf;
-	trimesh::TriMesh::BSphere bsphere;
-	sf::Clock clock;
-	SceneManager *scene;
-	trimesh::GLCamera cam;
-	std::shared_ptr<sf::Window> window;
-
-	bool draw_edges = false;
-	bool draw_points = false;
+	// Some useful vec3 functions:
+	void normalize();
+	void fix_color(); // if 0-255, sets 0-1
 };
 
 } // end namespace mcl

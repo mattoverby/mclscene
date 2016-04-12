@@ -2,7 +2,7 @@
 <mclScene>
 
 	<Object name="box1" >
-		<Type type="string" value="box" />
+		<Type type="string" value="sphere" />
 
 		<boxmin type="vec3" value="0 0 0" />
 		<boxmax type="vec3" value="1 1 1" />

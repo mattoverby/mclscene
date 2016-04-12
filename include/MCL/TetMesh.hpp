@@ -22,16 +22,8 @@
 #ifndef MCLSCENE_TETMESH_H
 #define MCLSCENE_TETMESH_H 1
 
-#include <memory>
-#include "TriMesh.h"
-#include "XForm.h"
-#include "VertexSort.hpp"
-#include <vector>
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <fstream>
-#include <unordered_map>
+#include "MCL/Object.hpp"
+#include "MCL/VertexSort.hpp"
 
 namespace mcl {
 
@@ -41,7 +33,7 @@ namespace mcl {
 //	TODO Surface mesh type with collapsed vertices
 //	instead of creating normals for every vertex.
 //
-class TetMesh {
+class TetMesh : public BaseObject {
 public:
 	struct tet {
 		tet(){}
@@ -67,6 +59,8 @@ public:
 
 	// Transform the mesh by the given matrix
 	void apply_xform( const trimesh::xform &xf );
+
+	void init( const std::vector< Param > &params );
 
 	// Creates a new trimesh object from ALL vertices and stuff
 	std::shared_ptr<trimesh::TriMesh> as_TriMesh();

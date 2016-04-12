@@ -22,6 +22,7 @@
 #ifndef MCLSCENE_METATYPES_H
 #define MCLSCENE_METATYPES_H 1
 
+#include "Param.hpp"
 #include "TetMesh.hpp"
 #include "TriMesh.h"
 #include "bsphere.h"
@@ -40,48 +41,6 @@
 ///	Metadata structs loaded from the config file
 ///
 namespace mcl {
-
-// Nice utility functions for parsing
-namespace parse {
-
-	static std::string to_lower( std::string s ){ std::transform( s.begin(), s.end(), s.begin(), ::tolower ); return s; }
-
-	// Returns directory to a file
-	static std::string fileDir( std::string fname ){
-		size_t pos = fname.find_last_of('/');
-		return (std::string::npos == pos) ? "" : fname.substr(0, pos)+'/';
-	}
-};
-
-
-//
-//	A parameter parsed from the scene file, stored as a string.
-//	Has casting functions for convenience, but assumes the type
-//	has an overloaded stream operator (with exception of trimesh::vec).
-//	I'm really just copying what pugixml does.
-//
-class Param {
-public:
-	Param( std::string n, std::string v, std::string t ) : name(n), value(v), type(t) {}
-	double as_double() const;
-	char as_char() const;
-	std::string as_string() const;
-	int as_int() const;
-	long as_long() const;
-	bool as_bool() const;
-	float as_float() const;
-	trimesh::vec as_vec3() const;
-
-	// Stores the parsed data
-	std::string name;
-	std::string value; // string value
-	std::string type; // string type
-
-	// Some useful vec3 functions:
-	void normalize();
-	void fix_color(); // if 0-255, sets 0-1
-};
-
 
 //
 //	Base
@@ -173,7 +132,7 @@ public:
 //
 class ObjectMeta : public BaseMeta {
 public:
-	ObjectMeta() : built_TriMesh(NULL), built_TetMesh(NULL) {}
+	ObjectMeta() : built_TetMesh(NULL), built_obj(NULL) {}
 
 	bool check_params();
 
@@ -184,9 +143,9 @@ public:
 	// Build functions
 	std::shared_ptr<trimesh::TriMesh> as_TriMesh();
 	std::shared_ptr<TetMesh> as_TetMesh();
+	std::shared_ptr<BaseObject> as_object();
 
 protected:
-	std::shared_ptr<trimesh::TriMesh> built_TriMesh;
 	std::shared_ptr<TetMesh> built_TetMesh;
 	std::shared_ptr<BaseObject> built_obj;
 

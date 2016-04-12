@@ -26,6 +26,9 @@
 #include "TriMesh_algo.h"
 #include "TriMeshBuilder.h"
 #include "XForm.h"
+#include <memory>
+#include <cassert>
+#include "MCL/Param.hpp"
 
 ///
 ///	Simple object types
@@ -40,7 +43,8 @@ class BaseObject {
 public:
 	virtual ~BaseObject(){}
 	virtual std::shared_ptr<trimesh::TriMesh> as_TriMesh() = 0;
-	std::string material;
+	virtual void init( const std::vector< Param > &params ) = 0;
+	virtual void apply_xform( const trimesh::xform &xf ) = 0;
 };
 
 
@@ -49,16 +53,44 @@ public:
 //
 class Sphere : public BaseObject {
 public:
-	Sphere( trimesh::vec cent, double rad, int tess=32 ) : tris(NULL), center(cent), radius(rad) { build_trimesh(tess,tess); }
-	std::shared_ptr<trimesh::TriMesh> as_TriMesh(){ assert(tris!=NULL); return tris; }
+	Sphere() : tris(NULL), center(0,0,0), radius(1.0), tessellation(32) {}
+
+	Sphere( trimesh::vec cent, double rad, int tess=32 ) : tris(NULL), center(cent), radius(rad), tessellation(tess) {}
+
+	std::shared_ptr<trimesh::TriMesh> as_TriMesh(){
+		if( tris == NULL ){ build_trimesh(); }
+		return tris;
+	}
+
+	void init( const std::vector< Param > &params ){
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].name)=="radius" ){ radius=params[i].as_double(); }
+			else if( parse::to_lower(params[i].name)=="center" ){ center=params[i].as_vec3(); }
+			else if( parse::to_lower(params[i].name)=="tess" ){ tessellation=params[i].as_int(); }
+		}
+		build_trimesh();
+	}
+
+	// Unlike other objects, sphere only changes trimesh, not radius/center.
+	// What I shoooould do is store the xform and only apply it at render time...
+	void apply_xform( const trimesh::xform &xf ){
+		if( tris == NULL ){ build_trimesh(); }
+		trimesh::apply_xform( tris.get(), xf );
+	}
+
 	trimesh::vec center;
 	double radius;
+
 private:
 	std::shared_ptr<trimesh::TriMesh> tris;
-	void build_trimesh( int tess_ph, int tess_th ){
-		using namespace trimesh;
-		tris = std::shared_ptr<trimesh::TriMesh>( new TriMesh() );
-		make_sphere_polar(tris.get(), tess_ph, tess_th);
+	int tessellation;
+
+	void build_trimesh(){
+		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
+		else{ tris.reset( new trimesh::TriMesh() ); }
+		trimesh::make_sphere_polar( tris.get(), tessellation, tessellation );
+		tris.get()->need_normals();
+		tris.get()->need_tstrips();
 	}
 };
 
@@ -68,34 +100,113 @@ private:
 //
 class Box : public BaseObject {
 public:
-	Box( trimesh::vec boxmin, trimesh::vec boxmax, int tess=1 ) : tris(NULL) { build_trimesh(boxmin,boxmax,tess); }
-	std::shared_ptr<trimesh::TriMesh> as_TriMesh(){ assert(tris!=NULL); return tris; }
+	Box() : boxmin(0,0,0), boxmax(1,1,1), tris(NULL), tessellation(1) {}
+
+	Box( trimesh::vec bmin, trimesh::vec bmax, int tess=1 ) : boxmin(bmin), boxmax(bmax), tris(NULL), tessellation(tess) {}
+
+	std::shared_ptr<trimesh::TriMesh> as_TriMesh(){
+		if( tris == NULL ){ build_trimesh(); }
+		return tris;
+	}
+
+	void init( const std::vector< Param > &params ){
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].name)=="boxmin" ){ boxmin=params[i].as_vec3(); }
+			else if( parse::to_lower(params[i].name)=="boxmin" ){ boxmin=params[i].as_vec3(); }
+			else if( parse::to_lower(params[i].name)=="tess" ){ tessellation=params[i].as_int(); }
+		}
+		build_trimesh();
+	}
+
+	void apply_xform( const trimesh::xform &xf ){
+		if( tris == NULL ){ build_trimesh(); }
+		trimesh::apply_xform( tris.get(), xf );
+
+		// Reset boxmin and boxmax
+		tris.get()->bbox.valid = false;
+		tris.get()->need_bbox();
+		boxmin = tris.get()->bbox.min;
+		boxmax = tris.get()->bbox.max;
+	}
+
+	trimesh::vec boxmin, boxmax;
+
 private:
 	std::shared_ptr<trimesh::TriMesh> tris;
+	int tessellation;
 
-	void build_trimesh( trimesh::vec boxmin, trimesh::vec boxmax, int tess ){
-		using namespace trimesh;
+	void build_trimesh(){
+		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
+		else{ tris.reset( new trimesh::TriMesh() ); }
 
-		tris = std::shared_ptr<trimesh::TriMesh>( new TriMesh() );
+		tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() );
 
 		// First create a boring cube
-		make_cube( tris.get(), tess ); // tess=1 -> 12 tris
+		trimesh::make_cube( tris.get(), tessellation ); // tess=1 -> 12 tris
 		tris.get()->need_bbox();
 
 		// Now translate it so boxmins are the same
-		vec offset = tris.get()->bbox.min - boxmin;
-		xform t_xf = xform::trans(offset[0],offset[1],offset[2]);
-		apply_xform(tris.get(), t_xf);
+		trimesh::vec offset = tris.get()->bbox.min - boxmin;
+		trimesh::xform t_xf = trimesh::xform::trans(offset[0],offset[1],offset[2]);
+		trimesh::apply_xform(tris.get(), t_xf);
 		tris.get()->bbox.valid = false;
 		tris.get()->need_bbox();
 
 		// Now scale so that boxmaxes are the same
-		vec size = tris.get()->bbox.max - boxmax;
-		xform s_xf = xform::scale(size[0],size[1],size[2]);
-		apply_xform(tris.get(), s_xf);
+		trimesh::vec size = tris.get()->bbox.max - boxmax;
+		trimesh::xform s_xf = trimesh::xform::scale(size[0],size[1],size[2]);
+		trimesh::apply_xform(tris.get(), s_xf);
 		tris.get()->bbox.valid = false;
 		tris.get()->need_bbox();
 
+		tris.get()->need_normals();
+		tris.get()->need_tstrips();
+	}
+};
+
+
+//
+//	Just a convenient wrapper to plug into the system
+//
+class TriangleMesh : public BaseObject {
+public:
+	TriangleMesh() : tris(NULL), filename("") {}
+
+	std::shared_ptr<trimesh::TriMesh> as_TriMesh(){
+		if( tris == NULL ){ build_trimesh(); }
+		return tris;
+	}
+
+	void init( const std::vector< Param > &params ){
+		filename = "";
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].name)=="file" ){ filename=params[i].as_string(); }
+		}
+		if( !filename.size() ){ printf("\nTriangleMesh Error: No file specified"); assert(false); }
+
+	}
+
+	void apply_xform( const trimesh::xform &xf ){
+		if( tris == NULL ){ build_trimesh(); }
+		trimesh::apply_xform( tris.get(), xf );
+	}
+
+private:
+	std::string filename;
+	std::shared_ptr<trimesh::TriMesh> tris;
+
+	void build_trimesh(){
+		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( trimesh::TriMesh::read( filename.c_str() ) ); }
+		else{ tris.reset( trimesh::TriMesh::read( filename.c_str() ) ); }
+
+		// Try to load the trimesh
+		if( !tris.get() ){ printf("\nTriMesh Error: Could not load %s", filename.c_str() ); assert(false); }
+		tris.get()->set_verbose(0);
+
+		// Now clean the mesh
+		trimesh::remove_unused_vertices( tris.get() );
+
+		// Create triangle strip for rendering
 		tris.get()->need_normals();
 		tris.get()->need_tstrips();
 	}

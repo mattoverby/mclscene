@@ -25,12 +25,28 @@ using namespace mcl;
 
 bool TetMesh::load( std::string filename ){
 
+	// Clear old data
+	vertices.clear();
+	tets.clear();
+	normals.clear();
+	faces.clear();
+
 	if( !load_node( filename ) ){ return false; }
 	if( !load_ele( filename ) ){ return false; }
 	if( !need_surface() ){ return false; }
 	need_normals();
 
 	return true;
+}
+
+
+void TetMesh::init( const std::vector< Param > &params ){
+	std::string filename = "";
+	for( int i=0; i<params.size(); ++i ){
+		if( parse::to_lower(params[i].name)=="file" ){ filename=params[i].as_string(); }
+	}
+	if( !filename.size() ){ printf("\nTetMesh Error: No file specified"); assert(false); }
+	if( !load( filename ) ){ assert(false); }
 }
 
 
