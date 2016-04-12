@@ -106,9 +106,9 @@ bool SceneManager::load( std::string xmlfile ){
 
 			// Set defaults
 			cam.add_param( Param( "type", "perspective", "string" ) );
-			cam.add_param( Param( "position", "vec3", "0 0 0" ) );
-			cam.add_param( Param( "direction", "vec3", "0 0 -1" ) );
-			cam.add_param( Param( "up", "vec3", "0 1 0" ) );
+			cam.add_param( Param( "position", "0 0 0", "vec3" ) );
+			cam.add_param( Param( "direction", "0 0 -1", "vec3" ) );
+			cam.add_param( Param( "up", "0 1 0", "vec3" ) );
 
 			// Load parameters
 			if( !cam.load_params( curr_node ) ){ return false; }
@@ -129,9 +129,9 @@ bool SceneManager::load( std::string xmlfile ){
 			light.name = name;
 
 			// Set defaults
-			light.add_param( Param( "type", "string", "point" ) );
-			light.add_param( Param( "position", "vec3", "0 0 0" ) );
-			light.add_param( Param( "intensity", "vec3", "1 1 1" ) );
+			light.add_param( Param( "type", "point", "string" ) );
+			light.add_param( Param( "position", "0 0 0", "vec3" ) );
+			light.add_param( Param( "intensity", "1 1 1", "vec3" ) );
 
 			// Load parameters
 			if( !light.load_params( curr_node ) ){ return false; }
@@ -152,7 +152,7 @@ bool SceneManager::load( std::string xmlfile ){
 			mat.name = name;
 
 			// Set defaults
-			mat.add_param( Param( "type", "string", "diffuse" ) );
+			mat.add_param( Param( "type", "diffuse", "string" ) );
 
 			// Load parameters
 			if( !mat.load_params( curr_node ) ){ return false; }
@@ -173,7 +173,7 @@ bool SceneManager::load( std::string xmlfile ){
 			object.name = name;
 
 			// Set defaults
-			object.add_param( Param( "type", "string", "none" ) );
+			object.add_param( Param( "type", "none", "string" ) );
 
 			// Load parameters
 			if( !object.load_params( curr_node ) ){ return false; }
