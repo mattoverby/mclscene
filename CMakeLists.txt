@@ -35,10 +35,6 @@ option(MCL_BUILD_SAMPLES "Build mcl library samples" ON)
 #	dependencies
 #
 
-# pugixml - header only, included in deps/
-set( PUGIXML_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/pugixml" )
-include_directories( ${PUGIXML_DIR} )
-
 # trimesh, included in deps/
 set( TRIMESH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/trimesh2" )
 add_subdirectory( ${TRIMESH_DIR} ) # sets TRIMESH_INCLUDE and TRIMESH_SRCS

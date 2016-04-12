@@ -23,7 +23,7 @@
 #define MCLSCENE_METATYPES_H 1
 
 #include "TetMesh.hpp"
-#include "pugixml.hpp"
+#include "../../deps/pugixml/pugixml.hpp"
 
 ///
 ///	Metadata structs loaded from the config file
