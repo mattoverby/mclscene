@@ -28,7 +28,7 @@ void TriMesh::need_normals( bool recompute )
 	int nv = vertices.size();
 	if( int(normals.size()) == nv && !recompute ){ return; }
 
-	dprintf("Computing normals... ");
+//	dprintf("Computing normals... ");
 	normals.clear();
 	normals.resize(nv);
 
@@ -109,7 +109,7 @@ void TriMesh::need_normals( bool recompute )
 	for (int i = 0; i < nv; i++)
 		normalize(normals[i]);
 
-	dprintf("Done.\n");
+//	dprintf("Done.\n");
 }
 
 }; // namespace trimesh

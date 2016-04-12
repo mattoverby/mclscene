@@ -24,7 +24,7 @@ void TriMesh::need_neighbors()
 	if (faces.empty())
 		return;
 
-	dprintf("Finding vertex neighbors... ");
+//	dprintf("Finding vertex neighbors... ");
 	int nv = vertices.size(), nf = faces.size();
 
 	vector<int> numneighbors(nv);
@@ -50,7 +50,7 @@ void TriMesh::need_neighbors()
 		}
 	}
 
-	dprintf("Done.\n");
+//	dprintf("Done.\n");
 }
 
 
@@ -64,7 +64,7 @@ void TriMesh::need_adjacentfaces()
 	if (faces.empty())
 		return;
 
-	dprintf("Finding vertex to triangle maps... ");
+//	dprintf("Finding vertex to triangle maps... ");
 	int nv = vertices.size(), nf = faces.size();
 
 	vector<int> numadjacentfaces(nv);
@@ -83,7 +83,7 @@ void TriMesh::need_adjacentfaces()
 			adjacentfaces[faces[i][j]].push_back(i);
 	}
 
-	dprintf("Done.\n");
+//	dprintf("Done.\n");
 }
 
 
@@ -98,7 +98,7 @@ void TriMesh::need_across_edge()
 	if (adjacentfaces.empty())
 		return;
 
-	dprintf("Finding across-edge maps... ");
+//	dprintf("Finding across-edge maps... ");
 
 	int nf = faces.size();
 	across_edge.resize(nf, Face(-1,-1,-1));
@@ -130,7 +130,7 @@ void TriMesh::need_across_edge()
 		}
 	}
 
-	dprintf("Done.\n");
+//	dprintf("Done.\n");
 }
 
 }; // namespace trimesh

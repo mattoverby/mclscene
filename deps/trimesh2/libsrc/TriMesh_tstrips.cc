@@ -32,7 +32,7 @@ void TriMesh::need_tstrips()
 
 	need_across_edge();
 
-	dprintf("Building triangle strips... ");
+//	dprintf("Building triangle strips... ");
 	int nf = faces.size();
 
 	vector<int> todo;
@@ -65,8 +65,8 @@ void TriMesh::need_tstrips()
 
 	convert_strips(TSTRIP_LENGTH);
 
-	dprintf("Done.\n  %d strips (Avg. length %.1f)\n",
-		nstrips, (float) faces.size() / nstrips);
+//	dprintf("Done.\n  %d strips (Avg. length %.1f)\n",
+//		nstrips, (float) faces.size() / nstrips);
 }
 
 
