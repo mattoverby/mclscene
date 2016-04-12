@@ -177,6 +177,7 @@ std::shared_ptr<BaseObject> ObjectMeta::as_object(){
 
 	if( ltype == "sphere" ){ built_obj = std::shared_ptr<BaseObject>( new Sphere() ); }
 	else if( ltype == "box" ){ built_obj = std::shared_ptr<BaseObject>( new Box() ); }
+	else if( ltype == "plane" ){ built_obj = std::shared_ptr<BaseObject>( new Plane() ); }
 	else if( ltype == "trimesh" ){ built_obj = std::shared_ptr<BaseObject>( new TriangleMesh() ); }
 	else if( ltype == "tetmesh" ){ built_obj = std::shared_ptr<BaseObject>( new TetMesh() ); }
 
