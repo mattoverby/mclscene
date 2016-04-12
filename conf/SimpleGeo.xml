@@ -9,6 +9,7 @@
 
 		<width type="int" value="20" />
 		<length type="int" value="20" />
+		<noise type="double" value="0.01" />
 
 		<center type="vec3" value="0 0 0" />
 		<radius type="double" value="2" />

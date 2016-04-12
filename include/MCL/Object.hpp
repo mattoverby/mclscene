@@ -213,9 +213,9 @@ private:
 //
 class Plane : public BaseObject {
 public:
-	Plane() : width(20), length(20), tris(NULL) {}
+	Plane() : width(20), length(20), noise(0.0), tris(NULL) {}
 
-	Plane( int w, int l ) : width(w), length(l), tris(NULL) {}
+	Plane( int w, int l ) : width(w), length(l), noise(0.0), tris(NULL) {}
 
 	std::shared_ptr<trimesh::TriMesh> as_TriMesh(){
 		if( tris == NULL ){ build_trimesh(); }
@@ -226,6 +226,7 @@ public:
 		for( int i=0; i<params.size(); ++i ){
 			if( parse::to_lower(params[i].name)=="width" ){ width=params[i].as_int(); }
 			else if( parse::to_lower(params[i].name)=="length" ){ length=params[i].as_int(); }
+			else if( parse::to_lower(params[i].name)=="noise" ){ noise=params[i].as_double(); }
 		}
 	}
 
@@ -237,11 +238,13 @@ public:
 private:
 	std::shared_ptr<trimesh::TriMesh> tris;
 	int width, length;
+	double noise;
 
 	void build_trimesh(){
 		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
 		else{ tris.reset( new trimesh::TriMesh() ); }
 		trimesh::make_plane( tris.get(), width, length );
+		if( noise > 0.0 ){ trimesh::noisify( tris.get(), noise ); }
 		tris.get()->need_normals();
 		tris.get()->need_tstrips();
 	}
