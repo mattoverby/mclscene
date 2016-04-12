@@ -22,10 +22,7 @@
 #ifndef MCLSCENE_OBJECT_H
 #define MCLSCENE_OBJECT_H 1
 
-#include "TriMesh.h"
-#include "TriMesh_algo.h"
 #include "TriMeshBuilder.h"
-#include "XForm.h"
 #include <memory>
 #include <cassert>
 #include "MCL/Param.hpp"

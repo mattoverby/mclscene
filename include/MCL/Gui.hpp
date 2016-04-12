@@ -51,8 +51,6 @@ protected:
 	// Trimeshes and tetmeshes are pointers to their instance in SceneManager
 	std::vector< std::shared_ptr<trimesh::TriMesh> > trimeshes;
 	std::vector< int > trimesh_materials;
-//	std::vector< std::shared_ptr<TetMesh> > tetmeshes;
-//	std::vector< int > tetmesh_materials;
 
 	trimesh::xform global_xf;
 	trimesh::TriMesh::BSphere bsphere;

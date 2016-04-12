@@ -23,6 +23,7 @@
 #define MCLSCENE_SCENEMANAGER_H 1
 
 #include "MetaTypes.hpp"
+#include "bsphere.h"
 
 namespace mcl {
 ///

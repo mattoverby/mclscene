@@ -22,20 +22,8 @@
 #ifndef MCLSCENE_METATYPES_H
 #define MCLSCENE_METATYPES_H 1
 
-#include "Param.hpp"
 #include "TetMesh.hpp"
-#include "TriMesh.h"
-#include "bsphere.h"
-#include "XForm.h"
-#include "TriMesh_algo.h"
 #include "pugixml.hpp"
-#include <iostream>
-#include <algorithm>
-#include <string>
-#include <sstream>
-#include <vector>
-#include <map>
-#include "Object.hpp"
 
 ///
 ///	Metadata structs loaded from the config file
