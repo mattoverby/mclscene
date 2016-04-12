@@ -1,4 +1,4 @@
-// Copyright 2014 Matthew Overby.
+// Copyright 2016 Matthew Overby.
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -43,7 +43,7 @@ protected:
 	virtual bool update( const float screen_dt );
 	virtual bool draw( const float screen_dt );
 	virtual void clear_screen();
-	virtual void setup_lighting( MaterialMeta *material );
+	virtual void setup_lighting( MaterialMeta *material, const std::vector<LightMeta> &lights );
 	virtual void draw_tstrips( const trimesh::TriMesh *themesh );
 	virtual void draw_trimesh( const trimesh::TriMesh *themesh );
 	virtual void check_mouse( const sf::Event &event, const float screen_dt );

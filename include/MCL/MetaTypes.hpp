@@ -1,4 +1,4 @@
-// Copyright 2014 Matthew Overby.
+// Copyright 2016 Matthew Overby.
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -128,10 +128,12 @@ public:
 	std::string type;
 	std::string material; // for material_map
 
-	// Build functions
+	// Rendering helpers
 	std::shared_ptr<trimesh::TriMesh> as_TriMesh();
-	std::shared_ptr<TetMesh> as_TetMesh();
-	std::shared_ptr<BaseObject> as_object();
+
+	// Build functions
+	std::shared_ptr<BaseObject> as_object(); // everything can be an object
+	std::shared_ptr<TetMesh> as_TetMesh(); 
 
 protected:
 	std::shared_ptr<TetMesh> built_TetMesh;

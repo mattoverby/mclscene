@@ -111,11 +111,11 @@ bool Gui::draw( const float screen_dt ){
 	cam.setupGL( global_xf * bsphere.center, bsphere.r );
 	glPushMatrix();
 	glMultMatrixd(global_xf);
-	setup_lighting( &scene->materials[0] );
+	setup_lighting( &scene->materials[0], scene->lights );
 
 	// Draw the meshes
 	for( int i=0; i<trimeshes.size(); ++i ){
-		setup_lighting( &scene->materials[ trimesh_materials[i] ] );
+		setup_lighting( &scene->materials[ trimesh_materials[i] ], scene->lights );
 		draw_trimesh( trimeshes[i].get() );
 	}
 
@@ -168,8 +168,8 @@ void Gui::clear_screen(){
 }
 
 
-// Set up lights and materials
-void Gui::setup_lighting( MaterialMeta *material ){
+// Set up lights and materials, by Szymon Rusinkiewicz
+void Gui::setup_lighting( MaterialMeta *material, const std::vector<LightMeta> &lights ){
 
 	// Diffuse color
 	if( trimesh::len2(material->diffuse)>0 ){
@@ -195,6 +195,8 @@ void Gui::setup_lighting( MaterialMeta *material ){
 
 	GLfloat light1_diffuse[] = { -0.01f, -0.01f, -0.03f, -0.03f };
 	GLfloat light0_specular[] = { 0.85f, 0.85f, 0.85f, 0.85f };
+
+
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
@@ -202,6 +204,7 @@ void Gui::setup_lighting( MaterialMeta *material ){
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular);
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
+
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
 //	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
@@ -214,7 +217,7 @@ void Gui::setup_lighting( MaterialMeta *material ){
 }
 
 
-// Draw triangle strips.  They are stored as length followed by values.
+// Draw triangle strips.  They are stored as length followed by values. By Szymon Rusinkiewicz
 void Gui::draw_tstrips( const trimesh::TriMesh *themesh ){
 
 	static bool use_glArrayElement = false;
@@ -246,7 +249,7 @@ void Gui::draw_tstrips( const trimesh::TriMesh *themesh ){
 }
 
 
-// Draw the mesh
+// Draw the mesh, by Szymon Rusinkiewicz
 void Gui::draw_trimesh( const trimesh::TriMesh *themesh ){
 
 	bool draw_falsecolor = false;
