@@ -42,6 +42,7 @@ public:
 	virtual std::shared_ptr<trimesh::TriMesh> as_TriMesh() = 0;
 	virtual void init( const std::vector< Param > &params ) = 0;
 	virtual void apply_xform( const trimesh::xform &xf ) = 0;
+	// virtual std::string save() = 0; TODO
 };
 
 
