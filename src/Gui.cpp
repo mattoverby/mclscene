@@ -36,7 +36,7 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 	// If there aren't any materials, create a default one
 	if( scene->materials.size()==0 ){
 
-		MaterialMeta flat_gray;
+		MaterialComponent flat_gray;
 		flat_gray.name = "base_mat";
 
 		flat_gray.add_param( Param("type", "string", "diffuse") );
@@ -120,7 +120,7 @@ bool Gui::draw( const float screen_dt ){
 
 	// Draw the meshes
 	for( int i=0; i<trimeshes.size(); ++i ){
-		MaterialMeta *mat = &scene->materials[ trimesh_materials[i] ]; 
+		MaterialComponent *mat = &scene->materials[ trimesh_materials[i] ]; 
 		setup_lighting( mat, scene->lights );
 		draw_trimesh( mat, trimeshes[i].get() );
 	}
@@ -175,7 +175,7 @@ void Gui::clear_screen(){
 
 
 // Set up lights and materials, by Szymon Rusinkiewicz
-void Gui::setup_lighting( MaterialMeta *material, const std::vector<LightMeta> &lights ){
+void Gui::setup_lighting( MaterialComponent *material, const std::vector<LightComponent> &lights ){
 
 	// Diffuse color
 	if( trimesh::len2(material->diffuse)>0 ){
@@ -256,7 +256,7 @@ void Gui::draw_tstrips( const trimesh::TriMesh *themesh ){
 
 
 // Draw the mesh, by Szymon Rusinkiewicz
-void Gui::draw_trimesh( MaterialMeta *material, const trimesh::TriMesh *themesh ){
+void Gui::draw_trimesh( MaterialComponent *material, const trimesh::TriMesh *themesh ){
 	bool draw_falsecolor = false;
 	bool draw_index = false;
 	bool draw_2side = false;

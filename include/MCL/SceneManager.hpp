@@ -49,10 +49,10 @@ class SceneManager {
 		// BaseMeta operator[]( const std::string name ) const; // TODO
 
 		// Vectors of scene components
-		std::vector< CameraMeta > cameras;
-		std::vector< ObjectMeta > objects;
-		std::vector< LightMeta > lights;
-		std::vector< MaterialMeta > materials;
+		std::vector< CameraComponent > cameras;
+		std::vector< ObjectComponent > objects;
+		std::vector< LightComponent > lights;
+		std::vector< MaterialComponent > materials;
 
 		// Because each component has a unique name, we can
 		// use maps to access the data directly.

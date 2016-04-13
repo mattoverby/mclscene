@@ -48,7 +48,7 @@ namespace parse {
 //
 class Param {
 public:
-	Param( std::string n, std::string v, std::string t ) : name(n), value(v), type(t) {}
+	Param( std::string tag_, std::string value_, std::string type_ ) : tag(tag_), value(value_), type(type_) {}
 	double as_double() const;
 	char as_char() const;
 	std::string as_string() const;
@@ -59,7 +59,7 @@ public:
 	trimesh::vec as_vec3() const;
 
 	// Stores the parsed data
-	std::string name;
+	std::string tag;
 	std::string value; // string value
 	std::string type; // string type
 

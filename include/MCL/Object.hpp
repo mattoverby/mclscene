@@ -62,9 +62,9 @@ public:
 
 	void init( const std::vector< Param > &params ){
 		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].name)=="radius" ){ radius=params[i].as_double(); }
-			else if( parse::to_lower(params[i].name)=="center" ){ center=params[i].as_vec3(); }
-			else if( parse::to_lower(params[i].name)=="tess" ){ tessellation=params[i].as_int(); }
+			if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_double(); }
+			else if( parse::to_lower(params[i].tag)=="center" ){ center=params[i].as_vec3(); }
+			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
 		}
 	}
 
@@ -108,9 +108,9 @@ public:
 
 	void init( const std::vector< Param > &params ){
 		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].name)=="boxmin" ){ boxmin=params[i].as_vec3(); }
-			else if( parse::to_lower(params[i].name)=="boxmin" ){ boxmin=params[i].as_vec3(); }
-			else if( parse::to_lower(params[i].name)=="tess" ){ tessellation=params[i].as_int(); }
+			if( parse::to_lower(params[i].tag)=="boxmin" ){ boxmin=params[i].as_vec3(); }
+			else if( parse::to_lower(params[i].tag)=="boxmin" ){ boxmin=params[i].as_vec3(); }
+			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
 		}
 	}
 
@@ -176,7 +176,7 @@ public:
 	void init( const std::vector< Param > &params ){
 		filename = "";
 		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].name)=="file" ){ filename=params[i].as_string(); }
+			if( parse::to_lower(params[i].tag)=="file" ){ filename=params[i].as_string(); }
 		}
 		if( !filename.size() ){ printf("\nTriangleMesh Error: No file specified"); assert(false); }
 
@@ -225,9 +225,9 @@ public:
 
 	void init( const std::vector< Param > &params ){
 		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].name)=="width" ){ width=params[i].as_int(); }
-			else if( parse::to_lower(params[i].name)=="length" ){ length=params[i].as_int(); }
-			else if( parse::to_lower(params[i].name)=="noise" ){ noise=params[i].as_double(); }
+			if( parse::to_lower(params[i].tag)=="width" ){ width=params[i].as_int(); }
+			else if( parse::to_lower(params[i].tag)=="length" ){ length=params[i].as_int(); }
+			else if( parse::to_lower(params[i].tag)=="noise" ){ noise=params[i].as_double(); }
 		}
 	}
 

@@ -25,7 +25,7 @@ using namespace mcl;
 using namespace trimesh;
 
 
-bool BaseMeta::load_params( const pugi::xml_node &curr_node ){
+bool Component::load_params( const pugi::xml_node &curr_node ){
 
 	pugi::xml_node::iterator param = curr_node.begin();
 	for( param; param != curr_node.end(); ++param ) {
@@ -70,19 +70,29 @@ bool BaseMeta::load_params( const pugi::xml_node &curr_node ){
 }
 
 
-Param BaseMeta::operator[]( const std::string tag ) const {
+Param Component::operator[]( const std::string tag ) const {
 	std::unordered_map< std::string, int >::const_iterator it = param_map.find(tag);
 	assert( it != param_map.end() ); assert( it->second < param_vec.size() );
 	return param_vec[ it->second ];
 }
 
-void BaseMeta::add_param( const Param &p ){
-	param_map[ p.name ] = param_vec.size();
+Param Component::get( const std::string tag ) const {
+	return this->operator[](tag);
+}
+
+void Component::add_param( const Param &p ){
+	param_map[ p.tag ] = param_vec.size();
 	param_vec.push_back( p );	
 }
 
+bool Component::exists( const std::string tag ) const{
+	std::unordered_map< std::string, int >::const_iterator it = param_map.find(tag);
+	if( it != param_map.end() && it->second < param_vec.size() ){ return true; }
+	return false;
+}
 
-bool CameraMeta::check_params(){
+
+bool CameraComponent::check_params(){
 
 	if( param_map.count( "position" )==0 ){ printf("\nCamera Error: No vec3 position!"); return false; }
 	if( param_map.count( "up" )==0 ){ printf("\nCamera Error: No vec3 up!"); return false; }
@@ -109,7 +119,7 @@ bool CameraMeta::check_params(){
 }
 
 
-bool MaterialMeta::check_params(){
+bool MaterialComponent::check_params(){
 
 	if( param_map.count( "type" )==0 ){ printf("\nMaterial Error: No str type!"); return false; }
 
@@ -138,7 +148,7 @@ bool MaterialMeta::check_params(){
 }
 
 
-bool LightMeta::check_params(){
+bool LightComponent::check_params(){
 
 	if( param_map.count( "type" )==0 ){ printf("\nLight Error: No str type!"); return false; }
 	if( param_map.count( "intensity" )==0 ){ printf("\nLight Error: No vec3 intensity!"); return false; }
@@ -163,7 +173,7 @@ bool LightMeta::check_params(){
 }
 
 
-bool ObjectMeta::check_params(){
+bool ObjectComponent::check_params(){
 
 	if( param_map.count( "type" )==0 ){ printf("\nObject Error: No str type!"); return false; }
 	type = param_vec[ param_map[ "type" ] ].as_string();
@@ -174,7 +184,7 @@ bool ObjectMeta::check_params(){
 }
 
 
-std::shared_ptr<BaseObject> ObjectMeta::as_object(){
+std::shared_ptr<BaseObject> ObjectComponent::as_object(){
 
 	if( built_obj != NULL ){ return built_obj; }
 	std::string ltype = parse::to_lower(type);
@@ -191,7 +201,7 @@ std::shared_ptr<BaseObject> ObjectMeta::as_object(){
 }
 
 
-std::shared_ptr<trimesh::TriMesh> ObjectMeta::as_TriMesh(){
+std::shared_ptr<trimesh::TriMesh> ObjectComponent::as_TriMesh(){
 
 	// If the object has not been created yet, do so
 	if( built_obj == NULL ){ built_obj = as_object(); }
@@ -200,7 +210,7 @@ std::shared_ptr<trimesh::TriMesh> ObjectMeta::as_TriMesh(){
 } // end build trimesh
 
 
-std::shared_ptr<TetMesh> ObjectMeta::as_TetMesh(){
+std::shared_ptr<TetMesh> ObjectComponent::as_TetMesh(){
 
 	if( parse::to_lower(type) != "tetmesh" ){ printf("\nObject Error: Not type TetMesh!"); assert(false); }
 	if( built_TetMesh != NULL ){ return built_TetMesh; }

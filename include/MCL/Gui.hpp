@@ -43,9 +43,9 @@ protected:
 	virtual bool update( const float screen_dt );
 	virtual bool draw( const float screen_dt );
 	virtual void clear_screen();
-	virtual void setup_lighting( MaterialMeta *material, const std::vector<LightMeta> &lights );
+	virtual void setup_lighting( MaterialComponent *material, const std::vector<LightComponent> &lights );
 	virtual void draw_tstrips( const trimesh::TriMesh *themesh );
-	virtual void draw_trimesh( MaterialMeta *material, const trimesh::TriMesh *themesh );
+	virtual void draw_trimesh( MaterialComponent *material, const trimesh::TriMesh *themesh );
 	virtual void check_mouse( const sf::Event &event, const float screen_dt );
 
 	// Trimeshes and tetmeshes are pointers to their instance in SceneManager

@@ -101,7 +101,7 @@ bool SceneManager::load( std::string xmlfile ){
 		//
 		if( parse::to_lower(curr_node.name()) == "camera" ){
 
-			CameraMeta cam;
+			CameraComponent cam;
 			cam.name = name;
 
 			// Set defaults
@@ -125,7 +125,7 @@ bool SceneManager::load( std::string xmlfile ){
 		//
 		if( parse::to_lower(curr_node.name()) == "light" ){
 
-			LightMeta light;
+			LightComponent light;
 			light.name = name;
 
 			// Set defaults
@@ -148,7 +148,7 @@ bool SceneManager::load( std::string xmlfile ){
 		//
 		if( parse::to_lower(curr_node.name()) == "material" ){
 
-			MaterialMeta mat;
+			MaterialComponent mat;
 			mat.name = name;
 
 			// Set defaults
@@ -169,7 +169,7 @@ bool SceneManager::load( std::string xmlfile ){
 		//
 		if( parse::to_lower(curr_node.name()) == "object" ){
 
-			ObjectMeta object;
+			ObjectComponent object;
 			object.name = name;
 
 			// Set defaults

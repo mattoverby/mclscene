@@ -33,9 +33,9 @@ namespace mcl {
 //
 //	Base
 //
-class BaseMeta {
+class Component {
 public:
-	virtual ~BaseMeta(){}
+	virtual ~Component(){}
 	std::string name;
 
 	// Load parameters and store in the vector/maps.
@@ -45,14 +45,17 @@ public:
 	// member data for the derived types.
 	virtual bool check_params() { return true; }
 
-	// Returns a parameter with the given tag so long as the parameter
-	// is unique (exists only once in the meta). Otherwise it returns
-	// the last meta to be added.
+	// Returns a parameter with the given tag.
+	// It returns the last param to be added.
 	// E.g. <mass type="int" value="1" /> would be
-	// int mass = myMeta[mass].as_int()
+	// int mass = myComponent[mass].as_int()
 	virtual Param operator[]( const std::string tag ) const;
+	virtual Param get( const std::string tag ) const;
 
-	// Adds a parameter to the meta object
+	// Returns true if the parameter exists, false otherwise.
+	bool exists( const std::string tag ) const;
+
+	// Adds a parameter to the component
 	void add_param( const Param &p );
 
 	// Map of parameter indices (in param_vec) with unique names
@@ -63,6 +66,7 @@ public:
 
 	// Transforms are unique in which they are constructed
 	// as they are parsed so that order is preserved.
+	// This should really just be a different component but oh well.
 	// The value portion is always a vec3.
 	// Their xml syntax is:
 	// 	<XForm type="scale/translate/rotate" value="0 100 0" />
@@ -73,7 +77,7 @@ public:
 //
 //	Camera
 //
-class CameraMeta : public BaseMeta {
+class CameraComponent : public Component {
 public:
 	bool check_params();
 
@@ -86,7 +90,7 @@ public:
 //
 //	Material
 //
-class MaterialMeta : public BaseMeta {
+class MaterialComponent : public Component {
 public:
 	bool check_params();
 
@@ -101,7 +105,7 @@ public:
 //	Light
 //
 // TODO: Area light
-class LightMeta : public BaseMeta {
+class LightComponent : public Component {
 public:
 	bool check_params();
 
@@ -118,9 +122,9 @@ public:
 //	it can build and create certain objects. When built, this
 //	data is cached and return on subsequent build calls
 //
-class ObjectMeta : public BaseMeta {
+class ObjectComponent : public Component {
 public:
-	ObjectMeta() : built_TetMesh(NULL), built_obj(NULL) {}
+	ObjectComponent() : built_TetMesh(NULL), built_obj(NULL) {}
 
 	bool check_params();
 

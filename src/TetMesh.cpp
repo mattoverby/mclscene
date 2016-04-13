@@ -43,7 +43,7 @@ bool TetMesh::load( std::string filename ){
 void TetMesh::init( const std::vector< Param > &params ){
 	std::string filename = "";
 	for( int i=0; i<params.size(); ++i ){
-		if( parse::to_lower(params[i].name)=="file" ){ filename=params[i].as_string(); }
+		if( parse::to_lower(params[i].tag)=="file" ){ filename=params[i].as_string(); }
 	}
 	if( !filename.size() ){ printf("\nTetMesh Error: No file specified"); assert(false); }
 	if( !load( filename ) ){ assert(false); }
