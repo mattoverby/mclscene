@@ -93,7 +93,7 @@ bool SceneManager::load( std::string xmlfile ){
 		std::string name = curr_node.attribute("name").as_string();
 		std::string type = curr_node.attribute("type").as_string();
 		if( name.size() == 0 || type.size() == 0 ){
-			std::cerr << "\n**SceneManager Error: Components need a name and type." << std::endl;
+			std::cerr << "\n**SceneManager Error: Component \"" << curr_node.name() << "\" need a name and type." << std::endl;
 			return false;
 		}
 
