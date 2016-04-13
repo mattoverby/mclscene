@@ -37,6 +37,7 @@ class Component {
 public:
 	virtual ~Component(){}
 	std::string name;
+	std::string type;
 
 	// Load parameters and store in the vector/maps.
 	virtual bool load_params( const pugi::xml_node &curr_node );
@@ -50,6 +51,7 @@ public:
 	// E.g. <mass type="int" value="1" /> would be
 	// int mass = myComponent[mass].as_int()
 	virtual Param operator[]( const std::string tag ) const;
+	virtual Param &operator[]( const std::string tag );
 	virtual Param get( const std::string tag ) const;
 
 	// Returns true if the parameter exists, false otherwise.
@@ -82,7 +84,6 @@ public:
 	bool check_params();
 
 	// Set by check_params:
-	std::string type;
 	trimesh::vec pos, dir, lookat;
 };
 
@@ -95,7 +96,6 @@ public:
 	bool check_params();
 
 	// Set by check_params:
-	std::string type;
 	trimesh::vec diffuse, specular;
 	float exponent; // i.e. shininess
 };
@@ -110,7 +110,6 @@ public:
 	bool check_params();
 
 	// Set by check_params:
-	std::string type; // point or directional
 	trimesh::vec pos, intensity, dir;
 };
 
@@ -129,14 +128,13 @@ public:
 	bool check_params();
 
 	// Set by check_params:
-	std::string type;
 	std::string material; // for material_map
 
 	// Rendering helpers
 	std::shared_ptr<trimesh::TriMesh> as_TriMesh();
 
 	// Build functions
-	std::shared_ptr<BaseObject> as_object(); // everything can be an object
+	std::shared_ptr<BaseObject> as_object();
 	std::shared_ptr<TetMesh> as_TetMesh(); 
 
 protected:

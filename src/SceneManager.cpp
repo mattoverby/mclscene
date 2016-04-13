@@ -91,8 +91,9 @@ bool SceneManager::load( std::string xmlfile ){
 
 		pugi::xml_node curr_node = *main_node;
 		std::string name = curr_node.attribute("name").as_string();
-		if( name.size() == 0 ){
-			std::cerr << "\n**SceneManager Error: Everything needs a name!" << std::endl;
+		std::string type = curr_node.attribute("type").as_string();
+		if( name.size() == 0 || type.size() == 0 ){
+			std::cerr << "\n**SceneManager Error: Components need a name and type." << std::endl;
 			return false;
 		}
 
@@ -103,6 +104,7 @@ bool SceneManager::load( std::string xmlfile ){
 
 			CameraComponent cam;
 			cam.name = name;
+			cam.type = type;
 
 			// Set defaults
 			cam.add_param( Param( "type", "perspective", "string" ) );
@@ -127,6 +129,7 @@ bool SceneManager::load( std::string xmlfile ){
 
 			LightComponent light;
 			light.name = name;
+			light.type = type;
 
 			// Set defaults
 			light.add_param( Param( "type", "point", "string" ) );
@@ -150,6 +153,7 @@ bool SceneManager::load( std::string xmlfile ){
 
 			MaterialComponent mat;
 			mat.name = name;
+			mat.type = type;
 
 			// Set defaults
 			mat.add_param( Param( "type", "diffuse", "string" ) );
@@ -171,6 +175,7 @@ bool SceneManager::load( std::string xmlfile ){
 
 			ObjectComponent object;
 			object.name = name;
+			object.type = type;
 
 			// Set defaults
 			object.add_param( Param( "type", "none", "string" ) );

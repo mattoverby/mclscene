@@ -76,6 +76,12 @@ Param Component::operator[]( const std::string tag ) const {
 	return param_vec[ it->second ];
 }
 
+Param &Component::operator[]( const std::string tag ) {
+	std::unordered_map< std::string, int >::const_iterator it = param_map.find(tag);
+	assert( it != param_map.end() ); assert( it->second < param_vec.size() );
+	return param_vec[ it->second ];
+}
+
 Param Component::get( const std::string tag ) const {
 	return this->operator[](tag);
 }
@@ -97,7 +103,6 @@ bool CameraComponent::check_params(){
 	if( param_map.count( "position" )==0 ){ printf("\nCamera Error: No vec3 position!"); return false; }
 	if( param_map.count( "up" )==0 ){ printf("\nCamera Error: No vec3 up!"); return false; }
 	if( param_map.count( "lookat" )==0 && param_map.count( "direction" )==0 ){ printf("\nCamera Error: No vec3 direction/lookat!"); return false; }
-	if( param_map.count( "type" )==0 ){ printf("\nCamera Error: No str type!"); return false; }
 	if( param_map.count( "lookat" )>0 && param_map.count( "direction" )>0 ){ printf("\nCamera Error: Both direction and lookat set!"); return false; }
 
 	// Normalize directions
@@ -113,7 +118,6 @@ bool CameraComponent::check_params(){
 
 	// Set members
 	pos = param_vec[ param_map[ "position" ] ].as_vec3();
-	type = param_vec[ param_map[ "type" ] ].as_string();
 
 	return true;
 }
@@ -121,9 +125,6 @@ bool CameraComponent::check_params(){
 
 bool MaterialComponent::check_params(){
 
-	if( param_map.count( "type" )==0 ){ printf("\nMaterial Error: No str type!"); return false; }
-
-	type = param_vec[ param_map[ "type" ] ].as_string();
 	diffuse = vec(.5,.5,.5);
 	specular = vec(0,0,0);
 	exponent = 0;
@@ -150,9 +151,7 @@ bool MaterialComponent::check_params(){
 
 bool LightComponent::check_params(){
 
-	if( param_map.count( "type" )==0 ){ printf("\nLight Error: No str type!"); return false; }
 	if( param_map.count( "intensity" )==0 ){ printf("\nLight Error: No vec3 intensity!"); return false; }
-	type = param_vec[ param_map[ "type" ] ].as_string();
 
 	if( type == "directional" ){
 		if( param_map.count( "direction" )==0 ){ printf("\nLight Error: No vec3 direction!"); return false; }
@@ -174,9 +173,6 @@ bool LightComponent::check_params(){
 
 
 bool ObjectComponent::check_params(){
-
-	if( param_map.count( "type" )==0 ){ printf("\nObject Error: No str type!"); return false; }
-	type = param_vec[ param_map[ "type" ] ].as_string();
 
 	if( param_map.count( "material" )>0 ){ material = param_vec[ param_map[ "material" ] ].as_string(); }
 

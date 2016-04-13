@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
 <mclScene>
 
-	<Object name="bunny1" >
-		<Type type="string" value="TetMesh" />
+	<Object name="bunny1" type="TetMesh" >
 
 		<!-- File path is relative to location of config file -->
 		<File type="string" value="bunny562faces.1" />
@@ -14,8 +13,7 @@
 		<Material type="string" value="red_spec" />
 	</Object>
 
-	<Object name="bunny1" >
-		<Type type="string" value="TriMesh" />
+	<Object name="bunny1" type="TriMesh" >
 
 		<File type="string" value="bunny.ply" />
 
@@ -27,14 +25,12 @@
 		<Material type="string" value="blue_diff" />
 	</Object>
 
-	<Material name="red_spec" >
-		<Type type="string" value="specular" />
+	<Material name="red_spec" type="specular"  >
 		<Diffuse type="vec3" value="255  120  120" />
 		<Specular type="vec3" value=".2 .2 .2" />
 	</Material>
 
-	<Material name="blue_diff" >
-		<Type type="string" value="diffuse" />
+	<Material name="blue_diff" type="diffuse"  >
 		<Diffuse type="vec3" value="120  120  255" />
 	</Material>
 

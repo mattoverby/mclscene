@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
 <mclScene>
 
-	<Object name="box1" >
-		<Type type="string" value="plane" />
+	<Object name="box1" type="plane" >
 
 		<boxmin type="vec3" value="0 0 0" />
 		<boxmax type="vec3" value="1 1 1" />
@@ -19,11 +18,10 @@
 		<XForm type="translate" value="0  30  0" />
 		<XForm type="rotate" value="0  0  0" />
 
-		<Material type="string" value="red_spec" />
+		<Material type="string" value="blue_diff" />
 	</Object>
 
-	<Material name="blue_diff" >
-		<Type type="string" value="diffuse" />
+	<Material name="blue_diff" type="diffuse">
 		<Diffuse type="vec3" value="120  120  255" />
 		<edges type="vec3" value="190  190  255" />
 	</Material>
