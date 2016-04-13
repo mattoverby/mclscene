@@ -31,12 +31,12 @@ bool Component::load_params( const pugi::xml_node &curr_node ){
 	for( param; param != curr_node.end(); ++param ) {
 		pugi::xml_node curr_param = *param;
 
-		std::string name = parse::to_lower( curr_param.name() );
+		std::string tag = parse::to_lower( curr_param.name() );
 		std::string type_id = curr_param.attribute("type").value();
 		std::string value = curr_param.attribute("value").value();
-		Param newP( name, value, type_id );
+		Param newP( tag, value, type_id );
 
-		if( name == "xform" ){
+		if( tag == "xform" ){
 
 			std::stringstream ss( value );
 			trimesh::vec v; ss >> v[0] >> v[1] >> v[2];
@@ -59,7 +59,7 @@ bool Component::load_params( const pugi::xml_node &curr_node ){
 			}
 		}
 		else{
-			param_map[ name ] = param_vec.size();
+			param_map[ tag ] = param_vec.size();
 			param_vec.push_back( newP );	
 		}
 
@@ -71,13 +71,13 @@ bool Component::load_params( const pugi::xml_node &curr_node ){
 
 
 Param Component::operator[]( const std::string tag ) const {
-	std::unordered_map< std::string, int >::const_iterator it = param_map.find(tag);
+	std::unordered_map< std::string, int >::const_iterator it = param_map.find( parse::to_lower(tag) );
 	assert( it != param_map.end() ); assert( it->second < param_vec.size() );
 	return param_vec[ it->second ];
 }
 
 Param &Component::operator[]( const std::string tag ) {
-	std::unordered_map< std::string, int >::const_iterator it = param_map.find(tag);
+	std::unordered_map< std::string, int >::const_iterator it = param_map.find( parse::to_lower(tag) );
 	assert( it != param_map.end() ); assert( it->second < param_vec.size() );
 	return param_vec[ it->second ];
 }
@@ -86,13 +86,22 @@ Param Component::get( const std::string tag ) const {
 	return this->operator[](tag);
 }
 
+void Component::get( const std::string tag, std::vector<mcl::Param> *p ) const {
+	if( !exists(tag) ){ return; }
+	for( int i=0; i<param_vec.size(); ++i ){
+		if( param_vec[i].tag == parse::to_lower(tag) ){
+			p->push_back( param_vec[i] );
+		}
+	}
+}
+
 void Component::add_param( const Param &p ){
 	param_map[ p.tag ] = param_vec.size();
 	param_vec.push_back( p );	
 }
 
 bool Component::exists( const std::string tag ) const{
-	std::unordered_map< std::string, int >::const_iterator it = param_map.find(tag);
+	std::unordered_map< std::string, int >::const_iterator it = param_map.find( parse::to_lower(tag) );
 	if( it != param_map.end() && it->second < param_vec.size() ){ return true; }
 	return false;
 }
@@ -193,6 +202,7 @@ std::shared_ptr<BaseObject> ObjectComponent::as_object(){
 
 	built_obj.get()->init( param_vec );
 	built_obj.get()->apply_xform( x_form );
+
 	return built_obj;
 }
 

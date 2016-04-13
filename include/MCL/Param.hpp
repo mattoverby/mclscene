@@ -46,6 +46,8 @@ namespace parse {
 //	has an overloaded stream operator (with exception of trimesh::vec).
 //	I'm really just copying what pugixml does.
 //
+//	Tag is ALWAYS lowercase
+//
 class Param {
 public:
 	Param( std::string tag_, std::string value_, std::string type_ ) : tag(tag_), value(value_), type(type_) {}

@@ -50,9 +50,12 @@ public:
 	// It returns the last param to be added.
 	// E.g. <mass type="int" value="1" /> would be
 	// int mass = myComponent[mass].as_int()
-	virtual Param operator[]( const std::string tag ) const;
-	virtual Param &operator[]( const std::string tag );
-	virtual Param get( const std::string tag ) const;
+	Param operator[]( const std::string tag ) const;
+	Param &operator[]( const std::string tag );
+	Param get( const std::string tag ) const;
+
+	// Returns a vector of parameters with the designated tag
+	void get( const std::string tag, std::vector<mcl::Param> *p ) const;
 
 	// Returns true if the parameter exists, false otherwise.
 	bool exists( const std::string tag ) const;
