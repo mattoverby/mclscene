@@ -58,7 +58,9 @@ public:
 	long as_long() const;
 	bool as_bool() const;
 	float as_float() const;
+	trimesh::vec4 as_vec4() const;
 	trimesh::vec as_vec3() const;
+	trimesh::vec2 as_vec2() const;
 
 	// Stores the parsed data
 	std::string tag;

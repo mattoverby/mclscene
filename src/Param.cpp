@@ -44,21 +44,70 @@ trimesh::vec Param::as_vec3() const {
 	return v;
 }
 
+trimesh::vec2 Param::as_vec2() const {
+	std::stringstream ss(value);
+	trimesh::vec2 v;
+	for( int i=0; i<2; ++i ){ ss>>v[i]; }
+	return v;
+}
+
+trimesh::vec4 Param::as_vec4() const {
+	std::stringstream ss(value);
+	trimesh::vec4 v;
+	for( int i=0; i<4; ++i ){ ss>>v[i]; }
+	return v;
+}
+
 void Param::normalize(){
-	if( type != "vec3" ){ return; }
-	trimesh::vec v = as_vec3();
-	trimesh::normalize( v );
-	std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2];
-	value = ss.str();
+	if(type=="vec3"){
+		trimesh::vec v = as_vec3();
+		trimesh::normalize( v );
+		std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2];
+		value = ss.str();
+	}
+	else if(type=="vec2"){
+		trimesh::vec2 v = as_vec2();
+		trimesh::normalize( v );
+		std::stringstream ss; ss << v[0] << ' ' << v[1];
+		value = ss.str();
+	}
+	else if(type=="vec4"){
+		trimesh::vec4 v = as_vec4();
+		trimesh::normalize( v );
+		std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2] << ' ' << v[3];
+		value = ss.str();
+	}
 }
 
 void Param::fix_color(){
-	if( type != "vec3" ){ return; }
-	trimesh::vec c = as_vec3();
-	for( int ci=0; ci<3; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
-	if( c[0] > 1.0 || c[1] > 1.0 || c[2] > 1.0 ){
-		for( int ci=0; ci<3; ++ci ){ c[ci]/=255.f; } // from 0-255 to 0-1
+
+	if(type=="vec3"){
+		trimesh::vec c = as_vec3();
+
+		for( int ci=0; ci<3; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
+		if( c[0] > 1.0 || c[1] > 1.0 || c[2] > 1.0 ){ for( int ci=0; ci<3; ++ci ){ c[ci]/=255.f; } } // from 0-255 to 0-1
+
+		std::stringstream ss; ss << c[0] << ' ' << c[1] << ' ' << c[2];
+		value = ss.str();
 	}
-	std::stringstream ss; ss << c[0] << ' ' << c[1] << ' ' << c[2];
-	value = ss.str();
+	else if(type=="vec2"){
+		trimesh::vec2 c = as_vec2();
+
+		for( int ci=0; ci<2; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
+		if( c[0] > 1.0 || c[1] > 1.0 ){ for( int ci=0; ci<2; ++ci ){ c[ci]/=255.f; } } // from 0-255 to 0-1
+
+		std::stringstream ss; ss << c[0] << ' ' << c[1];
+		value = ss.str();
+	}
+	else if(type=="vec4"){
+		trimesh::vec4 c = as_vec4();
+
+		for( int ci=0; ci<4; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
+		if( c[0] > 1.0 || c[1] > 1.0 || c[2] > 1.0 || c[3] > 1.0 ){ for( int ci=0; ci<4; ++ci ){ c[ci]/=255.f; } } // from 0-255 to 0-1
+
+		std::stringstream ss; ss << c[0] << ' ' << c[1] << ' ' << c[2] << ' ' << c[3];
+		value = ss.str();
+	}
+
+
 }
