@@ -86,6 +86,15 @@ private:
 		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
 		else{ tris.reset( new trimesh::TriMesh() ); }
 		trimesh::make_sphere_polar( tris.get(), tessellation, tessellation );
+
+		// Now scale it by the radius
+		trimesh::xform s_xf = trimesh::xform::scale(radius,radius,radius);
+		trimesh::apply_xform(tris.get(), s_xf);
+
+		// Translate so center is correct
+		trimesh::xform t_xf = trimesh::xform::trans(center[0],center[1],center[2]);
+		trimesh::apply_xform(tris.get(), t_xf);
+
 		tris.get()->need_normals();
 		tris.get()->need_tstrips();
 	}
