@@ -144,13 +144,15 @@ void Gui::check_mouse( const sf::Event &event, const float screen_dt ){
 	if( mouse_pos.x < 0 || mouse_pos.x > win_size.x ){ return; }
 	if( mouse_pos.y < 0 || mouse_pos.y > win_size.y ){ return; }
 
+	bool shift_down = sf::Keyboard::isKeyPressed(sf::Keyboard::LShift);
+
 	Mouse::button b = Mouse::NONE;
 	if (event.type == sf::Event::MouseWheelMoved){
 		if( event.mouseWheel.delta > 0 ){ b = Mouse::WHEELDOWN; }
 		else if( event.mouseWheel.delta < 0 ){ b = Mouse::WHEELUP; }
 	}
-	else if( sf::Mouse::isButtonPressed( sf::Mouse::Right ) ){ b = Mouse::LIGHT; }
 	else if( sf::Mouse::isButtonPressed( sf::Mouse::Left ) ){ b = Mouse::ROTATE; }
+	else if( sf::Mouse::isButtonPressed( sf::Mouse::Right ) && shift_down ){ b = Mouse::LIGHT; }
 
 	cam.mouse( mouse_pos.x, mouse_pos.y, b, global_xf*bsphere.center, bsphere.r, global_xf );
 	bsphere = scene->get_bsphere(true);

@@ -61,6 +61,9 @@ namespace mcl {
 				&& sorted_v[2] == a.sorted_v[2]
 			);
 		}
+		int operator[](const int i) const {
+			assert(i<3); return orig_v[i];
+		}
 		int sorted_v[3]; // vertices SORTED
 		int orig_v[3]; // original vertices
 	};
@@ -76,6 +79,9 @@ namespace mcl {
 			return (sorted_v[0] == a.sorted_v[0]
 				&& sorted_v[1] == a.sorted_v[1]
 			);
+		}
+		int operator[](const int i) const {
+			assert(i<2); return orig_v[i];
 		}
 		int sorted_v[2]; // vertices SORTED
 		int orig_v[2]; // original vertices

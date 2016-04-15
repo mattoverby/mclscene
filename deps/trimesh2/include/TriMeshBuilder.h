@@ -30,11 +30,33 @@ static inline void mkface(TriMesh *mesh, int v1, int v2, int v3)
 	mesh->faces.push_back(TriMesh::Face(v1, v2, v3));
 }
 
+// non symmetric quad
+//	*---*
+//	|  /|
+//	| / |
+//	|/  |
+//	*---*
 static inline void mkquad(TriMesh *mesh, int ll, int lr, int ul, int ur)
 {
 	mkface(mesh, ll, lr, ur);
 	mkface(mesh, ll, ur, ul);
 }
+
+// Symmetric quad
+//	*---*
+//	|\ /|
+//	| * |
+//	|/ \|
+//	*---*
+static inline void mkquad_sym(TriMesh *mesh, int ll, int lr, int ul, int ur, int cent)
+{
+	// Counter clockwise
+	mkface(mesh, ll, lr, cent);
+	mkface(mesh, lr, ur, cent);
+	mkface(mesh, cent, ur, ul);
+	mkface(mesh, ll, cent, ul);
+}
+
 
 static inline void tess4(TriMesh *mesh, int v1, int v2, int v3, int v4)
 {
@@ -60,6 +82,12 @@ static inline void tess5(TriMesh *mesh, int v1, int v2, int v3, int v4, int v5)
 	mkface(mesh, ci, v3, v4);
 	mkface(mesh, ci, v4, v5);
 	mkface(mesh, ci, v5, v1);
+}
+
+
+static inline void make_sym_plane(trimesh::TriMesh *mesh, int tess_x, int tess_y)
+{
+std::cout << "todo" << std::endl; exit(0);
 }
 
 
