@@ -63,6 +63,8 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 		    trimesh::xform::trans(-bsphere.center);
 	cam.setupGL( global_xf * bsphere.center, bsphere.r );
 
+	std::cout << "Gui bsphere radius: " << bsphere.r << std::endl;
+
 }
 
 
