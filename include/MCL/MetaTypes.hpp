@@ -126,7 +126,7 @@ public:
 //
 class ObjectComponent : public Component {
 public:
-	ObjectComponent() : built_TetMesh(NULL), built_obj(NULL) {}
+	ObjectComponent() : built_obj(NULL) {}
 
 	bool check_params();
 
@@ -141,7 +141,6 @@ public:
 	std::shared_ptr<TetMesh> as_TetMesh(); 
 
 protected:
-	std::shared_ptr<TetMesh> built_TetMesh;
 	std::shared_ptr<BaseObject> built_obj;
 
 	#if MCLSCENE_SCENEMANAGER_H

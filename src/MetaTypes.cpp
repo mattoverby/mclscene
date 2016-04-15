@@ -219,21 +219,8 @@ std::shared_ptr<trimesh::TriMesh> ObjectComponent::as_TriMesh(){
 std::shared_ptr<TetMesh> ObjectComponent::as_TetMesh(){
 
 	if( parse::to_lower(type) != "tetmesh" ){ printf("\nObject Error: Not type TetMesh!"); assert(false); }
-	if( built_TetMesh != NULL ){ return built_TetMesh; }
-
-	if( param_map.count("file")==0 ){ printf("\nTetMesh Error: No file specified"); assert(false); }
-
-	std::string file = param_vec[ param_map[ "file" ] ].as_string();
-
-	std::shared_ptr<TetMesh> newMesh( new TetMesh() );
-
-	if( !newMesh.get()->load( file ) ){ assert(false); }
-	newMesh.get()->apply_xform( x_form );
-
-	// Store the trimesh for later
-	built_TetMesh = newMesh;
-
-	return newMesh;
+	if( built_obj == NULL ){ built_obj = as_object(); }
+	return std::dynamic_pointer_cast<TetMesh>(built_obj); // totally safe
 
 } // end build tet mesh
 
