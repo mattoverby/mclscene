@@ -44,9 +44,9 @@ class SceneManager {
 		// Returns true on success
 		bool load( std::string xmlfile );
 
-		// bool save( std::string xmlfile ); // TODO
-
-		// BaseMeta operator[]( const std::string name ) const; // TODO
+		// Build all objects as a mesh (fill meshes vector which can be indexed by object_map)
+		void build_meshes();
+		std::vector< std::shared_ptr<trimesh::TriMesh> > meshes;
 
 		// Vectors of scene components
 		std::vector< CameraComponent > cameras;

@@ -120,35 +120,16 @@ public:
 //
 //	Object
 //
-//	ObjectMeta is a little special compared to the others as
-//	it can build and create certain objects. When built, this
-//	data is cached and return on subsequent build calls
-//
 class ObjectComponent : public Component {
 public:
-	ObjectComponent() : built_obj(NULL) {}
+	ObjectComponent() {}
 
 	bool check_params();
 
 	// Set by check_params:
 	std::string material; // for material_map
 
-	// Rendering helpers
-	const std::shared_ptr<trimesh::TriMesh> get_TriMesh();
-
-	// Attempts to cast the object into its derived class, may fail!
-	// But I'm too lazy to come up with a better solution.
-	// Also note that these pointers are mutable.
-	std::shared_ptr<BaseObject> as_object();
-	template<typename T> std::shared_ptr<T> getPtr(){
-		if( built_obj != NULL ){ as_object(); } // build self
-		return std::dynamic_pointer_cast<T>(built_obj); // totally safe
-	}
-
-
 protected:
-	std::shared_ptr<BaseObject> built_obj;
-
 	#if MCLSCENE_SCENEMANAGER_H
 	friend class SceneManager;
 	#endif

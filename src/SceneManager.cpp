@@ -53,14 +53,12 @@ void SceneManager::build_boundary(){
 		if( lights[i].type=="point" ){ bbox += lights[i].pos; mb.check_in(lights[i].pos); }
 	}
 
-	for( int i=0; i<objects.size(); ++i ){
-		std::shared_ptr<BaseObject> obj = objects[i].as_object();
-		const std::shared_ptr<trimesh::TriMesh> tmesh = obj.get()->get_TriMesh();
-
-		for( int j=0; j<tmesh.get()->vertices.size(); ++j ){
-			bbox += tmesh.get()->vertices[j];
+	build_meshes();
+	for( int i=0; i<meshes.size(); ++i ){
+		for( int j=0; j<meshes[i]->vertices.size(); ++j ){
+			bbox += meshes[i]->vertices.at(j);
 		}
-		mb.check_in( tmesh.get()->vertices.begin(), tmesh.get()->vertices.end() );
+		mb.check_in( meshes[i]->vertices.begin(), meshes[i]->vertices.end() );
 	}
 
 	mb.build();
@@ -68,6 +66,37 @@ void SceneManager::build_boundary(){
 	bsphere.r = sqrt(mb.squared_radius());
 	bsphere.valid = true;
 
+}
+
+
+void SceneManager::build_meshes(){
+
+	if( meshes.size() == objects.size() ){ return; }
+
+	meshes.clear();
+	meshes.reserve( objects.size() );
+	for( int i=0; i<objects.size(); ++i ){
+
+		ObjectComponent *obj = &objects[i];
+		std::string ltype = parse::to_lower(obj->type);
+
+		std::shared_ptr<BaseObject> built_obj;
+		if( ltype == "sphere" ){ built_obj = std::shared_ptr<BaseObject>( new Sphere() ); }
+		else if( ltype == "box" ){ built_obj = std::shared_ptr<BaseObject>( new Box() ); }
+		else if( ltype == "plane" ){ built_obj = std::shared_ptr<BaseObject>( new Plane() ); }
+		else if( ltype == "trimesh" ){ built_obj = std::shared_ptr<BaseObject>( new TriangleMesh() ); }
+		else if( ltype == "tetmesh" ){ built_obj = std::shared_ptr<BaseObject>( new TetMesh() ); }
+		else{ std::cerr << "I should really use builder callbacks..." << std::endl; exit(0); }
+
+		built_obj->init( obj->param_vec );
+		built_obj->apply_xform( obj->x_form );
+
+		// Now that we've build the object we can get its triangle mesh
+		const std::shared_ptr<TriMesh> tmesh = built_obj->get_TriMesh();
+		meshes.push_back( std::make_shared<TriMesh>(*tmesh) ); // make a copy
+		meshes.back()->need_normals();
+		meshes.back()->need_tstrips();
+	}
 }
 
 

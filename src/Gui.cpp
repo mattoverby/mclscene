@@ -49,10 +49,10 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 	}
 
 	// Get tet and tri meshes
+	scene->build_meshes();
 	for( int i=0; i<scene->objects.size(); ++i ){
 
 		std::string mat = scene->objects[i].material;
-		trimeshes.push_back( scene->objects[i].get_TriMesh() );
 		if( mat.size()==0 ){ trimesh_materials.push_back( 0 ); }
 		else{ trimesh_materials.push_back( scene->material_map[mat] ); }
 
@@ -121,10 +121,10 @@ bool Gui::draw( const float screen_dt ){
 	setup_lighting( &scene->materials[0], scene->lights );
 
 	// Draw the meshes
-	for( int i=0; i<trimeshes.size(); ++i ){
+	for( int i=0; i<scene->meshes.size(); ++i ){
 		MaterialComponent *mat = &scene->materials[ trimesh_materials[i] ]; 
 		setup_lighting( mat, scene->lights );
-		draw_trimesh( mat, trimeshes[i].get() );
+		draw_trimesh( mat, scene->meshes[i].get() );
 	}
 
 	glPopMatrix();

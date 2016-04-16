@@ -187,6 +187,7 @@ private:
 class TriangleMesh : public BaseObject {
 public:
 	TriangleMesh() : tris(NULL), filename("") {}
+	TriangleMesh( const trimesh::TriMesh &tm ) : tris( new trimesh::TriMesh(tm) ), filename("") {}
 
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
 		if( tris == NULL ){ build_trimesh(); }
@@ -207,13 +208,13 @@ public:
 		trimesh::apply_xform( tris.get(), xf );
 	}
 
-	// Tris are public since that's the actual type anyway
-	std::shared_ptr<trimesh::TriMesh> tris;
-
 private:
 	std::string filename;
+	std::shared_ptr<trimesh::TriMesh> tris;
 
 	void build_trimesh(){
+		if( filename.size() == 0 ){ return; }
+
 		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( trimesh::TriMesh::read( filename.c_str() ) ); }
 		else{ tris.reset( trimesh::TriMesh::read( filename.c_str() ) ); }
 

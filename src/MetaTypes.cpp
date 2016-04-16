@@ -189,30 +189,3 @@ bool ObjectComponent::check_params(){
 }
 
 
-std::shared_ptr<BaseObject> ObjectComponent::as_object(){
-
-	if( built_obj != NULL ){ return built_obj; }
-	std::string ltype = parse::to_lower(type);
-
-	if( ltype == "sphere" ){ built_obj = std::shared_ptr<BaseObject>( new Sphere() ); }
-	else if( ltype == "box" ){ built_obj = std::shared_ptr<BaseObject>( new Box() ); }
-	else if( ltype == "plane" ){ built_obj = std::shared_ptr<BaseObject>( new Plane() ); }
-	else if( ltype == "trimesh" ){ built_obj = std::shared_ptr<BaseObject>( new TriangleMesh() ); }
-	else if( ltype == "tetmesh" ){ built_obj = std::shared_ptr<BaseObject>( new TetMesh() ); }
-
-	built_obj.get()->init( param_vec );
-	built_obj.get()->apply_xform( x_form );
-
-	return built_obj;
-}
-
-
-const std::shared_ptr<trimesh::TriMesh> ObjectComponent::get_TriMesh(){
-
-	// If the object has not been created yet, do so
-	if( built_obj == NULL ){ built_obj = as_object(); }
-	return built_obj.get()->get_TriMesh();
-
-} // end build trimesh
-
-
