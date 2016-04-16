@@ -207,20 +207,17 @@ std::shared_ptr<BaseObject> ObjectComponent::as_object(){
 }
 
 
-std::shared_ptr<trimesh::TriMesh> ObjectComponent::as_TriMesh(){
+const std::shared_ptr<trimesh::TriMesh> ObjectComponent::get_TriMesh(){
 
 	// If the object has not been created yet, do so
 	if( built_obj == NULL ){ built_obj = as_object(); }
-	return built_obj.get()->as_TriMesh();
+	return built_obj.get()->get_TriMesh();
 
 } // end build trimesh
 
+template<typename T> std::shared_ptr<T> ObjectComponent::get(){
 
-std::shared_ptr<TetMesh> ObjectComponent::as_TetMesh(){
-
-	if( parse::to_lower(type) != "tetmesh" ){ printf("\nObject Error: Not type TetMesh!"); assert(false); }
-	if( built_obj == NULL ){ built_obj = as_object(); }
-	return std::dynamic_pointer_cast<TetMesh>(built_obj); // totally safe
-
-} // end build tet mesh
+	if( built_obj != NULL ){ return built_obj; }
+	return std::dynamic_pointer_cast<T>(built_obj); // totally safe
+}
 

@@ -39,7 +39,7 @@ namespace mcl {
 class BaseObject {
 public:
 	virtual ~BaseObject(){}
-	virtual std::shared_ptr<trimesh::TriMesh> as_TriMesh() = 0;
+	virtual const std::shared_ptr<trimesh::TriMesh> get_TriMesh() = 0;
 	virtual void init( const std::vector< Param > &params ) = 0;
 	virtual void apply_xform( const trimesh::xform &xf ) = 0;
 	// virtual std::string save() = 0; TODO
@@ -55,8 +55,14 @@ public:
 
 	Sphere( trimesh::vec cent, double rad, int tess=32 ) : tris(NULL), center(cent), radius(rad), tessellation(tess) {}
 
-	std::shared_ptr<trimesh::TriMesh> as_TriMesh(){
-		if( tris == NULL ){ build_trimesh(); }
+	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
+		// See if we need to build a new trimesh
+		static double last_rad = -1.0; static trimesh::vec last_cent;
+		static const double thresh = 0.000001f;
+		if( tris == NULL || last_cent.neq( center, thresh ) || std::fabs(last_rad-radius)>thresh ){
+			last_cent = center; last_rad = radius;
+			build_trimesh();
+		}
 		return tris;
 	}
 
@@ -82,7 +88,7 @@ private:
 	std::shared_ptr<trimesh::TriMesh> tris;
 	int tessellation;
 
-	void build_trimesh(){
+	void build_trimesh(){		
 		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
 		else{ tris.reset( new trimesh::TriMesh() ); }
 		trimesh::make_sphere_polar( tris.get(), tessellation, tessellation );
@@ -110,8 +116,13 @@ public:
 
 	Box( trimesh::vec bmin, trimesh::vec bmax, int tess=1 ) : boxmin(bmin), boxmax(bmax), tris(NULL), tessellation(tess) {}
 
-	std::shared_ptr<trimesh::TriMesh> as_TriMesh(){
-		if( tris == NULL ){ build_trimesh(); }
+	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
+		static trimesh::vec last_bmin, last_bmax;
+		static const double thresh = 0.000001f;
+		if( tris == NULL || last_bmin.neq( boxmin, thresh ) || last_bmax.neq( boxmax, thresh ) ){
+			last_bmin = boxmin; last_bmax = boxmax;
+			build_trimesh();
+		}
 		return tris;
 	}
 
@@ -177,7 +188,7 @@ class TriangleMesh : public BaseObject {
 public:
 	TriangleMesh() : tris(NULL), filename("") {}
 
-	std::shared_ptr<trimesh::TriMesh> as_TriMesh(){
+	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
 		if( tris == NULL ){ build_trimesh(); }
 		return tris;
 	}
@@ -196,9 +207,11 @@ public:
 		trimesh::apply_xform( tris.get(), xf );
 	}
 
+	// Tris are public since that's the actual type anyway
+	std::shared_ptr<trimesh::TriMesh> tris;
+
 private:
 	std::string filename;
-	std::shared_ptr<trimesh::TriMesh> tris;
 
 	void build_trimesh(){
 		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( trimesh::TriMesh::read( filename.c_str() ) ); }
@@ -220,6 +233,7 @@ private:
 
 //
 //	Plane, 2 or more triangles
+//	TODO have a position
 //
 class Plane : public BaseObject {
 public:
@@ -227,7 +241,7 @@ public:
 
 	Plane( int w, int l ) : width(w), length(l), noise(0.0), tris(NULL) {}
 
-	std::shared_ptr<trimesh::TriMesh> as_TriMesh(){
+	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
 		if( tris == NULL ){ build_trimesh(); }
 		return tris;
 	}

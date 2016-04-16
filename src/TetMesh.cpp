@@ -102,7 +102,7 @@ void TetMesh::apply_xform( const trimesh::xform &xf ){
 
 
 // Creates a new trimesh object from ALL vertices and stuff
-std::shared_ptr<trimesh::TriMesh> TetMesh::as_TriMesh(){
+const std::shared_ptr<trimesh::TriMesh> TetMesh::get_TriMesh(){
 	if( temp_trimesh == NULL ){ temp_trimesh = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
 
 	// Check data sizes

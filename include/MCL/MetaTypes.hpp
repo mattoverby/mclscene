@@ -134,11 +134,14 @@ public:
 	std::string material; // for material_map
 
 	// Rendering helpers
-	std::shared_ptr<trimesh::TriMesh> as_TriMesh();
+	const std::shared_ptr<trimesh::TriMesh> get_TriMesh();
 
-	// Build functions
+	// Attempts to cast the object into its derived class, may fail!
+	// But I'm too lazy to come up with a better solution.
+	// Also note that these pointers are mutable.
+	template<typename T> std::shared_ptr<T> get();
 	std::shared_ptr<BaseObject> as_object();
-	std::shared_ptr<TetMesh> as_TetMesh(); 
+
 
 protected:
 	std::shared_ptr<BaseObject> built_obj;

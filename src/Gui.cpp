@@ -52,7 +52,7 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 	for( int i=0; i<scene->objects.size(); ++i ){
 
 		std::string mat = scene->objects[i].material;
-		trimeshes.push_back( scene->objects[i].as_TriMesh() );
+		trimeshes.push_back( scene->objects[i].get_TriMesh() );
 		if( mat.size()==0 ){ trimesh_materials.push_back( 0 ); }
 		else{ trimesh_materials.push_back( scene->material_map[mat] ); }
 

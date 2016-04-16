@@ -222,6 +222,24 @@ public:
 	size_type max_size() const
 		{ return D; }
 
+	// not equal with threshold
+	bool neq( const Vec<D,T> &x, float thresh )
+	{
+		for (size_type i = 0; i < D; i++){
+			if( fabs(x[i]-v[i])>thresh ){ return true; }
+		}
+		return false;
+	}
+
+	// equal with threshold
+	bool eq( const Vec<D,T> &x, float thresh )
+	{
+		for (size_type i = 0; i < D; i++){
+			if( fabs(x[i]-v[i])>thresh ){ return false; }
+		}
+		return true;
+	}
+
 	// empty() and clear() - check for all zero or set to zero
 	bool empty() const
 	{

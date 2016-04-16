@@ -55,7 +55,7 @@ void SceneManager::build_boundary(){
 
 	for( int i=0; i<objects.size(); ++i ){
 		std::shared_ptr<BaseObject> obj = objects[i].as_object();
-		std::shared_ptr<trimesh::TriMesh> tmesh = obj.get()->as_TriMesh();
+		const std::shared_ptr<trimesh::TriMesh> tmesh = obj.get()->get_TriMesh();
 
 		for( int j=0; j<tmesh.get()->vertices.size(); ++j ){
 			bbox += tmesh.get()->vertices[j];

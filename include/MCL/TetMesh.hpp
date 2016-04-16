@@ -63,7 +63,7 @@ public:
 	void init( const std::vector< Param > &params );
 
 	// Creates a new trimesh object from ALL vertices and stuff
-	std::shared_ptr<trimesh::TriMesh> as_TriMesh();
+	const std::shared_ptr<trimesh::TriMesh> get_TriMesh();
 
 private:
 	// Created on first call to as_TriMesh()
