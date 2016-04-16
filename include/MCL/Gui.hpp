@@ -48,8 +48,7 @@ protected:
 	virtual void draw_trimesh( MaterialComponent *material, const trimesh::TriMesh *themesh );
 	virtual void check_mouse( const sf::Event &event, const float screen_dt );
 
-	// Trimeshes and tetmeshes are pointers to their instance in SceneManager
-	std::vector< std::shared_ptr<trimesh::TriMesh> > trimeshes;
+	// trimesh_materials is the same size as scene->meshes
 	std::vector< int > trimesh_materials;
 
 	trimesh::xform global_xf;
