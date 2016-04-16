@@ -139,8 +139,11 @@ public:
 	// Attempts to cast the object into its derived class, may fail!
 	// But I'm too lazy to come up with a better solution.
 	// Also note that these pointers are mutable.
-	template<typename T> std::shared_ptr<T> get();
 	std::shared_ptr<BaseObject> as_object();
+	template<typename T> std::shared_ptr<T> getPtr(){
+		if( built_obj != NULL ){ as_object(); } // build self
+		return std::dynamic_pointer_cast<T>(built_obj); // totally safe
+	}
 
 
 protected:

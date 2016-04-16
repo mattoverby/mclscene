@@ -215,9 +215,4 @@ const std::shared_ptr<trimesh::TriMesh> ObjectComponent::get_TriMesh(){
 
 } // end build trimesh
 
-template<typename T> std::shared_ptr<T> ObjectComponent::get(){
-
-	if( built_obj != NULL ){ return built_obj; }
-	return std::dynamic_pointer_cast<T>(built_obj); // totally safe
-}
 
