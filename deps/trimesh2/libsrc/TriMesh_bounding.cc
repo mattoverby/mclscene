@@ -41,7 +41,7 @@ void TriMesh::need_bsphere()
 	if (vertices.empty() || bsphere.valid)
 		return;
 
-	dprintf("Computing bounding sphere... ");
+//	dprintf("Computing bounding sphere... ");
 
 	Miniball<3,float> mb;
 	mb.check_in(vertices.begin(), vertices.end());
@@ -50,9 +50,9 @@ void TriMesh::need_bsphere()
 	bsphere.r = sqrt(mb.squared_radius());
 	bsphere.valid = true; 
 
-	dprintf("Done.\n  center = (%g, %g, %g), radius = %g\n",
-		bsphere.center[0], bsphere.center[1],
-		bsphere.center[2], bsphere.r);
+//	dprintf("Done.\n  center = (%g, %g, %g), radius = %g\n",
+//		bsphere.center[0], bsphere.center[1],
+//		bsphere.center[2], bsphere.r);
 }
 
 #else

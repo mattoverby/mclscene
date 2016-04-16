@@ -64,6 +64,7 @@ set( MCLSCENE_SRCS
 	include/MCL/Param.hpp		src/Param.cpp
 	include/MCL/Object.hpp		src/Object.cpp
 	include/MCL/VertexSort.hpp
+	include/MCL/RenderUtils.hpp
 )
 
 # Create the library
