@@ -36,10 +36,10 @@ namespace mcl {
 namespace Draw {
 
 	// Replacement for gluPerspective
-	static void perspectiveGL(double fovy,double aspect, double zNear, double zFar);
+	static inline void perspectiveGL(double fovy,double aspect, double zNear, double zFar);
 
 	// Replacement for gluLookat
-	static void LookAt(const double p_EyeX, const double p_EyeY, const double p_EyeZ,
+	static inline void LookAt(const double p_EyeX, const double p_EyeY, const double p_EyeZ,
 		const double p_CenterX, const double p_CenterY, const double p_CenterZ);
 
 	// Draws a sphere the bad way. Best to make this a display list...
@@ -58,13 +58,13 @@ namespace Draw {
 	static inline sf::Vector3f rotatePoint(const sf::Vector3f &p, const sf::Vector3f &a, const float &angle);
 
 	// Swap pixel locations
-	static void swap( unsigned char &p1, unsigned char &p2 );
+	static inline void swap( unsigned char &p1, unsigned char &p2 );
 
 	// Flip storage order of image rows
-	static void flip_image (int w, int h, unsigned char *pixels);
+	static inline void flip_image (int w, int h, unsigned char *pixels);
 
 	// Write an image buffer to a PNG file
-	static void save_png (const char *filename, int width, int height,
+	static inline void save_png (const char *filename, int width, int height,
 		       unsigned char *pixels, bool has_alpha=false);
 
 }; // end namespace Draw
@@ -79,7 +79,7 @@ namespace Draw {
 
 // From:
 // http://en.sfml-dev.org/forums/index.php?topic=137.0
-static void mcl::Draw::perspectiveGL(double fovy,double aspect, double zNear, double zFar){
+static inline void mcl::Draw::perspectiveGL(double fovy,double aspect, double zNear, double zFar){
 	// Start in projection mode.
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -94,7 +94,7 @@ static void mcl::Draw::perspectiveGL(double fovy,double aspect, double zNear, do
 
 // From:
 // http://forums.codeguru.com/showthread.php?396078-gluLookAt
-static void mcl::Draw::LookAt(const double p_EyeX, const double p_EyeY, const double p_EyeZ, const double p_CenterX,
+static inline void mcl::Draw::LookAt(const double p_EyeX, const double p_EyeY, const double p_EyeZ, const double p_CenterX,
 	const double p_CenterY, const double p_CenterZ){
 		double l_X = p_EyeX - p_CenterX;
 		double l_Y = p_EyeY - p_CenterY;
@@ -244,14 +244,14 @@ static inline sf::Vector3f mcl::Draw::rotatePoint( const sf::Vector3f &p, const 
 }
 
 // Swap pixel locations
-static void mcl::Draw::swap( unsigned char &p1, unsigned char &p2 ){
+static inline void mcl::Draw::swap( unsigned char &p1, unsigned char &p2 ){
 	unsigned char temp = p1;
 	p1 = p2;
 	p2 = temp;
 }
 
 // Flip storage order of image rows
-static void mcl::Draw::flip_image (int w, int h, unsigned char *pixels) {
+static inline void mcl::Draw::flip_image (int w, int h, unsigned char *pixels) {
 
     for (int j = 0; j < h/2; j++)
 	for (int i = 0; i < w; i++)
@@ -261,7 +261,7 @@ static void mcl::Draw::flip_image (int w, int h, unsigned char *pixels) {
 }
 
 // Write an image buffer to a PNG file
-static void mcl::Draw::save_png (const char *filename, int width, int height,
+static inline void mcl::Draw::save_png (const char *filename, int width, int height,
 	       unsigned char *pixels, bool has_alpha) {
     FILE* file = fopen(filename, "wb");
     if (!file) {
