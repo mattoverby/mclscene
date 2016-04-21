@@ -51,6 +51,11 @@ if (OPENMP_FOUND)
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
+# Boost
+set( Boost_USE_STATIC_LIBS ON )
+find_package( Boost COMPONENTS filesystem system REQUIRED )
+include_directories( ${Boost_INCLUDE_DIR} )
+
 #
 #	mclscene library
 #
@@ -61,6 +66,7 @@ set( MCLSCENE_SRCS
 	include/MCL/SceneManager.hpp	src/SceneManager.cpp
 	include/MCL/MetaTypes.hpp	src/MetaTypes.cpp
 	include/MCL/TetMesh.hpp		src/TetMesh.cpp
+	include/MCL/MeshDump.hpp	src/MeshDump.cpp
 	include/MCL/Param.hpp		src/Param.cpp
 	include/MCL/Object.hpp		src/Object.cpp
 	include/MCL/VertexSort.hpp
@@ -71,10 +77,10 @@ set( MCLSCENE_SRCS
 if(SFML_FOUND AND OPENGL_FOUND)
 	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} include/MCL/Gui.hpp src/Gui.cpp )
 	add_library( mclscene ${TRIMESH_SRCS} ${MCLSCENE_SRCS} )
-	set( MCLSCENE_LIBRARIES mclscene ${OPENGL_LIBRARIES} ${SFML_LIBRARIES} png )
+	set( MCLSCENE_LIBRARIES mclscene ${OPENGL_LIBRARIES} ${SFML_LIBRARIES} ${Boost_LIBRARIES} png )
 elseif(SFML_FOUND AND OPENGL_FOUND)
 	add_library( mclscene ${TRIMESH_SRCS} ${MCLSCENE_SRCS} )
-	set( MCLSCENE_LIBRARIES mclscene )
+	set( MCLSCENE_LIBRARIES mclscene ${Boost_LIBRARIES} )
 endif(SFML_FOUND AND OPENGL_FOUND)
 
 # Set the libraries variable in parent scope if exists
