@@ -129,7 +129,7 @@ public:
 	void init( const std::vector< Param > &params ){
 		for( int i=0; i<params.size(); ++i ){
 			if( parse::to_lower(params[i].tag)=="boxmin" ){ boxmin=params[i].as_vec3(); }
-			else if( parse::to_lower(params[i].tag)=="boxmin" ){ boxmin=params[i].as_vec3(); }
+			else if( parse::to_lower(params[i].tag)=="boxmax" ){ boxmax=params[i].as_vec3(); }
 			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
 		}
 	}
