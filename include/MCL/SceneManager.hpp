@@ -37,13 +37,14 @@ class SceneManager {
 		SceneManager() {}
 		~SceneManager() {}
 
-		// Computes the world bounding
-		trimesh::box3 get_bbox( bool recompute=false );
-		trimesh::TriMesh::BSphere get_bsphere( bool recompute=false );
-
 		// Load a configuration file, can be called multiple times for different files.
 		// Returns true on success
 		bool load( std::string xmlfile );
+
+		// Computes the world bounding
+		void build_boundary();
+		trimesh::box3 get_bbox( bool recompute=false );
+		trimesh::TriMesh::BSphere get_bsphere( bool recompute=false );
 
 		// Build all objects as a mesh (which can be indexed by object_map)
 		void build_meshes();
@@ -75,7 +76,6 @@ class SceneManager {
 		std::shared_ptr<BVHNode> root_bvh;
 
 		// Builds both bounding sphere and bounding box
-		void build_boundary();
 		trimesh::box3 bbox;
 		trimesh::TriMesh::BSphere bsphere;
 
