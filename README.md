@@ -18,6 +18,7 @@
 
 # todo
 
+	- Builder callbacks for custom types
 	- Cleanup headers
 	- Support for textures
 	- Mesh instancing

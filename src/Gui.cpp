@@ -127,6 +127,20 @@ bool Gui::draw( const float screen_dt ){
 		draw_trimesh( mat, scene->meshes[i].get() );
 	}
 
+	#if 0
+		static std::vector<trimesh::point> edges;
+		if( !edges.size() ){ scene->get_bvh()->get_edges( edges ); }
+		glDisable(GL_LIGHTING);
+		glColor3f(1.0, 0.0, 0.0);
+		glBegin(GL_LINES);
+		for( int j=0; j<edges.size(); j+=2 ){
+			glVertex3f(edges[j][0],edges[j][1],edges[j][2]);
+			glVertex3f(edges[j+1][0],edges[j+1][1],edges[j+1][2]);
+		}
+		glEnd();
+		glEnable(GL_LIGHTING);
+	#endif
+
 	glPopMatrix();
 
 	window->display();

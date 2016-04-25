@@ -23,7 +23,8 @@
 #define MCLSCENE_SCENEMANAGER_H 1
 
 #include "MetaTypes.hpp"
-#include "bsphere.h"
+#include "bsphere.h" // in trimesh2
+#include "BVH.hpp"
 
 namespace mcl {
 ///
@@ -44,11 +45,18 @@ class SceneManager {
 		// Returns true on success
 		bool load( std::string xmlfile );
 
-		// Build all objects as a mesh (fill meshes vector which can be indexed by object_map)
+		// Build all objects as a mesh (which can be indexed by object_map)
 		void build_meshes();
 		std::vector< std::shared_ptr<trimesh::TriMesh> > meshes;
 
-		// Vectors of scene components
+		// Builds bounding volume heirarchies for each individual mesh
+		// (which can be indexed by object_map).
+		void build_bvh();
+		std::shared_ptr<BVHNode> get_bvh( bool recompute=false );
+		std::vector< std::shared_ptr<BVHNode> > mesh_bvh;
+
+		// Vectors of scene components. These are just meta types
+		// that describe what was read in the XML file.
 		std::vector< CameraComponent > cameras;
 		std::vector< ObjectComponent > objects;
 		std::vector< LightComponent > lights;
@@ -63,6 +71,8 @@ class SceneManager {
 		std::unordered_map< std::string, int > material_map;
 
 	protected:
+		// Root bvh is created by build_bvh
+		std::shared_ptr<BVHNode> root_bvh;
 
 		// Builds both bounding sphere and bounding box
 		void build_boundary();

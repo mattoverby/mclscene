@@ -69,6 +69,7 @@ set( MCLSCENE_SRCS
 	include/MCL/MeshDump.hpp	src/MeshDump.cpp
 	include/MCL/Param.hpp		src/Param.cpp
 	include/MCL/Object.hpp		src/Object.cpp
+	include/MCL/BVH.hpp		src/BVH.cpp
 	include/MCL/VertexSort.hpp
 	include/MCL/RenderUtils.hpp
 )

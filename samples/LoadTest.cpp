@@ -12,6 +12,8 @@ int main(int argc, char *argv[]){
 	if( !scene.load( std::string(argv[1]) ) ){ return 0; }
 	else{ printf( "Successfully loaded xml file.\n"); }
 
+	scene.build_bvh();
+
 	float scene_rad = scene.get_bsphere().r;
 	printf( "Scene radius: %f\n", scene_rad );
 

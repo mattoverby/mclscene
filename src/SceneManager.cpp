@@ -233,3 +233,25 @@ bool SceneManager::load( std::string xmlfile ){
 } // end load xml file
 
 
+void SceneManager::build_bvh(){
+
+	// Need meshes
+	build_meshes();
+	mesh_bvh.clear();
+
+	// Create all of the mesh bvhs
+	for( int i=0; i<meshes.size(); ++i ){
+		std::shared_ptr<BVHNode> bvh = make_tree( meshes[i].get() );
+		mesh_bvh.push_back( bvh );
+	}
+
+	root_bvh = make_tree( mesh_bvh );
+
+}
+
+
+std::shared_ptr<BVHNode> SceneManager::get_bvh( bool recompute ){
+	if( recompute || mesh_bvh.size()==0 ){ build_bvh(); }
+	return root_bvh;
+}
+
