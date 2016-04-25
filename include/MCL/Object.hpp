@@ -268,7 +268,7 @@ private:
 	void build_trimesh(){
 		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
 		else{ tris.reset( new trimesh::TriMesh() ); }
-		trimesh::make_plane( tris.get(), width, length );
+		trimesh::make_sym_plane( tris.get(), width, length );
 		if( noise > 0.0 ){ trimesh::noisify( tris.get(), noise ); }
 		tris.get()->need_normals();
 		tris.get()->need_tstrips();

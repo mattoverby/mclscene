@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <mclScene>
 
-	<Object name="box1" type="sphere" >
+	<Object name="box1" type="plane" >
 
 		<boxmin type="vec3" value="0 0 0" />
 		<boxmax type="vec3" value="1 1 1" />
 
-		<width type="int" value="2" />
-		<length type="int" value="2" />
+		<width type="int" value="30" />
+		<length type="int" value="30" />
 		<noise type="double" value="0.01" />
 
 		<center type="vec3" value="0 0 0" />

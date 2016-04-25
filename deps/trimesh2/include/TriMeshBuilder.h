@@ -14,6 +14,7 @@ Create various kinds of meshes for testing...
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <cassert>
 
 namespace trimesh {
 
@@ -85,12 +86,6 @@ static inline void tess5(TriMesh *mesh, int v1, int v2, int v3, int v4, int v5)
 }
 
 
-static inline void make_sym_plane(trimesh::TriMesh *mesh, int tess_x, int tess_y)
-{
-std::cout << "todo" << std::endl; exit(0);
-}
-
-
 static inline void make_plane(trimesh::TriMesh *mesh, int tess_x, int tess_y)
 {
 	if (tess_x < 1)
@@ -113,6 +108,54 @@ static inline void make_plane(trimesh::TriMesh *mesh, int tess_x, int tess_y)
 		for (int i = 0; i < tess_x; i++) {
 			int ind = i + j * (tess_x+1);
 			mkquad(mesh, ind, ind+1, ind+tess_x+1, ind+tess_x+2);
+		}
+	}
+}
+
+
+static inline void make_sym_plane(trimesh::TriMesh *mesh, int tess_x, int tess_y)
+{
+	if (tess_x < 1)
+		tess_x = 1;
+	if (tess_y < 1)
+		tess_y = 1;
+
+	int n_verts = (tess_x+1)*(tess_y+1)+(tess_x*tess_y);
+	mesh->vertices.reserve(n_verts);
+	double y_step = 1.0 / tess_y;
+	double x_step = 1.0 / tess_x;
+
+	// Make grid of vertices
+	for( int x=0; x<(tess_x+1); ++x ){
+		for( int y=0; y<(tess_y+1); ++y ){
+			float xp = -1.0f + 2.0f * x / tess_x;
+			float yp = -1.0f + 2.0f * y / tess_y;
+			mkpoint(mesh, xp, yp, 0);
+		}
+	}
+
+	// Make center points
+	for( int x=0; x<(tess_x); ++x ){
+		for( int y=0; y<(tess_y); ++y ){
+			float xp = -1.0f + 2.0f * x / tess_x;
+			float yp = -1.0f + 2.0f * y / tess_y;
+			xp += 1.f/tess_x;
+			yp += 1.f/tess_y;
+			mkpoint(mesh, xp, yp, 0);
+		}
+	}
+
+	assert( n_verts == (int)mesh->vertices.size() );
+
+	mesh->faces.reserve(tess_x*tess_y*4);
+	for( int x=0; x<tess_x; ++x ){
+		for( int y=0; y<tess_y; ++y ){
+			int ll=y+x*(tess_y+1);
+			int lr=y+(x+1)*(tess_y+1);
+			int ul=ll+1;
+			int ur=lr+1;
+			int cent=(tess_x+1)*(tess_y+1) + x*tess_y + y;
+			mkquad_sym(mesh, ll, lr, ul, ur, cent);
 		}
 	}
 }
