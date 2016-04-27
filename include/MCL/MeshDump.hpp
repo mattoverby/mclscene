@@ -41,7 +41,9 @@ public:
 	// Creates a meshdump directory
 	// If save is called and remove_existing_data is true, previous data is deleted
 	MeshDump( std::string directory="meshdump/", bool remove_existing_dir=true ) :
-		remove_existing_data(remove_existing_dir), dump_dir(directory) {}
+		remove_existing_data(remove_existing_dir), dump_dir(directory), directory_created(false) {}
+
+	~MeshDump(){ entries.clear(); dump_dir=""; }
 
 	// Load meshes from a directory
 	// returns true on success
@@ -63,6 +65,7 @@ public:
 
 private:
 	// Settings
+	bool directory_created;
 	bool remove_existing_data; // Clear the default directory if it exists, default: true
 	std::string dump_dir; // Directory of the dump, default: ./meshdump
 

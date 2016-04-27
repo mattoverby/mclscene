@@ -252,7 +252,7 @@ bool TriMesh::read_helper(const char *filename, TriMesh *mesh)
 			return false;
 		}
 	}
-	dprintf("Reading %s... ", filename);
+//	dprintf("Reading %s... ", filename);
 
 	// STL
 	if (begins_with(filename, "stl:-") || ends_with(filename, ".stl")) {
@@ -332,7 +332,7 @@ out:
 		return false;
 	}
 
-	dprintf("Done.\n");
+//	dprintf("Done.\n");
 	check_ind_range(mesh);
 	return true;
 }
@@ -1540,7 +1540,7 @@ bool TriMesh::write(const char *filename)
 		}
 	}
 
-	dprintf("Writing %s... ", filename);
+//	dprintf("Writing %s... ", filename);
 
 	bool ok = false;
 	switch (filetype) {
@@ -1584,7 +1584,7 @@ bool TriMesh::write(const char *filename)
 		return false;
 	}
 
-	dprintf("Done.\n");
+//	dprintf("Done.\n");
 	return true;
 }
 

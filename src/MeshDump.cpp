@@ -166,7 +166,6 @@ bool MeshDump::save( float dt, const std::vector< trimesh::TriMesh* > &meshes ){
 
 	if( dump_dir.back() != '/' ){ dump_dir += '/'; }
 
-	static bool directory_created = false;
 	if( !directory_created ){
 		createDirectory( dump_dir );
 		directory_created = true;

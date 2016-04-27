@@ -187,6 +187,7 @@ private:
 class TriangleMesh : public BaseObject {
 public:
 	TriangleMesh() : tris(NULL), filename("") {}
+	TriangleMesh( std::string filename_ ) : tris(NULL), filename(filename_) {}
 	TriangleMesh( const trimesh::TriMesh &tm ) : tris( new trimesh::TriMesh(tm) ), filename("") {}
 
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
