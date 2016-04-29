@@ -72,6 +72,10 @@ set( MCLSCENE_SRCS
 	include/MCL/BVH.hpp		src/BVH.cpp
 	include/MCL/VertexSort.hpp
 	include/MCL/RenderUtils.hpp
+	include/MCL/Camera.hpp
+	include/MCL/Light.hpp
+	include/MCL/Material.hpp
+	include/MCL/DefaultBuilders.hpp
 )
 
 # Create the library

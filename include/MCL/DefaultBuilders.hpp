@@ -1,0 +1,239 @@
+// Copyright 2016 Matthew Overby.
+// 
+// MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
+// Redistribution and use in source and binary forms, with or without modification, are
+// permitted provided that the following conditions are met:
+// 1. Redistributions of source code must retain the above copyright notice, this list of
+//    conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright notice, this list
+//    of conditions and the following disclaimer in the documentation and/or other materials
+//    provided with the distribution.
+// THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR  A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE UNIVERSITY OF MINNESOTA, DULUTH OR CONTRIBUTORS BE 
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+// (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+// OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+// IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// By Matt Overby (http://www.mattoverby.net)
+
+#ifndef MCLSCENE_DEFAULTBUILDERS_H
+#define MCLSCENE_DEFAULTBUILDERS_H 1
+
+#include "TetMesh.hpp"
+#include "Material.hpp"
+
+namespace mcl {
+
+//
+//	Default Object Builder: Everything is a trimesh or tetmesh.
+//
+static std::shared_ptr<BaseObject> default_build_object( std::string name, std::string type, std::vector<Param> &params ){
+
+	using namespace trimesh;
+
+	//
+	//	Sphere
+	//
+	if( parse::to_lower(type) == "sphere" ){
+
+		std::shared_ptr<TriMesh> tris( new TriMesh() );
+
+		double radius = 1.0;
+		vec center(0,0,0);
+		int tessellation = 1;
+
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_double(); }
+			else if( parse::to_lower(params[i].tag)=="center" ){ center=params[i].as_vec3(); }
+			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
+		}
+
+		make_sphere_polar( tris.get(), tessellation, tessellation );
+
+		// Now scale it by the radius
+		xform s_xf = trimesh::xform::scale(radius,radius,radius);
+		apply_xform(tris.get(), s_xf);
+
+		// Translate so center is correct
+		xform t_xf = trimesh::xform::trans(center[0],center[1],center[2]);
+		apply_xform(tris.get(), t_xf);
+
+		tris.get()->need_normals();
+		tris.get()->need_tstrips();
+		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
+		return new_obj;
+
+	} // end build sphere
+
+
+	//
+	//	Box
+	//
+	else if( parse::to_lower(type) == "box" ){
+
+		std::shared_ptr<TriMesh> tris( new TriMesh() );
+
+		vec boxmin(-1,-1,-1); vec boxmax(1,1,1);
+		int tessellation=1;
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="boxmin" ){ boxmin=params[i].as_vec3(); }
+			else if( parse::to_lower(params[i].tag)=="boxmax" ){ boxmax=params[i].as_vec3(); }
+			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
+		}
+
+		tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() );
+
+		// First create a boring cube
+		trimesh::make_cube( tris.get(), tessellation ); // tess=1 -> 12 tris
+		tris.get()->need_bbox();
+
+		// Now translate it so boxmins are the same
+		trimesh::vec offset = tris.get()->bbox.min - boxmin;
+		trimesh::xform t_xf = trimesh::xform::trans(offset[0],offset[1],offset[2]);
+		trimesh::apply_xform(tris.get(), t_xf);
+		tris.get()->bbox.valid = false;
+		tris.get()->need_bbox();
+
+		// Now scale so that boxmaxes are the same
+		trimesh::vec size = tris.get()->bbox.max - boxmax;
+		trimesh::xform s_xf = trimesh::xform::scale(size[0],size[1],size[2]);
+		trimesh::apply_xform(tris.get(), s_xf);
+		tris.get()->bbox.valid = false;
+		tris.get()->need_bbox();
+
+		tris.get()->need_normals();
+		tris.get()->need_tstrips();
+		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
+		return new_obj;
+
+	} // end build box
+
+
+	//
+	//	Plane, 2 or more triangles
+	//
+	else if( parse::to_lower(type) == "plane" ){
+
+		std::shared_ptr<TriMesh> tris( new TriMesh() );
+
+		int width = 10;
+		int length = 10;
+		double noise = 0.0;
+
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="width" ){ width=params[i].as_int(); }
+			else if( parse::to_lower(params[i].tag)=="length" ){ length=params[i].as_int(); }
+			else if( parse::to_lower(params[i].tag)=="noise" ){ noise=params[i].as_double(); }
+		}
+
+		make_sym_plane( tris.get(), width, length );
+		if( noise > 0.0 ){ trimesh::noisify( tris.get(), noise ); }
+
+		tris.get()->need_normals();
+		tris.get()->need_tstrips();
+		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
+		return new_obj;
+
+	} // end build plane
+
+
+	//
+	//	Plane, 2 or more triangles
+	//
+	else if( parse::to_lower(type) == "trimesh" ){
+
+		std::shared_ptr<TriMesh> tris( new TriMesh() );
+
+		std::string filename = "";
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="file" ){ filename=params[i].as_string(); }
+		}
+		if( !filename.size() ){ printf("\nTriangleMesh Error for obj %s: No file specified", name.c_str()); assert(false); } 
+
+		// Try to load the trimesh
+		tris->read( filename.c_str() );
+		tris.get()->set_verbose(0);
+
+		// Now clean the mesh
+		remove_unused_vertices( tris.get() );
+
+		tris.get()->need_normals();
+		tris.get()->need_tstrips();
+		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
+		return new_obj;
+
+	} // end build trimesh
+
+
+	//
+	//	Tet Mesh
+	//
+	else if( parse::to_lower(type) == "tetmesh" ){
+
+		std::shared_ptr<TetMesh> mesh( new TetMesh() );
+		std::string filename = "";
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="file" ){ filename=params[i].as_string(); }
+		}
+		if( !filename.size() ){ printf("\nTetMesh Error for obj %s: No file specified", name.c_str()); assert(false); }
+		if( !mesh->load( filename ) ){ printf("\nTetMesh Error for obj %s: failed to load file %s", name.c_str(), filename.c_str()); assert(false); }
+		mesh->need_normals();
+		std::shared_ptr<BaseObject> new_obj( mesh );
+		return new_obj;
+
+	} // end build tet mesh
+
+
+	//
+	//	Unknown
+	//
+	return NULL;
+
+} // end object builder
+
+//
+//	Default Material Builder
+//
+static std::shared_ptr<BaseMaterial> default_build_material( std::string name, std::string type, std::vector<Param> &params ){
+
+	//
+	//	Sphere
+	//
+	if( parse::to_lower(type) == "diffuse" ){
+
+		std::shared_ptr<DiffuseMaterial> mat( new DiffuseMaterial() );
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="diffuse" || parse::to_lower(params[i].tag)=="color" ){ mat->diffuse=params[i].as_vec3(); }
+		}
+		std::shared_ptr<BaseMaterial> new_mat( mat );
+		return new_mat;
+
+	} // end build diffuse
+
+	else if( parse::to_lower(type) == "specular" ){
+
+		std::shared_ptr<SpecularMaterial> mat( new SpecularMaterial() );
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="diffuse" || parse::to_lower(params[i].tag)=="color" ){ mat->diffuse=params[i].as_vec3(); }
+			if( parse::to_lower(params[i].tag)=="specular" ){ mat->specular=params[i].as_vec3(); }
+			if( parse::to_lower(params[i].tag)=="shininess" || parse::to_lower(params[i].tag)=="exponent" ){ mat->shininess=params[i].as_double(); }
+		}
+		std::shared_ptr<BaseMaterial> new_mat( mat );
+		return new_mat;
+
+	} // end build specular
+
+	//
+	//	Unknown
+	//
+	return NULL;
+
+} // end build material
+
+
+} // end namespace mcl
+
+#endif

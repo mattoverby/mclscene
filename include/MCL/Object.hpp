@@ -182,6 +182,74 @@ private:
 
 
 //
+//	Plane, 2 or more triangles
+//	TODO have a position
+//
+class Plane : public BaseObject {
+public:
+	Plane() : width(20), length(20), noise(0.0), tris(NULL) {}
+
+	Plane( int w, int l ) : width(w), length(l), noise(0.0), tris(NULL) {}
+
+	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
+		if( tris == NULL ){ build_trimesh(); }
+		return tris;
+	}
+
+	void init( const std::vector< Param > &params ){
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="width" ){ width=params[i].as_int(); }
+			else if( parse::to_lower(params[i].tag)=="length" ){ length=params[i].as_int(); }
+			else if( parse::to_lower(params[i].tag)=="noise" ){ noise=params[i].as_double(); }
+		}
+	}
+
+	void apply_xform( const trimesh::xform &xf ){
+		if( tris == NULL ){ build_trimesh(); }
+		trimesh::apply_xform( tris.get(), xf );
+	}
+
+private:
+	std::shared_ptr<trimesh::TriMesh> tris;
+	int width, length;
+	double noise;
+
+	void build_trimesh(){
+		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
+		else{ tris.reset( new trimesh::TriMesh() ); }
+		trimesh::make_sym_plane( tris.get(), width, length );
+		if( noise > 0.0 ){ trimesh::noisify( tris.get(), noise ); }
+		tris.get()->need_normals();
+		tris.get()->need_tstrips();
+	}
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
 //	Just a convenient wrapper to plug into the system
 //
 class TriangleMesh : public BaseObject {
@@ -189,6 +257,8 @@ public:
 	TriangleMesh() : tris(NULL), filename("") {}
 	TriangleMesh( std::string filename_ ) : tris(NULL), filename(filename_) {}
 	TriangleMesh( const trimesh::TriMesh &tm ) : tris( new trimesh::TriMesh(tm) ), filename("") {}
+	TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm ) : tris(tm), filename("") {}
+
 
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
 		if( tris == NULL ){ build_trimesh(); }
@@ -227,50 +297,6 @@ private:
 		trimesh::remove_unused_vertices( tris.get() );
 
 		// Create triangle strip for rendering
-		tris.get()->need_normals();
-		tris.get()->need_tstrips();
-	}
-};
-
-
-//
-//	Plane, 2 or more triangles
-//	TODO have a position
-//
-class Plane : public BaseObject {
-public:
-	Plane() : width(20), length(20), noise(0.0), tris(NULL) {}
-
-	Plane( int w, int l ) : width(w), length(l), noise(0.0), tris(NULL) {}
-
-	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
-		if( tris == NULL ){ build_trimesh(); }
-		return tris;
-	}
-
-	void init( const std::vector< Param > &params ){
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="width" ){ width=params[i].as_int(); }
-			else if( parse::to_lower(params[i].tag)=="length" ){ length=params[i].as_int(); }
-			else if( parse::to_lower(params[i].tag)=="noise" ){ noise=params[i].as_double(); }
-		}
-	}
-
-	void apply_xform( const trimesh::xform &xf ){
-		if( tris == NULL ){ build_trimesh(); }
-		trimesh::apply_xform( tris.get(), xf );
-	}
-
-private:
-	std::shared_ptr<trimesh::TriMesh> tris;
-	int width, length;
-	double noise;
-
-	void build_trimesh(){
-		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
-		else{ tris.reset( new trimesh::TriMesh() ); }
-		trimesh::make_sym_plane( tris.get(), width, length );
-		if( noise > 0.0 ){ trimesh::noisify( tris.get(), noise ); }
 		tris.get()->need_normals();
 		tris.get()->need_tstrips();
 	}

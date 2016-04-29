@@ -102,6 +102,9 @@ void SceneManager::build_meshes(){
 
 bool SceneManager::load( std::string xmlfile ){
 
+//	if( obj_builders.size()==0 ){ add_callback( BuildObjCallback(default_build_object) ); }
+//	if( mat_builders.size()==0 ){ add_callback( BuildMatCallback(default_build_material) ); }
+
 	std::string xmldir = parse::fileDir( xmlfile );
 
 	pugi::xml_document doc;
