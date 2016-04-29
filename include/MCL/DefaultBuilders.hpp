@@ -24,6 +24,7 @@
 
 #include "TetMesh.hpp"
 #include "Material.hpp"
+#include "../../deps/pugixml/pugixml.hpp"
 
 namespace mcl {
 
@@ -33,6 +34,21 @@ namespace mcl {
 static std::shared_ptr<BaseObject> default_build_object( std::string name, std::string type, std::vector<Param> &params ){
 
 	using namespace trimesh;
+
+	//
+	//	First build the transform and other common params
+	//
+	xform x_form;
+	std::string material = "";
+	for( int i=0; i<params.size(); ++i ){
+		if( parse::to_lower(params[i].tag)=="xform" ){
+			x_form = x_form * params[i].as_xform();
+		}
+		else if( parse::to_lower(params[i].tag)=="material" ){
+			material = params[i].as_string();
+		}
+	}
+	
 
 	//
 	//	Sphere
@@ -63,7 +79,8 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 
 		tris.get()->need_normals();
 		tris.get()->need_tstrips();
-		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
+		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris,material) );
+		new_obj->apply_xform( x_form );
 		return new_obj;
 
 	} // end build sphere
@@ -106,7 +123,8 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 
 		tris.get()->need_normals();
 		tris.get()->need_tstrips();
-		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
+		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris,material) );
+		new_obj->apply_xform( x_form );
 		return new_obj;
 
 	} // end build box
@@ -134,7 +152,8 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 
 		tris.get()->need_normals();
 		tris.get()->need_tstrips();
-		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
+		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris,material) );
+		new_obj->apply_xform( x_form );
 		return new_obj;
 
 	} // end build plane
@@ -146,6 +165,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 	else if( parse::to_lower(type) == "trimesh" ){
 
 		std::shared_ptr<TriMesh> tris( new TriMesh() );
+		tris->set_verbose(0);
 
 		std::string filename = "";
 		for( int i=0; i<params.size(); ++i ){
@@ -154,15 +174,18 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 		if( !filename.size() ){ printf("\nTriangleMesh Error for obj %s: No file specified", name.c_str()); assert(false); } 
 
 		// Try to load the trimesh
-		tris->read( filename.c_str() );
-		tris.get()->set_verbose(0);
+		tris.reset( trimesh::TriMesh::read( filename.c_str() ) );
+		if( tris == NULL ){
+			printf("\nnTriangleMesh Error for obj %s: failed to load file %s", name.c_str(), filename.c_str()); assert(false);
+		}
 
 		// Now clean the mesh
 		remove_unused_vertices( tris.get() );
 
 		tris.get()->need_normals();
 		tris.get()->need_tstrips();
-		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
+		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris,material) );
+		new_obj->apply_xform( x_form );
 		return new_obj;
 
 	} // end build trimesh
@@ -173,7 +196,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 	//
 	else if( parse::to_lower(type) == "tetmesh" ){
 
-		std::shared_ptr<TetMesh> mesh( new TetMesh() );
+		std::shared_ptr<TetMesh> mesh( new TetMesh(material) );
 		std::string filename = "";
 		for( int i=0; i<params.size(); ++i ){
 			if( parse::to_lower(params[i].tag)=="file" ){ filename=params[i].as_string(); }
@@ -182,6 +205,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 		if( !mesh->load( filename ) ){ printf("\nTetMesh Error for obj %s: failed to load file %s", name.c_str(), filename.c_str()); assert(false); }
 		mesh->need_normals();
 		std::shared_ptr<BaseObject> new_obj( mesh );
+		new_obj->apply_xform( x_form );
 		return new_obj;
 
 	} // end build tet mesh
@@ -206,7 +230,14 @@ static std::shared_ptr<BaseMaterial> default_build_material( std::string name, s
 
 		std::shared_ptr<DiffuseMaterial> mat( new DiffuseMaterial() );
 		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="diffuse" || parse::to_lower(params[i].tag)=="color" ){ mat->diffuse=params[i].as_vec3(); }
+			if( parse::to_lower(params[i].tag)=="diffuse" || parse::to_lower(params[i].tag)=="color" ){
+				params[i].fix_color();
+				mat->diffuse=params[i].as_vec3();
+			}
+			if( parse::to_lower(params[i].tag)=="edges" ){
+				params[i].fix_color();
+				mat->edge_color=params[i].as_vec3();
+			}
 		}
 		std::shared_ptr<BaseMaterial> new_mat( mat );
 		return new_mat;
@@ -217,8 +248,18 @@ static std::shared_ptr<BaseMaterial> default_build_material( std::string name, s
 
 		std::shared_ptr<SpecularMaterial> mat( new SpecularMaterial() );
 		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="diffuse" || parse::to_lower(params[i].tag)=="color" ){ mat->diffuse=params[i].as_vec3(); }
-			if( parse::to_lower(params[i].tag)=="specular" ){ mat->specular=params[i].as_vec3(); }
+			if( parse::to_lower(params[i].tag)=="diffuse" || parse::to_lower(params[i].tag)=="color" ){
+				params[i].fix_color();
+				mat->diffuse=params[i].as_vec3();
+			}
+			if( parse::to_lower(params[i].tag)=="specular" ){
+				params[i].fix_color();
+				mat->specular=params[i].as_vec3();
+			}
+			if( parse::to_lower(params[i].tag)=="edges" ){
+				params[i].fix_color();
+				mat->edge_color=params[i].as_vec3();
+			}
 			if( parse::to_lower(params[i].tag)=="shininess" || parse::to_lower(params[i].tag)=="exponent" ){ mat->shininess=params[i].as_double(); }
 		}
 		std::shared_ptr<BaseMaterial> new_mat( mat );
@@ -233,6 +274,51 @@ static std::shared_ptr<BaseMaterial> default_build_material( std::string name, s
 
 } // end build material
 
+
+static void load_params( std::vector<Param> &params, const pugi::xml_node &curr_node ){
+
+	pugi::xml_node::iterator param = curr_node.begin();
+	for( param; param != curr_node.end(); ++param ) {
+		pugi::xml_node curr_param = *param;
+
+		std::string tag = parse::to_lower( curr_param.name() );
+		std::string type_id = curr_param.attribute("type").value();
+		std::string value = curr_param.attribute("value").value();
+		Param newP( tag, value, type_id );
+
+		if( tag == "xform" ){
+
+			std::stringstream ss( value );
+			trimesh::vec v; ss >> v[0] >> v[1] >> v[2];
+
+			trimesh::xform x_form;
+
+			if( parse::to_lower(type_id) == "scale" ){
+				trimesh::xform scale = trimesh::xform::scale(v[0],v[1],v[2]);
+				x_form = scale * x_form;
+			}
+			else if( parse::to_lower(type_id) == "translate" ){
+				trimesh::xform translate = trimesh::xform::trans(v[0],v[1],v[2]);
+				x_form = translate * x_form;
+			}
+			else if( parse::to_lower(type_id) == "rotate" ){
+				v *= (M_PI/180.f); // convert to radians
+				trimesh::xform rot;
+				rot = rot * trimesh::xform::rot( v[0], trimesh::vec(1.f,0.f,0.f) );
+				rot = rot * trimesh::xform::rot( v[1], trimesh::vec(0.f,1.f,0.f) );
+				rot = rot * trimesh::xform::rot( v[2], trimesh::vec(0.f,0.f,1.f) );
+				x_form = x_form * rot;
+			}
+
+			std::stringstream xf_ss; xf_ss << x_form;
+			newP.value = xf_ss.str();
+		}
+
+		params.push_back( newP );	
+
+	} // end loop params
+
+} // end load parameters
 
 } // end namespace mcl
 

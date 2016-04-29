@@ -39,10 +39,13 @@ namespace mcl {
 class BaseObject {
 public:
 	virtual ~BaseObject(){}
-	virtual const std::shared_ptr<trimesh::TriMesh> get_TriMesh() = 0;
-	virtual void init( const std::vector< Param > &params ) = 0;
-	virtual void apply_xform( const trimesh::xform &xf ) = 0;
+	virtual const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return NULL; }
+//	virtual void init( const std::vector< Param > &params ) = 0;
+	virtual void apply_xform( const trimesh::xform &xf ){}
+	virtual std::string get_material() const { return ""; }
 	// virtual std::string save() = 0; TODO
+
+//	virtual void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ) = 0;
 };
 
 
@@ -55,31 +58,36 @@ public:
 
 	Sphere( trimesh::vec cent, double rad, int tess=32 ) : tris(NULL), center(cent), radius(rad), tessellation(tess) {}
 
-	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
-		// See if we need to build a new trimesh
-		static double last_rad = -1.0; static trimesh::vec last_cent;
-		static const double thresh = 0.000001f;
-		if( tris == NULL || last_cent.neq( center, thresh ) || std::fabs(last_rad-radius)>thresh ){
-			last_cent = center; last_rad = radius;
-			build_trimesh();
-		}
-		return tris;
-	}
+//	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
+//		// See if we need to build a new trimesh
+//		static double last_rad = -1.0; static trimesh::vec last_cent;
+//		static const double thresh = 0.000001f;
+//		if( tris == NULL || last_cent.neq( center, thresh ) || std::fabs(last_rad-radius)>thresh ){
+//			last_cent = center; last_rad = radius;
+//			build_trimesh();
+//		}
+//		return tris;
+//	}
 
-	void init( const std::vector< Param > &params ){
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_double(); }
-			else if( parse::to_lower(params[i].tag)=="center" ){ center=params[i].as_vec3(); }
-			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
-		}
-	}
+//	void init( const std::vector< Param > &params ){
+//		for( int i=0; i<params.size(); ++i ){
+//			if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_double(); }
+//			else if( parse::to_lower(params[i].tag)=="center" ){ center=params[i].as_vec3(); }
+//			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
+//		}
+//	}
 
 	// Unlike other objects, sphere only changes trimesh, not radius/center.
 	// What I shoooould do is store the xform and only apply it at render time...
-	void apply_xform( const trimesh::xform &xf ){
-		if( tris == NULL ){ build_trimesh(); }
-		trimesh::apply_xform( tris.get(), xf );
-	}
+//	void apply_xform( const trimesh::xform &xf ){
+//		if( tris == NULL ){ build_trimesh(); }
+//		trimesh::apply_xform( tris.get(), xf );
+//	}
+
+//	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
+//		bmin = trimesh::vec( center[0]-radius, center[1]-radius, center[2]-radius );
+//		bmax = trimesh::vec( center[0]+radius, center[1]+radius, center[2]+radius );
+//	}
 
 	trimesh::vec center;
 	double radius;
@@ -88,22 +96,22 @@ private:
 	std::shared_ptr<trimesh::TriMesh> tris;
 	int tessellation;
 
-	void build_trimesh(){		
-		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
-		else{ tris.reset( new trimesh::TriMesh() ); }
-		trimesh::make_sphere_polar( tris.get(), tessellation, tessellation );
+//	void build_trimesh(){		
+//		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
+//		else{ tris.reset( new trimesh::TriMesh() ); }
+//		trimesh::make_sphere_polar( tris.get(), tessellation, tessellation );
 
-		// Now scale it by the radius
-		trimesh::xform s_xf = trimesh::xform::scale(radius,radius,radius);
-		trimesh::apply_xform(tris.get(), s_xf);
+//		// Now scale it by the radius
+//		trimesh::xform s_xf = trimesh::xform::scale(radius,radius,radius);
+//		trimesh::apply_xform(tris.get(), s_xf);
 
 		// Translate so center is correct
-		trimesh::xform t_xf = trimesh::xform::trans(center[0],center[1],center[2]);
-		trimesh::apply_xform(tris.get(), t_xf);
+//		trimesh::xform t_xf = trimesh::xform::trans(center[0],center[1],center[2]);
+//		trimesh::apply_xform(tris.get(), t_xf);
 
-		tris.get()->need_normals();
-		tris.get()->need_tstrips();
-	}
+//		tris.get()->need_normals();
+//		tris.get()->need_tstrips();
+///	}
 };
 
 
@@ -116,34 +124,38 @@ public:
 
 	Box( trimesh::vec bmin, trimesh::vec bmax, int tess=1 ) : boxmin(bmin), boxmax(bmax), tris(NULL), tessellation(tess) {}
 
-	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
-		static trimesh::vec last_bmin, last_bmax;
-		static const double thresh = 0.000001f;
-		if( tris == NULL || last_bmin.neq( boxmin, thresh ) || last_bmax.neq( boxmax, thresh ) ){
-			last_bmin = boxmin; last_bmax = boxmax;
-			build_trimesh();
-		}
-		return tris;
-	}
+//	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
+//		static trimesh::vec last_bmin, last_bmax;
+//		static const double thresh = 0.000001f;
+//		if( tris == NULL || last_bmin.neq( boxmin, thresh ) || last_bmax.neq( boxmax, thresh ) ){
+//			last_bmin = boxmin; last_bmax = boxmax;
+//			build_trimesh();
+//		}
+///		return tris;
+//	}
 
-	void init( const std::vector< Param > &params ){
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="boxmin" ){ boxmin=params[i].as_vec3(); }
-			else if( parse::to_lower(params[i].tag)=="boxmax" ){ boxmax=params[i].as_vec3(); }
-			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
-		}
-	}
+//	void init( const std::vector< Param > &params ){
+//		for( int i=0; i<params.size(); ++i ){
+//			if( parse::to_lower(params[i].tag)=="boxmin" ){ boxmin=params[i].as_vec3(); }
+//			else if( parse::to_lower(params[i].tag)=="boxmax" ){ boxmax=params[i].as_vec3(); }
+//			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
+//		}
+//	}
 
-	void apply_xform( const trimesh::xform &xf ){
-		if( tris == NULL ){ build_trimesh(); }
-		trimesh::apply_xform( tris.get(), xf );
+//	void apply_xform( const trimesh::xform &xf ){
+//		if( tris == NULL ){ build_trimesh(); }
+//		trimesh::apply_xform( tris.get(), xf );
 
 		// Reset boxmin and boxmax
-		tris.get()->bbox.valid = false;
-		tris.get()->need_bbox();
-		boxmin = tris.get()->bbox.min;
-		boxmax = tris.get()->bbox.max;
-	}
+//		tris.get()->bbox.valid = false;
+//		tris.get()->need_bbox();
+//		boxmin = tris.get()->bbox.min;
+//		boxmax = tris.get()->bbox.max;
+//	}
+//
+//	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
+//		bmin = boxmin; bmax = boxmax;
+//	}
 
 	trimesh::vec boxmin, boxmax;
 
@@ -151,33 +163,33 @@ private:
 	std::shared_ptr<trimesh::TriMesh> tris;
 	int tessellation;
 
-	void build_trimesh(){
-		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
-		else{ tris.reset( new trimesh::TriMesh() ); }
-
-		tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() );
+//	void build_trimesh(){
+//		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
+//		else{ tris.reset( new trimesh::TriMesh() ); }
+//
+//		tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() );
 
 		// First create a boring cube
-		trimesh::make_cube( tris.get(), tessellation ); // tess=1 -> 12 tris
-		tris.get()->need_bbox();
+//		trimesh::make_cube( tris.get(), tessellation ); // tess=1 -> 12 tris
+//		tris.get()->need_bbox();
 
 		// Now translate it so boxmins are the same
-		trimesh::vec offset = tris.get()->bbox.min - boxmin;
-		trimesh::xform t_xf = trimesh::xform::trans(offset[0],offset[1],offset[2]);
-		trimesh::apply_xform(tris.get(), t_xf);
-		tris.get()->bbox.valid = false;
-		tris.get()->need_bbox();
-
+//		trimesh::vec offset = tris.get()->bbox.min - boxmin;
+//		trimesh::xform t_xf = trimesh::xform::trans(offset[0],offset[1],offset[2]);
+//		trimesh::apply_xform(tris.get(), t_xf);
+//		tris.get()->bbox.valid = false;
+//		tris.get()->need_bbox();
+//
 		// Now scale so that boxmaxes are the same
-		trimesh::vec size = tris.get()->bbox.max - boxmax;
-		trimesh::xform s_xf = trimesh::xform::scale(size[0],size[1],size[2]);
-		trimesh::apply_xform(tris.get(), s_xf);
-		tris.get()->bbox.valid = false;
-		tris.get()->need_bbox();
-
-		tris.get()->need_normals();
-		tris.get()->need_tstrips();
-	}
+//		trimesh::vec size = tris.get()->bbox.max - boxmax;
+//		trimesh::xform s_xf = trimesh::xform::scale(size[0],size[1],size[2]);
+//		trimesh::apply_xform(tris.get(), s_xf);
+//		tris.get()->bbox.valid = false;
+//		tris.get()->need_bbox();
+//
+//		tris.get()->need_normals();
+//		tris.get()->need_tstrips();
+//	}
 };
 
 
@@ -191,37 +203,41 @@ public:
 
 	Plane( int w, int l ) : width(w), length(l), noise(0.0), tris(NULL) {}
 
-	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
-		if( tris == NULL ){ build_trimesh(); }
-		return tris;
-	}
+//	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
+//		if( tris == NULL ){ build_trimesh(); }
+//		return tris;
+//	}
 
-	void init( const std::vector< Param > &params ){
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="width" ){ width=params[i].as_int(); }
-			else if( parse::to_lower(params[i].tag)=="length" ){ length=params[i].as_int(); }
-			else if( parse::to_lower(params[i].tag)=="noise" ){ noise=params[i].as_double(); }
-		}
-	}
+//	void init( const std::vector< Param > &params ){
+//		for( int i=0; i<params.size(); ++i ){
+//			if( parse::to_lower(params[i].tag)=="width" ){ width=params[i].as_int(); }
+//			else if( parse::to_lower(params[i].tag)=="length" ){ length=params[i].as_int(); }
+//			else if( parse::to_lower(params[i].tag)=="noise" ){ noise=params[i].as_double(); }
+//		}
+//	}
 
-	void apply_xform( const trimesh::xform &xf ){
-		if( tris == NULL ){ build_trimesh(); }
-		trimesh::apply_xform( tris.get(), xf );
-	}
+//	void apply_xform( const trimesh::xform &xf ){
+//		if( tris == NULL ){ build_trimesh(); }
+//		trimesh::apply_xform( tris.get(), xf );
+//	}
+
+//	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
+//		std::cout << "Plane::get_aabb TODO" << std::endl;
+//	}
 
 private:
 	std::shared_ptr<trimesh::TriMesh> tris;
 	int width, length;
 	double noise;
 
-	void build_trimesh(){
-		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
-		else{ tris.reset( new trimesh::TriMesh() ); }
-		trimesh::make_sym_plane( tris.get(), width, length );
-		if( noise > 0.0 ){ trimesh::noisify( tris.get(), noise ); }
-		tris.get()->need_normals();
-		tris.get()->need_tstrips();
-	}
+//	void build_trimesh(){
+//		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
+//		else{ tris.reset( new trimesh::TriMesh() ); }
+//		trimesh::make_sym_plane( tris.get(), width, length );
+//		if( noise > 0.0 ){ trimesh::noisify( tris.get(), noise ); }
+//		tris.get()->need_normals();
+//		tris.get()->need_tstrips();
+//	}
 };
 
 
@@ -254,10 +270,10 @@ private:
 //
 class TriangleMesh : public BaseObject {
 public:
-	TriangleMesh() : tris(NULL), filename("") {}
-	TriangleMesh( std::string filename_ ) : tris(NULL), filename(filename_) {}
-	TriangleMesh( const trimesh::TriMesh &tm ) : tris( new trimesh::TriMesh(tm) ), filename("") {}
-	TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm ) : tris(tm), filename("") {}
+//	TriangleMesh() : tris(NULL), filename(""), material("") {}
+//	TriangleMesh( std::string filename_ ) : tris(NULL), filename(filename_), material("") {}
+//	TriangleMesh( const trimesh::TriMesh &tm ) : tris( new trimesh::TriMesh(tm) ), filename(""), material("") {}
+	TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm, std::string mat="" ) : tris(tm), filename(""), material(mat) {}
 
 
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
@@ -279,9 +295,18 @@ public:
 		trimesh::apply_xform( tris.get(), xf );
 	}
 
+	std::string get_material() const { return material; }
+
+//	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
+//		tris->bbox.valid = false;
+//		tris->need_bbox();
+//		bmin = tris->bbox.min; bmax = tris->bbox.max;
+//	}
+
 private:
 	std::string filename;
 	std::shared_ptr<trimesh::TriMesh> tris;
+	std::string material;
 
 	void build_trimesh(){
 		if( filename.size() == 0 ){ return; }

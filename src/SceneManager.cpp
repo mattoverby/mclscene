@@ -24,12 +24,6 @@
 using namespace mcl;
 using namespace trimesh;
 
-trimesh::box3 SceneManager::get_bbox( bool recompute ){
-	if( bbox.valid && !recompute ){ return bbox; }
-	build_boundary();
-	return bbox;
-}
-
 
 trimesh::TriMesh::BSphere SceneManager::get_bsphere( bool recompute ){
 	if( bsphere.valid && !recompute ){ return bsphere; }
@@ -40,30 +34,26 @@ trimesh::TriMesh::BSphere SceneManager::get_bsphere( bool recompute ){
 
 void SceneManager::build_boundary(){
 
-	bbox.clear();
 	bsphere.valid = false;
 	Miniball<3,float> mb;
 
-	for( int i=0; i<cameras.size(); ++i ){
-		bbox += cameras[i].pos;
-		mb.check_in(cameras[i].pos);
-	}
+//	for( int i=0; i<cameras.size(); ++i ){
+//		mb.check_in(cameras[i].pos);
+//	}
 
-	for( int i=0; i<lights.size(); ++i ){
-		if( lights[i].type=="point" ){ bbox += lights[i].pos; mb.check_in(lights[i].pos); }
-	}
+//	for( int i=0; i<lights.size(); ++i ){
+//		if( lights[i].type=="point" ){ mb.check_in(lights[i].pos); }
+//	}
 
 	build_meshes();
 	for( int i=0; i<meshes.size(); ++i ){
-		for( int j=0; j<meshes[i]->vertices.size(); ++j ){
-			bbox += meshes[i]->vertices.at(j);
-		}
 		mb.check_in( meshes[i]->vertices.begin(), meshes[i]->vertices.end() );
 	}
 
 	mb.build();
 	bsphere.center = mb.center();
 	bsphere.r = sqrt(mb.squared_radius());
+	if( std::isnan( bsphere.r ) ){ bsphere.r=0.0; }
 	bsphere.valid = true;
 
 }
@@ -72,38 +62,20 @@ void SceneManager::build_boundary(){
 void SceneManager::build_meshes(){
 
 	if( meshes.size() == objects.size() ){ return; }
-
 	meshes.clear();
 	meshes.reserve( objects.size() );
+
 	for( int i=0; i<objects.size(); ++i ){
-
-		ObjectComponent *obj = &objects[i];
-		std::string ltype = parse::to_lower(obj->type);
-
-		std::shared_ptr<BaseObject> built_obj;
-		if( ltype == "sphere" ){ built_obj = std::shared_ptr<BaseObject>( new Sphere() ); }
-		else if( ltype == "box" ){ built_obj = std::shared_ptr<BaseObject>( new Box() ); }
-		else if( ltype == "plane" ){ built_obj = std::shared_ptr<BaseObject>( new Plane() ); }
-		else if( ltype == "trimesh" ){ built_obj = std::shared_ptr<BaseObject>( new TriangleMesh() ); }
-		else if( ltype == "tetmesh" ){ built_obj = std::shared_ptr<BaseObject>( new TetMesh() ); }
-		else{ std::cerr << "I should really use builder callbacks..." << std::endl; exit(0); }
-
-		built_obj->init( obj->param_vec );
-		built_obj->apply_xform( obj->x_form );
-
-		// Now that we've build the object we can get its triangle mesh
-		const std::shared_ptr<TriMesh> tmesh = built_obj->get_TriMesh();
-		meshes.push_back( std::make_shared<TriMesh>(*tmesh) ); // make a copy
-		meshes.back()->need_normals();
-		meshes.back()->need_tstrips();
+		std::shared_ptr<trimesh::TriMesh> mesh = objects[i]->get_TriMesh();
+		if( mesh != NULL ){ meshes.push_back( mesh ); }
 	}
 }
 
 
 bool SceneManager::load( std::string xmlfile ){
 
-//	if( obj_builders.size()==0 ){ add_callback( BuildObjCallback(default_build_object) ); }
-//	if( mat_builders.size()==0 ){ add_callback( BuildMatCallback(default_build_material) ); }
+	if( obj_builders.size()==0 ){ add_callback( BuildObjCallback(default_build_object) ); }
+	if( mat_builders.size()==0 ){ add_callback( BuildMatCallback(default_build_material) ); }
 
 	std::string xmldir = parse::fileDir( xmlfile );
 
@@ -129,74 +101,66 @@ bool SceneManager::load( std::string xmlfile ){
 			return false;
 		}
 
+		// Load the parameters
+		std::vector<Param> params;
+		{
+			load_params( params, curr_node );
+			// If any parameters are "file" give it the full path name
+			for( int i=0; i<params.size(); ++i ){
+				if( parse::to_lower(params[i].tag) == "file" ){
+					params[i].value = xmldir + params[i].as_string();
+				}
+			}
+		} // end load parameters
+
+
 		//
 		//	Parse Camera
 		//
 		if( parse::to_lower(curr_node.name()) == "camera" ){
 
-			CameraComponent cam;
-			cam.name = name;
-			cam.type = type;
+			// Call the builders
+			for( int i=0; i<cam_builders.size(); ++i ){
+				std::shared_ptr<BaseCamera> cam = cam_builders[i]( name, type, params );
+				if( cam != NULL ){
+					cameras.push_back( cam );
+					cameras_map[name] = cam;
+				}
+			}
 
-			// Set defaults
-			cam.add_param( Param( "type", "perspective", "string" ) );
-			cam.add_param( Param( "position", "0 0 0", "vec3" ) );
-			cam.add_param( Param( "direction", "0 0 -1", "vec3" ) );
-			cam.add_param( Param( "up", "0 1 0", "vec3" ) );
+		} // end parse Camera
 
-			// Load parameters
-			if( !cam.load_params( curr_node ) ){ return false; }
-
-			// Check the parameters and store the data
-			if( !cam.check_params() ){ printf("\n**SceneManager Error: Camera check_params\n"); return false; }
-			camera_map[ name ] = cameras.size();
-			cameras.push_back( cam );
-
-		} // end parse camera
 
 		//
 		//	Parse Light
 		//
 		if( parse::to_lower(curr_node.name()) == "light" ){
 
-			LightComponent light;
-			light.name = name;
-			light.type = type;
+			// Call the builders
+			for( int i=0; i<light_builders.size(); ++i ){
+				std::shared_ptr<BaseLight> light = light_builders[i]( name, type, params );
+				if( light != NULL ){
+					lights.push_back( light );
+					lights_map[name] = light;
+				}
+			}
 
-			// Set defaults
-			light.add_param( Param( "type", "point", "string" ) );
-			light.add_param( Param( "position", "0 0 0", "vec3" ) );
-			light.add_param( Param( "intensity", "1 1 1", "vec3" ) );
+		} // end parse Light
 
-			// Load parameters
-			if( !light.load_params( curr_node ) ){ return false; }
-
-			// Check the parameters and store the data
-			if( !light.check_params() ){ printf("\n**SceneManager Error: Light check_params\n"); return false; }
-			light_map[ name ] = lights.size();
-			lights.push_back( light );
-
-		} // end parse light
 
 		//
 		//	Parse Material
 		//
 		if( parse::to_lower(curr_node.name()) == "material" ){
 
-			MaterialComponent mat;
-			mat.name = name;
-			mat.type = type;
-
-			// Set defaults
-			mat.add_param( Param( "type", "diffuse", "string" ) );
-
-			// Load parameters
-			if( !mat.load_params( curr_node ) ){ return false; }
-
-			// Check the parameters and store the data
-			if( !mat.check_params() ){ printf("\n**SceneManager Error: Material check_params\n"); return false; }
-			material_map[ name ] = materials.size();
-			materials.push_back( mat );
+			// Call the builders
+			for( int i=0; i<mat_builders.size(); ++i ){
+				std::shared_ptr<BaseMaterial> mat = mat_builders[i]( name, type, params );
+				if( mat != NULL ){
+					materials.push_back( mat );
+					materials_map[name] = mat;
+				}
+			}
 
 		} // end parse material
 
@@ -205,27 +169,15 @@ bool SceneManager::load( std::string xmlfile ){
 		//
 		if( parse::to_lower(curr_node.name()) == "object" ){
 
-			ObjectComponent object;
-			object.name = name;
-			object.type = type;
-
-			// Set defaults
-			object.add_param( Param( "type", "none", "string" ) );
-
-			// Load parameters
-			if( !object.load_params( curr_node ) ){ return false; }
-
-			// If there is a file, append the full path
-			if( object.param_map.count("file")>0 ){
-				std::string file = object.param_vec[ object.param_map["file"] ].as_string();
-				std::string full_path = xmldir + file;
-				object.param_vec[ object.param_map["file"] ].value = full_path;
+			// Call the builders
+			for( int i=0; i<obj_builders.size(); ++i ){
+				std::shared_ptr<BaseObject> obj = obj_builders[i]( name, type, params );
+				if( obj != NULL ){
+					objects.push_back( obj );
+					objects_map[name] = obj;
+				}
 			}
 
-			// Check the parameters and store the data
-			if( !object.check_params() ){ printf("\n**SceneManager Error: Object check_params\n"); return false; }
-			object_map[ name ] = objects.size();
-			objects.push_back( object );
 
 		} // end parse object
 

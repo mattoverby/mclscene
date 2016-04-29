@@ -46,7 +46,7 @@ public:
 	std::vector< trimesh::vec > normals; // zero length for all non-surface normals
 	std::vector< trimesh::TriMesh::Face > faces; // surface triangles
 
-	TetMesh() : temp_trimesh(NULL) {}
+	TetMesh( std::string mat="" ) : temp_trimesh(NULL), material(mat) {}
 
 	// Filename is the first part of a tetmesh which must contain an .ele and .node file.
 	// Returns true on success
@@ -65,7 +65,11 @@ public:
 	// Creates a new trimesh object from ALL vertices and stuff
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh();
 
+	std::string get_material() const { return material; }
+
 private:
+	std::string material;
+
 	// Created on first call to as_TriMesh()
 	std::shared_ptr<trimesh::TriMesh> temp_trimesh;
 

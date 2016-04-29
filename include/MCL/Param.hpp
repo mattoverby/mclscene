@@ -25,6 +25,7 @@
 #include "Vec.h"
 #include <string>
 #include <sstream>
+#include "XForm.h"
 
 namespace mcl {
 
@@ -61,6 +62,7 @@ public:
 	trimesh::vec4 as_vec4() const;
 	trimesh::vec as_vec3() const;
 	trimesh::vec2 as_vec2() const;
+	trimesh::xform as_xform() const;
 
 	// Stores the parsed data
 	std::string tag;

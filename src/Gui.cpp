@@ -33,29 +33,19 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 
 	std::cout << "Gui Warning: Ignoring lights and camera settings" << std::endl;
 
-	// If there aren't any materials, create a default one
-	if( scene->materials.size()==0 ){
-
-		MaterialComponent flat_gray;
-		flat_gray.name = "base_mat";
-
-		flat_gray.add_param( Param("type", "string", "diffuse") );
-		flat_gray.add_param( Param("diffuse", "vec3", "0.5 0.5 0.5") );
-		flat_gray.add_param( Param("diffuse", "vec3", "0.5 0.5 0.5") );
-		flat_gray.add_param( Param("edges", "vec3", "0.9 0.9 0.9") );
-
-		scene->materials.push_back( flat_gray );
-		scene->material_map[ "base_mat" ] = 0;
-	}
+	// If there aren't any materials, use a default one
+	std::shared_ptr<DiffuseMaterial> flat_gray( new DiffuseMaterial() );
+	flat_gray->diffuse = trimesh::vec( 0.5, 0.5, 0.5 );
+	flat_gray->edge_color = trimesh::vec( 0.9, 0.9, 0.9 );
+	std::shared_ptr<BaseMaterial> mat( flat_gray );
+	scene->materials.push_back( mat ); // store it to the scene for later
 
 	// Get tet and tri meshes
 	scene->build_meshes();
 	for( int i=0; i<scene->objects.size(); ++i ){
-
-		std::string mat = scene->objects[i].material;
-		if( mat.size()==0 ){ trimesh_materials.push_back( 0 ); }
-		else{ trimesh_materials.push_back( scene->material_map[mat] ); }
-
+		std::string mat_str = scene->objects[i]->get_material();
+		if( mat_str.size()==0 ){ trimesh_materials.push_back( mat ); }
+		else{ trimesh_materials.push_back( scene->materials_map[mat_str] ); }
 	} // end draw scene objects
 
 	bsphere = scene->get_bsphere();
@@ -118,13 +108,12 @@ bool Gui::draw( const float screen_dt ){
 	cam.setupGL( global_xf * bsphere.center, bsphere.r );
 	glPushMatrix();
 	glMultMatrixd(global_xf);
-	setup_lighting( &scene->materials[0], scene->lights );
+	setup_lighting( scene->materials[0], scene->lights );
 
 	// Draw the meshes
 	for( int i=0; i<scene->meshes.size(); ++i ){
-		MaterialComponent *mat = &scene->materials[ trimesh_materials[i] ]; 
-		setup_lighting( mat, scene->lights );
-		draw_trimesh( mat, scene->meshes[i].get() );
+		setup_lighting( trimesh_materials[i], scene->lights );
+		draw_trimesh( trimesh_materials[i], scene->meshes[i].get() );
 	}
 
 	#if 0
@@ -193,25 +182,35 @@ void Gui::clear_screen(){
 
 
 // Set up lights and materials, by Szymon Rusinkiewicz
-void Gui::setup_lighting( MaterialComponent *material, const std::vector<LightComponent> &lights ){
+//void Gui::setup_lighting( MaterialComponent *material, const std::vector<LightComponent> &lights ){
+void Gui::setup_lighting( const std::shared_ptr<BaseMaterial> mat, const std::vector<std::shared_ptr<BaseLight> > &lights ){
+
+	// This isn't toooooo unsafe...
+	std::shared_ptr<DiffuseMaterial> diffuse = NULL;
+	std::shared_ptr<SpecularMaterial> specular = NULL;
+	if( parse::to_lower(mat->get_type())=="diffuse" ){ diffuse = std::static_pointer_cast<DiffuseMaterial>(mat); }
+	else if( parse::to_lower(mat->get_type())=="specular" ){ specular = std::static_pointer_cast<SpecularMaterial>(mat); }
 
 	// Diffuse color
-	if( trimesh::len2(material->diffuse)>0 ){
-		glColor3f(material->diffuse[0],material->diffuse[1],material->diffuse[2]);
-	}
+	if( diffuse != NULL ){ glColor3f( diffuse->diffuse[0], diffuse->diffuse[1], diffuse->diffuse[2] ); }
+	else if( specular != NULL ){ glColor3f( specular->diffuse[0], specular->diffuse[1], specular->diffuse[2] ); }
+//	if( trimesh::len2(material->diffuse)>0 ){
+//		glColor3f(material->diffuse[0],material->diffuse[1],material->diffuse[2]);
+//	}
 	else{ glColor3f(0.5f,0.5f,0.5f); }
 
 	// Specular color
 	GLfloat mat_specular[4] = { 0.f, 0.f, 0.f, 0.f };
-	if( trimesh::len2(material->specular)>0 ){
-		trimesh::vec c = material->specular;
+//	if( trimesh::len2(material->specular)>0 ){
+	if( specular != NULL ){
+		trimesh::vec c = specular->specular;
 		double w = (c[0]+c[1]+c[2])/3.f;
 		mat_specular[0]=c[0]; mat_specular[1]=c[1]; mat_specular[2]=c[2]; mat_specular[3]=w;
 	}
 
 	// shininess
 	GLfloat mat_shininess[] = { 64 };
-	if( material->exponent > 0 ){ mat_shininess[0]=material->exponent; }
+	if( specular != NULL ){ mat_shininess[0]=specular->shininess; }
 
 	GLfloat global_ambient[] = { 0.02f, 0.02f, 0.05f, 0.05f };
 	GLfloat light0_ambient[] = { 0, 0, 0, 0 };
@@ -219,7 +218,6 @@ void Gui::setup_lighting( MaterialComponent *material, const std::vector<LightCo
 
 	GLfloat light1_diffuse[] = { -0.01f, -0.01f, -0.03f, -0.03f };
 	GLfloat light0_specular[] = { 0.85f, 0.85f, 0.85f, 0.85f };
-
 
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
@@ -274,15 +272,16 @@ void Gui::draw_tstrips( const trimesh::TriMesh *themesh ){
 
 
 // Draw the mesh, by Szymon Rusinkiewicz
-void Gui::draw_trimesh( MaterialComponent *material, const trimesh::TriMesh *themesh ){
+void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::TriMesh *themesh ){
 	bool draw_falsecolor = false;
 	bool draw_index = false;
 	bool draw_2side = false;
 	int point_size = 1, line_width = 1;
 
-	// Not efficient but yolo
-	std::unordered_map< std::string, int >::const_iterator edge_color = material->param_map.find("edges");
-	bool draw_edges = edge_color != material->param_map.end();
+	trimesh::vec edge_color(0,0,0);
+	if( parse::to_lower(material->get_type())=="diffuse" ){ edge_color=std::static_pointer_cast<DiffuseMaterial>(material)->edge_color; }
+	else if( parse::to_lower(material->get_type())=="specular" ){ edge_color=std::static_pointer_cast<SpecularMaterial>(material)->edge_color; }
+	bool draw_edges = trimesh::len2( edge_color ) > 0.0001f;
 
 	glPushMatrix();
 //	glMultMatrixd(xforms[i]);
@@ -342,7 +341,7 @@ void Gui::draw_trimesh( MaterialComponent *material, const trimesh::TriMesh *the
 
 	// Edge drawing pass
 	if (draw_edges) {
-		trimesh::vec edge_c = material->param_vec[ edge_color->second ].as_vec3();
+		trimesh::vec edge_c = edge_color;
 		glPolygonMode(GL_FRONT, GL_LINE);
 		glLineWidth(float(line_width));
 		glDisableClientState(GL_COLOR_ARRAY);

@@ -49,6 +49,7 @@ public:
 class DiffuseMaterial : public BaseMaterial {
 public:
 	trimesh::vec diffuse; // diffuse color
+	trimesh::vec edge_color;
 
 	std::string get_type() const { return "diffuse"; }
 };
@@ -62,6 +63,8 @@ public:
 	trimesh::vec diffuse; // diffuse color
 	trimesh::vec specular; // specular color
 	double shininess; // i.e. phong exponent
+
+	trimesh::vec edge_color;
 
 	std::string get_type() const { return "specular"; }
 };

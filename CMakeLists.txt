@@ -64,7 +64,6 @@ include_directories( ${Boost_INCLUDE_DIR} )
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 set( MCLSCENE_SRCS
 	include/MCL/SceneManager.hpp	src/SceneManager.cpp
-	include/MCL/MetaTypes.hpp	src/MetaTypes.cpp
 	include/MCL/TetMesh.hpp		src/TetMesh.cpp
 	include/MCL/MeshDump.hpp	src/MeshDump.cpp
 	include/MCL/Param.hpp		src/Param.cpp

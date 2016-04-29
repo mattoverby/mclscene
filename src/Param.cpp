@@ -58,6 +58,13 @@ trimesh::vec4 Param::as_vec4() const {
 	return v;
 }
 
+trimesh::xform Param::as_xform() const {
+	trimesh::xform x_form;
+	std::stringstream ss(value);
+	ss >> x_form;
+	return x_form;
+}
+
 void Param::normalize(){
 	if(type=="vec3"){
 		trimesh::vec v = as_vec3();

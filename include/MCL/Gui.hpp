@@ -43,13 +43,12 @@ protected:
 	virtual bool update( const float screen_dt );
 	virtual bool draw( const float screen_dt );
 	virtual void clear_screen();
-	virtual void setup_lighting( MaterialComponent *material, const std::vector<LightComponent> &lights );
+	virtual void setup_lighting( const std::shared_ptr<BaseMaterial> mat, const std::vector<std::shared_ptr<BaseLight> > &lights );
 	virtual void draw_tstrips( const trimesh::TriMesh *themesh );
-	virtual void draw_trimesh( MaterialComponent *material, const trimesh::TriMesh *themesh );
+	virtual void draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::TriMesh *themesh );
 	virtual void check_mouse( const sf::Event &event, const float screen_dt );
 
-	// trimesh_materials is the same size as scene->meshes
-	std::vector< int > trimesh_materials;
+	std::vector< std::shared_ptr<BaseMaterial> > trimesh_materials;
 
 	trimesh::xform global_xf;
 	trimesh::TriMesh::BSphere bsphere;
