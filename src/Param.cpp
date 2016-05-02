@@ -118,3 +118,21 @@ void Param::fix_color(){
 
 
 }
+
+
+mcl::Param &Component::get( std::string tag ){
+	for( int i=0; i<params.size(); ++i ){
+		if( params[i].tag == tag ){ return params[i]; }
+	}
+	// not found, add it
+	params.push_back( mcl::Param(tag,"","string") );
+	return params.back();
+}
+
+
+bool Component::exists( std::string tag ) const {
+	for( int i=0; i<params.size(); ++i ){
+		if( params[i].tag == tag ){ return true; }
+	}
+	return false;
+}

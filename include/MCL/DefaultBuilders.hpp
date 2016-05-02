@@ -23,6 +23,7 @@
 #define MCLSCENE_DEFAULTBUILDERS_H 1
 
 #include "TetMesh.hpp"
+#include "TriangleMesh.hpp"
 #include "Material.hpp"
 #include "../../deps/pugixml/pugixml.hpp"
 
@@ -31,21 +32,23 @@ namespace mcl {
 //
 //	Default Object Builder: Everything is a trimesh or tetmesh.
 //
-static std::shared_ptr<BaseObject> default_build_object( std::string name, std::string type, std::vector<Param> &params ){
+static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 
 	using namespace trimesh;
+	std::string type = parse::to_lower(obj.type);
+	std::string name = obj.name;
 
 	//
 	//	First build the transform and other common params
 	//
 	xform x_form;
 	std::string material = "";
-	for( int i=0; i<params.size(); ++i ){
-		if( parse::to_lower(params[i].tag)=="xform" ){
-			x_form = x_form * params[i].as_xform();
+	for( int i=0; i<obj.params.size(); ++i ){
+		if( parse::to_lower(obj.params[i].tag)=="xform" ){
+			x_form = x_form * obj.params[i].as_xform();
 		}
-		else if( parse::to_lower(params[i].tag)=="material" ){
-			material = params[i].as_string();
+		else if( parse::to_lower(obj.params[i].tag)=="material" ){
+			material = obj.params[i].as_string();
 		}
 	}
 	
@@ -53,7 +56,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 	//
 	//	Sphere
 	//
-	if( parse::to_lower(type) == "sphere" ){
+	if( type == "sphere" ){
 
 		std::shared_ptr<TriMesh> tris( new TriMesh() );
 
@@ -61,10 +64,10 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 		vec center(0,0,0);
 		int tessellation = 1;
 
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_double(); }
-			else if( parse::to_lower(params[i].tag)=="center" ){ center=params[i].as_vec3(); }
-			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
+		for( int i=0; i<obj.params.size(); ++i ){
+			if( parse::to_lower(obj.params[i].tag)=="radius" ){ radius=obj.params[i].as_double(); }
+			else if( parse::to_lower(obj.params[i].tag)=="center" ){ center=obj.params[i].as_vec3(); }
+			else if( parse::to_lower(obj.params[i].tag)=="tess" ){ tessellation=obj.params[i].as_int(); }
 		}
 
 		make_sphere_polar( tris.get(), tessellation, tessellation );
@@ -89,16 +92,16 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 	//
 	//	Box
 	//
-	else if( parse::to_lower(type) == "box" ){
+	else if( type == "box" ){
 
 		std::shared_ptr<TriMesh> tris( new TriMesh() );
 
 		vec boxmin(-1,-1,-1); vec boxmax(1,1,1);
 		int tessellation=1;
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="boxmin" ){ boxmin=params[i].as_vec3(); }
-			else if( parse::to_lower(params[i].tag)=="boxmax" ){ boxmax=params[i].as_vec3(); }
-			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
+		for( int i=0; i<obj.params.size(); ++i ){
+			if( parse::to_lower(obj.params[i].tag)=="boxmin" ){ boxmin=obj.params[i].as_vec3(); }
+			else if( parse::to_lower(obj.params[i].tag)=="boxmax" ){ boxmax=obj.params[i].as_vec3(); }
+			else if( parse::to_lower(obj.params[i].tag)=="tess" ){ tessellation=obj.params[i].as_int(); }
 		}
 
 		tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() );
@@ -133,7 +136,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 	//
 	//	Plane, 2 or more triangles
 	//
-	else if( parse::to_lower(type) == "plane" ){
+	else if( type == "plane" ){
 
 		std::shared_ptr<TriMesh> tris( new TriMesh() );
 
@@ -141,10 +144,10 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 		int length = 10;
 		double noise = 0.0;
 
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="width" ){ width=params[i].as_int(); }
-			else if( parse::to_lower(params[i].tag)=="length" ){ length=params[i].as_int(); }
-			else if( parse::to_lower(params[i].tag)=="noise" ){ noise=params[i].as_double(); }
+		for( int i=0; i<obj.params.size(); ++i ){
+			if( parse::to_lower(obj.params[i].tag)=="width" ){ width=obj.params[i].as_int(); }
+			else if( parse::to_lower(obj.params[i].tag)=="length" ){ length=obj.params[i].as_int(); }
+			else if( parse::to_lower(obj.params[i].tag)=="noise" ){ noise=obj.params[i].as_double(); }
 		}
 
 		make_sym_plane( tris.get(), width, length );
@@ -162,14 +165,14 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 	//
 	//	Plane, 2 or more triangles
 	//
-	else if( parse::to_lower(type) == "trimesh" ){
+	else if( type == "trimesh" ){
 
 		std::shared_ptr<TriMesh> tris( new TriMesh() );
 		tris->set_verbose(0);
 
 		std::string filename = "";
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="file" ){ filename=params[i].as_string(); }
+		for( int i=0; i<obj.params.size(); ++i ){
+			if( parse::to_lower(obj.params[i].tag)=="file" ){ filename=obj.params[i].as_string(); }
 		}
 		if( !filename.size() ){ printf("\nTriangleMesh Error for obj %s: No file specified", name.c_str()); assert(false); } 
 
@@ -194,12 +197,12 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 	//
 	//	Tet Mesh
 	//
-	else if( parse::to_lower(type) == "tetmesh" ){
+	else if( type == "tetmesh" ){
 
 		std::shared_ptr<TetMesh> mesh( new TetMesh(material) );
 		std::string filename = "";
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="file" ){ filename=params[i].as_string(); }
+		for( int i=0; i<obj.params.size(); ++i ){
+			if( parse::to_lower(obj.params[i].tag)=="file" ){ filename=obj.params[i].as_string(); }
 		}
 		if( !filename.size() ){ printf("\nTetMesh Error for obj %s: No file specified", name.c_str()); assert(false); }
 		if( !mesh->load( filename ) ){ printf("\nTetMesh Error for obj %s: failed to load file %s", name.c_str(), filename.c_str()); assert(false); }
@@ -221,22 +224,19 @@ static std::shared_ptr<BaseObject> default_build_object( std::string name, std::
 //
 //	Default Material Builder
 //
-static std::shared_ptr<BaseMaterial> default_build_material( std::string name, std::string type, std::vector<Param> &params ){
+static std::shared_ptr<BaseMaterial> default_build_material( Component &component ){
 
-	//
-	//	Sphere
-	//
-	if( parse::to_lower(type) == "diffuse" ){
+	if( parse::to_lower(component.type) == "diffuse" ){
 
 		std::shared_ptr<DiffuseMaterial> mat( new DiffuseMaterial() );
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="diffuse" || parse::to_lower(params[i].tag)=="color" ){
-				params[i].fix_color();
-				mat->diffuse=params[i].as_vec3();
+		for( int i=0; i<component.params.size(); ++i ){
+			if( parse::to_lower(component.params[i].tag)=="diffuse" || parse::to_lower(component.params[i].tag)=="color" ){
+				component.params[i].fix_color();
+				mat->diffuse=component.params[i].as_vec3();
 			}
-			if( parse::to_lower(params[i].tag)=="edges" ){
-				params[i].fix_color();
-				mat->edge_color=params[i].as_vec3();
+			if( parse::to_lower(component.params[i].tag)=="edges" ){
+				component.params[i].fix_color();
+				mat->edge_color=component.params[i].as_vec3();
 			}
 		}
 		std::shared_ptr<BaseMaterial> new_mat( mat );
@@ -244,23 +244,23 @@ static std::shared_ptr<BaseMaterial> default_build_material( std::string name, s
 
 	} // end build diffuse
 
-	else if( parse::to_lower(type) == "specular" ){
+	else if( parse::to_lower(component.type) == "specular" ){
 
 		std::shared_ptr<SpecularMaterial> mat( new SpecularMaterial() );
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="diffuse" || parse::to_lower(params[i].tag)=="color" ){
-				params[i].fix_color();
-				mat->diffuse=params[i].as_vec3();
+		for( int i=0; i<component.params.size(); ++i ){
+			if( parse::to_lower(component.params[i].tag)=="diffuse" || parse::to_lower(component.params[i].tag)=="color" ){
+				component.params[i].fix_color();
+				mat->diffuse=component.params[i].as_vec3();
 			}
-			if( parse::to_lower(params[i].tag)=="specular" ){
-				params[i].fix_color();
-				mat->specular=params[i].as_vec3();
+			if( parse::to_lower(component.params[i].tag)=="specular" ){
+				component.params[i].fix_color();
+				mat->specular=component.params[i].as_vec3();
 			}
-			if( parse::to_lower(params[i].tag)=="edges" ){
-				params[i].fix_color();
-				mat->edge_color=params[i].as_vec3();
+			if( parse::to_lower(component.params[i].tag)=="edges" ){
+				component.params[i].fix_color();
+				mat->edge_color=component.params[i].as_vec3();
 			}
-			if( parse::to_lower(params[i].tag)=="shininess" || parse::to_lower(params[i].tag)=="exponent" ){ mat->shininess=params[i].as_double(); }
+			if( parse::to_lower(component.params[i].tag)=="shininess" || parse::to_lower(component.params[i].tag)=="exponent" ){ mat->shininess=component.params[i].as_double(); }
 		}
 		std::shared_ptr<BaseMaterial> new_mat( mat );
 		return new_mat;

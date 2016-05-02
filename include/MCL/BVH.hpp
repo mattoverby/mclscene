@@ -23,6 +23,7 @@
 #define MCLSCENE_BVH_H 1
 
 #include "TriMesh.h"
+#include "MCL/Object.hpp"
 #include <memory>
 #include <cassert>
 
@@ -64,36 +65,76 @@ public:
 
 class BVHNode {
 public:
-	BVHNode( const std::vector<trimesh::TriMesh::Face> &faces, const std::vector<trimesh::point> &vertices, int split_axis, int max_depth=10 );
-	BVHNode( std::vector< std::shared_ptr<BVHNode> > bvhnodes, int split_axis );
-	void get_faces( const std::vector<trimesh::TriMesh::Face> *faces ){ faces = &m_faces; }
+	BVHNode() : aabb( new AABB ) { left_child=NULL; right_child=NULL; }
+
 	void get_edges( std::vector<trimesh::vec> &edges );
 	const std::shared_ptr<AABB> bounds(){ return aabb; }
 
-private:
 	std::shared_ptr<BVHNode> left_child;
 	std::shared_ptr<BVHNode> right_child;
 	std::shared_ptr<AABB> aabb;
 
 	int m_split; // split axis
-	std::vector<trimesh::TriMesh::Face> m_faces;
+	std::vector< std::shared_ptr<BaseObject> > m_objects;
 
 };
 
-// Makes a BVH from a trimesh
-static inline std::shared_ptr<BVHNode> make_tree( trimesh::TriMesh *mesh ){
-	mesh->need_faces();
-	std::vector<trimesh::point> vertices = mesh->vertices;
-	std::vector<trimesh::TriMesh::Face> faces = mesh->faces;
-	std::shared_ptr<BVHNode> root( new BVHNode( faces, vertices, 0 ) );
-	return root;
+
+static inline std::shared_ptr<BVHNode> make_tree( const std::vector< std::shared_ptr<BaseObject> > objects, int split_axis, int max_depth ) {
+
+	using namespace trimesh;	
+	std::shared_ptr<BVHNode> node( new BVHNode() );
+
+	node->left_child = NULL;
+	node->right_child = NULL;
+	split_axis = (split_axis+1)%3;
+	node->m_split = split_axis;
+	max_depth--;
+
+	// Create the aabb
+	std::vector< point > obj_centers; // store the centers for later lookup
+	for( int i=0; i<objects.size(); ++i ){
+		vec bmin, bmax; objects[i]->get_aabb( bmin, bmax );
+		*node->aabb += bmin;
+		*node->aabb += bmax;
+		obj_centers.push_back( (bmin+bmax)*0.5f );
+	}
+	point center = node->aabb->center();
+
+	// If num faces == 1, we're done
+	if( objects.size()==0 ){ return node; }
+	else if( objects.size()==1 || max_depth <= 0 ){
+		node->m_objects = objects;
+		return node;
+	}
+	else if( objects.size()==2 ){
+		std::vector< std::shared_ptr<BaseObject> > left_objs(1,objects[0]), right_objs(1,objects[1]);
+		node->left_child = make_tree( left_objs, split_axis, max_depth );
+		node->right_child = make_tree( right_objs, split_axis, max_depth );
+		return node;
+	}
+
+	// Split faces
+	std::vector< std::shared_ptr<BaseObject> > left_objs, right_objs;
+	for( int i=0; i<objects.size(); ++i ){
+		double oc = obj_centers[i][split_axis];
+		if( oc <= center[ split_axis ] ){ left_objs.push_back( objects[i] ); }
+		else if( oc > center[ split_axis ] ){ right_objs.push_back( objects[i] ); }
+	}
+
+	// Check to make sure things got sorted. Sometimes small meshes fail.
+	if( left_objs.size()==0 ){ left_objs.push_back( right_objs.back() ); right_objs.pop_back(); }
+	if( right_objs.size()==0 ){ right_objs.push_back( left_objs.back() ); left_objs.pop_back(); }
+
+	// Create the children
+	node->left_child = make_tree( left_objs, split_axis, max_depth );
+	node->right_child = make_tree( right_objs, split_axis, max_depth );
+
+	return node;
 }
 
-// Makes a BVH from a vector of other BVHs
-static inline std::shared_ptr<BVHNode> make_tree( std::vector< std::shared_ptr<BVHNode> > bvhs ){
-	std::shared_ptr<BVHNode> root( new BVHNode( bvhs, 0 ) );
-	return root;
-}
+
+
 
 
 } // end namespace mcl

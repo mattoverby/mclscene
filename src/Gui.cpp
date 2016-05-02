@@ -40,6 +40,7 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 	std::shared_ptr<BaseMaterial> mat( flat_gray );
 	scene->materials.push_back( mat ); // store it to the scene for later
 
+
 	// Get tet and tri meshes
 	scene->build_meshes();
 	for( int i=0; i<scene->objects.size(); ++i ){

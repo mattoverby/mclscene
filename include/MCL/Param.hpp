@@ -26,6 +26,8 @@
 #include <string>
 #include <sstream>
 #include "XForm.h"
+#include <unordered_map>
+#include "../../deps/pugixml/pugixml.hpp"
 
 namespace mcl {
 
@@ -73,6 +75,22 @@ public:
 	void normalize();
 	void fix_color(); // if 0-255, sets 0-1
 };
+
+//
+//	A component is basically a list of params (e.g. Object, Light, etc...)
+//	Components are parsed from the xml file and always stored. If a callback exists
+//	for that type, it's called.
+//
+class Component {
+public:
+	Component( std::string tag_, std::string name_, std::string type_ ) : tag(tag_), name(name_), type(type_) {}
+	std::string tag, name, type;
+	Param &get( std::string tag );
+	Param &operator[]( std::string tag ){ return get(tag); }
+	bool exists( std::string tag ) const;
+	std::vector<Param> params;
+};
+
 
 } // end namespace mcl
 

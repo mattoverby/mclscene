@@ -48,6 +48,8 @@ public:
 
 	TetMesh( std::string mat="" ) : temp_trimesh(NULL), material(mat) {}
 
+	std::string get_type() const { return "tetmesh"; }
+
 	// Filename is the first part of a tetmesh which must contain an .ele and .node file.
 	// Returns true on success
 	bool load( std::string filename );
@@ -66,6 +68,8 @@ public:
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh();
 
 	std::string get_material() const { return material; }
+
+	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){}//TODO
 
 private:
 	std::string material;

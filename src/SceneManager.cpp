@@ -74,9 +74,6 @@ void SceneManager::build_meshes(){
 
 bool SceneManager::load( std::string xmlfile ){
 
-	if( obj_builders.size()==0 ){ add_callback( BuildObjCallback(default_build_object) ); }
-	if( mat_builders.size()==0 ){ add_callback( BuildMatCallback(default_build_material) ); }
-
 	std::string xmldir = parse::fileDir( xmlfile );
 
 	pugi::xml_document doc;
@@ -96,6 +93,7 @@ bool SceneManager::load( std::string xmlfile ){
 		pugi::xml_node curr_node = *main_node;
 		std::string name = curr_node.attribute("name").as_string();
 		std::string type = curr_node.attribute("type").as_string();
+		std::string tag = curr_node.name();
 		if( name.size() == 0 || type.size() == 0 ){
 			std::cerr << "\n**SceneManager Error: Component \"" << curr_node.name() << "\" need a name and type." << std::endl;
 			return false;
@@ -113,83 +111,101 @@ bool SceneManager::load( std::string xmlfile ){
 			}
 		} // end load parameters
 
+		// Create the component
+		components.push_back( Component( tag, name, type ) );
+		components.back().params = params;
 
-		//
-		//	Parse Camera
-		//
-		if( parse::to_lower(curr_node.name()) == "camera" ){
+	} // end loop scene info
+
+	return build_components();	
+
+//	return true;
+
+} // end load xml file
+
+
+bool SceneManager::build_components(){
+
+	if( obj_builders.size()==0 ){ add_callback( BuildObjCallback(default_build_object) ); }
+	if( mat_builders.size()==0 ){ add_callback( BuildMatCallback(default_build_material) ); }
+
+	for( int j=0; j<components.size(); ++j ){
+
+		std::string tag = parse::to_lower(components[j].tag);
+		std::string name = parse::to_lower(components[j].name);
+
+		//	Build Camera
+		if( tag == "camera" ){
 
 			// Call the builders
 			for( int i=0; i<cam_builders.size(); ++i ){
-				std::shared_ptr<BaseCamera> cam = cam_builders[i]( name, type, params );
+				std::shared_ptr<BaseCamera> cam = cam_builders[i]( components[j] );
 				if( cam != NULL ){
 					cameras.push_back( cam );
 					cameras_map[name] = cam;
 				}
 			}
 
-		} // end parse Camera
+		} // end build Camera
 
-
-		//
-		//	Parse Light
-		//
-		if( parse::to_lower(curr_node.name()) == "light" ){
+		//	Build Light
+		else if( tag == "light" ){
 
 			// Call the builders
 			for( int i=0; i<light_builders.size(); ++i ){
-				std::shared_ptr<BaseLight> light = light_builders[i]( name, type, params );
+				std::shared_ptr<BaseLight> light = light_builders[i]( components[j] );
 				if( light != NULL ){
 					lights.push_back( light );
 					lights_map[name] = light;
 				}
 			}
 
-		} // end parse Light
+		} // end build Light
 
-
-		//
-		//	Parse Material
-		//
-		if( parse::to_lower(curr_node.name()) == "material" ){
+		//	Build Material
+		else if( tag == "material" ){
 
 			// Call the builders
 			for( int i=0; i<mat_builders.size(); ++i ){
-				std::shared_ptr<BaseMaterial> mat = mat_builders[i]( name, type, params );
+				std::shared_ptr<BaseMaterial> mat = mat_builders[i]( components[j] );
 				if( mat != NULL ){
 					materials.push_back( mat );
 					materials_map[name] = mat;
 				}
 			}
 
-		} // end parse material
+		} // end build material
 
-		//
-		//	Parse Object
-		//
-		if( parse::to_lower(curr_node.name()) == "object" ){
+		//	Build Object
+		else if( tag == "object" ){
 
 			// Call the builders
 			for( int i=0; i<obj_builders.size(); ++i ){
-				std::shared_ptr<BaseObject> obj = obj_builders[i]( name, type, params );
+				std::shared_ptr<BaseObject> obj = obj_builders[i]( components[j] );
 				if( obj != NULL ){
 					objects.push_back( obj );
 					objects_map[name] = obj;
 				}
 			}
 
+		} // end build object
 
-		} // end parse object
+		// Build unknown
+		else{
+			for( int i=0; i<builders.size(); ++i ){ builders[i]( components[j] ); }
 
-	} // end loop scene info
+		} // end build unknown
+
+	} // end loop components
 
 	return true;
 
-} // end load xml file
+} // end build components
+
 
 
 void SceneManager::build_bvh(){
-
+/*
 	// Need meshes
 	build_meshes();
 	mesh_bvh.clear();
@@ -201,12 +217,31 @@ void SceneManager::build_bvh(){
 	}
 
 	root_bvh = make_tree( mesh_bvh );
-
+*/
 }
 
 
-std::shared_ptr<BVHNode> SceneManager::get_bvh( bool recompute ){
-	if( recompute || mesh_bvh.size()==0 ){ build_bvh(); }
-	return root_bvh;
+//std::shared_ptr<BVHNode> SceneManager::get_bvh( bool recompute ){
+//	if( recompute || mesh_bvh.size()==0 ){ build_bvh(); }
+//	return root_bvh;
+//}
+
+
+
+mcl::Component &SceneManager::get( std::string name ){
+	for( int i=0; i<components.size(); ++i ){
+		if( components[i].name == name ){ return components[i]; }
+	}
+	// not found, add it
+	components.push_back( mcl::Component( "", name, "" ) );
+	return components.back();
+}
+
+
+bool SceneManager::exists( std::string name ) const {
+	for( int i=0; i<components.size(); ++i ){
+		if( components[i].name == name ){ return true; }
+	}
+	return false;
 }
 

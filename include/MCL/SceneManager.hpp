@@ -30,30 +30,35 @@
 #include "Material.hpp"
 #include "DefaultBuilders.hpp"
 
+
+//
+//	Creating a scene through SceneManager is done in three steps:
+//	1) Create the scene via component containers (see Param.hpp). This can be done
+//	   programatically or by a call to load(...).
+//	2) Add builder callbacks to the SceneManager.
+//	3) Call build_components() to invoke the builder callbacks.
+//
+//
 namespace mcl {
 
-// Callback functions for building unique derived types in custom projects
-typedef boost::function<std::shared_ptr<BaseCamera> ( std::string name, std::string type, std::vector<Param> &params )> BuildCamCallback;
-typedef boost::function<std::shared_ptr<BaseObject> ( std::string name, std::string type, std::vector<Param> &params )> BuildObjCallback;
-typedef boost::function<std::shared_ptr<BaseLight> ( std::string name, std::string type, std::vector<Param> &params )> BuildLightCallback;
-typedef boost::function<std::shared_ptr<BaseMaterial> ( std::string name, std::string type, std::vector<Param> &params )> BuildMatCallback;
+//
+// Callback funcions are invoked on a call to build_components().
+// See details in that function's doc. Note that these functions CAN change the component itself.
+//
+typedef boost::function<std::shared_ptr<BaseCamera> ( Component &component )> BuildCamCallback;
+typedef boost::function<std::shared_ptr<BaseObject> ( Component &component )> BuildObjCallback;
+typedef boost::function<std::shared_ptr<BaseLight> ( Component &component )> BuildLightCallback;
+typedef boost::function<std::shared_ptr<BaseMaterial> ( Component &component )> BuildMatCallback;
+typedef boost::function<void( Component &component )> BuildCallback; // generic builder callback for unknown things
 
 class SceneManager {
 
 	public:
 		// Load a configuration file, can be called multiple times for different files.
 		// Additional calls will add (or replace) stuff to the scene.
-		// If no builder callbacks have been added to the scene, everything is built as
-		// a trimesh/tetmesh and default cam/light/material builders are used.
-		// See DefaultBuilders.hpp for details.
+		// This fills the components member data.
 		// Returns true on success
 		bool load( std::string xmlfile );
-
-		// Builder callbacks are executing on a call to load(...).
-		void add_callback( BuildCamCallback cb ){ cam_builders.push_back( cb ); }
-		void add_callback( BuildObjCallback cb ){ obj_builders.push_back( cb ); }
-		void add_callback( BuildLightCallback cb ){ light_builders.push_back( cb ); }
-		void add_callback( BuildMatCallback cb ){ mat_builders.push_back( cb ); }
 
 		// Build all objects as a trimesh. I use this for OpenGL rendering of scenes.
 		// Only objects that have the get_TriMesh() function are built this way.
@@ -64,13 +69,41 @@ class SceneManager {
 		// (same indices as meshes) as well as the whole scene
 		// (obtained through get_bvh).
 		void build_bvh();
-		std::shared_ptr<BVHNode> get_bvh( bool recompute=false );
-		std::vector< std::shared_ptr<BVHNode> > mesh_bvh;
+//		std::shared_ptr<BVHNode> get_bvh( bool recompute=false );
+//		std::vector< std::shared_ptr<BVHNode> > mesh_bvh;
 
 		// Computes the world bounding if it hasn't already
 		trimesh::TriMesh::BSphere get_bsphere( bool recompute=false );
 
+		//
+		// The scene is a list of components (e.g. Object, Light, etc...)
+		// This vector is filled on a load(...) call, or you can add to it manually.
+		// When you call build_components, this vector is looped over and the callbacks
+		// are invoked.
+		//
+		Component &get( std::string name );
+		Component &operator[]( std::string name ){ return get(name); }
+		bool exists( std::string name ) const;
+		std::vector< Component > components;
+
+		//
+		// Invokes the callbacks while looping over the components vector.
+		// Returns true on success.
+		//
+		bool build_components();
+
+		//
+		// Builder callbacks are executing on a call to build_components()
+		//
+		void add_callback( BuildCamCallback cb ){ cam_builders.push_back( cb ); }
+		void add_callback( BuildObjCallback cb ){ obj_builders.push_back( cb ); }
+		void add_callback( BuildLightCallback cb ){ light_builders.push_back( cb ); }
+		void add_callback( BuildMatCallback cb ){ mat_builders.push_back( cb ); }
+		void add_callback( BuildCallback cb ){ builders.push_back( cb ); }
+
+		//
 		// Vectors of scene components created through the builder callbacks.
+		//
 		std::vector< std::shared_ptr<BaseObject> > objects;
 		std::vector< std::shared_ptr<BaseMaterial> > materials;
 		std::vector< std::shared_ptr<BaseCamera> > cameras;
@@ -89,6 +122,7 @@ class SceneManager {
 		std::vector< BuildObjCallback > obj_builders;
 		std::vector< BuildLightCallback > light_builders;
 		std::vector< BuildMatCallback > mat_builders;
+		std::vector< BuildCallback > builders;
 
 		// Builds bounding sphere
 		void build_boundary();

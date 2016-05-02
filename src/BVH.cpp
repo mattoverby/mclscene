@@ -55,7 +55,7 @@ void AABB::get_edges( std::vector<trimesh::vec> &edges ){
 
 } // end make edges
 
-
+/*
 BVHNode::BVHNode( const std::vector<trimesh::TriMesh::Face> &faces, const std::vector<trimesh::point> &vertices, int split_axis, int max_depth ) {
 	using namespace trimesh;
 
@@ -150,10 +150,13 @@ BVHNode::BVHNode( std::vector< std::shared_ptr<BVHNode> > bvhnodes, int split_ax
 	right_child = std::shared_ptr<BVHNode>( new BVHNode( right_nodes, split_axis ) );
 }
 
+*/
+
 
 void BVHNode::get_edges( std::vector<trimesh::vec> &edges ){
 	aabb->get_edges( edges );
 	if( left_child != NULL ){ left_child->get_edges( edges ); }
 	if( right_child != NULL ){ right_child->get_edges( edges ); }
 }
+
 
