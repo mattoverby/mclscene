@@ -25,6 +25,7 @@
 #include "Vec.h"
 #include <string>
 #include <sstream>
+#include "../../deps/pugixml/pugixml.hpp"
 
 namespace mcl {
 
