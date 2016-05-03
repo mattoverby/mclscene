@@ -212,9 +212,7 @@ void SceneManager::build_bvh(){
 
 	if( root_bvh==NULL ){ root_bvh = std::shared_ptr<BVHNode>( new BVHNode() ); }
 	else{ root_bvh.reset( new BVHNode() ); }
-
-	int max_depth = 10;
-	root_bvh->make_tree( objects, 0, max_depth );
+	root_bvh->make_tree( objects );
 }
 
 

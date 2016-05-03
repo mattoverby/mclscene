@@ -37,6 +37,7 @@ namespace intersect {
 		Payload(){ t_min=1e-8; t_max=9999999.0; }
 		double t_min, t_max;
 		trimesh::vec n, hit_point;
+		std::string material;
 	};
 
 	// ray -> triangle without early exit

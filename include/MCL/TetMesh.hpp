@@ -30,13 +30,8 @@ namespace mcl {
 //
 //	Tetrahedral Mesh
 //
-//	TODO Surface mesh type with collapsed vertices
-//	instead of creating normals for every vertex.
-//
 class TetMesh : public BaseObject {
-private:
-	std::shared_ptr<trimesh::TriMesh> tris; // tris is actually the data container
-
+private: std::shared_ptr<trimesh::TriMesh> tris; // tris is actually the data container
 public:
 	struct tet {
 		tet(){}
@@ -45,7 +40,7 @@ public:
 	};
 
 	std::vector< tet > tets; // all elements
-	std::vector< trimesh::point > &vertices; // all vertices in the tet
+	std::vector< trimesh::point > &vertices; // all vertices in the tet mesh
 	std::vector< trimesh::vec > &normals; // zero length for all non-surface normals
 	std::vector< trimesh::TriMesh::Face > &faces; // surface triangles
 
@@ -69,16 +64,10 @@ public:
 
 	std::string get_material() const { return material; }
 
-	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
-		if( !aabb->valid ){
-			for( int f=0; f<faces.size(); ++f ){
-				(*aabb) += vertices[ faces[f][0] ];
-				(*aabb) += vertices[ faces[f][1] ];
-				(*aabb) += vertices[ faces[f][2] ];
-			}
-		}
-		bmin = aabb->min; bmax = aabb->max;
-		make_bvh();
+	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax );
+
+	bool ray_intersect( intersect::Ray &ray, intersect::Payload &payload ){
+		return BVHTraversal::ray_intersect( bvh, ray, payload );
 	}
 
 	void get_edges( std::vector<trimesh::vec> &edges ){ bvh->get_edges(edges); } // return edges of BVH for debugging visuals
@@ -86,7 +75,6 @@ public:
 private:
 	std::string material;
 	std::shared_ptr<AABB> aabb;
-
 
 	bool load_node( std::string filename );
 

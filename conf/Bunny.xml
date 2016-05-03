@@ -6,7 +6,7 @@
 		<File type="string" value="bunny.ply" />
 
 		<XForm type="scale" value="1  1  1" />
-		<XForm type="translate" value="0  0.5  0" />
+		<XForm type="translate" value="0  0.2  0" />
 		<XForm type="rotate" value="0  0  0" />
 
 

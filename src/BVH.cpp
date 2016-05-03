@@ -35,7 +35,7 @@ void BVHNode::get_edges( std::vector<trimesh::vec> &edges ){
 }
 
 
-void BVHNode::make_tree( const std::vector< std::shared_ptr<BaseObject> > objects, int split_axis, int max_depth ) {
+void BVHNode::make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> > objects, int split_axis, int max_depth ) {
 
 	using namespace trimesh;	
 
@@ -57,21 +57,6 @@ void BVHNode::make_tree( const std::vector< std::shared_ptr<BaseObject> > object
 	if( objects.size()==0 ){ return; }
 	else if( objects.size()==1 || max_depth <= 0 ){
 		m_objects = objects;
-/*
-		for( int o=0; o<objects.size(); ++o ){
-			if( objects[o]->get_type() == "trimesh" ){
-				std::shared_ptr<TriangleMesh> mesh = std::static_pointer_cast<TriangleMesh>(objects[o]);
-				left_child = std::shared_ptr<BVHNode>( new BVHNode() );
-				left_child->make_tree( mesh->faces, mesh->vertices, mesh->normals, split_axis, max_depth );
-			}
-			else if( objects[o]->get_type() == "tetmesh" ){
-				std::shared_ptr<TetMesh> mesh = std::static_pointer_cast<TetMesh>(objects[o]);
-				left_child = std::shared_ptr<BVHNode>( new BVHNode() );
-				left_child->make_tree( mesh->faces, mesh->vertices, mesh->normals, split_axis, max_depth );
-			}
-			else{ m_objects.push_back( objects[o] ); }
-		}
-*/
 		return;
 	}
 
@@ -90,143 +75,43 @@ void BVHNode::make_tree( const std::vector< std::shared_ptr<BaseObject> > object
 	// Create the children
 	left_child = std::shared_ptr<BVHNode>( new BVHNode() );
 	right_child = std::shared_ptr<BVHNode>( new BVHNode() );
-	left_child->make_tree( left_objs, split_axis, max_depth );
-	right_child->make_tree( right_objs, split_axis, max_depth );
+	left_child->make_tree_spatial( left_objs, split_axis, max_depth );
+	right_child->make_tree_spatial( right_objs, split_axis, max_depth );
 }
 
 
-// Make a BVH tree from a triangle mesh
-void BVHNode::make_tree( const std::vector<trimesh::TriMesh::Face> &faces,
-	const std::vector<trimesh::point> &vertices, const std::vector<trimesh::vec> &normals,
-	int split_axis, int max_depth ) {
-/*
-	using namespace trimesh;
-
-	split_axis = (split_axis+1)%3;
-	m_split = split_axis;
-	max_depth--;
-
-	// Create the aabb
-	for( int i=0; i<faces.size(); ++i ){
-		*aabb += vertices[ faces[i][0] ];
-		*aabb += vertices[ faces[i][1] ];
-		*aabb += vertices[ faces[i][2] ];
-	}
-	point center = aabb->center();
-
-	// If num faces == 1, we're done
-	if( faces.size()==0 ){ return; }
-	else if( faces.size()==1 || max_depth <= 0 ){
-		std::shared_ptr<BaseObject> face_list( new FaceList( faces, vertices, normals) );
-		m_objects.push_back( face_list );
-		return;
-	}
-
-	// Split faces
-	std::vector<TriMesh::Face> left_faces, right_faces;
-	for( int i=0; i<faces.size(); ++i ){
-		double fc = helper::face_center( faces[i], vertices )[ split_axis ];
-		if( fc <= center[ split_axis ] ){ left_faces.push_back( faces[i] ); }
-		else if( fc > center[ split_axis ] ){ right_faces.push_back( faces[i] ); }
-	}
-
-	// Check to make sure things got sorted. Sometimes small meshes fail.
-	if( left_faces.size()==0 ){ left_faces.push_back( right_faces.back() ); right_faces.pop_back(); }
-	if( right_faces.size()==0 ){ right_faces.push_back( left_faces.back() ); left_faces.pop_back(); }
-
-	// Create the children
-	left_child = std::shared_ptr<BVHNode>( new BVHNode() );
-	right_child = std::shared_ptr<BVHNode>( new BVHNode() );
-	left_child->make_tree( left_faces, vertices, normals, split_axis, max_depth );
-	right_child->make_tree( right_faces, vertices, normals, split_axis, max_depth );
-*/
+void BVHNode::make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > objects ){
+	
 }
 
 
-/*
-BVHNode::BVHNode( std::vector< std::shared_ptr<BVHNode> > bvhnodes, int split_axis ){
-	using namespace trimesh;
-
-	left_child = NULL;
-	right_child = NULL;
-	split_axis = (split_axis+1)%3;
-	m_split = split_axis;
-
-
-	// Create the aabb
-	aabb = std::shared_ptr<AABB>( new AABB );
-	for( int i=0; i<bvhnodes.size(); ++i ){
-		*aabb += *bvhnodes[i]->bounds();
-	}
-	point center = aabb->center();
-
-	// Special cases for numbers
-	if( bvhnodes.size()==0 ){ return; }
-	else if( bvhnodes.size()==1 ){
-		left_child = bvhnodes[0];
-		return;
-	}
-	else if( bvhnodes.size()==2 ){
-		left_child = bvhnodes[0];
-		right_child = bvhnodes[1];
-		return;
-	}
-
-	// Otherwise, sort and store
-	std::vector< std::shared_ptr<BVHNode> > left_nodes, right_nodes;
-	for( int i=0; i<bvhnodes.size(); ++i ){
-		double fc = bvhnodes[i]->bounds()->center()[ split_axis ];
-		if( fc <= center[ split_axis ] ){ left_nodes.push_back( bvhnodes[i] ); }
-		else if( fc > center[ split_axis ] ){ right_nodes.push_back( bvhnodes[i] ); }
-	}
-
-	// Check to make sure things got sorted. Sometimes small meshes fail.
-	if( left_nodes.size()==0 ){ left_nodes.push_back( right_nodes.back() ); right_nodes.pop_back(); }
-	if( right_nodes.size()==0 ){ right_nodes.push_back( left_nodes.back() ); left_nodes.pop_back(); }
-
-	// Create the children
-	left_child = std::shared_ptr<BVHNode>( new BVHNode( left_nodes, split_axis ) );
-	right_child = std::shared_ptr<BVHNode>( new BVHNode( right_nodes, split_axis ) );
-}
-
-*/
-/*
-bool BVHTraversal::ray_intersect( std::shared_ptr<BVHNode> node, const trimesh::vec &origin, const trimesh::vec &dir,
-		double &t_min, double &t_max, ray_payload &payload ) {
-
-	payload.curr_depth++;
+bool BVHTraversal::ray_intersect( std::shared_ptr<BVHNode> node, intersect::Ray &ray, intersect::Payload &payload ) {
 
 	// See if we even hit the box
-	if( !node->aabb->ray_intersect( origin, dir, t_min, t_max ) ){ return false; }
+	if( !node->aabb->ray_intersect( ray.origin, ray.direction, payload.t_min, payload.t_max ) ){ return false; }
 
 	// If we have children, progress down the tree
 	if( node->left_child != NULL || node->right_child != NULL ){
 
-		ray_payload payload_l=payload; ray_payload payload_r=payload;
-		double t_min_l = t_min; double t_min_r = t_min;
-		double t_max_l = t_max; double t_max_r = t_max;
+		intersect::Payload payload_l=payload; intersect::Payload payload_r=payload;
 		bool left_hit=false, right_hit=false;
-		if( node->left_child != NULL ){ left_hit = ray_intersect( node->left_child, origin, dir, t_min_l, t_max_l, payload_l ); }
-		if( node->right_child != NULL ){ right_hit = ray_intersect( node->right_child, origin, dir, t_min_r, t_max_r, payload_r ); }
+		if( node->left_child != NULL ){ left_hit = ray_intersect( node->left_child, ray, payload_l ); }
+		if( node->right_child != NULL ){ right_hit = ray_intersect( node->right_child, ray, payload_r ); }
 
 		// See which child is closer
 		if( left_hit && right_hit ){
-			if( t_max_r < t_max_l ){
-				t_max = t_max_r;
+			if( payload_r.t_max < payload_l.t_max ){
 				payload = payload_r;
 				return true;
 			}
-			t_max = t_max_l;
 			payload = payload_l;
 			return true;
 		}
 		else if( right_hit ){
-			t_max = t_max_r;
 			payload = payload_r;
 			return true;
 		}
 		else if( left_hit ){
-			t_max = t_max_l;
 			payload = payload_l;
 			return true;
 		}
@@ -237,7 +122,7 @@ bool BVHTraversal::ray_intersect( std::shared_ptr<BVHNode> node, const trimesh::
 	else{
 		bool obj_hit = false;
 		for( int i=0; i<node->m_objects.size(); ++i ){
-			if( node->m_objects[i]->ray_intersect( origin, dir, t_min, t_max, payload ) ){ obj_hit=true; }
+			if( node->m_objects[i]->ray_intersect( ray, payload ) ){ obj_hit=true; }
 		}
 		return obj_hit;
 	} // end ray_intersect objects
@@ -245,7 +130,5 @@ bool BVHTraversal::ray_intersect( std::shared_ptr<BVHNode> node, const trimesh::
 	return false;
 
 } // end ray intersect
-
-*/
 
 

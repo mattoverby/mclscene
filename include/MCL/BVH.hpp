@@ -50,21 +50,19 @@ public:
 	int m_split; // split axis
 	std::vector< std::shared_ptr<BaseObject> > m_objects;
 
-	// Make a tree from a list of objects
-	void make_tree( const std::vector< std::shared_ptr<BaseObject> > objects, int split_axis, int max_depth );
+	void make_tree(const std::vector< std::shared_ptr<BaseObject> > objects ){ make_tree_spatial(objects,0,10); }
 
-	// Make a tree from a triangle mesh
-	void make_tree( const std::vector<trimesh::TriMesh::Face> &faces,
-		const std::vector<trimesh::point> &vertices,
-		const std::vector<trimesh::vec> &normals,
-		int split_axis, int max_depth );
+	// Spatial split, round robin axis
+	void make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> > objects, int split_axis, int max_depth );
+
+	// Use the parallel sorting construction (Lauterbach et al. 2009)
+	void make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > objects );
 };
 
 
 class BVHTraversal {
 public:
-//	static inline bool ray_intersect( std::shared_ptr<BVHNode> node, const trimesh::vec &origin, const trimesh::vec &dir,
-//		double &t_min, double &t_max, ray_payload &payload );
+	static bool ray_intersect( std::shared_ptr<BVHNode> node, intersect::Ray &ray, intersect::Payload &payload );
 };
 
 

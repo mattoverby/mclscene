@@ -33,33 +33,22 @@
 ///
 namespace mcl {
 
-class ray_payload {
-public:
-	ray_payload() : material(""), curr_depth(0) {}
-	trimesh::vec hit_point, normal;
-	std::string material;
-	int curr_depth;
-};
-
-
 //
 //	Base, pure virtual
 //
 class BaseObject {
 public:
-	virtual ~BaseObject(){}
+	virtual std::string get_type() const = 0;
+	virtual void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ) = 0;
+
 	virtual const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return NULL; }
 	virtual void apply_xform( const trimesh::xform &xf ){}
 	virtual std::string get_material() const { return ""; }
-
-//	virtual bool ray_intersect( const trimesh::vec &origin, const trimesh::vec &dir,
-//		double &t_min, double &t_max, ray_payload &payload ){ return false; }
-
-	virtual std::string get_type() const = 0;
-
-	virtual void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ) = 0;
+	virtual bool ray_intersect( intersect::Ray &ray, intersect::Payload &payload ){ return false; }
 
 	virtual void get_edges( std::vector<trimesh::vec> &edges ){} // return edges of BVH for debugging visuals
+
+	virtual ~BaseObject(){}
 };
 
 

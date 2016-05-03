@@ -43,6 +43,7 @@ namespace parse {
 	}
 };
 
+
 //
 //	A parameter parsed from the scene file, stored as a string.
 //	Has casting functions for convenience, but assumes the type
@@ -54,6 +55,7 @@ namespace parse {
 class Param {
 public:
 	Param( std::string tag_, std::string value_, std::string type_ ) : tag(tag_), value(value_), type(type_) {}
+
 	double as_double() const;
 	char as_char() const;
 	std::string as_string() const;
@@ -76,10 +78,10 @@ public:
 	void fix_color(); // if 0-255, sets 0-1
 };
 
+
 //
-//	A component is basically a list of params (e.g. Object, Light, etc...)
-//	Components are parsed from the xml file and always stored. If a callback exists
-//	for that type, it's called.
+//	A component is basically a list of params.
+//	Components are parsed from the xml file and always stored.
 //
 class Component {
 public:
@@ -90,6 +92,55 @@ public:
 	bool exists( std::string tag ) const;
 	std::vector<Param> params;
 };
+
+
+//
+//	Parses the parameters from a pugi node and creates a vector of them.
+//
+static void load_params( std::vector<Param> &params, const pugi::xml_node &curr_node ){
+
+	pugi::xml_node::iterator param = curr_node.begin();
+	for( param; param != curr_node.end(); ++param ) {
+		pugi::xml_node curr_param = *param;
+
+		std::string tag = parse::to_lower( curr_param.name() );
+		std::string type_id = curr_param.attribute("type").value();
+		std::string value = curr_param.attribute("value").value();
+		Param newP( tag, value, type_id );
+
+		if( tag == "xform" ){
+
+			std::stringstream ss( value );
+			trimesh::vec v; ss >> v[0] >> v[1] >> v[2];
+
+			trimesh::xform x_form;
+
+			if( parse::to_lower(type_id) == "scale" ){
+				trimesh::xform scale = trimesh::xform::scale(v[0],v[1],v[2]);
+				x_form = scale * x_form;
+			}
+			else if( parse::to_lower(type_id) == "translate" ){
+				trimesh::xform translate = trimesh::xform::trans(v[0],v[1],v[2]);
+				x_form = translate * x_form;
+			}
+			else if( parse::to_lower(type_id) == "rotate" ){
+				v *= (M_PI/180.f); // convert to radians
+				trimesh::xform rot;
+				rot = rot * trimesh::xform::rot( v[0], trimesh::vec(1.f,0.f,0.f) );
+				rot = rot * trimesh::xform::rot( v[1], trimesh::vec(0.f,1.f,0.f) );
+				rot = rot * trimesh::xform::rot( v[2], trimesh::vec(0.f,0.f,1.f) );
+				x_form = x_form * rot;
+			}
+
+			std::stringstream xf_ss; xf_ss << x_form;
+			newP.value = xf_ss.str();
+		}
+
+		params.push_back( newP );	
+
+	} // end loop params
+
+} // end load parameters
 
 
 } // end namespace mcl

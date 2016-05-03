@@ -34,12 +34,13 @@ namespace mcl {
 class TriangleRef : public BaseObject {
 public:
 	TriangleRef( trimesh::vec *p0_, trimesh::vec *p1_, trimesh::vec *p2_,
-		trimesh::vec *n0_, trimesh::vec *n1_, trimesh::vec *n2_ ) :
-		p0(p0_), p1(p1_), p2(p2_), n0(n0_), n1(n1_), n2(n2_) {}
+		trimesh::vec *n0_, trimesh::vec *n1_, trimesh::vec *n2_, std::string mat="" ) :
+		p0(p0_), p1(p1_), p2(p2_), n0(n0_), n1(n1_), n2(n2_), material(mat) {}
 
 	std::string get_type() const { return "triangle"; }
 
 	trimesh::vec *p0, *p1, *p2, *n0, *n1, *n2;
+	std::string material;
 
 	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
 		AABB aabb; aabb += *p0; aabb += *p1; aabb += *p2;
@@ -47,7 +48,9 @@ public:
 	}
 
 	bool ray_intersect( intersect::Ray &ray, intersect::Payload &payload ){
-		return intersect::ray_triangle( ray, *p0, *p1, *p2, *n0, *n1, *n2, payload );
+		bool hit = intersect::ray_triangle( ray, *p0, *p1, *p2, *n0, *n1, *n2, payload );
+		if( hit ){ payload.material = material; }
+		return hit;
 	}
 };
 
@@ -77,16 +80,10 @@ public:
 
 	std::string get_material() const { return material; }
 
-	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
-		if( !aabb->valid ){
-			for( int f=0; f<faces.size(); ++f ){
-				(*aabb) += vertices[ faces[f][0] ];
-				(*aabb) += vertices[ faces[f][1] ];
-				(*aabb) += vertices[ faces[f][2] ];
-			}
-		}
-		bmin = aabb->min; bmax = aabb->max;
-		make_bvh();
+	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax );
+
+	bool ray_intersect( intersect::Ray &ray, intersect::Payload &payload ){
+		return BVHTraversal::ray_intersect( bvh, ray, payload );
 	}
 
 	void get_edges( std::vector<trimesh::vec> &edges ){ bvh->get_edges(edges); } // return edges of BVH for debugging visuals

@@ -38,12 +38,25 @@ void TriangleMesh::make_bvh( bool recompute ){
 	for( int i=0; i<faces.size(); ++i ){
 		TriMesh::Face f = faces[i];
 		std::shared_ptr<BaseObject> tri(
-			new TriangleRef( &vertices[f[0]], &vertices[f[1]], &vertices[f[2]], &normals[f[0]], &normals[f[1]], &normals[f[2]] )
+			new TriangleRef( &vertices[f[0]], &vertices[f[1]], &vertices[f[2]], &normals[f[0]], &normals[f[1]], &normals[f[2]], material )
 		);
 		tri_refs.push_back( tri );
 	} // end loop faces
 
 	// Now create a BVH with the triangle refs
-	bvh->make_tree( tri_refs, 0, 10 );
+	bvh->make_tree( tri_refs );
 
 } // end make triangle refs
+
+
+void TriangleMesh::get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
+	if( !aabb->valid ){
+		for( int f=0; f<faces.size(); ++f ){
+			(*aabb) += vertices[ faces[f][0] ];
+			(*aabb) += vertices[ faces[f][1] ];
+			(*aabb) += vertices[ faces[f][2] ];
+		}
+	}
+	bmin = aabb->min; bmax = aabb->max;
+	make_bvh();
+}
