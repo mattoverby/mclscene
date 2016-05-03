@@ -22,7 +22,7 @@
 #ifndef MCLSCENE_TETMESH_H
 #define MCLSCENE_TETMESH_H 1
 
-#include "MCL/Object.hpp"
+#include "MCL/TriangleMesh.hpp"
 #include "MCL/VertexSort.hpp"
 
 namespace mcl {
@@ -46,7 +46,7 @@ public:
 	std::vector< trimesh::vec > normals; // zero length for all non-surface normals
 	std::vector< trimesh::TriMesh::Face > faces; // surface triangles
 
-	TetMesh( std::string mat="" ) : temp_trimesh(NULL), material(mat) {}
+	TetMesh( std::string mat="" ) : temp_trimesh(NULL), material(mat), bvh(new MeshBVH) {}
 
 	std::string get_type() const { return "tetmesh"; }
 
@@ -69,10 +69,23 @@ public:
 
 	std::string get_material() const { return material; }
 
-	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){}//TODO
+	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
+		if( !bvh->valid ){
+			bvh->valid = true;
+			bvh->make_tree( faces, vertices, 0, 10 );
+		}
+		bmin = bvh->bounds()->min; bmax = bvh->bounds()->max;
+	}
+
+	void get_edges( std::vector<trimesh::vec> &edges ){ // return edges of BVH for debugging visuals
+		trimesh::vec n,x; get_aabb(n,x); // build the bvh
+		bvh->get_edges( edges );
+	}
 
 private:
 	std::string material;
+
+	std::shared_ptr<MeshBVH> bvh;
 
 	// Created on first call to as_TriMesh()
 	std::shared_ptr<trimesh::TriMesh> temp_trimesh;

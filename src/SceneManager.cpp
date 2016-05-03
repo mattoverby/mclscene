@@ -37,17 +37,14 @@ void SceneManager::build_boundary(){
 	bsphere.valid = false;
 	Miniball<3,float> mb;
 
-//	for( int i=0; i<cameras.size(); ++i ){
-//		mb.check_in(cameras[i].pos);
-//	}
-
 //	for( int i=0; i<lights.size(); ++i ){
 //		if( lights[i].type=="point" ){ mb.check_in(lights[i].pos); }
 //	}
 
-	build_meshes();
-	for( int i=0; i<meshes.size(); ++i ){
-		mb.check_in( meshes[i]->vertices.begin(), meshes[i]->vertices.end() );
+	for( int i=0; i<objects.size(); ++i ){
+		vec min, max;
+		objects[i]->get_aabb( min, max );
+		mb.check_in( min ); mb.check_in( max );
 	}
 
 	mb.build();
@@ -72,7 +69,7 @@ void SceneManager::build_meshes(){
 }
 
 
-bool SceneManager::load( std::string xmlfile ){
+bool SceneManager::load( std::string xmlfile, bool auto_build ){
 
 	std::string xmldir = parse::fileDir( xmlfile );
 
@@ -82,6 +79,8 @@ bool SceneManager::load( std::string xmlfile ){
 		std::cerr << "\n**SceneManager Error: Unable to load " << xmlfile << std::endl;
 		return false;
 	}
+
+	objects_built = false;
 
 	// Get the node that stores scene info
 	pugi::xml_node head_node = doc.first_child();
@@ -117,18 +116,22 @@ bool SceneManager::load( std::string xmlfile ){
 
 	} // end loop scene info
 
-	return build_components();	
-
-//	return true;
+	if( auto_build ){ return build_components(); }
+	return true;
 
 } // end load xml file
 
 
 bool SceneManager::build_components(){
 
+	// Only build scene components once per load(...) call
+	if( objects_built ){ return false; }
+
+	// Add default builders
 	if( obj_builders.size()==0 ){ add_callback( BuildObjCallback(default_build_object) ); }
 	if( mat_builders.size()==0 ){ add_callback( BuildMatCallback(default_build_material) ); }
 
+	// Loop components and invoke callbacks
 	for( int j=0; j<components.size(); ++j ){
 
 		std::string tag = parse::to_lower(components[j].tag);
@@ -198,6 +201,7 @@ bool SceneManager::build_components(){
 
 	} // end loop components
 
+	objects_built = true;
 	return true;
 
 } // end build components
@@ -205,27 +209,19 @@ bool SceneManager::build_components(){
 
 
 void SceneManager::build_bvh(){
-/*
-	// Need meshes
-	build_meshes();
-	mesh_bvh.clear();
 
-	// Create all of the mesh bvhs
-	for( int i=0; i<meshes.size(); ++i ){
-		std::shared_ptr<BVHNode> bvh = make_tree( meshes[i].get() );
-		mesh_bvh.push_back( bvh );
-	}
+	if( root_bvh==NULL ){ root_bvh = std::shared_ptr<BVHNode>( new BVHNode() ); }
+	else{ root_bvh.reset( new BVHNode() ); }
 
-	root_bvh = make_tree( mesh_bvh );
-*/
+	int max_depth = 10;
+	root_bvh->make_tree( objects, 0, max_depth );
 }
 
 
-//std::shared_ptr<BVHNode> SceneManager::get_bvh( bool recompute ){
-//	if( recompute || mesh_bvh.size()==0 ){ build_bvh(); }
-//	return root_bvh;
-//}
-
+std::shared_ptr<BVHNode> SceneManager::get_bvh( bool recompute ){
+	if( recompute || root_bvh==NULL ){ build_bvh(); }
+	return root_bvh;
+}
 
 
 mcl::Component &SceneManager::get( std::string name ){

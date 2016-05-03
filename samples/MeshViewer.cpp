@@ -13,8 +13,6 @@ int main(int argc, char *argv[]){
 	if( !scene.load( std::string(argv[1]) ) ){ return 0; }
 	else{ printf( "Successfully loaded xml file.\n"); }
 
-	scene.build_bvh();
-
 	Gui gui( &scene );
 	gui.display();
 

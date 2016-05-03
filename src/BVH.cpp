@@ -23,88 +23,65 @@
 
 using namespace mcl;
 
-void AABB::get_edges( std::vector<trimesh::vec> &edges ){
-	using namespace trimesh;
-	// Bottom quad
-	point a = min;
-	point b( max[0], min[1], min[2] );
-	point c( max[0], min[1], max[2] );
-	point d( min[0], min[1], max[2] );
-	// Top quad
-	point e( min[0], max[1], min[2] );
-	point f( max[0], max[1], min[2] );
-	point g = max;
-	point h( min[0], max[1], max[2] );
 
-	// make edges
-	// bottom
-	edges.push_back( a ); edges.push_back( b );
-	edges.push_back( a ); edges.push_back( d );
-	edges.push_back( c ); edges.push_back( b );
-	edges.push_back( c ); edges.push_back( d );
-	// top
-	edges.push_back( e ); edges.push_back( f );
-	edges.push_back( e ); edges.push_back( h );
-	edges.push_back( g ); edges.push_back( f );
-	edges.push_back( g ); edges.push_back( h );
-	// columns
-	edges.push_back( d ); edges.push_back( h );
-	edges.push_back( min ); edges.push_back( e );
-	edges.push_back( b ); edges.push_back( f );
-	edges.push_back( c ); edges.push_back( max );
+void BVHNode::get_edges( std::vector<trimesh::vec> &edges ){
+	aabb->get_edges( edges );
+	if( left_child != NULL ){ left_child->get_edges( edges ); }
+	if( right_child != NULL ){ right_child->get_edges( edges ); }
 
-} // end make edges
+	for( int i=0; i<m_objects.size(); ++i ){
+		m_objects[i]->get_edges( edges );
+	}
+}
 
-/*
-BVHNode::BVHNode( const std::vector<trimesh::TriMesh::Face> &faces, const std::vector<trimesh::point> &vertices, int split_axis, int max_depth ) {
-	using namespace trimesh;
 
-	left_child = NULL;
-	right_child = NULL;
+void BVHNode::make_tree( const std::vector< std::shared_ptr<BaseObject> > objects, int split_axis, int max_depth ) {
+
+	using namespace trimesh;	
+
 	split_axis = (split_axis+1)%3;
 	m_split = split_axis;
 	max_depth--;
 
 	// Create the aabb
-	aabb = std::shared_ptr<AABB>( new AABB );
-	for( int i=0; i<faces.size(); ++i ){
-		*aabb += vertices[ faces[i][0] ];
-		*aabb += vertices[ faces[i][1] ];
-		*aabb += vertices[ faces[i][2] ];
+	std::vector< point > obj_centers; // store the centers for later lookup
+	for( int i=0; i<objects.size(); ++i ){
+		vec bmin, bmax; objects[i]->get_aabb( bmin, bmax );
+		*aabb += bmin;
+		*aabb += bmax;
+		obj_centers.push_back( (bmin+bmax)*0.5f );
 	}
 	point center = aabb->center();
 
 	// If num faces == 1, we're done
-	if( faces.size()==0 ){ return; }
-	else if( faces.size()==1 || max_depth <= 0 ){
-		m_faces = faces;
-		return;
-	}
-	else if( faces.size()==2 ){
-		std::vector<TriMesh::Face> left_faces(1,faces[0]), right_faces(1,faces[1]);
-		left_child = std::shared_ptr<BVHNode>( new BVHNode( left_faces, vertices, split_axis, max_depth ) );
-		right_child = std::shared_ptr<BVHNode>( new BVHNode( right_faces, vertices, split_axis, max_depth ) );
+	if( objects.size()==0 ){ return; }
+	else if( objects.size()==1 || max_depth <= 0 ){
+		m_objects = objects;
 		return;
 	}
 
 	// Split faces
-	std::vector<TriMesh::Face> left_faces, right_faces;
-	for( int i=0; i<faces.size(); ++i ){
-		double fc = helper::face_center( faces[i], vertices )[ split_axis ];
-		if( fc <= center[ split_axis ] ){ left_faces.push_back( faces[i] ); }
-		else if( fc > center[ split_axis ] ){ right_faces.push_back( faces[i] ); }
+	std::vector< std::shared_ptr<BaseObject> > left_objs, right_objs;
+	for( int i=0; i<objects.size(); ++i ){
+		double oc = obj_centers[i][split_axis];
+		if( oc <= center[ split_axis ] ){ left_objs.push_back( objects[i] ); }
+		else if( oc > center[ split_axis ] ){ right_objs.push_back( objects[i] ); }
 	}
 
 	// Check to make sure things got sorted. Sometimes small meshes fail.
-	if( left_faces.size()==0 ){ left_faces.push_back( right_faces.back() ); right_faces.pop_back(); }
-	if( right_faces.size()==0 ){ right_faces.push_back( left_faces.back() ); left_faces.pop_back(); }
+	if( left_objs.size()==0 ){ left_objs.push_back( right_objs.back() ); right_objs.pop_back(); }
+	if( right_objs.size()==0 ){ right_objs.push_back( left_objs.back() ); left_objs.pop_back(); }
 
 	// Create the children
-	left_child = std::shared_ptr<BVHNode>( new BVHNode( left_faces, vertices, split_axis, max_depth ) );
-	right_child = std::shared_ptr<BVHNode>( new BVHNode( right_faces, vertices, split_axis, max_depth ) );
+	left_child = std::shared_ptr<BVHNode>( new BVHNode() );
+	right_child = std::shared_ptr<BVHNode>( new BVHNode() );
+	left_child->make_tree( left_objs, split_axis, max_depth );
+	right_child->make_tree( right_objs, split_axis, max_depth );
 }
 
 
+
+/*
 BVHNode::BVHNode( std::vector< std::shared_ptr<BVHNode> > bvhnodes, int split_axis ){
 	using namespace trimesh;
 
@@ -151,12 +128,5 @@ BVHNode::BVHNode( std::vector< std::shared_ptr<BVHNode> > bvhnodes, int split_ax
 }
 
 */
-
-
-void BVHNode::get_edges( std::vector<trimesh::vec> &edges ){
-	aabb->get_edges( edges );
-	if( left_child != NULL ){ left_child->get_edges( edges ); }
-	if( right_child != NULL ){ right_child->get_edges( edges ); }
-}
 
 

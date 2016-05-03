@@ -40,7 +40,6 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 	std::shared_ptr<BaseMaterial> mat( flat_gray );
 	scene->materials.push_back( mat ); // store it to the scene for later
 
-
 	// Get tet and tri meshes
 	scene->build_meshes();
 	for( int i=0; i<scene->objects.size(); ++i ){
@@ -48,6 +47,9 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 		if( mat_str.size()==0 ){ trimesh_materials.push_back( mat ); }
 		else{ trimesh_materials.push_back( scene->materials_map[mat_str] ); }
 	} // end draw scene objects
+
+	// build the bvh
+	scene->get_bvh();
 
 	bsphere = scene->get_bsphere();
 	global_xf = trimesh::xform::trans(0, 0, -10.0f * bsphere.r) *
@@ -117,7 +119,7 @@ bool Gui::draw( const float screen_dt ){
 		draw_trimesh( trimesh_materials[i], scene->meshes[i].get() );
 	}
 
-	#if 0
+	#if 1
 		static std::vector<trimesh::point> edges;
 		if( !edges.size() ){ scene->get_bvh()->get_edges( edges ); }
 		glDisable(GL_LIGHTING);

@@ -23,15 +23,34 @@
 #define MCLSCENE_TRIANGLEMESH_H 1
 
 #include "Object.hpp"
+#include "BVH.hpp"
 
 namespace mcl {
+
+//
+//	Special class for mesh bvh
+//
+class MeshBVH : public BVHNode {
+public:
+	MeshBVH() : BVHNode(), valid(false) {}
+	void make_tree( const std::vector<trimesh::TriMesh::Face> &faces, const std::vector<trimesh::point> &vertices, int split_axis, int max_depth );
+	std::vector<trimesh::TriMesh::Face> m_faces;
+	bool valid;
+};
+
 
 //
 //	Just a convenient wrapper to plug into the system
 //
 class TriangleMesh : public BaseObject {
 public:
-	TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm, std::string mat="" ) : tris(tm), filename(""), material(mat) {}
+	TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm, std::string mat="" ) : tris(tm), vertices(tm->vertices), normals(tm->normals), faces(tm->faces),
+		filename(""), bvh(new MeshBVH), material(mat) {}
+
+	// Mesh data
+	std::vector<trimesh::point> &vertices;
+	std::vector<trimesh::vec> &normals;
+	std::vector<trimesh::TriMesh::Face> &faces;
 
 	std::string get_type() const { return "trimesh"; }
 
@@ -42,12 +61,20 @@ public:
 	std::string get_material() const { return material; }
 
 	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
-		tris->bbox.valid = false;
-		tris->need_bbox();
-		bmin = tris->bbox.min; bmax = tris->bbox.max;
+		if( !bvh->valid ){
+			bvh->valid = true;
+			bvh->make_tree( faces, vertices, 0, 10 );
+		}
+		bmin = bvh->bounds()->min; bmax = bvh->bounds()->max;
+	}
+
+	void get_edges( std::vector<trimesh::vec> &edges ){ // return edges of BVH for debugging visuals
+		trimesh::vec n,x; get_aabb(n,x); // build the bvh
+		bvh->get_edges( edges );
 	}
 
 private:
+	std::shared_ptr<MeshBVH> bvh;
 	std::string filename;
 	std::shared_ptr<trimesh::TriMesh> tris;
 	std::string material;

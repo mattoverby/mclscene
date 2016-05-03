@@ -69,10 +69,12 @@ set( MCLSCENE_SRCS
 	include/MCL/Param.hpp		src/Param.cpp
 	include/MCL/Object.hpp		src/Object.cpp
 	include/MCL/BVH.hpp		src/BVH.cpp
+	include/MCL/TriangleMesh.hpp	src/TriangleMesh.cpp
 	include/MCL/VertexSort.hpp
 	include/MCL/RenderUtils.hpp
 	include/MCL/Camera.hpp
 	include/MCL/Light.hpp
+	include/MCL/AABB.hpp
 	include/MCL/Material.hpp
 	include/MCL/DefaultBuilders.hpp
 )

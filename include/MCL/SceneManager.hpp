@@ -33,10 +33,10 @@
 
 //
 //	Creating a scene through SceneManager is done in three steps:
-//	1) Create the scene via component containers (see Param.hpp). This can be done
+//	1) Add builder callbacks to the SceneManager.
+//	2) Create the scene via component containers (see Param.hpp). This can be done
 //	   programatically or by a call to load(...).
-//	2) Add builder callbacks to the SceneManager.
-//	3) Call build_components() to invoke the builder callbacks.
+//	3) If load was not called with auto_build=true, call build_components().
 //
 //
 namespace mcl {
@@ -54,25 +54,25 @@ typedef boost::function<void( Component &component )> BuildCallback; // generic 
 class SceneManager {
 
 	public:
+		SceneManager() { root_bvh=NULL; bsphere.r=0.f; }
+
+		//
 		// Load a configuration file, can be called multiple times for different files.
 		// Additional calls will add (or replace) stuff to the scene.
-		// This fills the components member data.
+		// This fills the components member data. If auto_build is true, build_components
+		// is called after the file is parsed.
 		// Returns true on success
-		bool load( std::string xmlfile );
+		//
+		bool load( std::string xmlfile, bool auto_build=true );
 
-		// Build all objects as a trimesh. I use this for OpenGL rendering of scenes.
-		// Only objects that have the get_TriMesh() function are built this way.
-		void build_meshes();
-		std::vector< std::shared_ptr<trimesh::TriMesh> > meshes;
+		//
+		// Computes bounding volume heirarchy (AABB)
+		//
+		std::shared_ptr<BVHNode> get_bvh( bool recompute=false );
 
-		// Builds bounding volume heirarchies for each individual object
-		// (same indices as meshes) as well as the whole scene
-		// (obtained through get_bvh).
-		void build_bvh();
-//		std::shared_ptr<BVHNode> get_bvh( bool recompute=false );
-//		std::vector< std::shared_ptr<BVHNode> > mesh_bvh;
-
-		// Computes the world bounding if it hasn't already
+		//
+		// Computes the world bounding sphere
+		//
 		trimesh::TriMesh::BSphere get_bsphere( bool recompute=false );
 
 		//
@@ -93,6 +93,13 @@ class SceneManager {
 		bool build_components();
 
 		//
+		// Build all objects as a trimesh. I use this for OpenGL rendering of scenes.
+		// Only objects that have the get_TriMesh() function are built this way.
+		//
+		void build_meshes();
+		std::vector< std::shared_ptr<trimesh::TriMesh> > meshes;
+
+		//
 		// Builder callbacks are executing on a call to build_components()
 		//
 		void add_callback( BuildCamCallback cb ){ cam_builders.push_back( cb ); }
@@ -102,7 +109,7 @@ class SceneManager {
 		void add_callback( BuildCallback cb ){ builders.push_back( cb ); }
 
 		//
-		// Vectors of scene components created through the builder callbacks.
+		// Scene components returned from the builder callbacks.
 		//
 		std::vector< std::shared_ptr<BaseObject> > objects;
 		std::vector< std::shared_ptr<BaseMaterial> > materials;
@@ -115,9 +122,11 @@ class SceneManager {
 
 	protected:
 		// Root bvh is created by build_bvh
+		void build_bvh();
 		std::shared_ptr<BVHNode> root_bvh;
 
 		// Builder vectors
+		bool objects_built;
 		std::vector< BuildCamCallback > cam_builders;
 		std::vector< BuildObjCallback > obj_builders;
 		std::vector< BuildLightCallback > light_builders;

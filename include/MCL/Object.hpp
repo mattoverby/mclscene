@@ -23,9 +23,8 @@
 #define MCLSCENE_OBJECT_H 1
 
 #include "TriMeshBuilder.h"
-#include <memory>
-#include <cassert>
-#include "MCL/Param.hpp"
+#include "Param.hpp"
+#include "AABB.hpp"
 
 ///
 ///	Simple object types
@@ -43,9 +42,10 @@ public:
 	virtual void apply_xform( const trimesh::xform &xf ){}
 	virtual std::string get_material() const { return ""; }
 
-	virtual std::string get_type() const { return ""; }
+	virtual std::string get_type() const = 0;
 	// virtual std::string save() = 0; TODO
 	virtual void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ) = 0;
+	virtual void get_edges( std::vector<trimesh::vec> &edges ){} // return edges of BVH for debugging visuals
 };
 
 
@@ -54,9 +54,9 @@ public:
 //
 class Sphere : public BaseObject {
 public:
-	Sphere() : tris(NULL), center(0,0,0), radius(1.0), tessellation(32) {}
+	Sphere() : center(0,0,0), radius(1.0) {}
 
-	Sphere( trimesh::vec cent, double rad, int tess=32 ) : tris(NULL), center(cent), radius(rad), tessellation(tess) {}
+	Sphere( trimesh::vec cent, double rad ) : center(cent), radius(rad) {}
 
 	std::string get_type() const { return "sphere"; }
 
@@ -67,10 +67,6 @@ public:
 
 	trimesh::vec center;
 	double radius;
-
-private:
-	std::shared_ptr<trimesh::TriMesh> tris;
-	int tessellation;
 };
 
 
@@ -79,9 +75,9 @@ private:
 //
 class Box : public BaseObject {
 public:
-	Box() : boxmin(0,0,0), boxmax(1,1,1), tris(NULL), tessellation(1) {}
+	Box() : boxmin(0,0,0), boxmax(1,1,1) {}
 
-	Box( trimesh::vec bmin, trimesh::vec bmax, int tess=1 ) : boxmin(bmin), boxmax(bmax), tris(NULL), tessellation(tess) {}
+	Box( trimesh::vec bmin, trimesh::vec bmax ) : boxmin(bmin), boxmax(bmax) {}
 
 	std::string get_type() const { return "box"; }
 
@@ -90,10 +86,6 @@ public:
 	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
 		bmin = boxmin; bmax = boxmax;
 	}
-
-private:
-	std::shared_ptr<trimesh::TriMesh> tris;
-	int tessellation;
 };
 
 
@@ -103,9 +95,9 @@ private:
 //
 class Plane : public BaseObject {
 public:
-	Plane() : width(20), length(20), noise(0.0), tris(NULL) {}
+	Plane() : width(20), length(20) {}
 
-	Plane( int w, int l ) : width(w), length(l), noise(0.0), tris(NULL) {}
+	Plane( int w, int l ) : width(w), length(l) {}
 
 	std::string get_type() const { return "plane"; }
 
@@ -113,10 +105,7 @@ public:
 		bmin = trimesh::vec(-1,-1,0); bmax = trimesh::vec(1,1,0);
 	}
 
-private:
-	std::shared_ptr<trimesh::TriMesh> tris;
 	int width, length;
-	double noise;
 };
 
 
