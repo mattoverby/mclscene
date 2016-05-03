@@ -22,3 +22,28 @@
 #include "MCL/Object.hpp"
 
 using namespace mcl;
+/*
+void FaceList::get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
+	if( !aabb->valid ){
+		aabb->valid = true;
+		for( int f=0; f<faces.size(); ++f ){
+			(*aabb) += vertices[ faces[f][0] ];
+			(*aabb) += vertices[ faces[f][1] ];
+			(*aabb) += vertices[ faces[f][2] ];
+		}
+	}
+	bmin = aabb->min; bmax = aabb->max;
+}
+
+
+bool FaceList::ray_intersect( const trimesh::vec &origin, const trimesh::vec &dir,
+	double &t_min, double &t_max, ray_payload &payload ){
+
+
+	for( int f=0; f<faces.size(); ++f ){
+
+		
+
+	}
+}
+*/

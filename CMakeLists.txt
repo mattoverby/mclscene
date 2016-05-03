@@ -76,6 +76,7 @@ set( MCLSCENE_SRCS
 	include/MCL/Light.hpp
 	include/MCL/AABB.hpp
 	include/MCL/Material.hpp
+	include/MCL/RayIntersect.hpp
 	include/MCL/DefaultBuilders.hpp
 )
 

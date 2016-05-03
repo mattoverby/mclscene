@@ -35,18 +35,9 @@ bool TetMesh::load( std::string filename ){
 	if( !load_ele( filename ) ){ return false; }
 	if( !need_surface() ){ return false; }
 	need_normals();
+	tris->need_tstrips();
 
 	return true;
-}
-
-
-void TetMesh::init( const std::vector< Param > &params ){
-	std::string filename = "";
-	for( int i=0; i<params.size(); ++i ){
-		if( parse::to_lower(params[i].tag)=="file" ){ filename=params[i].as_string(); }
-	}
-	if( !filename.size() ){ printf("\nTetMesh Error: No file specified"); assert(false); }
-	if( !load( filename ) ){ assert(false); }
 }
 
 
@@ -98,30 +89,6 @@ void TetMesh::apply_xform( const trimesh::xform &xf ){
 			trimesh::normalize(normals[i]);
 		}
 	}
-}
-
-
-// Creates a new trimesh object from ALL vertices and stuff
-const std::shared_ptr<trimesh::TriMesh> TetMesh::get_TriMesh(){
-	if( temp_trimesh == NULL ){ temp_trimesh = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
-
-	// Check data sizes
-	if( temp_trimesh.get()->vertices.size() != vertices.size() ){ temp_trimesh.get()->vertices.resize( vertices.size() ); }
-	if( temp_trimesh.get()->normals.size() != normals.size() ){ temp_trimesh.get()->normals.resize( normals.size() ); }
-	if( temp_trimesh.get()->faces.size() != faces.size() ){ temp_trimesh.get()->faces.resize( faces.size() ); }
-
-	#pragma omp parallel for
-	for( int i=0; i<vertices.size(); ++i ){ temp_trimesh.get()->vertices[i]=vertices[i]; }
-
-	#pragma omp parallel for
-	for( int i=0; i<normals.size(); ++i ){ temp_trimesh.get()->normals[i]=normals[i]; }
-
-	#pragma omp parallel for
-	for( int i=0; i<faces.size(); ++i ){ temp_trimesh.get()->faces[i]=faces[i]; }
-
-	temp_trimesh.get()->need_tstrips();
-
-	return temp_trimesh;
 }
 
 
@@ -263,4 +230,25 @@ bool TetMesh::need_surface(){
 	return true;
 
 } // end create boundary mesh
+
+
+void TetMesh::make_bvh( bool recompute ){
+
+	using namespace trimesh;
+
+	if( tri_refs.size()>0 && !recompute ){ return; }
+	tri_refs.clear();
+
+	for( int i=0; i<faces.size(); ++i ){
+		TriMesh::Face f = faces[i];
+		std::shared_ptr<BaseObject> tri(
+			new TriangleRef( &vertices[f[0]], &vertices[f[1]], &vertices[f[2]], &normals[f[0]], &normals[f[1]], &normals[f[2]] )
+		);
+		tri_refs.push_back( tri );
+	} // end loop faces
+
+	// Now create a BVH with the triangle refs
+	bvh->make_tree( tri_refs, 0, 10 );
+
+} // end make triangle refs
 

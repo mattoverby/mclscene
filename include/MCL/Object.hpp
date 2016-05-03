@@ -22,14 +22,24 @@
 #ifndef MCLSCENE_OBJECT_H
 #define MCLSCENE_OBJECT_H 1
 
+#include <memory>
 #include "TriMeshBuilder.h"
 #include "Param.hpp"
 #include "AABB.hpp"
+#include "RayIntersect.hpp"
 
 ///
-///	Simple object types
+///	Object Primitives
 ///
 namespace mcl {
+
+class ray_payload {
+public:
+	ray_payload() : material(""), curr_depth(0) {}
+	trimesh::vec hit_point, normal;
+	std::string material;
+	int curr_depth;
+};
 
 
 //
@@ -42,70 +52,14 @@ public:
 	virtual void apply_xform( const trimesh::xform &xf ){}
 	virtual std::string get_material() const { return ""; }
 
+//	virtual bool ray_intersect( const trimesh::vec &origin, const trimesh::vec &dir,
+//		double &t_min, double &t_max, ray_payload &payload ){ return false; }
+
 	virtual std::string get_type() const = 0;
-	// virtual std::string save() = 0; TODO
+
 	virtual void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ) = 0;
+
 	virtual void get_edges( std::vector<trimesh::vec> &edges ){} // return edges of BVH for debugging visuals
-};
-
-
-//
-//	Sphere
-//
-class Sphere : public BaseObject {
-public:
-	Sphere() : center(0,0,0), radius(1.0) {}
-
-	Sphere( trimesh::vec cent, double rad ) : center(cent), radius(rad) {}
-
-	std::string get_type() const { return "sphere"; }
-
-	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
-		bmin = trimesh::vec( center[0]-radius, center[1]-radius, center[2]-radius );
-		bmax = trimesh::vec( center[0]+radius, center[1]+radius, center[2]+radius );
-	}
-
-	trimesh::vec center;
-	double radius;
-};
-
-
-//
-//	Box, represented by a trimesh
-//
-class Box : public BaseObject {
-public:
-	Box() : boxmin(0,0,0), boxmax(1,1,1) {}
-
-	Box( trimesh::vec bmin, trimesh::vec bmax ) : boxmin(bmin), boxmax(bmax) {}
-
-	std::string get_type() const { return "box"; }
-
-	trimesh::vec boxmin, boxmax;
-
-	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
-		bmin = boxmin; bmax = boxmax;
-	}
-};
-
-
-//
-//	Plane, 2 or more triangles
-//	TODO have a position
-//
-class Plane : public BaseObject {
-public:
-	Plane() : width(20), length(20) {}
-
-	Plane( int w, int l ) : width(w), length(l) {}
-
-	std::string get_type() const { return "plane"; }
-
-	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
-		bmin = trimesh::vec(-1,-1,0); bmax = trimesh::vec(1,1,0);
-	}
-
-	int width, length;
 };
 
 

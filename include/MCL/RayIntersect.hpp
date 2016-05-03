@@ -19,57 +19,58 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_BVH_H
-#define MCLSCENE_BVH_H 1
+#ifndef MCLSCENE_RAYINTERSECT_H
+#define MCLSCENE_RAYINTERSECT_H 1
 
-#include "Object.hpp"
-#include "AABB.hpp"
 #include <memory>
+#include <Vec.h>
 
 namespace mcl {
 
-namespace helper {
-	static inline trimesh::point face_center( const trimesh::TriMesh::Face &f, const std::vector<trimesh::point> &vertices ){
-		return (vertices[ f[0] ]+vertices[ f[1] ]+vertices[ f[2] ])/3.f;
-	}
-}
+namespace intersect {
 
+	struct Ray {
+		trimesh::vec origin, direction;
+	};
 
-class BVHNode {
-public:
-	BVHNode() : aabb( new AABB ) { left_child=NULL; right_child=NULL; }
-	virtual ~BVHNode(){}
+	struct Payload {
+		Payload(){ t_min=1e-8; t_max=9999999.0; }
+		double t_min, t_max;
+		trimesh::vec n, hit_point;
+	};
 
-	void get_edges( std::vector<trimesh::vec> &edges );
-	const std::shared_ptr<AABB> bounds(){ return aabb; }
+	// ray -> triangle without early exit
+	static inline bool ray_triangle( const Ray &ray, const trimesh::vec &p0, const trimesh::vec &p1, const trimesh::vec &p2,
+		const trimesh::vec &n0, const trimesh::vec &n1, const trimesh::vec &n2, Payload &payload ){
+		using namespace trimesh;
 
-	std::shared_ptr<BVHNode> left_child;
-	std::shared_ptr<BVHNode> right_child;
-	std::shared_ptr<AABB> aabb;
+		const vec e0 = p1 - p0;
+		const vec e1 = p0 - p2;
+		const vec n = e1.cross( e0 );
 
-	int m_split; // split axis
-	std::vector< std::shared_ptr<BaseObject> > m_objects;
+		const vec e2 = ( 1.0f / n.dot( ray.direction ) ) * ( p0 - ray.origin );
+		const vec i  = ray.direction.cross( e2 );
 
-	// Make a tree from a list of objects
-	void make_tree( const std::vector< std::shared_ptr<BaseObject> > objects, int split_axis, int max_depth );
+		float beta  = i.dot( e1 );
+		float gamma = i.dot( e0 );
+		float alpha = 1.f - beta - gamma;
 
-	// Make a tree from a triangle mesh
-	void make_tree( const std::vector<trimesh::TriMesh::Face> &faces,
-		const std::vector<trimesh::point> &vertices,
-		const std::vector<trimesh::vec> &normals,
-		int split_axis, int max_depth );
-};
+		float t = n.dot( e2 );
+		bool hit = ( (t<payload.t_max) & (t>payload.t_min) & (beta>=0.0f) & (gamma>=0.0f) & (beta+gamma<=1) );
 
+		if( hit ){
+			payload.n = alpha*n0 + alpha*n1 + alpha*n2;
+			payload.t_max = t;
+			payload.hit_point = ray.origin + ray.direction*t;
+			return true;
+		}
 
-class BVHTraversal {
-public:
-//	static inline bool ray_intersect( std::shared_ptr<BVHNode> node, const trimesh::vec &origin, const trimesh::vec &dir,
-//		double &t_min, double &t_max, ray_payload &payload );
-};
+		return false;
 
+	} // end  ray -> triangle
+
+} // end namespace intersect
 
 } // end namespace mcl
-
-
 
 #endif

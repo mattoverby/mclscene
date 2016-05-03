@@ -24,47 +24,26 @@
 using namespace mcl;
 
 
-// Make a BVH tree from a triangle mesh
-void MeshBVH::make_tree( const std::vector<trimesh::TriMesh::Face> &faces,
-	const std::vector<trimesh::point> &vertices, int split_axis, int max_depth ) {
+void TriangleMesh::make_bvh( bool recompute ){
+
 	using namespace trimesh;
 
-	split_axis = (split_axis+1)%3;
-	m_split = split_axis;
-	max_depth--;
+	if( tri_refs.size()>0 && !recompute ){ return; }
+	tri_refs.clear();
 
-	// Create the aabb
+	// Create the triangle reference objects
+	tris->need_faces();
+	tris->need_normals();
+
 	for( int i=0; i<faces.size(); ++i ){
-		*aabb += vertices[ faces[i][0] ];
-		*aabb += vertices[ faces[i][1] ];
-		*aabb += vertices[ faces[i][2] ];
-	}
-	point center = aabb->center();
+		TriMesh::Face f = faces[i];
+		std::shared_ptr<BaseObject> tri(
+			new TriangleRef( &vertices[f[0]], &vertices[f[1]], &vertices[f[2]], &normals[f[0]], &normals[f[1]], &normals[f[2]] )
+		);
+		tri_refs.push_back( tri );
+	} // end loop faces
 
-	// If num faces == 1, we're done
-	if( faces.size()==0 ){ return; }
-	else if( faces.size()==1 || max_depth <= 0 ){
-		m_faces = faces;
-		return;
-	}
-	
-	// Split faces
-	std::vector<TriMesh::Face> left_faces, right_faces;
-	for( int i=0; i<faces.size(); ++i ){
-		double fc = helper::face_center( faces[i], vertices )[ split_axis ];
-		if( fc <= center[ split_axis ] ){ left_faces.push_back( faces[i] ); }
-		else if( fc > center[ split_axis ] ){ right_faces.push_back( faces[i] ); }
-	}
+	// Now create a BVH with the triangle refs
+	bvh->make_tree( tri_refs, 0, 10 );
 
-	// Check to make sure things got sorted. Sometimes small meshes fail.
-	if( left_faces.size()==0 ){ left_faces.push_back( right_faces.back() ); right_faces.pop_back(); }
-	if( right_faces.size()==0 ){ right_faces.push_back( left_faces.back() ); left_faces.pop_back(); }
-
-	// Create the children
-	left_child = std::shared_ptr<BVHNode>( new MeshBVH() );
-	right_child = std::shared_ptr<BVHNode>( new MeshBVH() );
-	std::static_pointer_cast<MeshBVH>(left_child)->make_tree( left_faces, vertices, split_axis, max_depth );
-	std::static_pointer_cast<MeshBVH>(right_child)->make_tree( right_faces, vertices, split_axis, max_depth );
-
-}
-
+} // end make triangle refs

@@ -27,14 +27,15 @@ public:
 	//
 	struct Face {
 		int v[3];
+		int idx;
 
-		Face() {}
+		Face() { idx=-1; }
 		Face(const int &v0, const int &v1, const int &v2)
-			{ v[0] = v0; v[1] = v1; v[2] = v2; }
+			{ v[0] = v0; v[1] = v1; v[2] = v2; idx=-1; }
 		Face(const int *v_)
-			{ v[0] = v_[0]; v[1] = v_[1]; v[2] = v_[2]; }
+			{ v[0] = v_[0]; v[1] = v_[1]; v[2] = v_[2]; idx=-1; }
 		template <class S> explicit Face(const S &x)
-			{ v[0] = x[0];  v[1] = x[1];  v[2] = x[2]; }
+			{ v[0] = x[0];  v[1] = x[1];  v[2] = x[2]; idx=-1; }
 		int &operator[] (int i) { return v[i]; }
 		const int &operator[] (int i) const { return v[i]; }
 		operator const int * () const { return &(v[0]); }
@@ -130,6 +131,10 @@ public:
 			unpack_tstrips();
 		else if (!grid.empty())
 			triangulate_grid();
+
+		for( int i=0; i<faces.size(); ++i ){
+			faces[i].idx=i;
+		}
 	}
 	void need_normals( bool recompute=false );
 	void need_pointareas();

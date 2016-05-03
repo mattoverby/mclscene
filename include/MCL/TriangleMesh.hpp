@@ -22,20 +22,33 @@
 #ifndef MCLSCENE_TRIANGLEMESH_H
 #define MCLSCENE_TRIANGLEMESH_H 1
 
-#include "Object.hpp"
 #include "BVH.hpp"
 
 namespace mcl {
 
+
 //
-//	Special class for mesh bvh
+//	Triangle (reference)
+//	Contains pointers to vertices and normals of a TriangleMesh
 //
-class MeshBVH : public BVHNode {
+class TriangleRef : public BaseObject {
 public:
-	MeshBVH() : BVHNode(), valid(false) {}
-	void make_tree( const std::vector<trimesh::TriMesh::Face> &faces, const std::vector<trimesh::point> &vertices, int split_axis, int max_depth );
-	std::vector<trimesh::TriMesh::Face> m_faces;
-	bool valid;
+	TriangleRef( trimesh::vec *p0_, trimesh::vec *p1_, trimesh::vec *p2_,
+		trimesh::vec *n0_, trimesh::vec *n1_, trimesh::vec *n2_ ) :
+		p0(p0_), p1(p1_), p2(p2_), n0(n0_), n1(n1_), n2(n2_) {}
+
+	std::string get_type() const { return "triangle"; }
+
+	trimesh::vec *p0, *p1, *p2, *n0, *n1, *n2;
+
+	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
+		AABB aabb; aabb += *p0; aabb += *p1; aabb += *p2;
+		bmin = aabb.min; bmax = aabb.max;
+	}
+
+	bool ray_intersect( intersect::Ray &ray, intersect::Payload &payload ){
+		return intersect::ray_triangle( ray, *p0, *p1, *p2, *n0, *n1, *n2, payload );
+	}
 };
 
 
@@ -43,9 +56,13 @@ public:
 //	Just a convenient wrapper to plug into the system
 //
 class TriangleMesh : public BaseObject {
+private:
+	std::shared_ptr<trimesh::TriMesh> tris;
+
 public:
-	TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm, std::string mat="" ) : tris(tm), vertices(tm->vertices), normals(tm->normals), faces(tm->faces),
-		filename(""), bvh(new MeshBVH), material(mat) {}
+	TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm, std::string mat="" ) :
+		tris(tm), vertices(tm->vertices), normals(tm->normals), faces(tm->faces),
+		material(mat), aabb(new AABB), bvh(new BVHNode) {}
 
 	// Mesh data
 	std::vector<trimesh::point> &vertices;
@@ -61,23 +78,28 @@ public:
 	std::string get_material() const { return material; }
 
 	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
-		if( !bvh->valid ){
-			bvh->valid = true;
-			bvh->make_tree( faces, vertices, 0, 10 );
+		if( !aabb->valid ){
+			for( int f=0; f<faces.size(); ++f ){
+				(*aabb) += vertices[ faces[f][0] ];
+				(*aabb) += vertices[ faces[f][1] ];
+				(*aabb) += vertices[ faces[f][2] ];
+			}
 		}
-		bmin = bvh->bounds()->min; bmax = bvh->bounds()->max;
+		bmin = aabb->min; bmax = aabb->max;
+		make_bvh();
 	}
 
-	void get_edges( std::vector<trimesh::vec> &edges ){ // return edges of BVH for debugging visuals
-		trimesh::vec n,x; get_aabb(n,x); // build the bvh
-		bvh->get_edges( edges );
-	}
+	void get_edges( std::vector<trimesh::vec> &edges ){ bvh->get_edges(edges); } // return edges of BVH for debugging visuals
 
 private:
-	std::shared_ptr<MeshBVH> bvh;
-	std::string filename;
-	std::shared_ptr<trimesh::TriMesh> tris;
+	std::shared_ptr<AABB> aabb;
 	std::string material;
+
+	// Triangle refs are used for BVH hook-in.
+	// The BVH is also created in this function.
+	void make_bvh( bool recompute=false );
+	std::vector< std::shared_ptr<BaseObject> > tri_refs;
+	std::shared_ptr<BVHNode> bvh;
 };
 
 
