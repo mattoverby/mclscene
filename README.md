@@ -5,9 +5,9 @@
 
 	mclscene is a generic scene loader for some of my test projects. It parses an XML file
 	and stores metadata, which can then be extracted by another application for whatever purpose.
-	Included are distributions of trimesh2 (Szymon Rusinkiewicz, gfx.cs.princeton.edu/proj/trimesh2)
-	and pugixml (Arseny Kapoulkine, pugixml.org). Currently it only handles triangle meshes and
-	tetrahedral meshes.
+	Included are distributions of: trimesh2 (Szymon Rusinkiewicz, gfx.cs.princeton.edu/proj/trimesh2),
+	pugixml (Arseny Kapoulkine, pugixml.org), and libmorton (Jeroen Baert, http://www.forceflow.be)
+	 Currently it only handles triangle meshes and tetrahedral meshes.
 
 	There is a viewer sample which can render the scene, but requires OpenGL and SFML 2.
 

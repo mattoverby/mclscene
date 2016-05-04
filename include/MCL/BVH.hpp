@@ -25,6 +25,7 @@
 #include "Object.hpp"
 #include "AABB.hpp"
 #include <memory>
+#include "../../deps/libmorton/morton3D.h"
 
 namespace mcl {
 
