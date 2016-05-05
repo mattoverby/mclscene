@@ -248,7 +248,7 @@ void TetMesh::make_bvh( bool recompute ){
 	} // end loop faces
 
 	// Now create a BVH with the triangle refs
-	bvh->make_tree( tri_refs );
+//	bvh->make_tree( tri_refs );
 
 } // end make triangle refs
 

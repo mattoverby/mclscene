@@ -214,21 +214,29 @@ void SceneManager::build_bvh(){
 	else{ root_bvh.reset( new BVHNode() ); }
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 
-	std::cout << "spatial bvh begin: " << std::flush;
-	start = std::chrono::system_clock::now();
-	root_bvh->make_tree( objects );
-	end = std::chrono::system_clock::now();
-	std::chrono::duration<double> elapsed_seconds = end-start;
-	std::cout << elapsed_seconds.count() << "s\n";
+	// Split mode:
+	//	0 = spatial
+	//	1 = linear (parallel)
+	int split_mode = 1;
 
+	if( split_mode == 0 ){
+		std::cout << "spatial bvh begin: " << std::flush;
+		start = std::chrono::system_clock::now();
+		root_bvh->make_tree_spatial( objects );
+		end = std::chrono::system_clock::now();
+		std::chrono::duration<double> elapsed_seconds = end-start;
+		std::cout << elapsed_seconds.count() << "s\n";
+	}
 
-	std::cout << "linear bvh begin: " << std::flush;
-	start = std::chrono::system_clock::now();
-	root_bvh->make_tree_lbvh( objects );
-	end = std::chrono::system_clock::now();
-	elapsed_seconds = end-start;
-	std::cout << elapsed_seconds.count() << "s\n";
-}
+	else if( split_mode == 1 ){
+		std::cout << "linear bvh begin: " << std::flush;
+		start = std::chrono::system_clock::now();
+		root_bvh->make_tree_lbvh( objects );
+		end = std::chrono::system_clock::now();
+		std::chrono::duration<double> elapsed_seconds = end-start;
+		std::cout << elapsed_seconds.count() << "s\n";
+	}
+} // end build bvh
 
 
 std::shared_ptr<BVHNode> SceneManager::get_bvh( bool recompute ){

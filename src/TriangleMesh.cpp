@@ -23,7 +23,7 @@
 
 using namespace mcl;
 
-
+/*
 void TriangleMesh::make_bvh( bool recompute ){
 
 	using namespace trimesh;
@@ -47,7 +47,7 @@ void TriangleMesh::make_bvh( bool recompute ){
 	bvh->make_tree( tri_refs );
 
 } // end make triangle refs
-
+*/
 
 void TriangleMesh::get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
 	if( !aabb->valid ){
@@ -58,5 +58,28 @@ void TriangleMesh::get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
 		}
 	}
 	bmin = aabb->min; bmax = aabb->max;
-	make_bvh();
+//	make_bvh();
 }
+
+
+void TriangleMesh::make_tri_refs(){
+
+	using namespace trimesh;
+
+	tri_refs.clear();
+
+	// Create the triangle reference objects
+	tris->need_faces();
+	tris->need_normals();
+
+	for( int i=0; i<faces.size(); ++i ){
+		TriMesh::Face f = faces[i];
+		std::shared_ptr<BaseObject> tri(
+			new TriangleRef( &vertices[f[0]], &vertices[f[1]], &vertices[f[2]], &normals[f[0]], &normals[f[1]], &normals[f[2]], material )
+		);
+		tri_refs.push_back( tri );
+	} // end loop faces
+
+} // end make triangle references
+
+

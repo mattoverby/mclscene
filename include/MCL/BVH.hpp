@@ -33,6 +33,10 @@ namespace helper {
 	static inline trimesh::point face_center( const trimesh::TriMesh::Face &f, const std::vector<trimesh::point> &vertices ){
 		return (vertices[ f[0] ]+vertices[ f[1] ]+vertices[ f[2] ])/3.f;
 	}
+
+	// use: bool is_one = helper::check_bit( myInt, bit_position );
+	static inline bool check_bit( uint64_t variable, int bit ){ return ( variable & (1 << bit) ); }
+
 }
 
 // ENCODE 3D 64-bit morton code : For loop
@@ -64,13 +68,15 @@ public:
 	int m_split; // split axis
 	std::vector< std::shared_ptr<BaseObject> > m_objects;
 
-	void make_tree(const std::vector< std::shared_ptr<BaseObject> > objects ){ make_tree_spatial(objects,0,10); }
-
 	// Spatial split, round robin axis
-	void make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> > objects, int split_axis, int max_depth );
+	void make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> > &objects );
+	void spatial_split( const std::vector< std::shared_ptr<BaseObject> > &objects,
+		const std::vector< int > &queue, const int split_axis, const int max_depth );
 
 	// Use the parallel sorting construction (Lauterbach et al. 2009)
-	void make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > objects );
+	void make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &objects );
+	void lbvh_split( const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
+		const std::vector< std::pair< uint64_t, int > > &morton_codes, const int max_depth );
 };
 
 
