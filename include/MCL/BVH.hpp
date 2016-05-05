@@ -25,7 +25,7 @@
 #include "Object.hpp"
 #include "AABB.hpp"
 #include <memory>
-#include "../../deps/libmorton/morton3D.h"
+#include <chrono>
 
 namespace mcl {
 
@@ -35,6 +35,19 @@ namespace helper {
 	}
 }
 
+// ENCODE 3D 64-bit morton code : For loop
+template<typename morton> inline morton morton_encode(const uint32_t  x, const uint32_t y, const uint32_t z){
+	morton answer = 0;
+	unsigned int checkbits = floor((sizeof(morton) * 8.0f / 3.0f));
+	for (unsigned int i = 0; i <= checkbits; ++i) {
+		morton mshifted= (morton) 0x1 << i; // Here we need to cast 0x1 to 64bits, otherwise there is a bug when morton code is larger than 32 bits
+		unsigned int shift = 2 * i;
+		answer |= ((x & mshifted) << shift)
+		| ((y & mshifted) << (shift + 1))
+		| ((z & mshifted) << (shift + 2));
+	}
+	return answer;
+}
 
 class BVHNode {
 public:

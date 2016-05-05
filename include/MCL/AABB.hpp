@@ -116,6 +116,12 @@ public:
 
 	trimesh::vec center(){ return (min+max)*0.5f; }
 
+	AABB& operator+(const trimesh::vec& p){
+		if( valid ){ min.min(p); max.max(p); }
+		else{ min = p; max = p; }
+		valid = true;
+	}
+
 	AABB& operator+=(const AABB& aabb){
 		if( valid ){ min.min( aabb.min ); max.max( aabb.max ); }
 		else{ min = aabb.min; max = aabb.max; }

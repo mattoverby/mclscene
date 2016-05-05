@@ -36,7 +36,7 @@ namespace mcl {
 //
 //	Base, pure virtual
 //
-class BaseObject {
+class BaseObject : public std::enable_shared_from_this<BaseObject> {
 public:
 	virtual std::string get_type() const = 0;
 	virtual void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ) = 0;
@@ -45,6 +45,9 @@ public:
 	virtual void apply_xform( const trimesh::xform &xf ){}
 	virtual std::string get_material() const { return ""; }
 	virtual bool ray_intersect( intersect::Ray &ray, intersect::Payload &payload ){ return false; }
+
+	// If an object is made up of other (smaller) objects, they are needed for BVH construction
+	virtual void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){ prims.push_back( shared_from_this() ); }
 
 	virtual void get_edges( std::vector<trimesh::vec> &edges ){} // return edges of BVH for debugging visuals
 

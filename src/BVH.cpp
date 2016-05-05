@@ -36,8 +36,7 @@ void BVHNode::get_edges( std::vector<trimesh::vec> &edges ){
 
 
 void BVHNode::make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> > objects, int split_axis, int max_depth ) {
-
-	using namespace trimesh;	
+	using namespace trimesh;
 
 	split_axis = (split_axis+1)%3;
 	m_split = split_axis;
@@ -77,14 +76,53 @@ void BVHNode::make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> 
 	right_child = std::shared_ptr<BVHNode>( new BVHNode() );
 	left_child->make_tree_spatial( left_objs, split_axis, max_depth );
 	right_child->make_tree_spatial( right_objs, split_axis, max_depth );
-}
+
+} // end build spatial split tree
 
 
 void BVHNode::make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > objects ){
 
-	
+	using namespace trimesh;
 
-}
+	// Get all the primitives in the domain
+	std::vector< std::shared_ptr<BaseObject> > prims;
+	for( int i=0; i<objects.size(); ++i ){ objects[i]->get_primitives( prims ); }
+
+	// Compute their centroids
+	float minx=99999.f, miny=99999.f, minz=99999.f;
+	float maxx=-99999.f, maxy=-99999.f, maxz=-99999.f;
+	std::vector< vec > centroids( prims.size() );
+	#pragma omp parallel for reduction(min:minx,miny,minz) reduction(max:maxx,maxy,maxz)
+	for( int i=0; i<prims.size(); ++i ){
+		vec min, max;
+		prims[i]->get_aabb( min, max );
+		vec cent = (min+max)*0.5f;
+		centroids[i] = cent;
+
+		if( cent[0]<minx ){ minx = cent[0]; }
+		if( cent[1]<miny ){ miny = cent[1]; }
+		if( cent[2]<minz ){ minz = cent[2]; }
+		if( cent[0]>maxx ){ maxx = cent[0]; }
+		if( cent[1]>maxy ){ maxy = cent[1]; }
+		if( cent[2]>maxz ){ maxz = cent[2]; }
+
+	} // end get centroids
+
+	vec world_min( minx, miny, minz ), world_max( maxx, maxy, maxz );
+//https://github.com/elfrank/raytracer-gpupro4/blob/master/AccelerationStructures/LBVH/LBVH.cpp
+	// Assign morton codes
+	std::vector< uint64_t > morton_codes( prims.size() );
+	#pragma omp parallel for
+	for( int i=0; i<prims.size(); ++i ){
+
+		// Get 32bit ints representing (x, y, z) centroid
+		vec cent = centroids[i];
+		
+	//	morton_codes[i] = morton_encode< uint64_t >( cent[0], cent[1], cent[2] );	
+
+	}
+
+} // end build lbvh tree
 
 
 bool BVHTraversal::ray_intersect( std::shared_ptr<BVHNode> node, intersect::Ray &ray, intersect::Payload &payload ) {

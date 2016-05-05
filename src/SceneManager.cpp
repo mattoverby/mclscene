@@ -212,7 +212,22 @@ void SceneManager::build_bvh(){
 
 	if( root_bvh==NULL ){ root_bvh = std::shared_ptr<BVHNode>( new BVHNode() ); }
 	else{ root_bvh.reset( new BVHNode() ); }
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+
+	std::cout << "spatial bvh begin: " << std::flush;
+	start = std::chrono::system_clock::now();
 	root_bvh->make_tree( objects );
+	end = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = end-start;
+	std::cout << elapsed_seconds.count() << "s\n";
+
+
+	std::cout << "linear bvh begin: " << std::flush;
+	start = std::chrono::system_clock::now();
+	root_bvh->make_tree_lbvh( objects );
+	end = std::chrono::system_clock::now();
+	elapsed_seconds = end-start;
+	std::cout << elapsed_seconds.count() << "s\n";
 }
 
 
