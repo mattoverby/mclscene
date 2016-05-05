@@ -83,6 +83,8 @@ bool Gui::update( const float screen_dt ){
 	sf::Event event;
 	while( window->pollEvent(event) ){
 
+		for( int i=0; i<event_callbacks.size(); ++i ){ event_callbacks[i](event); }
+
 		if( event.type == sf::Event::Closed ){ return false; }
 		else if( event.type == sf::Event::Resized ){
 			// adjust the viewport when the window is resized
@@ -119,19 +121,7 @@ bool Gui::draw( const float screen_dt ){
 		draw_trimesh( trimesh_materials[i], scene->meshes[i].get() );
 	}
 
-	#if 1
-		static std::vector<trimesh::point> edges;
-		if( !edges.size() ){ scene->get_bvh()->get_edges( edges ); }
-		glDisable(GL_LIGHTING);
-		glColor3f(1.0, 0.0, 0.0);
-		glBegin(GL_LINES);
-		for( int j=0; j<edges.size(); j+=2 ){
-			glVertex3f(edges[j][0],edges[j][1],edges[j][2]);
-			glVertex3f(edges[j+1][0],edges[j+1][1],edges[j+1][2]);
-		}
-		glEnd();
-		glEnable(GL_LIGHTING);
-	#endif
+	for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i](); }
 
 	glPopMatrix();
 

@@ -1,6 +1,26 @@
 <?xml version="1.0"?>
 <mclScene>
 
+	<Object name="box1" type="sphere" >
+
+		<boxmin type="vec3" value="0 0 0" />
+		<boxmax type="vec3" value="1 1 1" />
+
+		<width type="int" value="30" />
+		<length type="int" value="30" />
+		<noise type="double" value="0.01" />
+
+		<center type="vec3" value="0 0 0" />
+		<radius type="double" value="2" />
+		<tess type="int" value="8" />
+
+		<XForm type="scale" value="1  1  1" />
+		<XForm type="translate" value="0  30  0" />
+		<XForm type="rotate" value="0  0  0" />
+
+		<Material type="string" value="blue_diff" />
+	</Object>
+<!--
 	<Object name="box1" type="plane" >
 
 		<boxmin type="vec3" value="0 0 0" />
@@ -20,6 +40,7 @@
 
 		<Material type="string" value="blue_diff" />
 	</Object>
+-->
 
 	<Material name="blue_diff" type="diffuse">
 		<Diffuse type="vec3" value="120  120  255" />

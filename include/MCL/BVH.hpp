@@ -26,8 +26,12 @@
 #include "AABB.hpp"
 #include <memory>
 #include <chrono>
+#include <bitset>
 
 namespace mcl {
+
+typedef uint64_t morton_type;
+typedef uint32_t morton_encode_type;
 
 namespace helper {
 	static inline trimesh::point face_center( const trimesh::TriMesh::Face &f, const std::vector<trimesh::point> &vertices ){
@@ -35,23 +39,25 @@ namespace helper {
 	}
 
 	// use: bool is_one = helper::check_bit( myInt, bit_position );
-	static inline bool check_bit( uint64_t variable, int bit ){ return ( variable & (1 << bit) ); }
+	static inline bool check_bit( morton_type variable, int bit ){
+		assert( bit >=0 && bit < sizeof(morton_type)*8 );
+		std::bitset<sizeof(morton_type)*8> bs(variable);
+		return ( bs[bit]==1 );
+	}
 
 }
 
-// ENCODE 3D 64-bit morton code : For loop
-template<typename morton> inline morton morton_encode(const uint32_t  x, const uint32_t y, const uint32_t z){
-	morton answer = 0;
-	unsigned int checkbits = floor((sizeof(morton) * 8.0f / 3.0f));
-	for (unsigned int i = 0; i <= checkbits; ++i) {
-		morton mshifted= (morton) 0x1 << i; // Here we need to cast 0x1 to 64bits, otherwise there is a bug when morton code is larger than 32 bits
-		unsigned int shift = 2 * i;
-		answer |= ((x & mshifted) << shift)
-		| ((y & mshifted) << (shift + 1))
-		| ((z & mshifted) << (shift + 2));
+static inline morton_type morton_encode(const morton_encode_type x, const morton_encode_type y, const morton_encode_type z){
+	morton_type answer = 0;
+	for (morton_type i = 0; i < (sizeof(morton_type)*8)/3; ++i) {
+		answer |= ((x & ((morton_type)1 << i)) << 2*i)
+			| ((y & ((morton_type)1 << i)) << (2*i + 1))
+			| ((z & ((morton_type)1 << i)) << (2*i + 2));
 	}
 	return answer;
 }
+
+
 
 class BVHNode {
 public:
@@ -76,7 +82,8 @@ public:
 	// Use the parallel sorting construction (Lauterbach et al. 2009)
 	void make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &objects );
 	void lbvh_split( const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
-		const std::vector< std::pair< uint64_t, int > > &morton_codes, const int max_depth );
+		const std::vector< std::pair< morton_type, int > > &morton_codes, const int max_depth );
+
 };
 
 

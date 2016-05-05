@@ -27,6 +27,7 @@
 #include <png.h>
 #include "SFML/Window.hpp"
 #include "GLCamera.h"
+#include <boost/function.hpp>
 
 namespace mcl {
 
@@ -39,6 +40,9 @@ public:
 	// Returns when window closes.
 	virtual void display();
 
+	void add_render_callback( boost::function<void ()> cb ){ render_callbacks.push_back( cb ); }
+	void add_event_callback( boost::function<void (sf::Event &event)> cb ){ event_callbacks.push_back( cb ); }
+
 protected:
 	virtual bool update( const float screen_dt );
 	virtual bool draw( const float screen_dt );
@@ -47,6 +51,10 @@ protected:
 	virtual void draw_tstrips( const trimesh::TriMesh *themesh );
 	virtual void draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::TriMesh *themesh );
 	virtual void check_mouse( const sf::Event &event, const float screen_dt );
+
+
+	std::vector< boost::function<void ()> > render_callbacks;
+	std::vector< boost::function<void (sf::Event &event)> > event_callbacks;
 
 	std::vector< std::shared_ptr<BaseMaterial> > trimesh_materials;
 

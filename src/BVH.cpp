@@ -21,6 +21,7 @@
 
 #include "MCL/BVH.hpp"
 
+
 using namespace mcl;
 
 
@@ -90,6 +91,8 @@ void BVHNode::spatial_split( const std::vector< std::shared_ptr<BaseObject> > &o
 } // end build spatial split tree
 
 
+float avg_balance = 0.f;
+int num_avg_balance = 0;
 void BVHNode::make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &objects ){
 
 	using namespace trimesh;
@@ -113,29 +116,60 @@ void BVHNode::make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &
 	vec world_len = max_scaled / (world_max-world_min);
 
 	// Assign morton codes
-	std::vector< std::pair< uint64_t, int > > morton_codes( prims.size() );
+	std::vector< std::pair< morton_type, int > > morton_codes( prims.size() );
 	#pragma omp parallel for
 	for( int i=0; i<prims.size(); ++i ){
 
-		// Scale the centroid to a value between 0 and 1024 and convert to integer.
+		// Scale the centroid to a value between 0 and max_scaled and convert to integer.
 		vec cent = centroids[i];
 		cent = ( cent - world_min ) * world_len;
-		unsigned int ix = int( cent[0] );
-		unsigned int iy = int( cent[1] );
-		unsigned int iz = int( cent[2] );
+		morton_encode_type ix = morton_encode_type( cent[0] );
+		morton_encode_type iy = morton_encode_type( cent[1] );
+		morton_encode_type iz = morton_encode_type( cent[2] );
 
-		// Endcode
-		morton_codes[i] = std::make_pair( morton_encode< uint64_t >( ix, iy, iz ), i );
+		morton_codes[i] = std::make_pair( morton_encode( ix, iy, iz ), i );
 	}
 
+	// Find first non-zero most signficant bit
+	int start_bit = 63;
+	bool found=false;
+	for( start_bit = 63; start_bit > 1 && !found; --start_bit ){
+
+		#pragma omp parallel for
+		for( int i=0; i<morton_codes.size(); ++i ){
+			if( helper::check_bit( morton_codes[i].first, start_bit ) ){
+				#pragma omp critical
+				{ found=true; }
+			}
+		}
+
+	} // end find starting bit
+/*
+	std::cout << std::endl;
+	for( int i=0; i<prims.size(); ++i ){
+		vec cent = centroids[i];
+		cent = ( cent - world_min ) * world_len;
+
+		std::cout << i << ":\t" << std::bitset<sizeof(morton_type)*8>( morton_codes[i].first ) << "\t" << centroids[i] << "\t" << std::flush;
+		for( int j=0; j<64; ++j ){
+			if( helper::check_bit( morton_codes[i].first, j ) ){
+				std::cout << j << " " << std::flush;
+			}
+		}
+		std::cout << std::endl;
+	}
+	std::cout << "Starting at bit: " << start_bit << std::endl;
+*/
 	// Now that we have the morton codes, we can recursively build the BVH in a top down manner
-	lbvh_split( 63, prims, morton_codes, 100 );
+	lbvh_split( start_bit, prims, morton_codes, 100 );
+
+	std::cout << "\nBalance: " << avg_balance / float(num_avg_balance) << std::endl;
 
 } // end build lbvh tree
 
 
 void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
-	const std::vector< std::pair< uint64_t, int > > &morton_codes, const int max_depth ){
+	const std::vector< std::pair< morton_type, int > > &morton_codes, const int max_depth ){
 
 	// First, see what bit we're at. If it's the last bit of the morton code,
 	// this is a child and we should add the objects to the scene.
@@ -147,11 +181,14 @@ void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<Base
 	// Check the morton codes at the bit.
 	// 0 = left child, 1 = right child.
 	else{
-		std::vector< std::pair< uint64_t, int > > left_codes, right_codes;
+		std::vector< std::pair< morton_type, int > > left_codes, right_codes;
 		for( int i=0; i<morton_codes.size(); ++i ){
 
 			if( helper::check_bit( morton_codes[i].first, bit ) ){
 				right_codes.push_back( morton_codes[i] );
+
+//		std::cout << bit << ":\t" << std::bitset<8*8>( morton_codes[i].first ) << std::endl;
+
 			} else {
 				left_codes.push_back( morton_codes[i] );
 			}
@@ -161,6 +198,9 @@ void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<Base
 		// Check to make sure things got sorted. Sometimes small meshes fail.
 		if( left_codes.size()==0 ){ left_codes.push_back( right_codes.back() ); right_codes.pop_back(); }
 		if( right_codes.size()==0 ){ right_codes.push_back( left_codes.back() ); left_codes.pop_back(); }
+
+		avg_balance += float(left_codes.size())/float(right_codes.size());
+		num_avg_balance++;
 
 		// Create the children
 		assert( left_codes.size() > 0 && right_codes.size() > 0 );
