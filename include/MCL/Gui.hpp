@@ -28,6 +28,7 @@
 #include "SFML/Window.hpp"
 #include "GLCamera.h"
 #include <boost/function.hpp>
+#include "RenderUtils.hpp"
 
 namespace mcl {
 
@@ -52,6 +53,7 @@ protected:
 	virtual void draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::TriMesh *themesh );
 	virtual void check_mouse( const sf::Event &event, const float screen_dt );
 
+	void save_screenshot();
 
 	std::vector< boost::function<void ()> > render_callbacks;
 	std::vector< boost::function<void (sf::Event &event)> > event_callbacks;

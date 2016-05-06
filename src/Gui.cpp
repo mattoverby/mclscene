@@ -93,6 +93,7 @@ bool Gui::update( const float screen_dt ){
 		}
 		else if( event.type == sf::Event::KeyPressed ){
 			if( event.key.code == sf::Keyboard::Escape ){ return false; }
+			if( event.key.code == sf::Keyboard::S ){ save_screenshot(); }
 		}
 
 	} // end event loop
@@ -355,6 +356,27 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 	}
 
 	glPopMatrix();
+
+}
+
+void Gui::save_screenshot(){
+
+	std::string MY_DATE_FORMAT = "h%H_m%M_s%S";
+	const int MY_DATE_SIZE = 20;
+	static char name[MY_DATE_SIZE];
+	time_t now = time(0);
+	strftime(name, sizeof(name), MY_DATE_FORMAT.c_str(), localtime(&now));
+
+	std::stringstream filename;
+	filename << MCLSCENE_BUILD_DIR << "/screenshot_" << name << ".png";
+	sf::Vector2u windowsize = window->getSize();
+	int w = int(windowsize.x), h = int(windowsize.y);
+	unsigned char *pixels = new unsigned char[w*h*3];
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(0,0, w,h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+	mcl::Draw::flip_image(w,h, pixels);
+	mcl::Draw::save_png(filename.str().c_str(), w,h, pixels);
+	delete[] pixels;
 
 }
 

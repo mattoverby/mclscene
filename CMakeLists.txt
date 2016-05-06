@@ -23,7 +23,9 @@ cmake_minimum_required(VERSION 2.6)
 project(mclscene C CXX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-set( CMAKE_BUILD_TYPE Debug )
+add_definitions( -DMCLSCENE_BUILD_DIR="${CMAKE_CURRENT_BINARY_DIR}" )
+add_definitions( -DMCLSCENE_SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}" )
+set( CMAKE_BUILD_TYPE Release )
 
 #
 #	compilation options
