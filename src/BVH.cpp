@@ -35,17 +35,20 @@ void BVHNode::get_edges( std::vector<trimesh::vec> &edges ){
 	}
 }
 
-
+int n_nodes = 0;
 void BVHNode::make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> > &objects ){
+
+	n_nodes = 1;
 
 	// Get all the primitives in the domain and start construction
 	std::vector< std::shared_ptr<BaseObject> > prims;
 	for( int i=0; i<objects.size(); ++i ){ objects[i]->get_primitives( prims ); }
 	std::vector< int > queue( prims.size() );
 	std::iota( std::begin(queue), std::end(queue), 0 );
-	spatial_split( prims, queue, 0, 100 );
-}
+	spatial_split( prims, queue, 0, 10000 );
 
+	std::cout << "Spatial BVH made " << n_nodes << " nodes. " << std::endl;
+}
 
 void BVHNode::spatial_split( const std::vector< std::shared_ptr<BaseObject> > &objects,
 	const std::vector< int > &queue, const int split_axis, const int max_depth ) {
@@ -87,6 +90,7 @@ void BVHNode::spatial_split( const std::vector< std::shared_ptr<BaseObject> > &o
 	right_child = std::shared_ptr<BVHNode>( new BVHNode() );
 	left_child->spatial_split( objects, left_queue, ((split_axis+1)%3), max_depth-1 );
 	right_child->spatial_split( objects, right_queue, ((split_axis+1)%3), max_depth-1 );
+	n_nodes += 2;
 
 } // end build spatial split tree
 
@@ -94,6 +98,8 @@ void BVHNode::spatial_split( const std::vector< std::shared_ptr<BaseObject> > &o
 float avg_balance = 0.f;
 int num_avg_balance = 0;
 void BVHNode::make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &objects ){
+
+	n_nodes = 1;
 
 	using namespace trimesh;
 
@@ -161,9 +167,10 @@ void BVHNode::make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &
 	std::cout << "Starting at bit: " << start_bit << std::endl;
 */
 	// Now that we have the morton codes, we can recursively build the BVH in a top down manner
-	lbvh_split( start_bit, prims, morton_codes, 100 );
+	lbvh_split( start_bit, prims, morton_codes, 10000 );
 
 	std::cout << "\nBalance: " << avg_balance / float(num_avg_balance) << std::endl;
+	std::cout << "Linear BVH made " << n_nodes << " nodes. " << std::endl;
 
 } // end build lbvh tree
 
@@ -208,6 +215,7 @@ void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<Base
 		right_child = std::shared_ptr<BVHNode>( new BVHNode() );
 		left_child->lbvh_split( bit-1, prims, left_codes, max_depth-1 );
 		right_child->lbvh_split( bit-1, prims, right_codes, max_depth-1 );
+		n_nodes += 2;
 
 	} // end create childrend
 

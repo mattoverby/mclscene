@@ -8,6 +8,7 @@ SceneManager scene;
 void render_callback();
 void event_callback(sf::Event &event);
 std::vector< bool > traversal; // 0 = left, 1 = right
+void scale_mesh( std::string dir );
 bool view_all = false;
 
 int main(int argc, char *argv[]){
@@ -75,5 +76,43 @@ void event_callback(sf::Event &event){
 		else if( event.key.code == sf::Keyboard::Left ){ traversal.push_back( false ); }
 		else if( event.key.code == sf::Keyboard::Right ){ traversal.push_back( true ); }
 		else if( event.key.code == sf::Keyboard::Down ){ view_all = !view_all; }
+		else if( event.key.code == sf::Keyboard::Numpad6 ){ scale_mesh("+x"); }
+		else if( event.key.code == sf::Keyboard::Numpad4 ){ scale_mesh("-x"); }
+		else if( event.key.code == sf::Keyboard::Numpad8 ){ scale_mesh("+y"); }
+		else if( event.key.code == sf::Keyboard::Numpad2 ){ scale_mesh("-y"); }
 	}
 }
+
+
+void scale_mesh( std::string dir ){
+
+
+	float scale_x=1.f;
+	float scale_y=1.f;
+	if( dir=="+x" ){ scale_x = 1.1f; }
+	else if( dir=="-x" ){ scale_x = 0.9f; }
+	else if( dir=="+y" ){ scale_y = 1.1f; }
+	else if( dir=="-y" ){ scale_y = 0.9f; }
+
+	trimesh::xform scale = trimesh::xform::scale(scale_x,scale_y,1.f);
+	if( scene.objects.size() >= 1 ){
+		// Scale the object and remake the BVH
+//		trimesh::vec center = trimesh::mesh_center_of_mass( scene.objects[0]->get_TriMesh().get() );
+//		trimesh::xform translate_in = trimesh::xform::scale(-center[0],-center[1],-center[2]);
+//		trimesh::xform translate_out = trimesh::xform::scale(center[0],center[1],center[2]);
+//		trimesh::xform x_form = translate_out * scale * translate_in;
+
+		scene.objects[0]->apply_xform( scale );
+
+		// Recomputed bounding volumes
+		scene.get_bvh(true);
+		scene.get_bsphere(true);
+	}
+}
+
+
+
+
+
+
+

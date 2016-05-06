@@ -236,6 +236,7 @@ void SceneManager::build_bvh(){
 		std::chrono::duration<double> elapsed_seconds = end-start;
 		std::cout << elapsed_seconds.count() << "s\n";
 	}
+
 } // end build bvh
 
 
