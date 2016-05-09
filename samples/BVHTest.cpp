@@ -15,7 +15,7 @@ int main(int argc, char *argv[]){
 	for( int i=0; i<types.size(); ++i ){
 
 		SceneManager scene;
-		std::stringstream ss; ss << MCLSCENE_SRC_DIR << "/conf/Dillo.xml";
+		std::stringstream ss; ss << MCLSCENE_SRC_DIR << "/conf/Lucy.xml";
 		if( !scene.load( ss.str() ) ){ return 0; }
 		assert( scene.objects.size()==1 );
 
@@ -43,8 +43,8 @@ int main(int argc, char *argv[]){
 			std::string line = oss.str();
 			std::cout << types[i] << ", " << j << ":\t" << line << std::endl;
 
-			// Skip first iteration: always fastest because it skips reallocations with deletes
-			// in my trimesh geometry class.
+			// Skip first iteration: overly fast because it skips reallocations
+			// with deletes in my trimesh geometry class.
 			if( j>0 ){ filestream << line.c_str(); }
 
 			clip_mesh(scene);

@@ -17,10 +17,10 @@ hold on;
     
     %set(gca,'xscale','log');
     %set(gca,'yscale','log');
-    ylabel('Run Time (seconds)','FontSize',12,'FontName','Helvetica','FontWeight','Bold')
+    ylabel('Run Time (Seconds)','FontSize',12,'FontName','Helvetica','FontWeight','Bold')
     xlabel('Number of Triangles (Millions)','FontSize',12,'FontName','Helvetica','FontWeight','Bold')
 
-legend('Spatial BVH','Linear BVH','Location','northwest');
+legend('Object Median BVH','Linear BVH','Location','northwest');
 hold off;
 
 % resize and print

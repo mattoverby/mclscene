@@ -28,9 +28,10 @@
 #include <chrono>
 #include <bitset>
 
+
 namespace mcl {
 
-typedef uint64_t morton_type;
+typedef uint32_t morton_type;
 typedef uint32_t morton_encode_type;
 
 namespace helper {
@@ -49,7 +50,7 @@ namespace helper {
 
 static inline morton_type morton_encode(const morton_encode_type x, const morton_encode_type y, const morton_encode_type z){
 	morton_type answer = 0;
-	for (morton_type i = 0; i < (sizeof(morton_type)*8)/3; ++i) {
+	for( morton_type i = 0; i < (sizeof(morton_type)*8)/3; ++i ){
 		answer |= ((x & ((morton_type)1 << i)) << 2*i)
 			| ((y & ((morton_type)1 << i)) << (2*i + 1))
 			| ((z & ((morton_type)1 << i)) << (2*i + 2));
@@ -71,14 +72,14 @@ public:
 	std::shared_ptr<BVHNode> right_child;
 	std::shared_ptr<AABB> aabb;
 
-	int m_split; // split axis, used for spatial BVH build.
+	int m_split; // split axis, used for Object Median BVH build.
 	std::vector< std::shared_ptr<BaseObject> > m_objects;
 
 	// Number of children below this node on the tree.
 	// TODO: For now, only root node has this information.
 	int num_children;
 
-	// Spatial split, round robin axis
+	// Object Median split, round robin axis
 	int make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> > &objects ); // returns num nodes in tree
 	void spatial_split( const std::vector< std::shared_ptr<BaseObject> > &objects,
 		const std::vector< int > &queue, const int split_axis, const int max_depth );

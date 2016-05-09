@@ -118,7 +118,7 @@ int BVHNode::make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &o
 		centroids[i]=( (bmin+bmax)*0.5f );
 	}
 
-	float max_scaled = 1024.f; // can play with this and check results
+	float max_scaled = 1024.f;
 	vec world_min( world_aabb.min );
 	vec world_max( world_aabb.max );
 	vec world_len = max_scaled / (world_max-world_min);
