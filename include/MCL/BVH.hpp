@@ -31,8 +31,8 @@
 
 namespace mcl {
 
-typedef uint32_t morton_type;
-typedef uint32_t morton_encode_type;
+typedef long morton_type;
+typedef unsigned long long morton_encode_type;
 
 namespace helper {
 	static inline trimesh::point face_center( const trimesh::TriMesh::Face &f, const std::vector<trimesh::point> &vertices ){
@@ -49,13 +49,15 @@ namespace helper {
 }
 
 static inline morton_type morton_encode(const morton_encode_type x, const morton_encode_type y, const morton_encode_type z){
-	morton_type answer = 0;
-	for( morton_type i = 0; i < (sizeof(morton_type)*8)/3; ++i ){
-		answer |= ((x & ((morton_type)1 << i)) << 2*i)
-			| ((y & ((morton_type)1 << i)) << (2*i + 1))
-			| ((z & ((morton_type)1 << i)) << (2*i + 2));
+	morton_type result = 0;
+	int n_iters = (sizeof(morton_type)*8); // sizeof returns BYTES and this is a 3dim encode
+	// Step through the bits and assign them.
+	for( morton_type i = 0; i<n_iters; ++i ){
+		result |= (x & (morton_type(1) << i)) << i
+			| (y & (morton_type(1) << i)) << (i + 1)
+			| (z & (morton_type(1) << i)) << (i + 2);
 	}
-	return answer;
+	return result;
 }
 
 

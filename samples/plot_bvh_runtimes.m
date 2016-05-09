@@ -24,8 +24,8 @@ legend('Object Median BVH','Linear BVH','Location','northwest');
 hold off;
 
 % resize and print
-set(gcf, 'Position', [10 10 600 300]);
-%print('relative_error','-depsc', '-r0');
+set(gcf, 'Position', [10 10 400 300]);
+print('bvh_test','-depsc', '-r0');
 print('bvh_test','-dpng', '-r0');
 
 close all;

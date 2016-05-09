@@ -171,7 +171,7 @@ int BVHNode::make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &o
 	// Now that we have the morton codes, we can recursively build the BVH in a top down manner
 	lbvh_split( start_bit, prims, morton_codes, 10000 );
 
-//	std::cout << "\nBalance: " << avg_balance / float(num_avg_balance) << std::endl;
+	std::cout << "\nLBVH Balance: " << avg_balance / float(num_avg_balance) << std::endl;
 //	std::cout << "Linear BVH made " << n_nodes << " nodes. " << std::endl;
 
 	return n_nodes;

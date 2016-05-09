@@ -67,7 +67,7 @@ class SceneManager {
 
 		//
 		// Computes bounding volume heirarchy (AABB)
-		// Type is either spatial or linear
+		// Type is either spatial (object median) or linear
 		//
 		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="spatial" );
 

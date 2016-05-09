@@ -19,6 +19,9 @@ int main(int argc, char *argv[]){
 	if( !scene.load( std::string(argv[1]) ) ){ return 0; }
 	else{ printf( "Successfully loaded xml file.\n"); }
 
+	// Build the initial bvh
+	scene.get_bvh(true,"linear");
+
 	Gui gui( &scene );
 
 	boost::function<void ()> draw_cb(render_callback);
@@ -56,6 +59,7 @@ void render_callback(){
 		bvh->get_edges( edges );
 	}
 
+//		glLineWidth(10.f);
 	glDisable(GL_LIGHTING);
 	glColor3f(1.0, 0.0, 0.0);
 	glBegin(GL_LINES);
@@ -108,7 +112,7 @@ void scale_mesh( std::string dir ){
 	scene.objects[0]->apply_xform( scale );
 
 	// Recomputed bounding volumes
-	scene.get_bvh(true);
+	scene.get_bvh(true,"linear");
 	scene.get_bsphere(true);
 
 }

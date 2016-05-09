@@ -1,6 +1,5 @@
 
 #include "MCL/SceneManager.hpp"
-#include "MCL/Gui.hpp"
 
 using namespace mcl;
 
