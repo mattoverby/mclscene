@@ -208,40 +208,41 @@ bool SceneManager::build_components(){
 
 
 
-void SceneManager::build_bvh(){
+void SceneManager::build_bvh( int split_mode ){
 
 	if( root_bvh==NULL ){ root_bvh = std::shared_ptr<BVHNode>( new BVHNode() ); }
 	else{ root_bvh.reset( new BVHNode() ); }
-	std::chrono::time_point<std::chrono::system_clock> start, end;
-
-	// Split mode:
-	//	0 = spatial
-	//	1 = linear (parallel)
-	int split_mode = 1;
+//	std::chrono::time_point<std::chrono::system_clock> start, end;
 
 	if( split_mode == 0 ){
-		std::cout << "spatial bvh begin: " << std::flush;
-		start = std::chrono::system_clock::now();
-		root_bvh->make_tree_spatial( objects );
-		end = std::chrono::system_clock::now();
-		std::chrono::duration<double> elapsed_seconds = end-start;
-		std::cout << elapsed_seconds.count() << "s\n";
+//		std::cout << "spatial bvh begin: " << std::flush;
+//		start = std::chrono::system_clock::now();
+		int num_nodes = root_bvh->make_tree_spatial( objects );
+		root_bvh->num_children = num_nodes;
+//		end = std::chrono::system_clock::now();
+//		std::chrono::duration<double> elapsed_seconds = end-start;
+//		std::cout << elapsed_seconds.count() << "s\n";
 	}
 
 	else if( split_mode == 1 ){
-		std::cout << "linear bvh begin: " << std::flush;
-		start = std::chrono::system_clock::now();
-		root_bvh->make_tree_lbvh( objects );
-		end = std::chrono::system_clock::now();
-		std::chrono::duration<double> elapsed_seconds = end-start;
-		std::cout << elapsed_seconds.count() << "s\n";
+//		std::cout << "linear bvh begin: " << std::flush;
+//		start = std::chrono::system_clock::now();
+		int num_nodes = root_bvh->make_tree_lbvh( objects );
+		root_bvh->num_children = num_nodes;
+//		end = std::chrono::system_clock::now();
+//		std::chrono::duration<double> elapsed_seconds = end-start;
+//		std::cout << elapsed_seconds.count() << "s\n";
 	}
 
 } // end build bvh
 
 
-std::shared_ptr<BVHNode> SceneManager::get_bvh( bool recompute ){
-	if( recompute || root_bvh==NULL ){ build_bvh(); }
+std::shared_ptr<BVHNode> SceneManager::get_bvh( bool recompute, std::string type ){
+	int split_mode=0;
+	if( parse::to_lower(type)=="spatial" ){ split_mode=0; }
+	else if( parse::to_lower(type)=="linear" ){ split_mode=1; }
+
+	if( recompute || root_bvh==NULL ){ build_bvh( split_mode ); }
 	return root_bvh;
 }
 

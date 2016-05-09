@@ -12,7 +12,7 @@
 
 		<Material type="string" value="blue_diff" />
 	</Object>
-
+<!--
 	<Object name="bunny1" type="TriMesh" >
 
 		<File type="string" value="bunny.ply" />
@@ -37,7 +37,7 @@
 
 		<Material type="string" value="blue_diff" />
 	</Object>
-<!--
+
 	<Object name="bunny1" type="TetMesh" >
 
 		<File type="string" value="bunny562faces.1" />

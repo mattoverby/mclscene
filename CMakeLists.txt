@@ -118,6 +118,8 @@ if(MCL_BUILD_SAMPLES)
 		target_link_libraries( mesh_viewer ${MCLSCENE_LIBRARIES} )
 		add_executable( bvh_viewer samples/BVHViewer.cpp )
 		target_link_libraries( bvh_viewer ${MCLSCENE_LIBRARIES} )
+		add_executable( testbvh samples/BVHTest.cpp )
+		target_link_libraries( testbvh ${MCLSCENE_LIBRARIES} )
 	endif(SFML_FOUND AND OPENGL_FOUND)
 
 endif(MCL_BUILD_SAMPLES)

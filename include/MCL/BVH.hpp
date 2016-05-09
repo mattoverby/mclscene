@@ -61,7 +61,7 @@ static inline morton_type morton_encode(const morton_encode_type x, const morton
 
 class BVHNode {
 public:
-	BVHNode() : aabb( new AABB ) { left_child=NULL; right_child=NULL; }
+	BVHNode() : aabb( new AABB ), m_split(0), num_children(0) { left_child=NULL; right_child=NULL; }
 	virtual ~BVHNode(){}
 
 	void get_edges( std::vector<trimesh::vec> &edges );
@@ -71,16 +71,20 @@ public:
 	std::shared_ptr<BVHNode> right_child;
 	std::shared_ptr<AABB> aabb;
 
-	int m_split; // split axis
+	int m_split; // split axis, used for spatial BVH build.
 	std::vector< std::shared_ptr<BaseObject> > m_objects;
 
+	// Number of children below this node on the tree.
+	// TODO: For now, only root node has this information.
+	int num_children;
+
 	// Spatial split, round robin axis
-	void make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> > &objects );
+	int make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> > &objects ); // returns num nodes in tree
 	void spatial_split( const std::vector< std::shared_ptr<BaseObject> > &objects,
 		const std::vector< int > &queue, const int split_axis, const int max_depth );
 
 	// Use the parallel sorting construction (Lauterbach et al. 2009)
-	void make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &objects );
+	int make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &objects ); // returns num nodes in tree
 	void lbvh_split( const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
 		const std::vector< std::pair< morton_type, int > > &morton_codes, const int max_depth );
 

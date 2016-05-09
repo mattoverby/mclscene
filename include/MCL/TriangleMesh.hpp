@@ -87,7 +87,7 @@ public:
 //	}
 
 	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
-		if( !tri_refs.size() ){ make_tri_refs(); }
+		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
 		prims.insert( prims.end(), tri_refs.begin(), tri_refs.end() );
 	}
 

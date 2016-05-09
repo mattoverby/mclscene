@@ -36,7 +36,7 @@ void BVHNode::get_edges( std::vector<trimesh::vec> &edges ){
 }
 
 int n_nodes = 0;
-void BVHNode::make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> > &objects ){
+int BVHNode::make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> > &objects ){
 
 	n_nodes = 1;
 
@@ -47,7 +47,9 @@ void BVHNode::make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> 
 	std::iota( std::begin(queue), std::end(queue), 0 );
 	spatial_split( prims, queue, 0, 10000 );
 
-	std::cout << "Spatial BVH made " << n_nodes << " nodes. " << std::endl;
+	return n_nodes;
+
+//	std::cout << "Spatial BVH made " << n_nodes << " nodes. " << std::endl;
 }
 
 void BVHNode::spatial_split( const std::vector< std::shared_ptr<BaseObject> > &objects,
@@ -97,7 +99,7 @@ void BVHNode::spatial_split( const std::vector< std::shared_ptr<BaseObject> > &o
 
 float avg_balance = 0.f;
 int num_avg_balance = 0;
-void BVHNode::make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &objects ){
+int BVHNode::make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &objects ){
 
 	n_nodes = 1;
 
@@ -169,8 +171,10 @@ void BVHNode::make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &
 	// Now that we have the morton codes, we can recursively build the BVH in a top down manner
 	lbvh_split( start_bit, prims, morton_codes, 10000 );
 
-	std::cout << "\nBalance: " << avg_balance / float(num_avg_balance) << std::endl;
-	std::cout << "Linear BVH made " << n_nodes << " nodes. " << std::endl;
+//	std::cout << "\nBalance: " << avg_balance / float(num_avg_balance) << std::endl;
+//	std::cout << "Linear BVH made " << n_nodes << " nodes. " << std::endl;
+
+	return n_nodes;
 
 } // end build lbvh tree
 

@@ -9,6 +9,7 @@ void render_callback();
 void event_callback(sf::Event &event);
 std::vector< bool > traversal; // 0 = left, 1 = right
 void scale_mesh( std::string dir );
+void refine_mesh( std::string amt );
 bool view_all = false;
 
 int main(int argc, char *argv[]){
@@ -76,6 +77,7 @@ void event_callback(sf::Event &event){
 		else if( event.key.code == sf::Keyboard::Left ){ traversal.push_back( false ); }
 		else if( event.key.code == sf::Keyboard::Right ){ traversal.push_back( true ); }
 		else if( event.key.code == sf::Keyboard::Down ){ view_all = !view_all; }
+		else if( event.key.code == sf::Keyboard::R ){ refine_mesh("-"); }
 		else if( event.key.code == sf::Keyboard::Numpad6 ){ scale_mesh("+x"); }
 		else if( event.key.code == sf::Keyboard::Numpad4 ){ scale_mesh("-x"); }
 		else if( event.key.code == sf::Keyboard::Numpad8 ){ scale_mesh("+y"); }
@@ -95,24 +97,48 @@ void scale_mesh( std::string dir ){
 	else if( dir=="-y" ){ scale_y = 0.9f; }
 
 	trimesh::xform scale = trimesh::xform::scale(scale_x,scale_y,1.f);
-	if( scene.objects.size() >= 1 ){
-		// Scale the object and remake the BVH
-//		trimesh::vec center = trimesh::mesh_center_of_mass( scene.objects[0]->get_TriMesh().get() );
-//		trimesh::xform translate_in = trimesh::xform::scale(-center[0],-center[1],-center[2]);
-//		trimesh::xform translate_out = trimesh::xform::scale(center[0],center[1],center[2]);
-//		trimesh::xform x_form = translate_out * scale * translate_in;
+	if( scene.objects.size() < 1 ){ return; }
 
-		scene.objects[0]->apply_xform( scale );
+	// Scale the object and remake the BVH
+//	trimesh::vec center = trimesh::mesh_center_of_mass( scene.objects[0]->get_TriMesh().get() );
+//	trimesh::xform translate_in = trimesh::xform::scale(-center[0],-center[1],-center[2]);
+//	trimesh::xform translate_out = trimesh::xform::scale(center[0],center[1],center[2]);
+//	trimesh::xform x_form = translate_out * scale * translate_in;
 
-		// Recomputed bounding volumes
-		scene.get_bvh(true);
-		scene.get_bsphere(true);
-	}
+	scene.objects[0]->apply_xform( scale );
+
+	// Recomputed bounding volumes
+	scene.get_bvh(true);
+	scene.get_bsphere(true);
+
 }
 
 
+void refine_mesh( std::string amt ){
 
+	if( scene.objects.size() != 1 ){ return; }
 
+	std::shared_ptr<BVHNode> bvh = scene.get_bvh(true,"linear");
+	trimesh::TriMesh *mesh = scene.objects[0]->get_TriMesh().get();
+	trimesh::box b( bvh->aabb->min ); b+=bvh->aabb->max;
+	b.min[1] += ((b.max[1]-b.min[1])*0.05f);
+
+	std::cout << "Clipping mesh. Vertices before: " << scene.objects[0]->get_TriMesh()->vertices.size() << std::flush;
+	trimesh::clip( mesh, b );
+	trimesh::remove_unused_vertices( mesh );
+//	mesh->normals.clear();
+//	mesh->faces.clear();
+//	mesh->tstrips.clear();
+//	mesh->need_faces();
+//	mesh->need_normals();
+//	mesh->need_tstrips();
+	std::cout << ", vertices after: " << scene.objects[0]->get_TriMesh()->vertices.size() << std::endl;
+
+	// Recomputed bounding volumes
+	scene.get_bvh(true);
+	scene.get_bsphere(true);
+
+}
 
 
 
