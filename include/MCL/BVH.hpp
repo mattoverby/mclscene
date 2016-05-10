@@ -50,12 +50,13 @@ namespace helper {
 
 static inline morton_type morton_encode(const morton_encode_type x, const morton_encode_type y, const morton_encode_type z){
 	morton_type result = 0;
-	int n_iters = (sizeof(morton_type)*8); // sizeof returns BYTES and this is a 3dim encode
-	// Step through the bits and assign them.
+	int n_iters = sizeof(morton_type)*8;
+	// Step through the bits and assign them. The x2 for i is required to round-robinish interleaving
+	// and differs from typical morten encoding. Without them, I got thin slices along the x and z axes.
 	for( morton_type i = 0; i<n_iters; ++i ){
-		result |= (x & (morton_type(1) << i)) << i
-			| (y & (morton_type(1) << i)) << (i + 1)
-			| (z & (morton_type(1) << i)) << (i + 2);
+		result |= (x & (morton_type(1) << i)) << i*2
+			| (y & (morton_type(1) << i)) << (i*2 + 1)
+			| (z & (morton_type(1) << i)) << (i*2 + 2);
 	}
 	return result;
 }

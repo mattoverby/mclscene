@@ -11,6 +11,8 @@ std::vector< bool > traversal; // 0 = left, 1 = right
 void scale_mesh( std::string dir );
 void refine_mesh( std::string amt );
 bool view_all = false;
+std::string bvh_mode = "linear";
+std::vector<trimesh::point> edges;
 
 int main(int argc, char *argv[]){
 
@@ -20,7 +22,7 @@ int main(int argc, char *argv[]){
 	else{ printf( "Successfully loaded xml file.\n"); }
 
 	// Build the initial bvh
-	scene.get_bvh(true,"linear");
+	scene.get_bvh(true,bvh_mode);
 
 	Gui gui( &scene );
 
@@ -39,7 +41,6 @@ int main(int argc, char *argv[]){
 
 void render_callback(){
 
-	static std::vector<trimesh::point> edges;
 	std::shared_ptr<BVHNode> bvh = scene.get_bvh();
 	if( !view_all ){
 		edges.clear();
@@ -55,7 +56,7 @@ void render_callback(){
 		}
 	
 		bvh->aabb->get_edges( edges );
-	} else {
+	} else if( edges.size()<=24 ) {
 		bvh->get_edges( edges );
 	}
 
@@ -82,6 +83,12 @@ void event_callback(sf::Event &event){
 		else if( event.key.code == sf::Keyboard::Right ){ traversal.push_back( true ); }
 		else if( event.key.code == sf::Keyboard::Down ){ view_all = !view_all; }
 		else if( event.key.code == sf::Keyboard::R ){ refine_mesh("-"); }
+		else if( event.key.code == sf::Keyboard::M ){ 
+			if( bvh_mode=="spatial" ){ bvh_mode="linear"; }
+			else{ bvh_mode = "spatial"; }
+			edges.clear();
+			scene.get_bvh(true,bvh_mode);
+		}
 		else if( event.key.code == sf::Keyboard::Numpad6 ){ scale_mesh("+x"); }
 		else if( event.key.code == sf::Keyboard::Numpad4 ){ scale_mesh("-x"); }
 		else if( event.key.code == sf::Keyboard::Numpad8 ){ scale_mesh("+y"); }
@@ -92,7 +99,7 @@ void event_callback(sf::Event &event){
 
 void scale_mesh( std::string dir ){
 
-
+	edges.clear();
 	float scale_x=1.f;
 	float scale_y=1.f;
 	if( dir=="+x" ){ scale_x = 1.1f; }
@@ -112,7 +119,7 @@ void scale_mesh( std::string dir ){
 	scene.objects[0]->apply_xform( scale );
 
 	// Recomputed bounding volumes
-	scene.get_bvh(true,"linear");
+	scene.get_bvh(true,bvh_mode);
 	scene.get_bsphere(true);
 
 }
@@ -120,9 +127,10 @@ void scale_mesh( std::string dir ){
 
 void refine_mesh( std::string amt ){
 
+	edges.clear();
 	if( scene.objects.size() != 1 ){ return; }
 
-	std::shared_ptr<BVHNode> bvh = scene.get_bvh(true,"linear");
+	std::shared_ptr<BVHNode> bvh = scene.get_bvh();
 	trimesh::TriMesh *mesh = scene.objects[0]->get_TriMesh().get();
 	trimesh::box b( bvh->aabb->min ); b+=bvh->aabb->max;
 	b.min[1] += ((b.max[1]-b.min[1])*0.05f);
@@ -138,8 +146,8 @@ void refine_mesh( std::string amt ){
 //	mesh->need_tstrips();
 	std::cout << ", vertices after: " << scene.objects[0]->get_TriMesh()->vertices.size() << std::endl;
 
-	// Recomputed bounding volumes
-	scene.get_bvh(true);
+	// Recompute bounding volumes
+	scene.get_bvh(true,bvh_mode);
 	scene.get_bsphere(true);
 
 }

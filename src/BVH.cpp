@@ -49,7 +49,7 @@ int BVHNode::make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> >
 
 	return n_nodes;
 
-//	std::cout << "Spatial BVH made " << n_nodes << " nodes. " << std::endl;
+	std::cout << "Object Median BVH made " << n_nodes << " nodes for " << prims.size() << " primitives." << std::endl;
 }
 
 void BVHNode::spatial_split( const std::vector< std::shared_ptr<BaseObject> > &objects,
@@ -139,9 +139,9 @@ int BVHNode::make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &o
 	}
 
 	// Find first non-zero most signficant bit
-	int start_bit = 63;
+	int start_bit = sizeof(morton_type)*8-1;
 	bool found=false;
-	for( start_bit = 63; start_bit > 1 && !found; --start_bit ){
+	for( start_bit; start_bit > 1 && !found; --start_bit ){
 
 		#pragma omp parallel for
 		for( int i=0; i<morton_codes.size(); ++i ){
@@ -172,7 +172,7 @@ int BVHNode::make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &o
 	lbvh_split( start_bit, prims, morton_codes, 10000 );
 
 	std::cout << "\nLBVH Balance: " << avg_balance / float(num_avg_balance) << std::endl;
-//	std::cout << "Linear BVH made " << n_nodes << " nodes. " << std::endl;
+	std::cout << "Linear BVH made " << n_nodes << " nodes for " << prims.size() << " primitives." << std::endl;
 
 	return n_nodes;
 
@@ -212,6 +212,7 @@ void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<Base
 
 		avg_balance += float(left_codes.size())/float(right_codes.size());
 		num_avg_balance++;
+		num_children = left_codes.size()+right_codes.size();
 
 		// Create the children
 		assert( left_codes.size() > 0 && right_codes.size() > 0 );
