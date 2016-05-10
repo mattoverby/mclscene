@@ -82,10 +82,10 @@ class SceneManager {
 		// When you call build_components, this vector is looped over and the callbacks
 		// are invoked.
 		//
+		std::vector< Component > components;
 		Component &get( std::string name );
 		Component &operator[]( std::string name ){ return get(name); }
 		bool exists( std::string name ) const;
-		std::vector< Component > components;
 
 		//
 		// Invokes the callbacks while looping over the components vector.
@@ -123,7 +123,7 @@ class SceneManager {
 
 	protected:
 		// Root bvh is created by build_bvh
-		void build_bvh( int split_mode=1 ); // 0=spatial, 1=linear
+		void build_bvh( int split_mode=0 ); // 0=object median, 1=linear
 		std::shared_ptr<BVHNode> root_bvh;
 
 		// Builder vectors

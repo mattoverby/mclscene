@@ -21,7 +21,7 @@ int main(int argc, char *argv[]){
 		std::stringstream fnss; fnss << "bvh_" << types[i] << ".txt";
 		std::ofstream filestream;
 		filestream.open( fnss.str().c_str() );
-		filestream << "%% num_tris\tnum_bvh_nodes\tbuild_time_s";
+		filestream << "%% num_tris\tempty\tbuild_time_s";
 
 		for( int j=0; j<20; ++j ){
 
@@ -38,7 +38,9 @@ int main(int argc, char *argv[]){
 			end = std::chrono::system_clock::now();
 			std::chrono::duration<double> elapsed_seconds = end-start;
 
-			oss << bvh->num_children << "\t" << elapsed_seconds.count();
+			// I used to use the second column for debugging and saved
+			// the number of nodes in the tree.
+			oss << 0 << "\t" << elapsed_seconds.count();
 			std::string line = oss.str();
 			std::cout << types[i] << ", " << j << ":\t" << line << std::endl;
 

@@ -88,6 +88,7 @@ void BVHNode::spatial_split( const std::vector< std::shared_ptr<BaseObject> > &o
 	if( right_queue.size()==0 ){ right_queue.push_back( left_queue.back() ); left_queue.pop_back(); }
 
 	// Create the children
+	num_objects = left_queue.size()+right_queue.size();
 	left_child = std::shared_ptr<BVHNode>( new BVHNode() );
 	right_child = std::shared_ptr<BVHNode>( new BVHNode() );
 	left_child->spatial_split( objects, left_queue, ((split_axis+1)%3), max_depth-1 );
@@ -212,7 +213,7 @@ void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<Base
 
 		avg_balance += float(left_codes.size())/float(right_codes.size());
 		num_avg_balance++;
-		num_children = left_codes.size()+right_codes.size();
+		num_objects = left_codes.size()+right_codes.size();
 
 		// Create the children
 		assert( left_codes.size() > 0 && right_codes.size() > 0 );

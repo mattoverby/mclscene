@@ -218,7 +218,6 @@ void SceneManager::build_bvh( int split_mode ){
 //		std::cout << "spatial bvh begin: " << std::flush;
 //		start = std::chrono::system_clock::now();
 		int num_nodes = root_bvh->make_tree_spatial( objects );
-		root_bvh->num_children = num_nodes;
 //		end = std::chrono::system_clock::now();
 //		std::chrono::duration<double> elapsed_seconds = end-start;
 //		std::cout << elapsed_seconds.count() << "s\n";
@@ -228,7 +227,6 @@ void SceneManager::build_bvh( int split_mode ){
 //		std::cout << "linear bvh begin: " << std::flush;
 //		start = std::chrono::system_clock::now();
 		int num_nodes = root_bvh->make_tree_lbvh( objects );
-		// num_children set by split_lbvh
 //		end = std::chrono::system_clock::now();
 //		std::chrono::duration<double> elapsed_seconds = end-start;
 //		std::cout << elapsed_seconds.count() << "s\n";
