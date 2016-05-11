@@ -24,12 +24,12 @@
 
 #include "bsphere.h" // in trimesh2
 #include "BVH.hpp"
-#include <boost/function.hpp>
+//#include <boost/function.hpp>
 #include "Camera.hpp"
 #include "Light.hpp"
 #include "Material.hpp"
 #include "DefaultBuilders.hpp"
-
+#include <functional>
 
 //
 //	Creating a scene through SceneManager is done in three steps:
@@ -45,10 +45,10 @@ namespace mcl {
 // Callback funcions are invoked on a call to build_components().
 // See details in that function's doc. Note that these functions CAN change the component itself.
 //
-typedef boost::function<std::shared_ptr<BaseCamera> ( Component &component )> BuildCamCallback;
-typedef boost::function<std::shared_ptr<BaseObject> ( Component &component )> BuildObjCallback;
-typedef boost::function<std::shared_ptr<BaseLight> ( Component &component )> BuildLightCallback;
-typedef boost::function<std::shared_ptr<BaseMaterial> ( Component &component )> BuildMatCallback;
+typedef std::function<std::shared_ptr<BaseCamera> ( Component &component )> BuildCamCallback;
+typedef std::function<std::shared_ptr<BaseObject> ( Component &component )> BuildObjCallback;
+typedef std::function<std::shared_ptr<BaseLight> ( Component &component )> BuildLightCallback;
+typedef std::function<std::shared_ptr<BaseMaterial> ( Component &component )> BuildMatCallback;
 
 class SceneManager {
 

@@ -27,7 +27,7 @@
 #include <png.h>
 #include "SFML/Window.hpp"
 #include "GLCamera.h"
-#include <boost/function.hpp>
+#include <functional>
 #include "RenderUtils.hpp"
 
 namespace mcl {
@@ -41,8 +41,8 @@ public:
 	// Returns when window closes.
 	virtual void display();
 
-	void add_render_callback( boost::function<void ()> cb ){ render_callbacks.push_back( cb ); }
-	void add_event_callback( boost::function<void (sf::Event &event)> cb ){ event_callbacks.push_back( cb ); }
+	void add_render_callback( std::function<void ()> cb ){ render_callbacks.push_back( cb ); }
+	void add_event_callback( std::function<void (sf::Event &event)> cb ){ event_callbacks.push_back( cb ); }
 
 protected:
 	virtual bool update( const float screen_dt );
@@ -55,8 +55,8 @@ protected:
 
 	void save_screenshot();
 
-	std::vector< boost::function<void ()> > render_callbacks;
-	std::vector< boost::function<void (sf::Event &event)> > event_callbacks;
+	std::vector< std::function<void ()> > render_callbacks;
+	std::vector< std::function<void (sf::Event &event)> > event_callbacks;
 
 	std::vector< std::shared_ptr<BaseMaterial> > trimesh_materials;
 

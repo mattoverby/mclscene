@@ -26,10 +26,10 @@ int main(int argc, char *argv[]){
 
 	Gui gui( &scene );
 
-	boost::function<void ()> draw_cb(render_callback);
+	std::function<void ()> draw_cb(render_callback);
 	gui.add_render_callback( draw_cb );
 
-	boost::function<void (sf::Event &event)> event_cb(event_callback);
+	std::function<void (sf::Event &event)> event_cb(event_callback);
 	gui.add_event_callback( event_cb );
 
 	gui.display();
