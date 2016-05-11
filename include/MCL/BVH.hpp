@@ -82,12 +82,10 @@ public:
 	int num_objects;
 
 	// Object Median split, round robin axis
-	int make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> > &objects ); // returns num nodes in tree
 	void spatial_split( const std::vector< std::shared_ptr<BaseObject> > &objects,
 		const std::vector< int > &queue, const int split_axis, const int max_depth );
 
 	// Use the parallel sorting construction (Lauterbach et al. 2009)
-	int make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &objects ); // returns num nodes in tree
 	void lbvh_split( const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
 		const std::vector< std::pair< morton_type, int > > &morton_codes, const int max_depth );
 
@@ -97,6 +95,13 @@ public:
 class BVHTraversal {
 public:
 	static bool ray_intersect( std::shared_ptr<BVHNode> node, intersect::Ray &ray, intersect::Payload &payload );
+};
+
+
+class BVHBuilder {
+public:
+	static int make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects ); // returns num nodes in tree
+	static int make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects ); // returns num nodes in tree
 };
 
 

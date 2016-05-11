@@ -213,7 +213,7 @@ void SceneManager::build_bvh( int split_mode ){
 	if( split_mode == 0 ){
 //		std::cout << "spatial bvh begin: " << std::flush;
 //		start = std::chrono::system_clock::now();
-		int num_nodes = root_bvh->make_tree_spatial( objects );
+		int num_nodes = BVHBuilder::make_tree_spatial( root_bvh, objects );
 //		end = std::chrono::system_clock::now();
 //		std::chrono::duration<double> elapsed_seconds = end-start;
 //		std::cout << elapsed_seconds.count() << "s\n";
@@ -222,7 +222,7 @@ void SceneManager::build_bvh( int split_mode ){
 	else if( split_mode == 1 ){
 //		std::cout << "linear bvh begin: " << std::flush;
 //		start = std::chrono::system_clock::now();
-		int num_nodes = root_bvh->make_tree_lbvh( objects );
+		int num_nodes = BVHBuilder::make_tree_lbvh( root_bvh, objects );
 //		end = std::chrono::system_clock::now();
 //		std::chrono::duration<double> elapsed_seconds = end-start;
 //		std::cout << elapsed_seconds.count() << "s\n";

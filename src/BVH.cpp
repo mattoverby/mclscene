@@ -32,21 +32,6 @@ void BVHNode::get_edges( std::vector<trimesh::vec> &edges ){
 }
 
 int n_nodes = 0;
-int BVHNode::make_tree_spatial( const std::vector< std::shared_ptr<BaseObject> > &objects ){
-
-	n_nodes = 1;
-
-	// Get all the primitives in the domain and start construction
-	std::vector< std::shared_ptr<BaseObject> > prims;
-	for( int i=0; i<objects.size(); ++i ){ objects[i]->get_primitives( prims ); }
-	std::vector< int > queue( prims.size() );
-	std::iota( std::begin(queue), std::end(queue), 0 );
-	spatial_split( prims, queue, 0, 10000 );
-
-	return n_nodes;
-
-	std::cout << "Object Median BVH made " << n_nodes << " nodes for " << prims.size() << " primitives." << std::endl;
-}
 
 void BVHNode::spatial_split( const std::vector< std::shared_ptr<BaseObject> > &objects,
 	const std::vector< int > &queue, const int split_axis, const int max_depth ) {
@@ -96,84 +81,7 @@ void BVHNode::spatial_split( const std::vector< std::shared_ptr<BaseObject> > &o
 
 float avg_balance = 0.f;
 int num_avg_balance = 0;
-int BVHNode::make_tree_lbvh( const std::vector< std::shared_ptr<BaseObject> > &objects ){
 
-	n_nodes = 1;
-
-	using namespace trimesh;
-
-	// Get all the primitives in the domain
-	std::vector< std::shared_ptr<BaseObject> > prims;
-	for( int i=0; i<objects.size(); ++i ){ objects[i]->get_primitives( prims ); }
-
-	// Compute centroids
-	std::vector< vec > centroids( prims.size() );
-	AABB world_aabb;
-	for( int i=0; i<prims.size(); ++i ){
-		vec bmin, bmax; prims[i]->get_aabb( bmin, bmax );
-		world_aabb += bmin; world_aabb += bmax;
-		centroids[i]=( (bmin+bmax)*0.5f );
-	}
-
-	float max_scaled = 1024.f;
-	vec world_min( world_aabb.min );
-	vec world_max( world_aabb.max );
-	vec world_len = max_scaled / (world_max-world_min);
-
-	// Assign morton codes
-	std::vector< std::pair< morton_type, int > > morton_codes( prims.size() );
-	#pragma omp parallel for
-	for( int i=0; i<prims.size(); ++i ){
-
-		// Scale the centroid to a value between 0 and max_scaled and convert to integer.
-		vec cent = centroids[i];
-		cent = ( cent - world_min ) * world_len;
-		morton_encode_type ix = morton_encode_type( cent[0] );
-		morton_encode_type iy = morton_encode_type( cent[1] );
-		morton_encode_type iz = morton_encode_type( cent[2] );
-
-		morton_codes[i] = std::make_pair( morton_encode( ix, iy, iz ), i );
-	}
-
-	// Find first non-zero most signficant bit
-	int start_bit = sizeof(morton_type)*8-1;
-	bool found=false;
-	for( start_bit; start_bit > 1 && !found; --start_bit ){
-
-		#pragma omp parallel for
-		for( int i=0; i<morton_codes.size(); ++i ){
-			if( helper::check_bit( morton_codes[i].first, start_bit ) ){
-				#pragma omp critical
-				{ found=true; }
-			}
-		}
-
-	} // end find starting bit
-/*
-	std::cout << std::endl;
-	for( int i=0; i<prims.size(); ++i ){
-		vec cent = centroids[i];
-		cent = ( cent - world_min ) * world_len;
-
-		std::cout << i << ":\t" << std::bitset<sizeof(morton_type)*8>( morton_codes[i].first ) << "\t" << centroids[i] << "\t" << std::flush;
-		for( int j=0; j<64; ++j ){
-			if( helper::check_bit( morton_codes[i].first, j ) ){
-				std::cout << j << " " << std::flush;
-			}
-		}
-		std::cout << std::endl;
-	}
-	std::cout << "Starting at bit: " << start_bit << std::endl;
-*/
-	// Now that we have the morton codes, we can recursively build the BVH in a top down manner
-	lbvh_split( start_bit, prims, morton_codes, 10000 );
-
-	std::cout << "\nLBVH Balance: " << avg_balance / float(num_avg_balance) << std::endl;
-	std::cout << "Linear BVH made " << n_nodes << " nodes for " << prims.size() << " primitives." << std::endl;
-
-	return n_nodes;
-
-} // end build lbvh tree
 
 
 void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
@@ -282,4 +190,87 @@ bool BVHTraversal::ray_intersect( std::shared_ptr<BVHNode> node, intersect::Ray 
 
 } // end ray intersect
 
+
+int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects ){
+
+	root.reset( new BVHNode );
+
+	n_nodes = 1;
+
+	using namespace trimesh;
+
+	// Get all the primitives in the domain
+	std::vector< std::shared_ptr<BaseObject> > prims;
+	for( int i=0; i<objects.size(); ++i ){ objects[i]->get_primitives( prims ); }
+
+	// Compute centroids
+	std::vector< vec > centroids( prims.size() );
+	AABB world_aabb;
+	for( int i=0; i<prims.size(); ++i ){
+		vec bmin, bmax; prims[i]->get_aabb( bmin, bmax );
+		world_aabb += bmin; world_aabb += bmax;
+		centroids[i]=( (bmin+bmax)*0.5f );
+	}
+
+	float max_scaled = 1024.f;
+	vec world_min( world_aabb.min );
+	vec world_max( world_aabb.max );
+	vec world_len = max_scaled / (world_max-world_min);
+
+	// Assign morton codes
+	std::vector< std::pair< morton_type, int > > morton_codes( prims.size() );
+	#pragma omp parallel for
+	for( int i=0; i<prims.size(); ++i ){
+
+		// Scale the centroid to a value between 0 and max_scaled and convert to integer.
+		vec cent = centroids[i];
+		cent = ( cent - world_min ) * world_len;
+		morton_encode_type ix = morton_encode_type( cent[0] );
+		morton_encode_type iy = morton_encode_type( cent[1] );
+		morton_encode_type iz = morton_encode_type( cent[2] );
+
+		morton_codes[i] = std::make_pair( morton_encode( ix, iy, iz ), i );
+	}
+
+	// Find first non-zero most signficant bit
+	int start_bit = sizeof(morton_type)*8-1;
+	bool found=false;
+	for( start_bit; start_bit > 1 && !found; --start_bit ){
+
+		#pragma omp parallel for
+		for( int i=0; i<morton_codes.size(); ++i ){
+			if( helper::check_bit( morton_codes[i].first, start_bit ) ){
+				#pragma omp critical
+				{ found=true; }
+			}
+		}
+
+	} // end find starting bit
+
+	// Now that we have the morton codes, we can recursively build the BVH in a top down manner
+	root->lbvh_split( start_bit, prims, morton_codes, 10000 );
+
+	std::cout << "\nLBVH Balance: " << avg_balance / float(num_avg_balance) << std::endl;
+	std::cout << "Linear BVH made " << n_nodes << " nodes for " << prims.size() << " primitives." << std::endl;
+
+	return n_nodes;
+
+}
+
+
+int BVHBuilder::make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects ){
+
+	n_nodes = 1;
+
+	// Get all the primitives in the domain and start construction
+	std::vector< std::shared_ptr<BaseObject> > prims;
+	for( int i=0; i<objects.size(); ++i ){ objects[i]->get_primitives( prims ); }
+	std::vector< int > queue( prims.size() );
+	std::iota( std::begin(queue), std::end(queue), 0 );
+	root->spatial_split( prims, queue, 0, 10000 );
+
+	return n_nodes;
+
+	std::cout << "Object Median BVH made " << n_nodes << " nodes for " << prims.size() << " primitives." << std::endl;
+}
 
