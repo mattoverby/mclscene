@@ -31,6 +31,7 @@ bool TetMesh::load( std::string filename ){
 	normals.clear();
 	faces.clear();
 
+	// Load new data
 	if( !load_node( filename ) ){ return false; }
 	if( !load_ele( filename ) ){ return false; }
 	if( !need_surface() ){ return false; }
@@ -232,12 +233,15 @@ bool TetMesh::need_surface(){
 } // end create boundary mesh
 
 
-void TetMesh::make_bvh( bool recompute ){
+void TetMesh::make_tri_refs(){
 
 	using namespace trimesh;
 
-	if( tri_refs.size()>0 && !recompute ){ return; }
 	tri_refs.clear();
+
+	// Create the triangle reference objects
+	tris->need_faces();
+	tris->need_normals();
 
 	for( int i=0; i<faces.size(); ++i ){
 		TriMesh::Face f = faces[i];
@@ -247,10 +251,7 @@ void TetMesh::make_bvh( bool recompute ){
 		tri_refs.push_back( tri );
 	} // end loop faces
 
-	// Now create a BVH with the triangle refs
-//	bvh->make_tree( tri_refs );
-
-} // end make triangle refs
+} // end make triangle references
 
 
 void TetMesh::get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
@@ -262,6 +263,5 @@ void TetMesh::get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
 		}
 	}
 	bmin = aabb->min; bmax = aabb->max;
-	make_bvh();
 }
 

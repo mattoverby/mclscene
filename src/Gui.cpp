@@ -41,7 +41,6 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 	scene->materials.push_back( mat ); // store it to the scene for later
 
 	// Get tet and tri meshes
-	scene->build_meshes();
 	for( int i=0; i<scene->objects.size(); ++i ){
 		std::string mat_str = scene->objects[i]->get_material();
 		if( mat_str.size()==0 ){ trimesh_materials.push_back( mat ); }

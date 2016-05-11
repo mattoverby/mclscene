@@ -29,10 +29,6 @@ void BVHNode::get_edges( std::vector<trimesh::vec> &edges ){
 	aabb->get_edges( edges );
 	if( left_child != NULL ){ left_child->get_edges( edges ); }
 	if( right_child != NULL ){ right_child->get_edges( edges ); }
-
-	for( int i=0; i<m_objects.size(); ++i ){
-		m_objects[i]->get_edges( edges );
-	}
 }
 
 int n_nodes = 0;

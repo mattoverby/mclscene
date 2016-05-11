@@ -193,13 +193,9 @@ bool SceneManager::build_components(){
 
 		} // end build object
 
-		// Build unknown
-		else{
-			for( int i=0; i<builders.size(); ++i ){ builders[i]( components[j] ); }
-
-		} // end build unknown
-
 	} // end loop components
+
+	build_meshes();
 
 	objects_built = true;
 	return true;

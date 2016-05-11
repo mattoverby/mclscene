@@ -5,9 +5,9 @@
 
 	mclscene is a generic scene loader for some of my test projects. It parses an XML file
 	and stores metadata, which can then be extracted by another application for whatever purpose.
-	Included are distributions of: trimesh2 (Szymon Rusinkiewicz, gfx.cs.princeton.edu/proj/trimesh2),
-	pugixml (Arseny Kapoulkine, pugixml.org).
-	Currently it only handles triangle meshes and tetrahedral meshes.
+	Included are distributions of: trimesh2 (Szymon Rusinkiewicz, gfx.cs.princeton.edu/proj/trimesh2)
+	and pugixml (Arseny Kapoulkine, pugixml.org).
+	Currently it only handles triangle/tetrahedral meshes.
 
 	There is a viewer sample which can render the scene, but requires OpenGL and SFML 2.
 
@@ -15,15 +15,15 @@
 
 	The best way to include mclscene in your project is to add it as a submodule with git,
 	use cmake to call add_subdirectory, then use the ${MCLSCENE_LIBRARIES} and
-	${MCLSCENE_INCLUDE_DIRS} that are set during the build.
+	${MCLSCENE_INCLUDE_DIRS} that are set during the build. I will improve this in the future
 
 # todo
 
 	- Cleanup headers
 	- Support for textures
 	- Mesh instancing
-	- TetMesh::save
 	- SceneManager::save
+	- Better viewer with shaders
 
 # license
 

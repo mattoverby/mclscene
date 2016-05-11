@@ -33,7 +33,7 @@
 
 //
 //	Creating a scene through SceneManager is done in three steps:
-//	1) Add builder callbacks to the SceneManager.
+//	1) Add builder callbacks to the SceneManager (optional).
 //	2) Create the scene via component containers (see Param.hpp). This can be done
 //	   programatically or by a call to load(...).
 //	3) If load was not called with auto_build=true, call build_components().
@@ -49,7 +49,6 @@ typedef boost::function<std::shared_ptr<BaseCamera> ( Component &component )> Bu
 typedef boost::function<std::shared_ptr<BaseObject> ( Component &component )> BuildObjCallback;
 typedef boost::function<std::shared_ptr<BaseLight> ( Component &component )> BuildLightCallback;
 typedef boost::function<std::shared_ptr<BaseMaterial> ( Component &component )> BuildMatCallback;
-typedef boost::function<void( Component &component )> BuildCallback; // generic builder callback for unknown things
 
 class SceneManager {
 
@@ -72,7 +71,7 @@ class SceneManager {
 		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="spatial" );
 
 		//
-		// Computes the world bounding sphere
+		// Computes an exact world bounding sphere
 		//
 		trimesh::TriMesh::BSphere get_bsphere( bool recompute=false );
 
@@ -94,20 +93,12 @@ class SceneManager {
 		bool build_components();
 
 		//
-		// Build all objects as a trimesh. I use this for OpenGL rendering of scenes.
-		// Only objects that have the get_TriMesh() function are built this way.
-		//
-		void build_meshes();
-		std::vector< std::shared_ptr<trimesh::TriMesh> > meshes;
-
-		//
 		// Builder callbacks are executing on a call to build_components()
 		//
 		void add_callback( BuildCamCallback cb ){ cam_builders.push_back( cb ); }
 		void add_callback( BuildObjCallback cb ){ obj_builders.push_back( cb ); }
 		void add_callback( BuildLightCallback cb ){ light_builders.push_back( cb ); }
 		void add_callback( BuildMatCallback cb ){ mat_builders.push_back( cb ); }
-		void add_callback( BuildCallback cb ){ builders.push_back( cb ); }
 
 		//
 		// Scene components returned from the builder callbacks.
@@ -121,18 +112,25 @@ class SceneManager {
 		std::unordered_map< std::string, std::shared_ptr<BaseCamera> > cameras_map; // name -> camera
 		std::unordered_map< std::string, std::shared_ptr<BaseLight> > lights_map; // name -> light
 
+		//
+		// Vector of trimeshes for objects that have the get_TriMesh() function,
+		// filled by the build_meshes() function which is called by build_components().
+		// I use this for OpenGL rendering of scenes.
+		//
+		std::vector< std::shared_ptr<trimesh::TriMesh> > meshes;
+
 	protected:
 		// Root bvh is created by build_bvh
 		void build_bvh( int split_mode=0 ); // 0=object median, 1=linear
 		std::shared_ptr<BVHNode> root_bvh;
 
 		// Builder vectors
+		void build_meshes(); // fills the meshes vector, called by build_components
 		bool objects_built;
 		std::vector< BuildCamCallback > cam_builders;
 		std::vector< BuildObjCallback > obj_builders;
 		std::vector< BuildLightCallback > light_builders;
 		std::vector< BuildMatCallback > mat_builders;
-		std::vector< BuildCallback > builders;
 
 		// Builds bounding sphere
 		void build_boundary();

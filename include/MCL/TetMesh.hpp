@@ -45,7 +45,7 @@ public:
 	std::vector< trimesh::TriMesh::Face > &faces; // surface triangles
 
 	TetMesh( std::string mat="" ) : tris(new trimesh::TriMesh), vertices(tris->vertices), normals(tris->normals), faces(tris->faces),
-		material(mat), aabb(new AABB), bvh(new BVHNode) {}
+		material(mat), aabb(new AABB) {}
 
 	std::string get_type() const { return "tetmesh"; }
 
@@ -66,11 +66,10 @@ public:
 
 	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax );
 
-	bool ray_intersect( intersect::Ray &ray, intersect::Payload &payload ){
-		return BVHTraversal::ray_intersect( bvh, ray, payload );
+	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
+		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
+		prims.insert( prims.end(), tri_refs.begin(), tri_refs.end() );
 	}
-
-	void get_edges( std::vector<trimesh::vec> &edges ){ bvh->get_edges(edges); } // return edges of BVH for debugging visuals
 
 private:
 	std::string material;
@@ -84,10 +83,8 @@ private:
 	bool need_surface();
 
 	// Triangle refs are used for BVH hook-in.
-	// The BVH is also created in this function.
-	void make_bvh( bool recompute=false );
+	void make_tri_refs();
 	std::vector< std::shared_ptr<BaseObject> > tri_refs;
-	std::shared_ptr<BVHNode> bvh;
 
 }; // end class TetMesh
 
