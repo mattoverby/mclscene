@@ -39,6 +39,18 @@
 	</Object>
 -->
 
+	<Object name="bunny2" type="TetMesh" >
+
+		<File type="string" value="bunny562faces.1" />
+
+		<XForm type="scale" value="1  1  1" />
+		<XForm type="translate" value="0  0.4  0" />
+		<XForm type="rotate" value="0  0  0" />
+
+
+		<Material type="string" value="blue_diff" />
+	</Object>
+
 
 	<Material name="red_spec" type="specular"  >
 		<Diffuse type="vec3" value="255  120  120" />
