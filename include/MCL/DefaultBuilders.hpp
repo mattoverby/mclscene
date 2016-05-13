@@ -163,6 +163,23 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 
 
 	//
+	//	Beam
+	//
+	else if( type == "beam" ){
+
+		std::shared_ptr<TriMesh> tris( new TriMesh() );
+		make_beam(tris.get());
+
+		tris.get()->need_normals();
+		tris.get()->need_tstrips();
+		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris,material) );
+		new_obj->apply_xform( x_form );
+		return new_obj;
+
+	} // end build beam
+
+
+	//
 	//	Plane, 2 or more triangles
 	//
 	else if( type == "trimesh" ){
