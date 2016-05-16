@@ -372,43 +372,43 @@ static inline void make_sphere_polar(TriMesh* mesh, int tess_ph, int tess_th)
 }
 
 
-static inline void make_beam(TriMesh* mesh){
+static inline void make_beam(TriMesh* mesh, int tess, int chunks ){
 
-	int xNodes = 30;
-	int yNodes = 10;
-	int zNodes = 10;
-	float dtor = M_PI / 180.f;
+	for( int b=0; b<chunks; ++b ){
 
-	// Make 6 planes. Note that these planes are equal in size, just vary in nodes.
-	TriMesh top, bottom, left, right, front, back;
-	make_sym_plane( &top, xNodes, zNodes );
-	make_sym_plane( &bottom, xNodes, zNodes );
-//	make_sym_plane( &left, yNodes, zNodes );
-//	make_sym_plane( &right, yNodes, zNodes );
-//	make_sym_plane( &front, xNodes, yNodes );
-//	make_sym_plane( &back, xNodes, yNodes );
+		TriMesh box;
+		box.set_verbose(0);
+		make_cube( &box, tess );
 
-	// Translate them and scale them to have uniform triangle sizes.
-	xform top_xform = xform::scale( float(xNodes), float(yNodes), 1.f ); // scale
-	top_xform = top_xform * xform::trans( 0.f, 0.f, 1.f ); // translate
-//	top_xform = top_xform * xform::rot( 90.f*dtor, vec(1.f,0.f,0.f) );
-	trimesh::apply_xform( &top, top_xform );
+		// Now translate box1 and box2
+		xform xf = xform::trans( b*2.f, 0, 0 );
+		trimesh::apply_xform( &box, xf );
+		box.need_normals();
 
-	xform bot_xform = xform::scale( float(xNodes), float(yNodes)*2.f, 1.f ); // scale
-	bot_xform = xform::trans( 0.f, 0.f, -1.f ) * bot_xform; // translate
-//	top_xform = top_xform * xform::rot( 90.f*dtor, vec(1.f,0.f,0.f) );
-	trimesh::apply_xform( &bottom, bot_xform );
+		// Remove faces on the -x and +x
+		std::vector<bool> toremove( box.faces.size(), false );
+		for( int f=0; f<box.faces.size(); ++f ){
+			if( b > 0 ){ // remove -x
+				if( box.trinorm(f).dot( vec(-1.f,0.f,0.f) ) > 0.f ){ toremove[f]=true; }
+			}
+			if( b < chunks-1 ){ // remove +x
+				if( box.trinorm(f).dot( vec(1.f,0.f,0.f) ) > 0.f ){ toremove[f]=true; }
+			}
+		}
 
+		trimesh::remove_faces( &box, toremove );
+		trimesh::remove_unused_vertices( &box );
 
-	// Copy all of the nodes and faces to the mesh data
-	int n_verts = top.vertices.size() + bottom.vertices.size();
-	int n_faces = top.faces.size() + bottom.faces.size();
-	mesh->vertices.reserve( n_verts );
-	mesh->faces.reserve( n_faces );
-	for( int i=0; i<top.vertices.size(); ++i ){ mesh->vertices.push_back( top.vertices[i] ); }
-	for( int i=0; i<top.faces.size(); ++i ){ mesh->faces.push_back( top.faces[i] ); }
-	for( int i=0; i<bottom.vertices.size(); ++i ){ mesh->vertices.push_back( bottom.vertices[i] ); }
-	for( int i=0; i<bottom.faces.size(); ++i ){ mesh->faces.push_back( bottom.faces[i] ); }
+		int prev_verts = mesh->vertices.size();
+
+		for( int i=0; i<box.vertices.size(); ++i ){ mesh->vertices.push_back( box.vertices[i] ); }
+		for( int i=0; i<box.faces.size(); ++i ){
+			for( int j=0; j<3; ++j ){ box.faces[i][j] += prev_verts; }
+			mesh->faces.push_back( box.faces[i] );
+		}
+
+	}
+
 }
 
 

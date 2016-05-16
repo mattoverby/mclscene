@@ -168,7 +168,17 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 	else if( type == "beam" ){
 
 		std::shared_ptr<TriMesh> tris( new TriMesh() );
-		make_beam(tris.get());
+
+		int tess = 3;
+		int chunks = 5;
+
+		for( int i=0; i<obj.params.size(); ++i ){
+			if( parse::to_lower(obj.params[i].tag)=="tess" ){ tess=obj.params[i].as_int(); }
+			else if( parse::to_lower(obj.params[i].tag)=="chunks" ){ chunks=obj.params[i].as_int(); }
+		}
+
+
+		make_beam( tris.get(), tess, chunks );
 
 		tris.get()->need_normals();
 		tris.get()->need_tstrips();

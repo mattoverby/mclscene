@@ -1431,8 +1431,9 @@ bool TriMesh::write(const char *filename)
 
 	// Infer file type from file extension
 	if (ends_with(filename, ".ply"))
-		filetype = we_are_little_endian() ?
-				PLY_BINARY_LE : PLY_BINARY_BE;
+//		filetype = we_are_little_endian() ?
+//				PLY_BINARY_LE : PLY_BINARY_BE;
+			filetype = PLY_ASCII;
 	else if (ends_with(filename, ".ray"))
 		filetype = RAY;
 	else if (ends_with(filename, ".obj"))
@@ -1467,9 +1468,10 @@ bool TriMesh::write(const char *filename)
 			float_color = true;
 		} else if (begins_with(filename, "ply:")) {
 			filename += 4;
-			filetype = we_are_little_endian() ?
-					PLY_BINARY_LE :
-					PLY_BINARY_BE;
+//			filetype = we_are_little_endian() ?
+//					PLY_BINARY_LE :
+//					PLY_BINARY_BE;
+			filetype = PLY_ASCII;
 		} else if (begins_with(filename, "ply_binary:")) {
 			filename += 11;
 			filetype = we_are_little_endian() ?

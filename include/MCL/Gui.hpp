@@ -54,6 +54,7 @@ protected:
 	virtual void check_mouse( const sf::Event &event, const float screen_dt );
 
 	void save_screenshot();
+	void save_meshes();
 
 	std::vector< std::function<void ()> > render_callbacks;
 	std::vector< std::function<void (sf::Event &event)> > event_callbacks;

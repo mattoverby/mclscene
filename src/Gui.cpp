@@ -93,6 +93,7 @@ bool Gui::update( const float screen_dt ){
 		else if( event.type == sf::Event::KeyPressed ){
 			if( event.key.code == sf::Keyboard::Escape ){ return false; }
 			if( event.key.code == sf::Keyboard::S ){ save_screenshot(); }
+			if( event.key.code == sf::Keyboard::M ){ save_meshes(); }
 		}
 
 	} // end event loop
@@ -377,6 +378,21 @@ void Gui::save_screenshot(){
 	mcl::Draw::save_png(filename.str().c_str(), w,h, pixels);
 	delete[] pixels;
 
+}
+
+
+void Gui::save_meshes(){
+
+	std::unordered_map< std::string, std::shared_ptr<BaseObject> >::iterator obj_it = scene->objects_map.begin();
+	for( obj_it; obj_it != scene->objects_map.end(); ++obj_it ){
+		std::shared_ptr<trimesh::TriMesh> mesh = obj_it->second->get_TriMesh();
+		if( mesh == NULL ){ continue; }
+
+		std::stringstream filename; filename << obj_it->first << ".obj";
+		std::cout << "Saving mesh: " << filename.str() << std::endl;
+		mesh->write( filename.str().c_str() );
+
+	} // end loop objects
 }
 
 
