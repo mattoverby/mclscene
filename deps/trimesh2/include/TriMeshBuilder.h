@@ -412,6 +412,77 @@ static inline void make_beam(TriMesh* mesh){
 }
 
 
+
+static inline void make_ccyl(TriMesh* mesh, int tess_th, int tess_h, float r = 1.0f)
+{
+	if (tess_th < 3)
+		tess_th = 3;
+	if (tess_h < 1)
+		tess_h = 1;
+
+	mesh->vertices.reserve(2+3*tess_th*tess_h-tess_th);
+
+	mkpoint(mesh, 0, 0, -1);
+	for (int j = 1; j <= tess_h; j++) {
+		float rr = r * j / tess_h;
+		for (int i = 0; i < tess_th; i++) {
+			float th = M_TWOPIf * i / tess_th;
+			mkpoint(mesh, rr*cos(th), rr*sin(th), -1);
+		}
+	}
+	int side_start = mesh->vertices.size();
+	for (int j = 1; j < tess_h; j++) {
+		float z = -1.0f + 2.0f * j / tess_h;
+		for (int i = 0; i < tess_th; i++) {
+			float th = M_TWOPIf * i / tess_th;
+			mkpoint(mesh, r*cos(th), r*sin(th), z);
+		}
+	}
+	int top_start = mesh->vertices.size();
+	for (int j = tess_h; j > 0; j--) {
+		float rr = r * j / tess_h;
+		for (int i = 0; i < tess_th; i++) {
+			float th = M_TWOPIf * i / tess_th;
+			mkpoint(mesh, rr*cos(th), rr*sin(th), 1);
+		}
+	}
+	mkpoint(mesh, 0, 0, 1);
+
+	mesh->faces.reserve(6*tess_th*tess_h - 2*tess_th);
+
+	for (int i = 0; i < tess_th; i++)
+		mkface(mesh, 0, ((i+1)%tess_th)+1, i+1);
+	for (int j = 1; j < tess_h; j++) {
+		int base = 1 + (j-1) * tess_th;
+		for (int i = 0; i < tess_th; i++) {
+			int i1 = (i+1)%tess_th;
+			mkquad(mesh, base+tess_th+i1, base+tess_th+i,
+				base+i1, base+i);
+		}
+	}
+
+	for (int j = 0; j < tess_h; j++) {
+		int base = side_start - tess_th + j * tess_th;
+		for (int i = 0; i < tess_th; i++) {
+			int i1 = (i+1)%tess_th;
+			mkquad(mesh, base + i, base + i1,
+				base+tess_th+i, base+tess_th+i1);
+		}
+	}
+
+	for (int j = 0; j < tess_h-1; j++) {
+		int base = top_start + j * tess_th;
+		for (int i = 0; i < tess_th; i++) {
+			int i1 = (i+1)%tess_th;
+			mkquad(mesh, base+tess_th+i1, base+tess_th+i,
+				base+i1, base+i);
+		}
+	}
+	int base = top_start + (tess_h-1)*tess_th;
+	for (int i = 0; i < tess_th; i++)
+		mkface(mesh, base+i, base+((i+1)%tess_th), base+tess_th);
+}
+
 /*
 TriMesh *make_disc(int tess_th, int tess_r)
 {
