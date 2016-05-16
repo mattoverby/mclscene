@@ -86,6 +86,7 @@ void SceneManager::build_meshes(){
 		else if( ltype == "plane" ){ built_obj = std::shared_ptr<BaseObject>( new Plane() ); }
 		else if( ltype == "trimesh" ){ built_obj = std::shared_ptr<BaseObject>( new TriangleMesh() ); }
 		else if( ltype == "tetmesh" ){ built_obj = std::shared_ptr<BaseObject>( new TetMesh() ); }
+		else if( ltype == "cylinder" ){ built_obj = std::shared_ptr<BaseObject>( new Cylinder() ); }
 		else{ std::cerr << "I should really use builder callbacks..." << std::endl; exit(0); }
 
 		built_obj->init( obj->param_vec );

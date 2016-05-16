@@ -226,6 +226,42 @@ private:
 
 
 
+class Cylinder : public BaseObject {
+public:
+	Cylinder() : radius(1.f), tess_l(10), tess_c(10), tris(NULL) {}
+
+	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){
+		if( tris == NULL ){ build_trimesh(); }
+		return tris;
+	}
+
+	void init( const std::vector< Param > &params ){
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_double(); }
+			else if( parse::to_lower(params[i].tag)=="tess_l" ){ tess_l=params[i].as_int(); }
+			else if( parse::to_lower(params[i].tag)=="tess_c" ){ tess_c=params[i].as_int(); }
+		}
+	}
+
+	void apply_xform( const trimesh::xform &xf ){
+		if( tris == NULL ){ build_trimesh(); }
+		trimesh::apply_xform( tris.get(), xf );
+	}
+
+private:
+	std::shared_ptr<trimesh::TriMesh> tris;
+	float radius;
+	int tess_l, tess_c;
+
+	void build_trimesh(){
+		if( tris == NULL ){ tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() ); }
+		else{ tris.reset( new trimesh::TriMesh() ); }
+		trimesh::make_ccyl( tris.get(), tess_l, tess_c, radius );
+		tris.get()->need_normals();
+		tris.get()->need_tstrips();
+	}
+};
+
 
 
 

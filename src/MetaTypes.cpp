@@ -43,11 +43,11 @@ bool Component::load_params( const pugi::xml_node &curr_node ){
 
 			if( parse::to_lower(type_id) == "scale" ){
 				trimesh::xform scale = trimesh::xform::scale(v[0],v[1],v[2]);
-				x_form = scale * x_form;
+				x_form = x_form * scale;
 			}
 			else if( parse::to_lower(type_id) == "translate" ){
 				trimesh::xform translate = trimesh::xform::trans(v[0],v[1],v[2]);
-				x_form = translate * x_form;
+				x_form = x_form * translate;
 			}
 			else if( parse::to_lower(type_id) == "rotate" ){
 				v *= (M_PI/180.f); // convert to radians
