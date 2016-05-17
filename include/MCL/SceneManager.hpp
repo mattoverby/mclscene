@@ -68,7 +68,7 @@ class SceneManager {
 		// Computes bounding volume heirarchy (AABB)
 		// Type is either spatial (object median) or linear
 		//
-		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="spatial" );
+		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="linear" );
 
 		//
 		// Computes an exact world bounding sphere
@@ -121,7 +121,7 @@ class SceneManager {
 
 	protected:
 		// Root bvh is created by build_bvh
-		void build_bvh( int split_mode=0 ); // 0=object median, 1=linear
+		void build_bvh( int split_mode ); // 0=object median, 1=linear (parallel)
 		std::shared_ptr<BVHNode> root_bvh;
 
 		// Builder vectors

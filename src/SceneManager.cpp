@@ -232,7 +232,7 @@ void SceneManager::build_bvh( int split_mode ){
 
 
 std::shared_ptr<BVHNode> SceneManager::get_bvh( bool recompute, std::string type ){
-	int split_mode=0;
+	int split_mode=1;
 	if( parse::to_lower(type)=="spatial" ){ split_mode=0; }
 	else if( parse::to_lower(type)=="linear" ){ split_mode=1; }
 
