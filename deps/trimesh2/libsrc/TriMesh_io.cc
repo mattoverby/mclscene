@@ -661,7 +661,7 @@ static bool read_vvd(FILE *f, TriMesh *mesh)
 	if (need_swap)
 		swap_int(nverts);
 	mesh->vertices.resize(nverts);
-	dprintf("\n  Reading %d vertices... ", nverts);
+//	dprintf("\n  Reading %d vertices... ", nverts);
 
 	for (int i = 0; i < nverts; i++) {
 		double v[3];
@@ -926,7 +926,7 @@ static bool read_verts_bin(FILE *f, TriMesh *mesh, bool &need_swap,
 			swap_float(mesh->confidences[i]);
 	}
 
-	dprintf("\n  Reading %d vertices... ", nverts);
+//	dprintf("\n  Reading %d vertices... ", nverts);
 	if (vert_len == 12 && sizeof(point) == 12 && nverts > 1)
 		return slurp_verts_bin(f, mesh, need_swap, nverts);
 	while (++i < new_nverts) {
@@ -1002,7 +1002,7 @@ static bool read_verts_asc(FILE *f, TriMesh *mesh,
 
 	char buf[1024];
 	skip_comments(f);
-	dprintf("\n  Reading %d vertices... ", nverts);
+//	dprintf("\n  Reading %d vertices... ", nverts);
 	for (int i = old_nverts; i < new_nverts; i++) {
 		for (int j = 0; j < vert_len; j++) {
 			if (j == vert_pos) {
@@ -1163,7 +1163,7 @@ static bool read_strips_bin(FILE *f, TriMesh *mesh, bool need_swap)
 	int new_striplen = old_striplen + striplen;
 	mesh->tstrips.resize(new_striplen);
 
-	dprintf("\n  Reading triangle strips... ");
+//	dprintf("\n  Reading triangle strips... ");
 	COND_READ(true, mesh->tstrips[old_striplen], 4*striplen);
 	if (need_swap) {
 		for (int i = old_striplen; i < new_striplen; i++)
@@ -1185,7 +1185,7 @@ static bool read_strips_asc(FILE *f, TriMesh *mesh)
 	int new_striplen = old_striplen + striplen;
 	mesh->tstrips.resize(new_striplen);
 
-	dprintf("\n  Reading triangle strips... ");
+//	dprintf("\n  Reading triangle strips... ");
 	skip_comments(f);
 	for (int i = old_striplen; i < new_striplen; i++)
 		if (fscanf(f, "%d", &mesh->tstrips[i]) != 1)
@@ -1431,9 +1431,8 @@ bool TriMesh::write(const char *filename)
 
 	// Infer file type from file extension
 	if (ends_with(filename, ".ply"))
-//		filetype = we_are_little_endian() ?
-//				PLY_BINARY_LE : PLY_BINARY_BE;
-			filetype = PLY_ASCII;
+		filetype = we_are_little_endian() ?
+				PLY_BINARY_LE : PLY_BINARY_BE;
 	else if (ends_with(filename, ".ray"))
 		filetype = RAY;
 	else if (ends_with(filename, ".obj"))
@@ -1468,10 +1467,9 @@ bool TriMesh::write(const char *filename)
 			float_color = true;
 		} else if (begins_with(filename, "ply:")) {
 			filename += 4;
-//			filetype = we_are_little_endian() ?
-//					PLY_BINARY_LE :
-//					PLY_BINARY_BE;
-			filetype = PLY_ASCII;
+			filetype = we_are_little_endian() ?
+					PLY_BINARY_LE :
+					PLY_BINARY_BE;
 		} else if (begins_with(filename, "ply_binary:")) {
 			filename += 11;
 			filetype = we_are_little_endian() ?

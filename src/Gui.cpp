@@ -279,7 +279,8 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 
 	glPushMatrix();
 //	glMultMatrixd(xforms[i]);
-
+//std::cout << themesh->vertices.size() << std::endl;
+//std::cout << bsphere.r << std::endl;
 	glDepthFunc(GL_LESS);
 	glEnable(GL_DEPTH_TEST);
 
