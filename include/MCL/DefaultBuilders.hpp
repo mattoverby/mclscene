@@ -188,9 +188,33 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 
 	} // end build beam
 
+	//
+	//	Cylinder
+	//
+	else if( type == "cylinder" ){
+
+		std::shared_ptr<TriMesh> tris( new TriMesh() );
+
+		float radius = 1.f;
+		int tess_l=10, tess_c=10;
+
+		for( int i=0; i<obj.params.size(); ++i ){
+			if( parse::to_lower(obj.params[i].tag)=="tess_l" ){ tess_l=obj.params[i].as_int(); }
+			if( parse::to_lower(obj.params[i].tag)=="tess_c" ){ tess_c=obj.params[i].as_int(); }
+			else if( parse::to_lower(obj.params[i].tag)=="radius" ){ radius=obj.params[i].as_float(); }
+		}
+
+		trimesh::make_ccyl( tris.get(), tess_l, tess_c, radius );
+		tris.get()->need_normals();
+		tris.get()->need_tstrips();
+		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris,material) );
+		new_obj->apply_xform( x_form );
+		return new_obj;
+
+	} // end build cylinder
 
 	//
-	//	Plane, 2 or more triangles
+	//	Triangle Mesh, 2 or more triangles
 	//
 	else if( type == "trimesh" ){
 
@@ -239,6 +263,10 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		return new_obj;
 
 	} // end build tet mesh
+
+	else{
+		std::cerr << "**Error: I don't know how to create an object of type " << type << std::endl;
+	}
 
 
 	//
