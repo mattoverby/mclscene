@@ -116,12 +116,10 @@ static void load_params( std::vector<Param> &params, const pugi::xml_node &curr_
 			trimesh::xform x_form;
 
 			if( parse::to_lower(type_id) == "scale" ){
-				trimesh::xform scale = trimesh::xform::scale(v[0],v[1],v[2]);
-				x_form = scale * x_form;
+				x_form = trimesh::xform::scale(v[0],v[1],v[2]);
 			}
 			else if( parse::to_lower(type_id) == "translate" ){
-				trimesh::xform translate = trimesh::xform::trans(v[0],v[1],v[2]);
-				x_form = translate * x_form;
+				x_form = trimesh::xform::trans(v[0],v[1],v[2]);
 			}
 			else if( parse::to_lower(type_id) == "rotate" ){
 				v *= (M_PI/180.f); // convert to radians
@@ -129,7 +127,7 @@ static void load_params( std::vector<Param> &params, const pugi::xml_node &curr_
 				rot = rot * trimesh::xform::rot( v[0], trimesh::vec(1.f,0.f,0.f) );
 				rot = rot * trimesh::xform::rot( v[1], trimesh::vec(0.f,1.f,0.f) );
 				rot = rot * trimesh::xform::rot( v[2], trimesh::vec(0.f,0.f,1.f) );
-				x_form = x_form * rot;
+				x_form = rot;
 			}
 
 			std::stringstream xf_ss; xf_ss << x_form;
