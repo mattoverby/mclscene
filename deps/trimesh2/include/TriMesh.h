@@ -71,7 +71,7 @@ public:
 	// Constructor
 	//
 	TriMesh() : grid_width(-1), grid_height(-1), flag_curr(0)
-		{}
+		{ set_verbose(0); }
 
 	//
 	// Members
