@@ -24,6 +24,7 @@
 
 #include <memory>
 #include <cassert>
+#include "Vec.h"
 
 namespace mcl {
 
@@ -34,6 +35,57 @@ namespace mcl {
 class BaseLight {
 public:
 	virtual ~BaseLight(){}
+
+	virtual std::string get_type() const = 0;
+
+	// A light is sampled from random numbers 0 <= u < 1
+	// If u=0.5 it returns position (or center).
+	virtual trimesh::vec sample( double u1, double u2 ) = 0;
+
+	trimesh::vec m_intensity; // i.e. color
+};
+
+
+//
+//	Point Light
+//
+//	If radius = 0, the sampler returns its position
+//
+class PointLight : public BaseLight {
+public:
+	PointLight( trimesh::vec intensity, trimesh::vec pos, double rad ) : m_pos(pos), m_rad(rad) { this->m_intensity=intensity; }
+
+	std::string get_type() const { return "point"; }
+
+	// Uniform sphere sample
+	trimesh::vec sample( double u1, double u2 ){
+		return m_pos;
+//		if( m_rad<=0.0 ){ return m_pos; }
+//		float z = 1.f - 2.f * u1;
+//		float r = sqrtf(fmaxf(0.f, 1.f - z*z))*m_rad;
+//		float phi = 2.f * M_PI * u2;
+//		float x = r * cosf(phi);
+//		float y = r * sinf(phi);
+//		return m_pos+trimesh::vec(x, y, z);
+	}
+
+	double m_rad;
+	trimesh::vec m_pos;
+};
+
+
+
+//
+//	Ambient Light
+//
+class AmbientLight : public BaseLight {
+public:
+	AmbientLight( trimesh::vec intensity ) { this->m_intensity=intensity; }
+
+	std::string get_type() const { return "ambient"; }
+
+	// Uniform sphere sample
+	trimesh::vec sample( double u1, double u2 ){ return trimesh::vec(0,1,0); }
 };
 
 

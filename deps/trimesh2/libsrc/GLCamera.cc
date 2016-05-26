@@ -407,6 +407,7 @@ void GLCamera::setupGL(const point &scene_center, float scene_size) const
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+/*
 	GLfloat light0_position[] = { lightdir[0], lightdir[1], lightdir[2], 0 };
 	GLfloat light1_position[] = { -lightdir[0], -lightdir[1], -lightdir[2], 0 };
 	GLfloat light2_position[] = { lightdir[2], 0, -lightdir[0], 0 };
@@ -419,6 +420,7 @@ void GLCamera::setupGL(const point &scene_center, float scene_size) const
 	glLightfv(GL_LIGHT3, GL_POSITION, light3_position);
 	glLightfv(GL_LIGHT4, GL_POSITION, light4_position);
 	glLightfv(GL_LIGHT5, GL_POSITION, light5_position);
+*/
 }
 
 }; // namespace trimesh

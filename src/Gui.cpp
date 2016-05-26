@@ -54,6 +54,16 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 		else{ trimesh_materials.push_back( scene->materials_map[mat_str] ); }
 	} // end draw scene objects
 
+	// If there are no lights defined in the scene, add some default ones
+	if( scene->lights.size() == 0 ){
+		scene->lights.push_back( std::make_shared<AmbientLight>( new AmbientLight( trimesh::vec( 0.02f, 0.02f, 0.05f ) ) ) ); // global ambient
+
+		trimesh::vec l_pos( 0.f, 10.f, 0.f );
+		trimesh::vec l_intensity( 0.85f, 0.85f, 0.85f );
+		std::shared_ptr<PointLight> p( new PointLight( l_intensity, l_pos, 0.f ) );
+//		scene->lights.push_back( p ); // overhead point light
+	}
+
 	// build the bvh
 	scene->get_bvh();
 
@@ -214,31 +224,58 @@ void Gui::setup_lighting( const std::shared_ptr<BaseMaterial> mat, const std::ve
 	GLfloat mat_shininess[] = { 64 };
 	if( specular != NULL ){ mat_shininess[0]=specular->shininess; }
 
-	GLfloat global_ambient[] = { 0.02f, 0.02f, 0.05f, 0.05f };
-	GLfloat light0_ambient[] = { 0, 0, 0, 0 };
-	GLfloat light0_diffuse[] = { 0.85f, 0.85f, 0.8f, 0.85f };
 
-	GLfloat light1_diffuse[] = { -0.01f, -0.01f, -0.03f, -0.03f };
-	GLfloat light0_specular[] = { 0.85f, 0.85f, 0.85f, 0.85f };
+//	GLfloat global_ambient[] = { 0.02f, 0.02f, 0.05f, 0.05f };
+//	GLfloat light0_ambient[] = { 0, 0, 0, 0 };
+//	GLfloat light0_diffuse[] = { 0.85f, 0.85f, 0.8f, 0.85f };
+
+//	GLfloat light1_diffuse[] = { -0.01f, -0.01f, -0.03f, -0.03f };
+//	GLfloat light0_specular[] = { 0.85f, 0.85f, 0.85f, 0.85f };
 
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, light0_ambient);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
+//	glLightfv(GL_LIGHT0, GL_AMBIENT, light0_ambient);
+//	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
+//	glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular);
+//	glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
 
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
+//	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
 	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
 //	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
+//	glEnable(GL_LIGHT0);
+//	glEnable(GL_LIGHT1);
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_NORMALIZE);
 
-}
+
+	for( int i=0; i<lights.size(); ++i ){
+
+		int l_id = GL_LIGHT1;
+		switch( i%8 ){
+			case 0: l_id = GL_LIGHT0; break;
+			case 1: l_id = GL_LIGHT1; break;
+			case 2: l_id = GL_LIGHT2; break;
+			case 3: l_id = GL_LIGHT3; break;
+			case 4: l_id = GL_LIGHT4; break;
+			case 5: l_id = GL_LIGHT5; break;
+			case 6: l_id = GL_LIGHT6; break;
+			case 7: l_id = GL_LIGHT7; break;
+		} // end get light id
+
+		if( lights[i]->get_type() == "ambient" ){
+			GLfloat l_color[] = { lights[i]->m_intensity[0], lights[i]->m_intensity[1], lights[i]->m_intensity[2], 1.f };
+			glLightfv(l_id, GL_AMBIENT, l_color);
+			glLightModelfv(GL_LIGHT_MODEL_AMBIENT, l_color);
+		} // end ambient light
+
+		// Enable the light
+		glEnable(l_id);
+
+	} // end loop lights
+
+} // end setup lighting
 
 
 // Draw triangle strips.  They are stored as length followed by values. By Szymon Rusinkiewicz
