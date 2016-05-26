@@ -26,9 +26,16 @@ using namespace mcl;
 
 Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 
+	sf::ContextSettings settings;
+	settings.depthBits = 24;
+	settings.stencilBits = 8;
+	settings.antialiasingLevel = 4;
+	settings.majorVersion = 3;
+	settings.minorVersion = 0;
+
 	// Set up the window and create the opengl context.
 	window = std::shared_ptr<sf::Window>( new sf::Window(sf::VideoMode(1024, 768), "Viewer",
-		sf::Style::Default, sf::ContextSettings(32)) );
+		sf::Style::Default, settings ) );
 	window.get()->setVerticalSyncEnabled(true);
 
 	std::cout << "Gui Warning: Ignoring lights and camera settings" << std::endl;
@@ -114,6 +121,7 @@ bool Gui::draw( const float screen_dt ){
 	cam.setupGL( global_xf * bsphere.center, bsphere.r );
 	glPushMatrix();
 	glMultMatrixd(global_xf);
+
 	setup_lighting( scene->materials[0], scene->lights );
 
 	// Draw the meshes
