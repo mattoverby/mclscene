@@ -112,4 +112,80 @@ void TriMesh::need_normals( bool recompute )
 //	dprintf("Done.\n");
 }
 
+
+
+void TriMesh::need_uv_dirs()
+{
+
+using namespace std;
+
+    if (texcoords.empty() || 
+        (need_faces(), faces.empty()) ||
+        (need_normals(), normals.empty()))
+        return;
+
+    int nv = vertices.size();
+	udirs.clear();
+	vdirs.clear();
+	udirs.resize(nv);
+	vdirs.resize(nv);
+	
+    // Compute from faces
+    int nf = faces.size();
+#pragma omp parallel for
+    for (int i = 0; i < nf; i++) {
+        const point &p0 = vertices[faces[i][0]];
+        const point &p1 = vertices[faces[i][1]];
+        const point &p2 = vertices[faces[i][2]];
+
+        const vec2 &uv0 = texcoords[faces[i][0]];
+        const vec2 &uv1 = texcoords[faces[i][1]];
+        const vec2 &uv2 = texcoords[faces[i][2]];
+
+        vec a = p0-p1, b = p1-p2, c = p2-p0;
+        float l2a = len2(a), l2b = len2(b), l2c = len2(c);
+
+        // Get a local frame for the face and compute the gradient
+        // of u and v in that frame. 
+        vec s = -a;
+        float b_s = sqrt(l2a);
+        s /= b_s;
+        vec t = c - s * (c DOT s);
+        normalize(t);
+        float c_s = c DOT s;
+        float c_t = c DOT t;
+
+        float fgs_u = (uv1[0] - uv0[0]) / b_s;
+        float fgt_u = ((uv2[0] - uv0[0]) - fgs_u * c_s) / c_t;
+        vec fg_u = s * fgs_u + t * fgt_u;
+
+        float fgs_v = (uv1[1] - uv0[1]) / b_s;
+        float fgt_v = ((uv2[1] - uv0[1]) - fgs_v * c_s) / c_t;
+        vec fg_v = s * fgs_v + t * fgt_v;
+
+        udirs[faces[i][0]] += fg_u * (1.0f / (l2a * l2c));
+        udirs[faces[i][1]] += fg_u * (1.0f / (l2b * l2a));
+        udirs[faces[i][2]] += fg_u * (1.0f / (l2c * l2b));
+        vdirs[faces[i][0]] += fg_v * (1.0f / (l2a * l2c));
+        vdirs[faces[i][1]] += fg_v * (1.0f / (l2b * l2a));
+        vdirs[faces[i][2]] += fg_v * (1.0f / (l2c * l2b));
+    }
+
+    // Project and renormalize so normal, u, and v dirs are
+    // all orthogonal.
+
+#pragma omp parallel for
+	for (int i = 0; i < nv; i++) {
+        udirs[i] -= normals[i] * (udirs[i] DOT normals[i]);
+        normalize(udirs[i]);
+		/*vdirs[i] -= normals[i] * (vdirs[i] DOT normals[i]);
+        normalize(vdirs[i]);*/
+        vec v = normals[i] CROSS udirs[i];
+        if ((v DOT vdirs[i]) < 0)
+            v *= -1;
+        vdirs[i] = v;
+    }
+}
+
+
 }; // namespace trimesh

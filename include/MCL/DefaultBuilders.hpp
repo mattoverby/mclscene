@@ -289,9 +289,12 @@ static std::shared_ptr<BaseMaterial> default_build_material( Component &componen
 				component.params[i].fix_color();
 				mat->diffuse=component.params[i].as_vec3();
 			}
-			if( parse::to_lower(component.params[i].tag)=="edges" ){
+			else if( parse::to_lower(component.params[i].tag)=="edges" ){
 				component.params[i].fix_color();
 				mat->edge_color=component.params[i].as_vec3();
+			}
+			else if( parse::to_lower(component.params[i].tag)=="texture" ){
+				mat->m_texture=TextureResource( component.name, component.params[i].as_string() );
 			}
 		}
 		std::shared_ptr<BaseMaterial> new_mat( mat );
@@ -307,15 +310,18 @@ static std::shared_ptr<BaseMaterial> default_build_material( Component &componen
 				component.params[i].fix_color();
 				mat->diffuse=component.params[i].as_vec3();
 			}
-			if( parse::to_lower(component.params[i].tag)=="specular" ){
+			else if( parse::to_lower(component.params[i].tag)=="specular" ){
 				component.params[i].fix_color();
 				mat->specular=component.params[i].as_vec3();
 			}
-			if( parse::to_lower(component.params[i].tag)=="edges" ){
+			else if( parse::to_lower(component.params[i].tag)=="texture" ){
+				mat->m_texture=TextureResource( component.name, component.params[i].as_string() );
+			}
+			else if( parse::to_lower(component.params[i].tag)=="edges" ){
 				component.params[i].fix_color();
 				mat->edge_color=component.params[i].as_vec3();
 			}
-			if( parse::to_lower(component.params[i].tag)=="shininess" || parse::to_lower(component.params[i].tag)=="exponent" ){ mat->shininess=component.params[i].as_double(); }
+			else if( parse::to_lower(component.params[i].tag)=="shininess" || parse::to_lower(component.params[i].tag)=="exponent" ){ mat->shininess=component.params[i].as_double(); }
 		}
 		std::shared_ptr<BaseMaterial> new_mat( mat );
 		return new_mat;

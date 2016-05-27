@@ -22,7 +22,7 @@
 #ifndef MCLSCENE_GUI_H
 #define MCLSCENE_GUI_H 1
 
-#include "SFML/OpenGL.hpp"
+#include "TextureManager.hpp"
 #include "SceneManager.hpp"
 #include <png.h>
 #include "SFML/Window.hpp"
@@ -52,6 +52,12 @@ protected:
 	virtual void draw_tstrips( const trimesh::TriMesh *themesh );
 	virtual void draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::TriMesh *themesh );
 	virtual void check_mouse( const sf::Event &event, const float screen_dt );
+
+	void load_textures();
+
+	TextureManager m_textures;
+	void load_skybox_textures();
+	void drawEnvMap();
 
 	void save_screenshot();
 	void save_meshes();

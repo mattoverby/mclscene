@@ -102,6 +102,12 @@ public:
 	::std::vector<vec> cornerareas;
 	::std::vector<float> pointareas;
 
+	// Texture coordinate properties
+	::std::vector<vec2> texcoords;
+//	::std::vector<Face> texfaces;
+	::std::vector<vec> udirs, vdirs;
+	void need_uv_dirs();
+
 	// Bounding structures
 	box bbox;
 	BSphere bsphere;

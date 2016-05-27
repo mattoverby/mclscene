@@ -158,6 +158,16 @@ static inline void make_sym_plane(trimesh::TriMesh *mesh, int tess_x, int tess_y
 			mkquad_sym(mesh, ll, lr, ul, ur, cent);
 		}
 	}
+
+
+	// Make texture coordinates
+	mesh->texcoords.reserve( mesh->vertices.size() );
+	for( int i=0; i<mesh->vertices.size(); ++i ){
+		point p = mesh->vertices[i];
+		float u = (p[0]+1.f)/2.f;
+		float v = 1.f-(p[1]+1.f)/2.f;
+		mesh->texcoords.push_back( vec2(u,v) );
+	}
 }
 
 

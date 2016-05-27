@@ -102,9 +102,9 @@ bool SceneManager::load( std::string xmlfile, bool auto_build ){
 		std::vector<Param> params;
 		{
 			load_params( params, curr_node );
-			// If any parameters are "file" give it the full path name
+			// If any parameters are "file" or "texture" give it the path name from the current execution directory
 			for( int i=0; i<params.size(); ++i ){
-				if( parse::to_lower(params[i].tag) == "file" ){
+				if( parse::to_lower(params[i].tag) == "file" || parse::to_lower(params[i].tag) == "texture" ){
 					params[i].value = xmldir + params[i].as_string();
 				}
 			}

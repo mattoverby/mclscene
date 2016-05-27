@@ -69,6 +69,7 @@ set( MCLSCENE_SRCS
 	include/MCL/TetMesh.hpp		src/TetMesh.cpp
 	include/MCL/MeshDump.hpp	src/MeshDump.cpp
 	include/MCL/Param.hpp		src/Param.cpp
+	include/MCL/TextureManager.hpp	src/TextureManager.cpp
 	include/MCL/Object.hpp
 	include/MCL/BVH.hpp		src/BVH.cpp
 	include/MCL/TriangleMesh.hpp	src/TriangleMesh.cpp

@@ -19,69 +19,35 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_MATERIAL_H
-#define MCLSCENE_MATERIAL_H 1
+#ifndef MCLSCENE_TEXMANAGER_H
+#define MCLSCENE_TEXMANAGER_H 1
 
-#include <memory>
-#include <cassert>
-#include "MCL/Param.hpp"
+#include <SFML/OpenGL.hpp>
+#include <SFML/Graphics.hpp>
+#include <unordered_map>
+#include <iostream>
+#include <string>
 
-///
-///	Simple object types
-///
 namespace mcl {
+	
+struct TextureManager {
 
+	public:
+		TextureManager() : bindActive(false) {}
 
-// Texture resource will eventually have more parameters
-// like mapping algorithm, etc...
-class TextureResource {
-public:
-	TextureResource( std::string name="", std::string file="" ) : m_name(name), m_file(file) {}
-	std::string m_name, m_file;
-};
+		// True on success
+		bool load( std::string name, std::string file );
 
+		void bind( std::string name );
 
-//
-//	Base, pure virtual
-//
-class BaseMaterial {
-public:
-	virtual ~BaseMaterial(){}
+		void unbind();
 
-	virtual std::string get_type() const = 0;
+	private:
+		std::unordered_map< std::string, sf::Texture > textures;
 
-	bool has_texture() { return m_texture.m_file.size(); }
+		bool bindActive;
 
-	TextureResource m_texture;
-};
-
-
-//
-//	Diffuse
-//
-class DiffuseMaterial : public BaseMaterial {
-public:
-	trimesh::vec diffuse; // diffuse color
-	trimesh::vec edge_color;
-
-	std::string get_type() const { return "diffuse"; }
-};
-
-
-//
-//	Specular
-//
-class SpecularMaterial : public BaseMaterial {
-public:
-	trimesh::vec diffuse; // diffuse color
-	trimesh::vec specular; // specular color
-	double shininess; // i.e. phong exponent
-
-	trimesh::vec edge_color;
-
-	std::string get_type() const { return "specular"; }
-};
-
+}; // end manager texture
 
 } // end namespace mcl
 

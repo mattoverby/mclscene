@@ -38,6 +38,9 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 		sf::Style::Default, settings ) );
 	window.get()->setVerticalSyncEnabled(true);
 
+	load_skybox_textures();
+	load_textures();
+
 	std::cout << "Gui Warning: Ignoring lights and camera settings" << std::endl;
 
 	// If there aren't any materials, use a default one
@@ -128,9 +131,10 @@ bool Gui::update( const float screen_dt ){
 bool Gui::draw( const float screen_dt ){
 
 	clear_screen();
-	cam.setupGL( global_xf * bsphere.center, bsphere.r );
+	cam.setupGL( global_xf * bsphere.center, bsphere.r+10.f );
 	glPushMatrix();
 	glMultMatrixd(global_xf);
+
 
 	setup_lighting( scene->materials[0], scene->lights );
 
@@ -141,6 +145,8 @@ bool Gui::draw( const float screen_dt ){
 	}
 
 	for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i](); }
+
+	drawEnvMap();
 
 	glPopMatrix();
 
@@ -197,32 +203,8 @@ void Gui::clear_screen(){
 //void Gui::setup_lighting( MaterialComponent *material, const std::vector<LightComponent> &lights ){
 void Gui::setup_lighting( const std::shared_ptr<BaseMaterial> mat, const std::vector<std::shared_ptr<BaseLight> > &lights ){
 
-	// This isn't toooooo unsafe...
-	std::shared_ptr<DiffuseMaterial> diffuse = NULL;
-	std::shared_ptr<SpecularMaterial> specular = NULL;
-	if( parse::to_lower(mat->get_type())=="diffuse" ){ diffuse = std::static_pointer_cast<DiffuseMaterial>(mat); }
-	else if( parse::to_lower(mat->get_type())=="specular" ){ specular = std::static_pointer_cast<SpecularMaterial>(mat); }
 
-	// Diffuse color
-	if( diffuse != NULL ){ glColor3f( diffuse->diffuse[0], diffuse->diffuse[1], diffuse->diffuse[2] ); }
-	else if( specular != NULL ){ glColor3f( specular->diffuse[0], specular->diffuse[1], specular->diffuse[2] ); }
-//	if( trimesh::len2(material->diffuse)>0 ){
-//		glColor3f(material->diffuse[0],material->diffuse[1],material->diffuse[2]);
-//	}
-	else{ glColor3f(0.5f,0.5f,0.5f); }
 
-	// Specular color
-	GLfloat mat_specular[4] = { 0.f, 0.f, 0.f, 0.f };
-//	if( trimesh::len2(material->specular)>0 ){
-	if( specular != NULL ){
-		trimesh::vec c = specular->specular;
-		double w = (c[0]+c[1]+c[2])/3.f;
-		mat_specular[0]=c[0]; mat_specular[1]=c[1]; mat_specular[2]=c[2]; mat_specular[3]=w;
-	}
-
-	// shininess
-	GLfloat mat_shininess[] = { 64 };
-	if( specular != NULL ){ mat_shininess[0]=specular->shininess; }
 
 
 //	GLfloat global_ambient[] = { 0.02f, 0.02f, 0.05f, 0.05f };
@@ -232,9 +214,7 @@ void Gui::setup_lighting( const std::shared_ptr<BaseMaterial> mat, const std::ve
 //	GLfloat light1_diffuse[] = { -0.01f, -0.01f, -0.03f, -0.03f };
 //	GLfloat light0_specular[] = { 0.85f, 0.85f, 0.85f, 0.85f };
 
-	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
+
 //	glLightfv(GL_LIGHT0, GL_AMBIENT, light0_ambient);
 //	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
 //	glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular);
@@ -246,7 +226,7 @@ void Gui::setup_lighting( const std::shared_ptr<BaseMaterial> mat, const std::ve
 	glEnable(GL_LIGHTING);
 //	glEnable(GL_LIGHT0);
 //	glEnable(GL_LIGHT1);
-	glEnable(GL_COLOR_MATERIAL);
+
 	glEnable(GL_NORMALIZE);
 
 
@@ -312,6 +292,7 @@ void Gui::draw_tstrips( const trimesh::TriMesh *themesh ){
 
 // Draw the mesh, by Szymon Rusinkiewicz
 void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::TriMesh *themesh ){
+
 	bool draw_falsecolor = false;
 	bool draw_index = false;
 	bool draw_2side = false;
@@ -328,6 +309,7 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 //std::cout << bsphere.r << std::endl;
 	glDepthFunc(GL_LESS);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_TEXTURE_2D);
 
 	if (draw_2side) {
 		glDisable(GL_CULL_FACE);
@@ -352,6 +334,14 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 		glDisableClientState(GL_NORMAL_ARRAY);
 	}
 
+	// Texture coordinates
+	if( !themesh->texcoords.empty() ){
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(themesh->texcoords[0]), &themesh->texcoords[0][0]);
+	} else {
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+
 	// Colors
 	if (!themesh->colors.empty() && !draw_falsecolor && !draw_index) {
 		glEnableClientState(GL_COLOR_ARRAY);
@@ -360,6 +350,35 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 			       &themesh->colors[0][0]);
 	} else {
 		glDisableClientState(GL_COLOR_ARRAY);
+
+		// This isn't toooooo unsafe...
+		std::shared_ptr<DiffuseMaterial> diffuse = NULL;
+		std::shared_ptr<SpecularMaterial> specular = NULL;
+		if( parse::to_lower(material->get_type())=="diffuse" ){ diffuse = std::static_pointer_cast<DiffuseMaterial>(material); }
+		else if( parse::to_lower(material->get_type())=="specular" ){ specular = std::static_pointer_cast<SpecularMaterial>(material); }
+
+		// Diffuse color
+		if( diffuse != NULL ){ glColor3f( diffuse->diffuse[0], diffuse->diffuse[1], diffuse->diffuse[2] ); }
+		else if( specular != NULL ){ glColor3f( specular->diffuse[0], specular->diffuse[1], specular->diffuse[2] ); }
+		else{ glColor3f(0.5f,0.5f,0.5f); }
+
+		// Specular color
+		GLfloat mat_specular[4] = { 0.f, 0.f, 0.f, 0.f };
+		if( specular != NULL ){
+			trimesh::vec c = specular->specular;
+			double w = (c[0]+c[1]+c[2])/3.f;
+			mat_specular[0]=c[0]; mat_specular[1]=c[1]; mat_specular[2]=c[2]; mat_specular[3]=w;
+		}
+
+		// shininess
+		GLfloat mat_shininess[] = { 64 };
+		if( specular != NULL ){ mat_shininess[0]=specular->shininess; }
+
+		glEnable(GL_COLOR_MATERIAL);
+		glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
+
 	}
 
 	// Main drawing pass
@@ -376,7 +395,14 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 		glEnable(GL_POLYGON_OFFSET_FILL);
 	}
 
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	if( material->has_texture() ){ m_textures.bind( material->m_texture.m_name ); }
 	draw_tstrips(themesh);
+	m_textures.unbind();
+
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
 	// Edge drawing pass
@@ -440,5 +466,146 @@ void Gui::save_meshes(){
 
 	} // end loop objects
 }
+
+
+void Gui::load_textures(){
+	for( int i=0; i<scene->materials.size(); ++i ){
+		if( scene->materials[i]->has_texture() ){
+			TextureResource tex = scene->materials[i]->m_texture;
+std::cout << tex.m_name << std::endl;
+			if( !m_textures.load( tex.m_name, tex.m_file ) ){ exit(0); }
+		}
+	}
+}
+
+
+
+void Gui::drawEnvMap() {
+return;
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_LIGHTING);
+	glTranslatef( bsphere.center[0], bsphere.center[1], bsphere.center[2] );
+
+	float s = bsphere.r;
+
+		m_textures.bind( "env-back" );
+		glBegin(GL_QUADS);
+
+		glNormal3f(0,0,-1);
+		glTexCoord2f( 0.0f, 1.0f ); glVertex3f(s,s,s);
+		glTexCoord2f( 0.0f, 0.f ); glVertex3f(-s,s,s);
+		glTexCoord2f( 1.0f, 0.f ); glVertex3f(-s,-s,s);
+		glTexCoord2f( 1.f, 1.f ); glVertex3f(s,-s,s);
+
+		glEnd();
+		m_textures.unbind();
+
+		m_textures.bind( "env-left" );
+		glBegin(GL_QUADS);
+
+		glNormal3f(-1,0,0);
+		glTexCoord2f( 0.0f, 1.0f ); glVertex3f(s,s,s);
+		glTexCoord2f( 0.0f, 0.f ); glVertex3f(s,-s,s);
+		glTexCoord2f( 1.0f, 0.f ); glVertex3f(s,-s,-s);
+		glTexCoord2f( 1.f, 1.f ); glVertex3f(s,s,-s);
+
+		glEnd();
+		m_textures.unbind();
+
+		m_textures.bind( "env-top" );
+		glBegin(GL_QUADS);
+
+		glNormal3f(0,-1,0);
+		glTexCoord2f( 0.0f, 1.0f ); glVertex3f(s,s,s);
+		glTexCoord2f( 0.0f, 0.f ); glVertex3f(s,s,-s);
+		glTexCoord2f( 1.0f, 0.f ); glVertex3f(-s,s,-s);
+		glTexCoord2f( 1.f, 1.f ); glVertex3f(-s,s,s);
+
+		glEnd();
+		m_textures.unbind();
+
+		m_textures.bind( "env-right" );
+		glBegin(GL_QUADS);
+
+		glNormal3f(1,0,0);
+		glTexCoord2f( 0.0f, 1.0f ); glVertex3f(-s,s,s);
+		glTexCoord2f( 0.0f, 0.f ); glVertex3f(-s,s,-s);
+		glTexCoord2f( 1.0f, 0.f ); glVertex3f(-s,-s,-s);
+		glTexCoord2f( 1.f, 1.f ); glVertex3f(-s,-s,s);
+
+		glEnd();
+		m_textures.unbind();
+
+
+		m_textures.bind( "env-front" );
+		glBegin(GL_QUADS);
+
+		glNormal3f(0,0,1);
+		glTexCoord2f( 0.0f, 1.0f ); glVertex3f(s,-s,-s);
+		glTexCoord2f( 0.0f, 0.f ); glVertex3f(-s,-s,-s);
+		glTexCoord2f( 1.0f, 0.f ); glVertex3f(-s,s,-s);
+		glTexCoord2f( 1.f, 1.f ); glVertex3f(s,s,-s);
+
+		glEnd();
+		m_textures.unbind();
+
+		m_textures.bind( "env-bot" );
+		glBegin(GL_QUADS);
+
+		glNormal3f(0,-1,0);
+		glTexCoord2f( 0.0f, 1.0f ); glVertex3f(-s,-s,-s);
+		glTexCoord2f( 0.0f, 0.f ); glVertex3f(s,-s,-s);
+		glTexCoord2f( 1.0f, 0.f ); glVertex3f(s,-s,s);
+		glTexCoord2f( 1.f, 1.f ); glVertex3f(-s,-s,s);
+
+		glEnd();
+		m_textures.unbind();
+
+
+	glTranslatef( -bsphere.center[0], -bsphere.center[1], -bsphere.center[2] );
+	glEnable(GL_LIGHTING);
+}
+
+
+void Gui::load_skybox_textures(){
+
+	{
+		std::stringstream ss;
+		ss << MCLSCENE_SRC_DIR << "/resources/envmap/posy.jpg";
+		m_textures.load( "env-top", ss.str() );
+	}
+
+	{
+		std::stringstream ss;
+		ss << MCLSCENE_SRC_DIR << "/resources/envmap/negy.jpg";
+		m_textures.load( "env-bot", ss.str() );
+	}
+
+	{
+		std::stringstream ss;
+		ss << MCLSCENE_SRC_DIR << "/resources/envmap/posz.jpg";
+		m_textures.load( "env-front", ss.str() );
+	}
+
+	{
+		std::stringstream ss;
+		ss << MCLSCENE_SRC_DIR << "/resources/envmap/negz.jpg";
+		m_textures.load( "env-back", ss.str() );
+	}
+
+
+	{
+		std::stringstream ss;
+		ss << MCLSCENE_SRC_DIR << "/resources/envmap/posx.jpg";
+		m_textures.load( "env-left", ss.str() );
+	}
+
+	{
+		std::stringstream ss;
+		ss << MCLSCENE_SRC_DIR << "/resources/envmap/negx.jpg";
+		m_textures.load( "env-right", ss.str() );
+	}
+
+} // end load textures
 
 

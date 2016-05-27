@@ -19,70 +19,42 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_MATERIAL_H
-#define MCLSCENE_MATERIAL_H 1
+#include "MCL/TextureManager.hpp"
 
-#include <memory>
-#include <cassert>
-#include "MCL/Param.hpp"
-
-///
-///	Simple object types
-///
-namespace mcl {
+using namespace mcl;
 
 
-// Texture resource will eventually have more parameters
-// like mapping algorithm, etc...
-class TextureResource {
-public:
-	TextureResource( std::string name="", std::string file="" ) : m_name(name), m_file(file) {}
-	std::string m_name, m_file;
-};
+bool TextureManager::load( std::string name, std::string file ){
+
+	if( bindActive ){
+		std::cerr << "**TextureManager Warning: Bind already active!" << std::endl;
+	}
+
+	sf::Texture img;
+	if( !img.loadFromFile( file ) ){
+		std::cerr << "**TextureManager Error: Could not load texture [" << file << "]" << std::endl;
+		return false;
+	}
+
+	textures.insert( std::pair< std::string, sf::Texture >( name, img ) );
+
+	return true;
+}
 
 
-//
-//	Base, pure virtual
-//
-class BaseMaterial {
-public:
-	virtual ~BaseMaterial(){}
-
-	virtual std::string get_type() const = 0;
-
-	bool has_texture() { return m_texture.m_file.size(); }
-
-	TextureResource m_texture;
-};
+void TextureManager::bind( std::string name ){
+//	if( !textures.count(name) ){
+//		std::unordered_map< std::string, sf::Texture >::iterator it = textures.begin();
+//		for( it; it != textures.end(); ++it ){
+//			std::cout << it->first << std::endl;
+//		}
+//	}
+	sf::Texture::bind( &textures[ name ] );
+	bindActive = true;
+}
 
 
-//
-//	Diffuse
-//
-class DiffuseMaterial : public BaseMaterial {
-public:
-	trimesh::vec diffuse; // diffuse color
-	trimesh::vec edge_color;
-
-	std::string get_type() const { return "diffuse"; }
-};
-
-
-//
-//	Specular
-//
-class SpecularMaterial : public BaseMaterial {
-public:
-	trimesh::vec diffuse; // diffuse color
-	trimesh::vec specular; // specular color
-	double shininess; // i.e. phong exponent
-
-	trimesh::vec edge_color;
-
-	std::string get_type() const { return "specular"; }
-};
-
-
-} // end namespace mcl
-
-#endif
+void TextureManager::unbind(){
+	sf::Texture::bind( NULL );
+	bindActive = false;
+}
