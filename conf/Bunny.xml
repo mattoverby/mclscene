@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <mclScene>
 
+	<background name="bg" type="jpg"  >
+		<file type="string" value="../resources/bg.jpg" />
+	</background>
 
 	<Object name="bunny1" type="TriMesh" >
 

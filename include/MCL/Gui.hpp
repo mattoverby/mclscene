@@ -53,11 +53,11 @@ protected:
 	virtual void draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::TriMesh *themesh );
 	virtual void check_mouse( const sf::Event &event, const float screen_dt );
 
-	void load_textures();
+	void draw_background();
 
+	void load_textures();
 	TextureManager m_textures;
-	void load_skybox_textures();
-	void drawEnvMap();
+
 
 	void save_screenshot();
 	void save_meshes();

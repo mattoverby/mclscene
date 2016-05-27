@@ -38,7 +38,6 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 		sf::Style::Default, settings ) );
 	window.get()->setVerticalSyncEnabled(true);
 
-	load_skybox_textures();
 	load_textures();
 
 	std::cout << "Gui Warning: Ignoring lights and camera settings" << std::endl;
@@ -131,10 +130,10 @@ bool Gui::update( const float screen_dt ){
 bool Gui::draw( const float screen_dt ){
 
 	clear_screen();
+	draw_background();
 	cam.setupGL( global_xf * bsphere.center, bsphere.r+10.f );
 	glPushMatrix();
 	glMultMatrixd(global_xf);
-
 
 	setup_lighting( scene->materials[0], scene->lights );
 
@@ -145,8 +144,6 @@ bool Gui::draw( const float screen_dt ){
 	}
 
 	for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i](); }
-
-	drawEnvMap();
 
 	glPopMatrix();
 
@@ -469,143 +466,68 @@ void Gui::save_meshes(){
 
 
 void Gui::load_textures(){
+
+	// Material textures
 	for( int i=0; i<scene->materials.size(); ++i ){
 		if( scene->materials[i]->has_texture() ){
 			TextureResource tex = scene->materials[i]->m_texture;
-std::cout << tex.m_name << std::endl;
 			if( !m_textures.load( tex.m_name, tex.m_file ) ){ exit(0); }
+		}
+	}
+
+	// Load the backdrop
+	for( int i=0; i<scene->components.size(); ++i ){
+		if( parse::to_lower( scene->components[i].tag ) == "background" &&
+			scene->components[i].exists("file") ){
+			m_textures.load( "bg", scene->components[i]["file"].as_string() );
 		}
 	}
 }
 
 
 
-void Gui::drawEnvMap() {
-return;
-	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_LIGHTING);
-	glTranslatef( bsphere.center[0], bsphere.center[1], bsphere.center[2] );
+void Gui::draw_background(){
 
-	float s = bsphere.r;
+	// Make sure a background texture was loaded
+	sf::Texture *tex = m_textures.get("bg");
+	if( tex == NULL ){ return; }
 
-		m_textures.bind( "env-back" );
-		glBegin(GL_QUADS);
+	// Set up the orthographic projection
+	sf::Vector2u windowsize = window->getSize();
+	int w1 = windowsize.x;
+	int h1 = windowsize.y;
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	gluOrtho2D(-w1/2, w1/2, -h1/2, h1/2);
+	glMatrixMode(GL_MODELVIEW);
 
-		glNormal3f(0,0,-1);
-		glTexCoord2f( 0.0f, 1.0f ); glVertex3f(s,s,s);
-		glTexCoord2f( 0.0f, 0.f ); glVertex3f(-s,s,s);
-		glTexCoord2f( 1.0f, 0.f ); glVertex3f(-s,-s,s);
-		glTexCoord2f( 1.f, 1.f ); glVertex3f(s,-s,s);
+	// texture width/height
+	// Scale the image to fit the background
+	sf::Vector2u tex_size = tex->getSize();
+	int iw = windowsize.x;
+	int ih = windowsize.y;
 
-		glEnd();
-		m_textures.unbind();
+	// Draw the texture on a quad
+	m_textures.bind("bg");
+	glPushMatrix();
+	glTranslatef( -iw/2, -ih/2, 0 );
+	glColor3f(1,1,1);
+	glBegin(GL_QUADS);
+	glTexCoord2i(1,1); glVertex2i(0, 0);
+	glTexCoord2i(0,1); glVertex2i(iw, 0);
+	glTexCoord2i(0,0); glVertex2i(iw, ih);
+	glTexCoord2i(1,0); glVertex2i(0, ih);
+	glEnd();
+	glPopMatrix();
 
-		m_textures.bind( "env-left" );
-		glBegin(GL_QUADS);
+	// Done
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
 
-		glNormal3f(-1,0,0);
-		glTexCoord2f( 0.0f, 1.0f ); glVertex3f(s,s,s);
-		glTexCoord2f( 0.0f, 0.f ); glVertex3f(s,-s,s);
-		glTexCoord2f( 1.0f, 0.f ); glVertex3f(s,-s,-s);
-		glTexCoord2f( 1.f, 1.f ); glVertex3f(s,s,-s);
-
-		glEnd();
-		m_textures.unbind();
-
-		m_textures.bind( "env-top" );
-		glBegin(GL_QUADS);
-
-		glNormal3f(0,-1,0);
-		glTexCoord2f( 0.0f, 1.0f ); glVertex3f(s,s,s);
-		glTexCoord2f( 0.0f, 0.f ); glVertex3f(s,s,-s);
-		glTexCoord2f( 1.0f, 0.f ); glVertex3f(-s,s,-s);
-		glTexCoord2f( 1.f, 1.f ); glVertex3f(-s,s,s);
-
-		glEnd();
-		m_textures.unbind();
-
-		m_textures.bind( "env-right" );
-		glBegin(GL_QUADS);
-
-		glNormal3f(1,0,0);
-		glTexCoord2f( 0.0f, 1.0f ); glVertex3f(-s,s,s);
-		glTexCoord2f( 0.0f, 0.f ); glVertex3f(-s,s,-s);
-		glTexCoord2f( 1.0f, 0.f ); glVertex3f(-s,-s,-s);
-		glTexCoord2f( 1.f, 1.f ); glVertex3f(-s,-s,s);
-
-		glEnd();
-		m_textures.unbind();
-
-
-		m_textures.bind( "env-front" );
-		glBegin(GL_QUADS);
-
-		glNormal3f(0,0,1);
-		glTexCoord2f( 0.0f, 1.0f ); glVertex3f(s,-s,-s);
-		glTexCoord2f( 0.0f, 0.f ); glVertex3f(-s,-s,-s);
-		glTexCoord2f( 1.0f, 0.f ); glVertex3f(-s,s,-s);
-		glTexCoord2f( 1.f, 1.f ); glVertex3f(s,s,-s);
-
-		glEnd();
-		m_textures.unbind();
-
-		m_textures.bind( "env-bot" );
-		glBegin(GL_QUADS);
-
-		glNormal3f(0,-1,0);
-		glTexCoord2f( 0.0f, 1.0f ); glVertex3f(-s,-s,-s);
-		glTexCoord2f( 0.0f, 0.f ); glVertex3f(s,-s,-s);
-		glTexCoord2f( 1.0f, 0.f ); glVertex3f(s,-s,s);
-		glTexCoord2f( 1.f, 1.f ); glVertex3f(-s,-s,s);
-
-		glEnd();
-		m_textures.unbind();
-
-
-	glTranslatef( -bsphere.center[0], -bsphere.center[1], -bsphere.center[2] );
-	glEnable(GL_LIGHTING);
+	m_textures.unbind();
 }
 
-
-void Gui::load_skybox_textures(){
-
-	{
-		std::stringstream ss;
-		ss << MCLSCENE_SRC_DIR << "/resources/envmap/posy.jpg";
-		m_textures.load( "env-top", ss.str() );
-	}
-
-	{
-		std::stringstream ss;
-		ss << MCLSCENE_SRC_DIR << "/resources/envmap/negy.jpg";
-		m_textures.load( "env-bot", ss.str() );
-	}
-
-	{
-		std::stringstream ss;
-		ss << MCLSCENE_SRC_DIR << "/resources/envmap/posz.jpg";
-		m_textures.load( "env-front", ss.str() );
-	}
-
-	{
-		std::stringstream ss;
-		ss << MCLSCENE_SRC_DIR << "/resources/envmap/negz.jpg";
-		m_textures.load( "env-back", ss.str() );
-	}
-
-
-	{
-		std::stringstream ss;
-		ss << MCLSCENE_SRC_DIR << "/resources/envmap/posx.jpg";
-		m_textures.load( "env-left", ss.str() );
-	}
-
-	{
-		std::stringstream ss;
-		ss << MCLSCENE_SRC_DIR << "/resources/envmap/negx.jpg";
-		m_textures.load( "env-right", ss.str() );
-	}
-
-} // end load textures
 
 

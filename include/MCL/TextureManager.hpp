@@ -42,6 +42,11 @@ struct TextureManager {
 
 		void unbind();
 
+		sf::Texture* get( std::string name ){
+			if( textures.count( name )==0 ){ return NULL; }
+			return &textures[name];
+		}
+
 	private:
 		std::unordered_map< std::string, sf::Texture > textures;
 
