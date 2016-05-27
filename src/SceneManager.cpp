@@ -49,7 +49,8 @@ void SceneManager::build_boundary(){
 
 	mb.build();
 	bsphere.center = mb.center();
-	bsphere.r = sqrt(mb.squared_radius());
+//	bsphere.r = sqrt(mb.squared_radius());
+	bsphere.r = mb.squared_radius();
 	if( std::isnan( bsphere.r ) ){ bsphere.r=0.0; }
 	bsphere.valid = true;
 
