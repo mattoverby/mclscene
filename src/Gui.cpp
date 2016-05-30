@@ -418,10 +418,11 @@ void Gui::load_textures(){
 	}
 
 	// Load the backdrop
+	draw_floor = false;
 	for( int i=0; i<scene->components.size(); ++i ){
-		if( parse::to_lower( scene->components[i].tag ) == "background" &&
-			scene->components[i].exists("file") ){
-			m_textures.load( "bg", scene->components[i]["file"].as_string() );
+		if( parse::to_lower( scene->components[i].tag ) == "background" ){
+			if( scene->components[i].exists("file") ){ m_textures.load( "bg", scene->components[i]["file"].as_string() ); }
+			if( scene->components[i]["floor"].as_bool() == true ){ 	draw_floor = true; }
 		}
 	}
 }
@@ -507,8 +508,7 @@ void Gui::draw_shadow( const std::vector<std::shared_ptr<BaseLight> > &lights,
 		const std::vector<std::shared_ptr<trimesh::TriMesh> > &meshes ){
 
 	// Only draw ground if there is no background
-	sf::Texture *tex = m_textures.get("bg");
-	if( tex != NULL ){ return; }
+	if( draw_floor != true ){ return; }
 
 	// Draw the ground
 	GLfloat mat_diffuse[4] = { 0.7f, 0.7f, 0.7f, 1.f };

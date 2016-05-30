@@ -25,6 +25,7 @@
 #include "TetMesh.hpp"
 #include "TriangleMesh.hpp"
 #include "Material.hpp"
+#include "Light.hpp"
 #include "../../deps/pugixml/pugixml.hpp"
 
 namespace mcl {

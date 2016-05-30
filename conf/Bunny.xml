@@ -3,6 +3,7 @@
 
 	<background name="bg" type="jpg"  >
 		<file type="string" value="../resources/bg.jpg" />
+		<floor type="bool" value="0" />
 	</background>
 
 	<Object name="bunny1" type="TriMesh" >
