@@ -386,6 +386,7 @@ void GLCamera::setupGL(const point &scene_center, float scene_size) const
 	if (read_depth(width/2, height/2, surface_point))
 		surface_depth = -surface_point[2];
 
+	
 	float fardist  = max(-(scene_center[2] - scene_size),
 			     scene_size / DOF);
 	float neardist = max(-(scene_center[2] + scene_size),
@@ -403,7 +404,7 @@ void GLCamera::setupGL(const point &scene_center, float scene_size) const
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glFrustum(left, right, bottom, top, neardist, fardist);
+	glFrustum(left, right, bottom, top, neardist, fardist*50.f);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();

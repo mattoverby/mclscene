@@ -55,18 +55,19 @@
 	</Object>
 
 
-	<Material name="red_spec" type="specular"  >
+	<Material name="red_spec" type="ogl"  >
 		<Diffuse type="vec3" value="255  120  120" />
 		<Specular type="vec3" value=".2 .2 .2" />
 	</Material>
 
-	<Material name="green_spec" type="specular"  >
+	<Material name="green_spec" type="ogl"  >
 		<Diffuse type="vec3" value="120  250  120" />
 		<Specular type="vec3" value=".2 .2 .2" />
 	</Material>
 
-	<Material name="blue_diff" type="diffuse"  >
+	<Material name="blue_diff" type="ogl"  >
 		<Diffuse type="vec3" value="120  120  255" />
+		<edges type="vec3" value="0  0  0" />
 	</Material>
 
 </mclScene>

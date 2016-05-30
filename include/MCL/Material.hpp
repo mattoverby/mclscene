@@ -57,29 +57,18 @@ public:
 
 
 //
-//	Diffuse
+//	OpenGL Materials
 //
-class DiffuseMaterial : public BaseMaterial {
+class OGLMaterial : public BaseMaterial {
 public:
-	trimesh::vec diffuse; // diffuse color
+	OGLMaterial() : diffuse(.5,.5,.5), specular(0,0,0), shininess(0), edge_color(-1,-1,-1) {}
+
+	trimesh::vec diffuse;
+	trimesh::vec specular;
+	int shininess;
 	trimesh::vec edge_color;
 
-	std::string get_type() const { return "diffuse"; }
-};
-
-
-//
-//	Specular
-//
-class SpecularMaterial : public BaseMaterial {
-public:
-	trimesh::vec diffuse; // diffuse color
-	trimesh::vec specular; // specular color
-	double shininess; // i.e. phong exponent
-
-	trimesh::vec edge_color;
-
-	std::string get_type() const { return "specular"; }
+	std::string get_type() const { return "ogl"; }
 };
 
 

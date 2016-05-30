@@ -48,7 +48,7 @@ protected:
 	virtual bool update( const float screen_dt );
 	virtual bool draw( const float screen_dt );
 	virtual void clear_screen();
-	virtual void setup_lighting( const std::shared_ptr<BaseMaterial> mat, const std::vector<std::shared_ptr<BaseLight> > &lights );
+	virtual void setup_lighting( const std::vector<std::shared_ptr<BaseLight> > &lights );
 	virtual void draw_tstrips( const trimesh::TriMesh *themesh );
 	virtual void draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::TriMesh *themesh );
 	virtual void check_mouse( const sf::Event &event, const float screen_dt );
@@ -75,6 +75,15 @@ protected:
 	std::shared_ptr<sf::Window> window;
 
 	bool draw_points = false;
+
+
+
+
+	// Shadow stuff
+	void make_shadow_mat( float light_pos[4], float dest_mat[4][4] );
+	void draw_shadow( const std::vector<std::shared_ptr<BaseLight> > &lights,
+		const std::vector<std::shared_ptr<trimesh::TriMesh> > &meshes );
+
 };
 
 } // end namespace mcl

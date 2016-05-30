@@ -281,30 +281,16 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 //
 static std::shared_ptr<BaseMaterial> default_build_material( Component &component ){
 
-	if( parse::to_lower(component.type) == "diffuse" ){
+	std::string type = parse::to_lower(component.type);
+	std::string name = component.name;
 
-		std::shared_ptr<DiffuseMaterial> mat( new DiffuseMaterial() );
-		for( int i=0; i<component.params.size(); ++i ){
-			if( parse::to_lower(component.params[i].tag)=="diffuse" || parse::to_lower(component.params[i].tag)=="color" ){
-				component.params[i].fix_color();
-				mat->diffuse=component.params[i].as_vec3();
-			}
-			else if( parse::to_lower(component.params[i].tag)=="edges" ){
-				component.params[i].fix_color();
-				mat->edge_color=component.params[i].as_vec3();
-			}
-			else if( parse::to_lower(component.params[i].tag)=="texture" ){
-				mat->m_texture=TextureResource( component.name, component.params[i].as_string() );
-			}
-		}
-		std::shared_ptr<BaseMaterial> new_mat( mat );
-		return new_mat;
+	//
+	//	OpenGL Materials
+	//
+//	if( type == "ogl" ){
+	{
 
-	} // end build diffuse
-
-	else if( parse::to_lower(component.type) == "specular" ){
-
-		std::shared_ptr<SpecularMaterial> mat( new SpecularMaterial() );
+		std::shared_ptr<OGLMaterial> mat( new OGLMaterial() );
 		for( int i=0; i<component.params.size(); ++i ){
 			if( parse::to_lower(component.params[i].tag)=="diffuse" || parse::to_lower(component.params[i].tag)=="color" ){
 				component.params[i].fix_color();
@@ -321,12 +307,11 @@ static std::shared_ptr<BaseMaterial> default_build_material( Component &componen
 				component.params[i].fix_color();
 				mat->edge_color=component.params[i].as_vec3();
 			}
-			else if( parse::to_lower(component.params[i].tag)=="shininess" || parse::to_lower(component.params[i].tag)=="exponent" ){ mat->shininess=component.params[i].as_double(); }
+			else if( parse::to_lower(component.params[i].tag)=="shininess" || parse::to_lower(component.params[i].tag)=="exponent" ){ mat->shininess=component.params[i].as_int(); }
 		}
 		std::shared_ptr<BaseMaterial> new_mat( mat );
 		return new_mat;
-
-	} // end build specular
+	}
 
 	//
 	//	Unknown
@@ -334,6 +319,59 @@ static std::shared_ptr<BaseMaterial> default_build_material( Component &componen
 	return NULL;
 
 } // end build material
+
+
+//
+//	Default Light Builder
+//
+static std::shared_ptr<BaseLight> default_build_light( Component &component ){
+
+	std::string type = parse::to_lower(component.type);
+	std::string name = component.name;
+
+//	int m_type;
+//	trimesh::vec m_pos;
+//	trimesh::vec m_ambient, m_diffuse, m_specular; // colors
+
+
+	//
+	//	OpenGL Light
+	//
+//	if( type == "ogl" ){
+	{
+		std::shared_ptr<OGLLight> light( new OGLLight() );
+		for( int i=0; i<component.params.size(); ++i ){
+			if( parse::to_lower(component.params[i].tag)=="diffuse" ){
+				component.params[i].fix_color();
+				light->m_diffuse=component.params[i].as_vec3();
+			}
+			else if( parse::to_lower(component.params[i].tag)=="ambient" ){
+				component.params[i].fix_color();
+				light->m_ambient=component.params[i].as_vec3();
+			}
+			else if( parse::to_lower(component.params[i].tag)=="specular" ){
+				component.params[i].fix_color();
+				light->m_specular=component.params[i].as_vec3();
+			}
+			else if( parse::to_lower(component.params[i].tag)=="position" ){
+				light->m_pos=component.params[i].as_vec3();
+				light->m_type=1; // point light
+			}
+			else if( parse::to_lower(component.params[i].tag)=="direction" ){
+				light->m_pos=component.params[i].as_vec3();
+				light->m_type=0; // directional light
+			}
+		}
+		std::shared_ptr<BaseLight> new_light( light );
+		return new_light;
+	}
+
+	//
+	//	Unknown
+	//
+	return NULL;
+
+} // end build light
 
 
 } // end namespace mcl

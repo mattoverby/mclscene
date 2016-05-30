@@ -40,14 +40,15 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 
 	load_textures();
 
-	std::cout << "Gui Warning: Ignoring lights and camera settings" << std::endl;
+	// If there are no lights, add a default one
+	if( scene->lights.size() == 0 ){
+		std::shared_ptr<BaseLight> light( std::shared_ptr<OGLLight>( new OGLLight() ) );
+		scene->lights.push_back( light );
+		scene->lights_map[ "default_light" ] = light;
+	}
 
 	// If there aren't any materials, use a default one
-	std::shared_ptr<DiffuseMaterial> flat_gray( new DiffuseMaterial() );
-	flat_gray->diffuse = trimesh::vec( 0.5, 0.5, 0.5 );
-	flat_gray->edge_color = trimesh::vec( 0.9, 0.9, 0.9 );
-	std::shared_ptr<BaseMaterial> mat( flat_gray );
-	scene->materials.push_back( mat ); // store it to the scene for later
+	std::shared_ptr<BaseMaterial> mat( std::shared_ptr<OGLMaterial>( new OGLMaterial() ) );
 
 	// Get tet and tri meshes
 	for( int i=0; i<scene->objects.size(); ++i ){
@@ -55,16 +56,6 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 		if( mat_str.size()==0 ){ trimesh_materials.push_back( mat ); }
 		else{ trimesh_materials.push_back( scene->materials_map[mat_str] ); }
 	} // end draw scene objects
-
-	// If there are no lights defined in the scene, add some default ones
-	if( scene->lights.size() == 0 ){
-		scene->lights.push_back( std::make_shared<AmbientLight>( new AmbientLight( trimesh::vec( 0.02f, 0.02f, 0.05f ) ) ) ); // global ambient
-
-		trimesh::vec l_pos( 0.f, 10.f, 0.f );
-		trimesh::vec l_intensity( 0.85f, 0.85f, 0.85f );
-		std::shared_ptr<PointLight> p( new PointLight( l_intensity, l_pos, 0.f ) );
-//		scene->lights.push_back( p ); // overhead point light
-	}
 
 	// build the bvh
 	scene->get_bvh();
@@ -134,12 +125,12 @@ bool Gui::draw( const float screen_dt ){
 	cam.setupGL( global_xf * bsphere.center, bsphere.r+10.f );
 	glPushMatrix();
 	glMultMatrixd(global_xf);
+	setup_lighting( scene->lights );
 
-	setup_lighting( scene->materials[0], scene->lights );
+	draw_shadow( scene->lights, scene->meshes );
 
 	// Draw the meshes
 	for( int i=0; i<scene->meshes.size(); ++i ){
-		setup_lighting( trimesh_materials[i], scene->lights );
 		draw_trimesh( trimesh_materials[i], scene->meshes[i].get() );
 	}
 
@@ -196,40 +187,16 @@ void Gui::clear_screen(){
 }
 
 
-// Set up lights and materials, by Szymon Rusinkiewicz
-//void Gui::setup_lighting( MaterialComponent *material, const std::vector<LightComponent> &lights ){
-void Gui::setup_lighting( const std::shared_ptr<BaseMaterial> mat, const std::vector<std::shared_ptr<BaseLight> > &lights ){
+void Gui::setup_lighting( const std::vector<std::shared_ptr<BaseLight> > &lights ){
 
-
-
-
-
-//	GLfloat global_ambient[] = { 0.02f, 0.02f, 0.05f, 0.05f };
-//	GLfloat light0_ambient[] = { 0, 0, 0, 0 };
-//	GLfloat light0_diffuse[] = { 0.85f, 0.85f, 0.8f, 0.85f };
-
-//	GLfloat light1_diffuse[] = { -0.01f, -0.01f, -0.03f, -0.03f };
-//	GLfloat light0_specular[] = { 0.85f, 0.85f, 0.85f, 0.85f };
-
-
-//	glLightfv(GL_LIGHT0, GL_AMBIENT, light0_ambient);
-//	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
-//	glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular);
-//	glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
-
-//	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
-	glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
-//	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	glEnable(GL_LIGHTING);
-//	glEnable(GL_LIGHT0);
-//	glEnable(GL_LIGHT1);
-
-	glEnable(GL_NORMALIZE);
-
 
 	for( int i=0; i<lights.size(); ++i ){
 
-		int l_id = GL_LIGHT1;
+		if( lights[i]->get_type() != "ogl" ){ continue; }
+		std::shared_ptr<OGLLight> light = std::static_pointer_cast<OGLLight>(lights[i]);
+
+		int l_id = GL_LIGHT0;
 		switch( i%8 ){
 			case 0: l_id = GL_LIGHT0; break;
 			case 1: l_id = GL_LIGHT1; break;
@@ -241,16 +208,26 @@ void Gui::setup_lighting( const std::shared_ptr<BaseMaterial> mat, const std::ve
 			case 7: l_id = GL_LIGHT7; break;
 		} // end get light id
 
-		if( lights[i]->get_type() == "ambient" ){
-			GLfloat l_color[] = { lights[i]->m_intensity[0], lights[i]->m_intensity[1], lights[i]->m_intensity[2], 1.f };
-			glLightfv(l_id, GL_AMBIENT, l_color);
-			glLightModelfv(GL_LIGHT_MODEL_AMBIENT, l_color);
-		} // end ambient light
+		GLfloat light_ambient[] = { light->m_ambient[0], light->m_ambient[1], light->m_ambient[2], 1.f };
+		GLfloat light_diffuse[] = { light->m_diffuse[0], light->m_diffuse[1], light->m_diffuse[2], 1.f };
+		GLfloat light_specular[] = { light->m_specular[0], light->m_specular[1], light->m_specular[2], 1.f };
 
 		// Enable the light
+		glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+		glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
 		glEnable(l_id);
 
+		GLfloat light_pos[] = { light->m_pos[0], light->m_pos[1], light->m_pos[2], float( light->m_type ) };
+		glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+
 	} // end loop lights
+
+	// Enable other drawing settings
+	glDepthFunc(GL_LESS);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_NORMALIZE);
 
 } // end setup lighting
 
@@ -295,25 +272,19 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 	bool draw_2side = false;
 	int point_size = 1, line_width = 1;
 
-	trimesh::vec edge_color(0,0,0);
-	if( parse::to_lower(material->get_type())=="diffuse" ){ edge_color=std::static_pointer_cast<DiffuseMaterial>(material)->edge_color; }
-	else if( parse::to_lower(material->get_type())=="specular" ){ edge_color=std::static_pointer_cast<SpecularMaterial>(material)->edge_color; }
-	bool draw_edges = trimesh::len2( edge_color ) > 0.0001f;
+	if( parse::to_lower(material->get_type())!="ogl" ){ std::cout << "Unknown material type." << std::endl; return; }
+	std::shared_ptr<OGLMaterial> mat = std::static_pointer_cast<OGLMaterial>(material);
+
+	bool draw_edges = ( mat->edge_color[0]>=0.f && mat->edge_color[1]>=0.f && mat->edge_color[2]>=0.f );
 
 	glPushMatrix();
-//	glMultMatrixd(xforms[i]);
-//std::cout << themesh->vertices.size() << std::endl;
-//std::cout << bsphere.r << std::endl;
-	glDepthFunc(GL_LESS);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
 
-	if (draw_2side) {
-		glDisable(GL_CULL_FACE);
-	} else {
-		glCullFace(GL_BACK);
-		glEnable(GL_CULL_FACE);
-	}
+//	if (draw_2side) {
+//		glDisable(GL_CULL_FACE);
+//	} else {
+//		glCullFace(GL_BACK);
+//		glEnable(GL_CULL_FACE);
+//	}
 
 	// Vertices
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -346,35 +317,15 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 			       sizeof(themesh->colors[0]),
 			       &themesh->colors[0][0]);
 	} else {
+
 		glDisableClientState(GL_COLOR_ARRAY);
 
-		// This isn't toooooo unsafe...
-		std::shared_ptr<DiffuseMaterial> diffuse = NULL;
-		std::shared_ptr<SpecularMaterial> specular = NULL;
-		if( parse::to_lower(material->get_type())=="diffuse" ){ diffuse = std::static_pointer_cast<DiffuseMaterial>(material); }
-		else if( parse::to_lower(material->get_type())=="specular" ){ specular = std::static_pointer_cast<SpecularMaterial>(material); }
-
-		// Diffuse color
-		if( diffuse != NULL ){ glColor3f( diffuse->diffuse[0], diffuse->diffuse[1], diffuse->diffuse[2] ); }
-		else if( specular != NULL ){ glColor3f( specular->diffuse[0], specular->diffuse[1], specular->diffuse[2] ); }
-		else{ glColor3f(0.5f,0.5f,0.5f); }
-
-		// Specular color
-		GLfloat mat_specular[4] = { 0.f, 0.f, 0.f, 0.f };
-		if( specular != NULL ){
-			trimesh::vec c = specular->specular;
-			double w = (c[0]+c[1]+c[2])/3.f;
-			mat_specular[0]=c[0]; mat_specular[1]=c[1]; mat_specular[2]=c[2]; mat_specular[3]=w;
-		}
-
-		// shininess
-		GLfloat mat_shininess[] = { 64 };
-		if( specular != NULL ){ mat_shininess[0]=specular->shininess; }
-
-		glEnable(GL_COLOR_MATERIAL);
-		glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+		// Color settings
+		GLfloat mat_diffuse[4] = { mat->diffuse[0], mat->diffuse[1], mat->diffuse[2], 1.f };
+		GLfloat mat_specular[4] = { mat->specular[0], mat->specular[1], mat->specular[2], 1.f };
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mat_diffuse );
 		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
+		glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, mat->shininess);
 
 	}
 
@@ -404,20 +355,11 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 
 	// Edge drawing pass
 	if (draw_edges) {
-		trimesh::vec edge_c = edge_color;
 		glPolygonMode(GL_FRONT, GL_LINE);
 		glLineWidth(float(line_width));
 		glDisableClientState(GL_COLOR_ARRAY);
 		glDisable(GL_COLOR_MATERIAL);
-		GLfloat global_ambient[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-		GLfloat light0_diffuse[] = { 0.8f, 0.8f, 0.8f, 0.0f };
-		GLfloat light1_diffuse[] = { -0.2f, -0.2f, -0.2f, 0.0f };
-		GLfloat light0_specular[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		glLightModelfv(GL_LIGHT_MODEL_AMBIENT, global_ambient);
-		glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
-		glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
-		glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular);
-		GLfloat mat_diffuse[4] = { edge_c[0], edge_c[1], edge_c[2], 1.0f };
+		GLfloat mat_diffuse[4] = { mat->edge_color[0], mat->edge_color[1], mat->edge_color[2], 1.0f };
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mat_diffuse);
 		glColor3f(0, 0, 1); // Used iff unlit
 		draw_tstrips(themesh);
@@ -529,5 +471,102 @@ void Gui::draw_background(){
 	m_textures.unbind();
 }
 
+
+
+
+
+
+void Gui::make_shadow_mat( float light_pos[4], float destMat[4][4] ){
+
+	// Floor always at y=0
+	float normal[4] = { 0.f, 1.f, 0.f, 0.1f };
+	float points[3][3] = { { -3.f, 0.1f, -3.f }, { -3.f, 0.1f, 3.f }, { 3.f, 0.1f, 3.f } };
+	float dot = normal[0]*light_pos[0] + normal[1]*light_pos[1] + normal[2]*light_pos[2] + normal[3]*light_pos[3] + normal[4]*light_pos[4];
+
+	// Now do the projection
+	destMat[0][0] = dot - light_pos[0] * normal[0];
+	destMat[1][0] = 0.0f - light_pos[0] * normal[1];
+	destMat[2][0] = 0.0f - light_pos[0] * normal[2];
+	destMat[3][0] = 0.0f - light_pos[0] * normal[3];
+	destMat[0][1] = 0.0f - light_pos[1] * normal[0];
+	destMat[1][1] = dot - light_pos[1] * normal[1];
+	destMat[2][1] = 0.0f - light_pos[1] * normal[2];
+	destMat[3][1] = 0.0f - light_pos[1] * normal[3];
+	destMat[0][2] = 0.0f - light_pos[2] * normal[0];
+	destMat[1][2] = 0.0f - light_pos[2] * normal[1];
+	destMat[2][2] = dot - light_pos[2] * normal[2];
+	destMat[3][2] = 0.0f - light_pos[2] * normal[3];
+	destMat[0][3] = 0.0f - light_pos[3] * normal[0];
+	destMat[1][3] = 0.0f - light_pos[3] * normal[1];
+	destMat[2][3] = 0.0f - light_pos[3] * normal[2];
+	destMat[3][3] = dot - light_pos[3] * normal[3];
+}
+
+
+void Gui::draw_shadow( const std::vector<std::shared_ptr<BaseLight> > &lights,
+		const std::vector<std::shared_ptr<trimesh::TriMesh> > &meshes ){
+
+	// Only draw ground if there is no background
+	sf::Texture *tex = m_textures.get("bg");
+	if( tex != NULL ){ return; }
+
+	// Draw the ground
+	GLfloat mat_diffuse[4] = { 0.7f, 0.7f, 0.7f, 1.f };
+	GLfloat mat_specular[4] = { 0.f, 0.f, 0.f, 1.f };
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mat_diffuse );
+//	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+//	glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 0);
+	float floor_r = bsphere.r*10.f;
+	glBegin(GL_QUADS);
+		glNormal3f(0.f,1.f,0.f);
+		glVertex3f(floor_r, 0.0f, -floor_r);
+		glVertex3f(-floor_r, 0.0f, -floor_r);
+		glVertex3f(-floor_r, 0.0f, floor_r);
+		glVertex3f(floor_r, 0.0f, floor_r);
+	glEnd();
+
+	// Disable lighting and save projection state to draw the shadow
+	glPushMatrix();
+	glDisable(GL_DEPTH_TEST);
+//	glDisable(GL_LIGHTING);
+//	glEnable(GL_COLOR);
+//	glEnable(GL_BLEND);
+//	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+//	glDisable(GL_CULL_FACE);
+
+	// Loop over the lights and draw shadows on the ground plane
+	for( int i=0; i<lights.size(); ++i ){
+
+		if( lights[i]->get_type() != "ogl" ){ continue; }
+		std::shared_ptr<OGLLight> light = std::static_pointer_cast<OGLLight>(lights[i]);
+
+		float light_pos[4] = { light->m_pos[0], light->m_pos[1], light->m_pos[2], float( light->m_type ) };
+		float shadow_matrix[4][4];
+		make_shadow_mat( light_pos, shadow_matrix );
+
+		glMultMatrixf( (GLfloat*)shadow_matrix );
+
+		// Draw meshes to flattened space
+		for( int j=0; j<meshes.size(); ++j ){
+
+			trimesh::TriMesh *themesh = meshes[j].get();
+
+			glColor4f(0.5f,0.5f,0.5f,0.5f);
+			glEnableClientState(GL_VERTEX_ARRAY);
+			glVertexPointer(3, GL_FLOAT,
+					sizeof(themesh->vertices[0]),
+					&themesh->vertices[0][0]);
+			draw_tstrips( themesh );
+		}
+
+	} // end loop lights
+
+//	glDisable(GL_COLOR);
+//	glEnable(GL_LIGHTING);
+	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+	glPopMatrix();
+
+} // end draw shadows
 
 

@@ -1,6 +1,14 @@
 <?xml version="1.0"?>
 <mclScene>
 
+	<light name="l1" type="ogl" >
+		<direction type="vec3" value="1 1 0" />
+	</light>
+
+	<light name="l1" type="ogl" >
+		<direction type="vec3" value=".5 1 0" />
+	</light>
+
 	<Object name="obj1" type="plane" >
 
 		<boxmin type="vec3" value="0 0 0" />
@@ -15,11 +23,32 @@
 		<tess type="int" value="8" />
 
 		<XForm type="scale" value="1  1  1" />
-		<XForm type="translate" value="0  30  0" />
+		<XForm type="translate" value="0  3  0" />
+		<XForm type="rotate" value="0  90  0" />
+
+		<Material type="string" value="white_flag" />
+	</Object>
+
+	<Object name="obj2" type="sphere" >
+
+		<boxmin type="vec3" value="0 0 0" />
+		<boxmax type="vec3" value="1 1 1" />
+
+		<width type="int" value="20" />
+		<length type="int" value="20" />
+<!--		<noise type="double" value="0.01" /> -->
+
+		<center type="vec3" value="0 0 0" />
+		<radius type="double" value="2" />
+		<tess type="int" value="8" />
+
+		<XForm type="scale" value="1  1  1" />
+		<XForm type="translate" value="0 3 5" />
 		<XForm type="rotate" value="0  0  0" />
 
 		<Material type="string" value="white_flag" />
 	</Object>
+
 <!--
 	<Object name="box1" type="plane" >
 

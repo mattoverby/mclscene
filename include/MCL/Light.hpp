@@ -34,6 +34,8 @@ namespace mcl {
 //
 class BaseLight {
 public:
+	BaseLight( trimesh::vec intensity ) : m_intensity(intensity) {}
+
 	virtual ~BaseLight(){}
 
 	virtual std::string get_type() const = 0;
@@ -46,6 +48,21 @@ public:
 };
 
 
+class OGLLight : public BaseLight {
+public:
+	// m_type = 0 (directional) or 1 (point)
+	OGLLight() : BaseLight( trimesh::vec(0,0,0) ), m_type(0), m_pos(1,1,0), m_ambient(0.3,0.3,0.3), m_diffuse(.7,.7,.7), m_specular(0.8,0.8,0.8) {}
+	std::string get_type() const { return "ogl"; }
+
+	trimesh::vec sample( double u1, double u2 ){ return m_pos; }
+
+	int m_type;
+	trimesh::vec m_pos;
+	trimesh::vec m_ambient, m_diffuse, m_specular; // colors
+};
+
+
+/*
 //
 //	Point Light
 //
@@ -53,7 +70,7 @@ public:
 //
 class PointLight : public BaseLight {
 public:
-	PointLight( trimesh::vec intensity, trimesh::vec pos, double rad ) : m_pos(pos), m_rad(rad) { this->m_intensity=intensity; }
+	PointLight( trimesh::vec intensity, trimesh::vec pos, double rad ) : BaseLight(intensity), m_pos(pos), m_rad(rad) {}
 
 	std::string get_type() const { return "point"; }
 
@@ -80,14 +97,14 @@ public:
 //
 class AmbientLight : public BaseLight {
 public:
-	AmbientLight( trimesh::vec intensity ) { this->m_intensity=intensity; }
+	AmbientLight( trimesh::vec intensity ) : BaseLight(intensity) {}
 
 	std::string get_type() const { return "ambient"; }
 
 	// Uniform sphere sample
 	trimesh::vec sample( double u1, double u2 ){ return trimesh::vec(0,1,0); }
 };
-
+*/
 
 } // end namespace mcl
 

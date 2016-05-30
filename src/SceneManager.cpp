@@ -130,6 +130,7 @@ bool SceneManager::build_components(){
 	// Add default builders
 	if( obj_builders.size()==0 ){ add_callback( BuildObjCallback(default_build_object) ); }
 	if( mat_builders.size()==0 ){ add_callback( BuildMatCallback(default_build_material) ); }
+	if( light_builders.size()==0 ){ add_callback( BuildLightCallback(default_build_light) ); }
 
 	// Loop components and invoke callbacks
 	for( int j=0; j<components.size(); ++j ){
