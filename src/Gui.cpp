@@ -213,13 +213,13 @@ void Gui::setup_lighting( const std::vector<std::shared_ptr<BaseLight> > &lights
 		GLfloat light_specular[] = { light->m_specular[0], light->m_specular[1], light->m_specular[2], 1.f };
 
 		// Enable the light
-		glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
-		glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-		glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+		glLightfv(l_id, GL_AMBIENT, light_ambient);
+		glLightfv(l_id, GL_DIFFUSE, light_diffuse);
+		glLightfv(l_id, GL_SPECULAR, light_specular);
 		glEnable(l_id);
 
 		GLfloat light_pos[] = { light->m_pos[0], light->m_pos[1], light->m_pos[2], float( light->m_type ) };
-		glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+		glLightfv(l_id, GL_POSITION, light_pos);
 
 	} // end loop lights
 

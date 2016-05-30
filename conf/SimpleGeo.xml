@@ -4,12 +4,10 @@
 		<floor type="bool" value="1" />
 	</background>
 
-	<light name="l1" type="ogl" >
-		<direction type="vec3" value="1 1 1" />
-	</light>
+
 
 	<light name="l1" type="ogl" >
-		<direction type="vec3" value=".5 1 0" />
+		<direction type="vec3" value="-1 1 0" />
 	</light>
 
 	<Object name="obj1" type="plane" >
