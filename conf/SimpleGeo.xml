@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
 <mclScene>
+	<background name="bg" type="jpg">
+		<floor type="bool" value="1" />
+	</background>
 
 	<light name="l1" type="ogl" >
 		<direction type="vec3" value="1 1 0" />

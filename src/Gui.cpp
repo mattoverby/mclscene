@@ -516,14 +516,39 @@ void Gui::draw_shadow( const std::vector<std::shared_ptr<BaseLight> > &lights,
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mat_diffuse );
 //	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
 //	glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 0);
-	float floor_r = bsphere.r*10.f;
+
+// Checkboard
+	int floor_r = int(bsphere.r*10.f);
+
+	glPushMatrix();
+	glDisable(GL_LIGHTING);
+//	glTranslatef(-bsper,0.f,-floor_r.f);
 	glBegin(GL_QUADS);
-		glNormal3f(0.f,1.f,0.f);
-		glVertex3f(floor_r, 0.0f, -floor_r);
-		glVertex3f(-floor_r, 0.0f, -floor_r);
-		glVertex3f(-floor_r, 0.0f, floor_r);
-		glVertex3f(floor_r, 0.0f, floor_r);
+	glNormal3f(0.f,1.f,0.f);
+	for( int x=-floor_r; x<floor_r; ++x ){
+		for( int z=-floor_r; z<floor_r; ++z ){
+
+			if( (x+z) % 2 == 0 ){ glColor3f(0.85f,0.85f,0.85f); }
+			else{ glColor3f(0.95f,0.95f,0.95f); }
+
+			glVertex3f( x, 0.f, z);
+			glVertex3f( (x+1), 0.f, z);
+			glVertex3f( (x+1), 0.f, (z+1));
+			glVertex3f( x, 0.f, (z+1)); 
+		}
+	}
 	glEnd();
+	glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+//	float floor_r = bsphere.r*10.f;
+//	glBegin(GL_QUADS);
+//		glNormal3f(0.f,1.f,0.f);
+//		glVertex3f(floor_r, 0.0f, -floor_r);
+//		glVertex3f(-floor_r, 0.0f, -floor_r);
+//		glVertex3f(-floor_r, 0.0f, floor_r);
+//		glVertex3f(floor_r, 0.0f, floor_r);
+//	glEnd();
 
 	// Disable lighting and save projection state to draw the shadow
 	glPushMatrix();

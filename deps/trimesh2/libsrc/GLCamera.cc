@@ -387,9 +387,11 @@ void GLCamera::setupGL(const point &scene_center, float scene_size) const
 		surface_depth = -surface_point[2];
 
 	float fardist  = max(-(scene_center[2] - scene_size),
-			     scene_size / DOF);
-	float neardist = max(-(scene_center[2] + scene_size),
-			     scene_size / MAXDOF);
+			     scene_size / DOF)*6.f;
+//	float neardist = max(-(scene_center[2] + scene_size),
+//			     scene_size / MAXDOF);
+	float neardist = 1.f;
+
 	surface_depth = min(surface_depth, fardist);
 	surface_depth = max(surface_depth, neardist);
 	surface_depth = max(surface_depth, fardist / MAXDOF);
