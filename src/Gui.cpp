@@ -518,7 +518,7 @@ void Gui::draw_shadow( const std::vector<std::shared_ptr<BaseLight> > &lights,
 //	glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 0);
 
 // Checkboard
-	int floor_r = int(bsphere.r*10.f);
+	int floor_r = int(bsphere.r*50.f);
 
 	glPushMatrix();
 	glDisable(GL_LIGHTING);
@@ -538,7 +538,7 @@ void Gui::draw_shadow( const std::vector<std::shared_ptr<BaseLight> > &lights,
 		}
 	}
 	glEnd();
-	glEnable(GL_LIGHTING);
+//	glEnable(GL_LIGHTING);
 	glPopMatrix();
 
 //	float floor_r = bsphere.r*10.f;
@@ -587,7 +587,7 @@ void Gui::draw_shadow( const std::vector<std::shared_ptr<BaseLight> > &lights,
 	} // end loop lights
 
 //	glDisable(GL_COLOR);
-//	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHTING);
 	glDisable(GL_BLEND);
 	glEnable(GL_DEPTH_TEST);
 	glPopMatrix();

@@ -359,6 +359,7 @@ static std::shared_ptr<BaseLight> default_build_light( Component &component ){
 				light->m_type=1; // point light
 			}
 			else if( parse::to_lower(component.params[i].tag)=="direction" ){
+				component.params[i].normalize();
 				light->m_pos=component.params[i].as_vec3();
 				light->m_type=0; // directional light
 			}
