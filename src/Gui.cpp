@@ -279,14 +279,16 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 
 	glPushMatrix();
 
-	if( !draw_floor ){
-		if (draw_2side) {
-			glDisable(GL_CULL_FACE);
-		} else {
-			glCullFace(GL_BACK);
-			glEnable(GL_CULL_FACE);
-		}
-	}
+	glDisable(GL_CULL_FACE);
+
+//	if( !draw_floor ){
+//		if (draw_2side) {
+//			glDisable(GL_CULL_FACE);
+//		} else {
+//			glCullFace(GL_BACK);
+//			glEnable(GL_CULL_FACE);
+//		}
+//	}
 
 	// Vertices
 	glEnableClientState(GL_VERTEX_ARRAY);

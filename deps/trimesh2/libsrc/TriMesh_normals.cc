@@ -34,6 +34,7 @@ void TriMesh::need_normals( bool recompute )
 
 	// TODO: direct handling of grids
 	if (!tstrips.empty()) {
+
 		// Compute from tstrips
 		const int *t = &tstrips[0], *end = t + tstrips.size();
 		while (likely(t < end)) {
@@ -54,7 +55,9 @@ void TriMesh::need_normals( bool recompute )
 				normals[* t   ] += facenormal * (1.0f / (l2c * l2b));
 			}
 		}
+
 	} else if (need_faces(), !faces.empty()) {
+
 		// Compute from faces
 		int nf = faces.size();
 #pragma omp parallel for
@@ -72,6 +75,7 @@ void TriMesh::need_normals( bool recompute )
 			normals[faces[i][2]] += facenormal * (1.0f / (l2c * l2b));
 		}
 	} else {
+
 		// Find normals of a point cloud
 		const int k = 6;
 		const vec ref(0, 0, 1);
@@ -103,6 +107,7 @@ void TriMesh::need_normals( bool recompute )
 				normals[i] = -normals[i];
 		}
 	}
+
 
 	// Make them all unit-length
 #pragma omp parallel for
