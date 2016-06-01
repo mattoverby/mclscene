@@ -94,14 +94,14 @@ public:
 
 class BVHTraversal {
 public:
-	static bool ray_intersect( std::shared_ptr<BVHNode> node, intersect::Ray &ray, intersect::Payload &payload );
+	static bool ray_intersect( const std::shared_ptr<BVHNode> node, intersect::Ray &ray, intersect::Payload &payload );
 };
 
 
 class BVHBuilder {
 public:
-	static int make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects ); // returns num nodes in tree
-	static int make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects ); // returns num nodes in tree
+	static int make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=1000 ); // returns num nodes in tree
+	static int make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=1000 ); // returns num nodes in tree
 };
 
 

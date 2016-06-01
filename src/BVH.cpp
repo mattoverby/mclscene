@@ -144,7 +144,7 @@ void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<Base
 //
 
 
-bool BVHTraversal::ray_intersect( std::shared_ptr<BVHNode> node, intersect::Ray &ray, intersect::Payload &payload ) {
+bool BVHTraversal::ray_intersect( const std::shared_ptr<BVHNode> node, intersect::Ray &ray, intersect::Payload &payload ){
 
 	// See if we even hit the box
 	if( !node->aabb->ray_intersect( ray.origin, ray.direction, payload.t_min, payload.t_max ) ){ return false; }
@@ -191,7 +191,7 @@ bool BVHTraversal::ray_intersect( std::shared_ptr<BVHNode> node, intersect::Ray 
 } // end ray intersect
 
 
-int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects ){
+int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth ){
 
 	root.reset( new BVHNode );
 
@@ -248,17 +248,17 @@ int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vecto
 	} // end find starting bit
 
 	// Now that we have the morton codes, we can recursively build the BVH in a top down manner
-	root->lbvh_split( start_bit, prims, morton_codes, 10000 );
+	root->lbvh_split( start_bit, prims, morton_codes, max_depth );
 
-	std::cout << "\nLBVH Balance: " << avg_balance / float(num_avg_balance) << std::endl;
-	std::cout << "Linear BVH made " << n_nodes << " nodes for " << prims.size() << " primitives." << std::endl;
+//	std::cout << "\nLBVH Balance: " << avg_balance / float(num_avg_balance) << std::endl;
+//	std::cout << "Linear BVH made " << n_nodes << " nodes for " << prims.size() << " primitives." << std::endl;
 
 	return n_nodes;
 
 }
 
 
-int BVHBuilder::make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects ){
+int BVHBuilder::make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth ){
 
 	n_nodes = 1;
 
@@ -267,10 +267,10 @@ int BVHBuilder::make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::ve
 	for( int i=0; i<objects.size(); ++i ){ objects[i]->get_primitives( prims ); }
 	std::vector< int > queue( prims.size() );
 	std::iota( std::begin(queue), std::end(queue), 0 );
-	root->spatial_split( prims, queue, 0, 10000 );
+	root->spatial_split( prims, queue, 0, max_depth );
 
 	return n_nodes;
 
-	std::cout << "Object Median BVH made " << n_nodes << " nodes for " << prims.size() << " primitives." << std::endl;
+//	std::cout << "Object Median BVH made " << n_nodes << " nodes for " << prims.size() << " primitives." << std::endl;
 }
 

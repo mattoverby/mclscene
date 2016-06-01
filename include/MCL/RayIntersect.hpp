@@ -40,6 +40,10 @@ namespace intersect {
 		std::string material;
 	};
 
+	static inline trimesh::vec reflect( const trimesh::vec incident, const trimesh::vec norm ){
+		return ( incident - 2.f * norm * norm.dot( incident ) );
+	}
+
 	// ray -> triangle without early exit
 	static inline bool ray_triangle( const Ray &ray, const trimesh::vec &p0, const trimesh::vec &p1, const trimesh::vec &p2,
 		const trimesh::vec &n0, const trimesh::vec &n1, const trimesh::vec &n2, Payload &payload ){

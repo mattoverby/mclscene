@@ -485,7 +485,7 @@ void Gui::make_shadow_mat( float light_pos[4], float destMat[4][4] ){
 
 	// Floor always at y=0
 	float normal[4] = { 0.f, 1.f, 0.f, 0.1f };
-	float points[3][3] = { { -3.f, 0.1f, -3.f }, { -3.f, 0.1f, 3.f }, { 3.f, 0.1f, 3.f } };
+	float points[3][3] = { { -3.f, 0.001f, -3.f }, { -3.f, 0.001f, 3.f }, { 3.f, 0.001f, 3.f } };
 	float dot = normal[0]*light_pos[0] + normal[1]*light_pos[1] + normal[2]*light_pos[2] + normal[3]*light_pos[3] + normal[4]*light_pos[4];
 
 	// Now do the projection
