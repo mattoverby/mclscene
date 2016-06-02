@@ -214,6 +214,36 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 
 	} // end build cylinder
 
+
+
+	//
+	//	Beam
+	//
+	else if( type == "torus" ){
+
+		std::shared_ptr<TriMesh> tris( new TriMesh() );
+
+		int tess_th=50, tess_ph=20;
+		float inner_rad = 0.25f;
+		float outer_rad = 1.f; // doesn't do anything?
+
+		for( int i=0; i<obj.params.size(); ++i ){
+			if( parse::to_lower(obj.params[i].tag)=="tess_th" ){ tess_th=obj.params[i].as_int(); }
+			else if( parse::to_lower(obj.params[i].tag)=="tess_ph" ){ tess_ph=obj.params[i].as_int(); }
+			else if( parse::to_lower(obj.params[i].tag)=="inner_radius" ){ inner_rad=obj.params[i].as_float(); }
+//			else if( parse::to_lower(obj.params[i].tag)=="outer_radius" ){ outer_rad=obj.params[i].as_float(); }
+		}
+
+		trimesh::make_torus( tris.get(), tess_th, tess_ph, inner_rad, outer_rad );
+		tris.get()->need_normals();
+		tris.get()->need_tstrips();
+		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris,material) );
+		new_obj->apply_xform( x_form );
+		return new_obj;
+
+	}
+
+
 	//
 	//	Triangle Mesh, 2 or more triangles
 	//

@@ -493,6 +493,67 @@ static inline void make_ccyl(TriMesh* mesh, int tess_th, int tess_h, float r = 1
 		mkface(mesh, base+i, base+((i+1)%tess_th), base+tess_th);
 }
 
+
+static inline void make_cyl(TriMesh *mesh, int tess_th, int tess_h, float r)
+{
+	if (tess_th < 3)
+		tess_th = 3;
+	if (tess_h < 1)
+		tess_h = 1;
+
+	mesh->vertices.reserve(tess_th * (tess_h+1));
+	for (int j = 0; j <= tess_h; j++) {
+		float z = -1.0f + 2.0f * j / tess_h;
+		for (int i = 0; i < tess_th; i++) {
+			float th = M_TWOPIf * i / tess_th;
+			mkpoint(mesh, r*cos(th), r*sin(th), z);
+		}
+	}
+
+	mesh->faces.reserve(2*tess_th*tess_h);
+	for (int j = 0; j < tess_h; j++) {
+		int base = j * tess_th;
+		for (int i = 0; i < tess_th; i++) {
+			int i1 = (i+1)%tess_th;
+			mkquad(mesh, base + i, base + i1,
+				base+tess_th+i, base+tess_th+i1);
+		}
+	}
+}
+
+
+static inline void make_torus(TriMesh* mesh, int tess_th, int tess_ph, float inner_rad, float outer_rad )
+{
+	if (tess_th < 3)
+		tess_th = 3;
+	if (tess_ph < 3)
+		tess_ph = 3;
+
+	make_cyl( mesh, tess_ph, tess_th, outer_rad );
+
+	for (int i = 0; i < tess_ph; i++)
+		mesh->vertices.pop_back();
+	for (size_t i = 0; i < mesh->faces.size(); i++) {
+		mesh->faces[i][0] %= mesh->vertices.size();
+		mesh->faces[i][1] %= mesh->vertices.size();
+		mesh->faces[i][2] %= mesh->vertices.size();
+	}
+
+//	float r = (outer_rad-inner_rad)*0.5f; // torus rad
+	float r = inner_rad;
+
+	for (int j = 0; j < tess_th; j++) {
+		float th = M_TWOPIf * j / tess_th;
+		vec circlepos(cos(th), sin(th), 0);
+		for (int i = 0; i < tess_ph; i++) {
+			float ph = M_TWOPIf * i / tess_ph;
+			mesh->vertices[i+j*tess_ph] = circlepos +
+						      cosf(ph)*r*circlepos +
+						      sinf(ph)*r*vec(0,0,-1);
+		}
+	}
+}
+
 /*
 TriMesh *make_disc(int tess_th, int tess_r)
 {
@@ -521,37 +582,6 @@ TriMesh *make_disc(int tess_th, int tess_r)
 			int i1 = (i+1)%tess_th;
 			mkquad(mesh, base+tess_th+i, base+tess_th+i1,
 				base+i, base+i1);
-		}
-	}
-
-	return mesh;
-}
-
-
-TriMesh *make_cyl(int tess_th, int tess_h, float r = 1.0f)
-{
-	if (tess_th < 3)
-		tess_th = 3;
-	if (tess_h < 1)
-		tess_h = 1;
-
-	TriMesh *mesh = new TriMesh;
-	mesh->vertices.reserve(tess_th * (tess_h+1));
-	for (int j = 0; j <= tess_h; j++) {
-		float z = -1.0f + 2.0f * j / tess_h;
-		for (int i = 0; i < tess_th; i++) {
-			float th = M_TWOPIf * i / tess_th;
-			mkpoint(mesh, r*cos(th), r*sin(th), z);
-		}
-	}
-
-	mesh->faces.reserve(2*tess_th*tess_h);
-	for (int j = 0; j < tess_h; j++) {
-		int base = j * tess_th;
-		for (int i = 0; i < tess_th; i++) {
-			int i1 = (i+1)%tess_th;
-			mkquad(mesh, base + i, base + i1,
-				base+tess_th+i, base+tess_th+i1);
 		}
 	}
 
@@ -717,35 +747,7 @@ TriMesh *make_ccone(int tess_th, int tess_r, float r = 1.0f)
 }
 
 
-TriMesh *make_torus(int tess_th, int tess_ph, float r = 0.25f)
-{
-	if (tess_th < 3)
-		tess_th = 3;
-	if (tess_ph < 3)
-		tess_ph = 3;
 
-	TriMesh *mesh = make_cyl(tess_ph, tess_th);
-
-	for (int i = 0; i < tess_ph; i++)
-		mesh->vertices.pop_back();
-	for (size_t i = 0; i < mesh->faces.size(); i++) {
-		mesh->faces[i][0] %= mesh->vertices.size();
-		mesh->faces[i][1] %= mesh->vertices.size();
-		mesh->faces[i][2] %= mesh->vertices.size();
-	}
-
-	for (int j = 0; j < tess_th; j++) {
-		float th = M_TWOPIf * j / tess_th;
-		vec circlepos(cos(th), sin(th), 0);
-		for (int i = 0; i < tess_ph; i++) {
-			float ph = M_TWOPIf * i / tess_ph;
-			mesh->vertices[i+j*tess_ph] = circlepos +
-						      cos(ph)*r*circlepos +
-						      sin(ph)*r*vec(0,0,-1);
-		}
-	}
-	return mesh;
-}
 
 
 TriMesh *make_knot(int tess_th, int tess_ph, float r = 0.2f)
