@@ -94,7 +94,7 @@ public:
 
 class BVHTraversal {
 public:
-	static bool ray_intersect( const std::shared_ptr<BVHNode> node, intersect::Ray &ray, intersect::Payload &payload );
+	static bool ray_intersect( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload );
 };
 
 

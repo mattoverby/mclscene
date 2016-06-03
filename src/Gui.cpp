@@ -280,6 +280,9 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 	glPushMatrix();
 
 	glDisable(GL_CULL_FACE);
+//glShadeModel(GL_FLAT);
+//			glCullFace(GL_BACK);
+//			glEnable(GL_CULL_FACE);
 
 //	if( !draw_floor ){
 //		if (draw_2side) {
@@ -343,7 +346,7 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 	}
 
 	if (draw_edges) {
-		glPolygonOffset(10.0f, 10.0f);
+		glPolygonOffset(2.0f, 2.0f);
 		glEnable(GL_POLYGON_OFFSET_FILL);
 	}
 

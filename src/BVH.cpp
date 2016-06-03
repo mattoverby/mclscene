@@ -144,7 +144,7 @@ void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<Base
 //
 
 
-bool BVHTraversal::ray_intersect( const std::shared_ptr<BVHNode> node, intersect::Ray &ray, intersect::Payload &payload ){
+bool BVHTraversal::ray_intersect( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload ){
 
 	// See if we even hit the box
 	if( !node->aabb->ray_intersect( ray.origin, ray.direction, payload.t_min, payload.t_max ) ){ return false; }
