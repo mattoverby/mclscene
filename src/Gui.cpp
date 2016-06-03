@@ -26,6 +26,8 @@ using namespace mcl;
 
 Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 
+	smooth_shade=true;
+
 	sf::ContextSettings settings;
 	settings.depthBits = 24;
 	settings.stencilBits = 8;
@@ -102,8 +104,9 @@ bool Gui::update( const float screen_dt ){
 		}
 		else if( event.type == sf::Event::KeyPressed ){
 			if( event.key.code == sf::Keyboard::Escape ){ return false; }
-			if( event.key.code == sf::Keyboard::S ){ save_screenshot(); }
-			if( event.key.code == sf::Keyboard::M ){ save_meshes(); }
+			else if( event.key.code == sf::Keyboard::S ){ save_screenshot(); }
+			else if( event.key.code == sf::Keyboard::M ){ save_meshes(); }
+			else if( event.key.code == sf::Keyboard::A ){ smooth_shade = !smooth_shade; }
 		}
 
 	} // end event loop
@@ -125,6 +128,7 @@ bool Gui::draw( const float screen_dt ){
 	cam.setupGL( global_xf * bsphere.center, bsphere.r+10.f );
 	glPushMatrix();
 	glMultMatrixd(global_xf);
+
 	setup_lighting( scene->lights );
 
 	draw_shadow( scene->lights, scene->meshes );
@@ -280,7 +284,6 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 	glPushMatrix();
 
 	glDisable(GL_CULL_FACE);
-//glShadeModel(GL_FLAT);
 //			glCullFace(GL_BACK);
 //			glEnable(GL_CULL_FACE);
 
@@ -292,6 +295,14 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 //			glEnable(GL_CULL_FACE);
 //		}
 //	}
+
+	if( smooth_shade ){
+		glShadeModel(GL_SMOOTH);
+	} else {
+		glShadeModel(GL_FLAT);
+	}
+
+
 
 	// Vertices
 	glEnableClientState(GL_VERTEX_ARRAY);
