@@ -203,6 +203,8 @@ int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vecto
 	std::vector< std::shared_ptr<BaseObject> > prims;
 	for( int i=0; i<objects.size(); ++i ){ objects[i]->get_primitives( prims ); }
 
+	if( prims.size()==0 ){ return 1; }
+
 	// Compute centroids
 	std::vector< vec > centroids( prims.size() );
 	AABB world_aabb;
@@ -265,6 +267,9 @@ int BVHBuilder::make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::ve
 	// Get all the primitives in the domain and start construction
 	std::vector< std::shared_ptr<BaseObject> > prims;
 	for( int i=0; i<objects.size(); ++i ){ objects[i]->get_primitives( prims ); }
+
+	if( prims.size()==0 ){ return 1; }
+
 	std::vector< int > queue( prims.size() );
 	std::iota( std::begin(queue), std::end(queue), 0 );
 	root->spatial_split( prims, queue, 0, max_depth );
