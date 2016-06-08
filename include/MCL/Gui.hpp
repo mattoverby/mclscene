@@ -44,6 +44,12 @@ public:
 	void add_render_callback( std::function<void ()> cb ){ render_callbacks.push_back( cb ); }
 	void add_event_callback( std::function<void (sf::Event &event)> cb ){ event_callbacks.push_back( cb ); }
 
+	void set_init_xform( trimesh::xform init ){
+		init_xf = init;
+		global_xf = trimesh::xform::trans(0, 0, -10.0f * bsphere.r) *
+			    trimesh::xform::trans(-bsphere.center) * init_xf;
+	}
+
 protected:
 	virtual bool update( const float screen_dt );
 	virtual bool draw( const float screen_dt );
@@ -69,7 +75,7 @@ protected:
 
 	std::vector< std::shared_ptr<BaseMaterial> > trimesh_materials;
 
-	trimesh::xform global_xf;
+	trimesh::xform global_xf, init_xf;
 	trimesh::TriMesh::BSphere bsphere;
 	sf::Clock clock;
 	SceneManager *scene;
