@@ -27,6 +27,7 @@ using namespace mcl;
 Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 
 	smooth_shade=true;
+	draw_red_back=false;
 
 	sf::ContextSettings settings;
 	settings.depthBits = 24;
@@ -36,7 +37,7 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 	settings.minorVersion = 0;
 
 	// Set up the window and create the opengl context.
-	window = std::shared_ptr<sf::Window>( new sf::Window(sf::VideoMode(1024, 768), "Viewer",
+	window = std::shared_ptr<sf::Window>( new sf::Window(sf::VideoMode(1920, 1080), "Viewer",
 		sf::Style::Default, settings ) );
 	window.get()->setVerticalSyncEnabled(true);
 
@@ -135,7 +136,7 @@ bool Gui::draw( const float screen_dt ){
 
 	// Draw the meshes
 	for( int i=0; i<scene->meshes.size(); ++i ){
-		draw_trimesh( trimesh_materials[i], scene->meshes[i].get() );
+		draw_trimesh( trimesh_materials[i], scene->meshes[i].get() );	
 	}
 
 	for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i](); }
@@ -283,7 +284,7 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 
 	glPushMatrix();
 
-	glDisable(GL_CULL_FACE);
+	if( !draw_red_back ){ glDisable(GL_CULL_FACE); }
 //			glCullFace(GL_BACK);
 //			glEnable(GL_CULL_FACE);
 
@@ -340,8 +341,17 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 
 		// Color settings
 		GLfloat mat_diffuse[4] = { mat->diffuse[0], mat->diffuse[1], mat->diffuse[2], 1.f };
+		const GLfloat mat_diff_back[4] = { 0.58f, 0.19f, 0.19f, 1.f };
 		GLfloat mat_specular[4] = { mat->specular[0], mat->specular[1], mat->specular[2], 1.f };
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mat_diffuse );
+
+		if( draw_red_back ){
+			glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 1);
+			glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, mat_diffuse );
+			glMaterialfv(GL_BACK, GL_AMBIENT_AND_DIFFUSE, mat_diff_back );
+		} else {
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, mat_diffuse );
+		}
+
 		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
 		glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, mat->shininess);
 

@@ -68,6 +68,7 @@ protected:
 	void save_screenshot();
 	void save_meshes();
 	bool draw_floor;
+	bool draw_red_back; // make the back side of triangles red
 	bool smooth_shade;
 
 	std::vector< std::function<void ()> > render_callbacks;
