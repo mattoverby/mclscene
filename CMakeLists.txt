@@ -75,7 +75,7 @@ set( MCLSCENE_SRCS
 	include/MCL/TriangleMesh.hpp	src/TriangleMesh.cpp
 	include/MCL/VertexSort.hpp
 	include/MCL/RenderUtils.hpp
-	include/MCL/Camera.hpp
+	include/MCL/Camera.hpp		src/Camera.cpp
 	include/MCL/Light.hpp
 	include/MCL/AABB.hpp
 	include/MCL/Material.hpp

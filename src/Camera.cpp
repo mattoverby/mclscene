@@ -19,49 +19,73 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_CAMERA_H
-#define MCLSCENE_CAMERA_H 1
+#include "MCL/Camera.hpp"
 
-#include <random>
-#include "MCL/RayIntersect.hpp"
-
-namespace mcl {
+using namespace mcl;
 
 
-//
-//	Orthonormal Base
-//
-struct OrthonormalBasis {
-	OrthonormalBasis( trimesh::vec direction, trimesh::vec up = trimesh::vec(0,1,0) );
-	trimesh::vec U, V, W;
-};
+OrthonormalBasis::OrthonormalBasis( trimesh::vec direction, trimesh::vec up ){
+
+	using namespace trimesh;
+
+	//
+	//  Create UVW
+	//
+
+	W = direction * -1.f;
+	normalize( W );
+
+	if( W[0] == 0.f && W[2] == 0.f ){
+		up[0]+=0.0001;
+		up[1]-=0.0001;
+		up[2]+=0.0001;
+		normalize( up );
+	}
+
+	U = up.cross( W );
+	normalize( U );
+
+	V = W.cross( U );
+	normalize( V );
+
+} // end ortho base
 
 
-//
-//	Base, pure virtual
-//
-class BaseCamera {
-public:
-	virtual ~BaseCamera(){}
-	void compute_rays( unsigned int img_width, unsigned int img_height, std::vector<mcl::intersect::Ray> &rays, unsigned int rpp=1 ){}
-};
+
+PerspectiveCamera::PerspectiveCamera( trimesh::vec pos, trimesh::vec dir, float focal_len ) : 
+	position(pos), focal_length(focal_len), basis(dir) {
+
+} // end constructor
 
 
-//
-//	Perspective Camera (for ray tracing)
-//
-class PerspectiveCamera : public BaseCamera {
-public:
-	PerspectiveCamera( trimesh::vec pos, trimesh::vec dir, float focal_len );
 
-	void compute_rays( unsigned int img_width, unsigned int img_height, std::vector<mcl::intersect::Ray> &rays, unsigned int rpp=1 );
+void PerspectiveCamera::compute_rays( unsigned int img_width, unsigned int img_height, std::vector<mcl::intersect::Ray> &rays, unsigned int rpp ){
 
-	trimesh::vec position;
-	float focal_length;
-	OrthonormalBasis basis;
-};
+	using namespace trimesh;
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<> dis(0.0,1.0);
+/*
+	for( int i=0; i<rpp; ++i ){
+
+		// Get a stochastic sample position
+		float xterm = (img_width + (i + dis(gen)) / float(rpp) );
+		float yterm = (img_height + (i + dis(gen)) / float(rpp) );
+
+		float u = l + (r - l)*(xterm)/img_width;
+		float v = b + (t - b)*(yterm)/img_height;
+
+		vec wVec = basis.W * focal_length * -1.f;
+		vec uVec = basis.U * u;
+		vec vVec = basis.V * v;
+
+		vec rayDir = wVec + uVec + vVec;
+		normalize( rayDir );
+
+		intersect::Ray ray = Ray( position, rayDir );
+		rays.push_back( ray );
+	}
+*/
+} // end compute rays
 
 
-} // end namespace mcl
-
-#endif

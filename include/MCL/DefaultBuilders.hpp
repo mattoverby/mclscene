@@ -436,9 +436,9 @@ static std::shared_ptr<BaseCamera> default_build_camera( Component &component ){
 				focal_length=component.params[i].as_float();
 			}
 
-			else if( parse::to_lower(component.params[i].tag)=="plane_width" ){
-				plane_width=component.params[i].as_float();
-			}
+//			else if( parse::to_lower(component.params[i].tag)=="plane_width" ){
+//				plane_width=component.params[i].as_float();
+//			}
 
 		} // end parse params
 
@@ -457,7 +457,7 @@ static std::shared_ptr<BaseCamera> default_build_camera( Component &component ){
 		} // end parse params
 
 		// Make the camera
-		std::shared_ptr<BaseCamera> cam( new PerspectiveCamera( pos, dir, focal_length, plane_width ) );
+		std::shared_ptr<BaseCamera> cam( new PerspectiveCamera( pos, dir, focal_length ) );
 		return cam;
 	}
 
