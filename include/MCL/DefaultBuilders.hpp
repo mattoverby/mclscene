@@ -26,6 +26,7 @@
 #include "TriangleMesh.hpp"
 #include "Material.hpp"
 #include "Light.hpp"
+#include "Camera.hpp"
 #include "../../deps/pugixml/pugixml.hpp"
 
 namespace mcl {

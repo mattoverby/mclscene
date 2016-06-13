@@ -30,6 +30,7 @@ namespace mcl {
 namespace intersect {
 
 	struct Ray {
+		Ray(){}
 		Ray( trimesh::vec o, trimesh::vec d ){ origin=o; direction=d; }
 		trimesh::vec origin, direction;
 	};

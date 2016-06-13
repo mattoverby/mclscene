@@ -341,7 +341,7 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 
 		// Color settings
 		GLfloat mat_diffuse[4] = { mat->diffuse[0], mat->diffuse[1], mat->diffuse[2], 1.f };
-		const GLfloat mat_diff_back[4] = { 0.58f, 0.19f, 0.19f, 1.f };
+		const GLfloat mat_diff_back[4] = { 240.f/255.f, 59.f/255.f, 32.f/255.f, 1.f };
 		GLfloat mat_specular[4] = { mat->specular[0], mat->specular[1], mat->specular[2], 1.f };
 
 		if( draw_red_back ){
