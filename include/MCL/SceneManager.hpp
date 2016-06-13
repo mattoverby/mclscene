@@ -24,7 +24,6 @@
 
 #include "bsphere.h" // in trimesh2
 #include "BVH.hpp"
-//#include <boost/function.hpp>
 #include "Camera.hpp"
 #include "Light.hpp"
 #include "Material.hpp"

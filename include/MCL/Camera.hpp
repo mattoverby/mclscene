@@ -22,10 +22,18 @@
 #ifndef MCLSCENE_CAMERA_H
 #define MCLSCENE_CAMERA_H 1
 
-#include <memory>
-#include <cassert>
+#include <random>
 
 namespace mcl {
+
+
+//
+//	Orthonormal Base
+//
+struct OrthonormalBasis {
+	OrthonormalBasis( trimesh::vec direction, trimesh::vec up = trimesh::vec(0,1,0) );
+	trimesh::vec U, V, W;
+};
 
 
 //
@@ -34,6 +42,22 @@ namespace mcl {
 class BaseCamera {
 public:
 	virtual ~BaseCamera(){}
+	void compute_rays( unsigned int img_width, unsigned int img_height, std::vector<mcl::intersect::Ray> &rays, unsigned int rpp=1 ){}
+};
+
+
+//
+//	Perspective Camera (for ray tracing)
+//
+class PerspectiveCamera : public BaseCamera {
+public:
+	PerspectiveCamera( trimesh::vec pos, trimesh::vec dir, float focal_len, float img_plane_width );
+
+	void compute_rays( unsigned int img_width, unsigned int img_height, std::vector<mcl::intersect::Ray> &rays, unsigned int rpp=1 );
+
+	trimesh::vec position;
+	float focal_length, img_plane_width;
+	OrthonormalBasis basis;
 };
 
 
