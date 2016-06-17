@@ -57,3 +57,20 @@ void TriangleMesh::make_tri_refs(){
 } // end make triangle references
 
 
+bool TriangleMesh::ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ){
+
+	// Check aabb first
+	if( !aabb->ray_intersect( ray.origin, ray.direction, payload.t_min, payload.t_max ) ){ return false; }
+
+	// Build triangle refs if they don't exist yet
+	if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
+
+	bool hit = false;
+	for( int i=0; i<tri_refs.size(); ++i ){
+		if( tri_refs[i]->ray_intersect( ray, payload ) ){ hit = true; }
+	} // end loop tris
+
+	return hit;
+}
+
+

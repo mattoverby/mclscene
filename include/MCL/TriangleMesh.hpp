@@ -80,6 +80,8 @@ public:
 
 	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax );
 
+	bool ray_intersect( const intersect::Ray &ray, intersect::Payload &payload );
+
 	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
 		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
 		prims.insert( prims.end(), tri_refs.begin(), tri_refs.end() );
