@@ -408,7 +408,7 @@ static std::shared_ptr<BaseLight> default_build_light( Component &component ){
 
 } // end build light
 
-
+/*
 //
 //	Default Camera
 //
@@ -468,7 +468,7 @@ static std::shared_ptr<BaseCamera> default_build_camera( Component &component ){
 	return NULL;
 
 } // end build camera
-
+*/
 
 } // end namespace mcl
 

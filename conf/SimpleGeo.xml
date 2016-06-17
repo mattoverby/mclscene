@@ -10,7 +10,7 @@
 		<direction type="vec3" value="-1 1 0" />
 	</light>
 
-	<Object name="obj1" type="plane" >
+	<Object name="obj1" type="box" >
 
 		<boxmin type="vec3" value="0 0 0" />
 		<boxmax type="vec3" value="1 1 1" />
@@ -79,6 +79,7 @@
 
 	<Material name="white_flag" type="diffuse">
 		<Diffuse type="vec3" value="1  0  0" />
+		<edges type="vec3" value="0  0  0" />
 <!--		<texture type="string" value="../resources/uofm.png" /> -->
 	</Material>
 
