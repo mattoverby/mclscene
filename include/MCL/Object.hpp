@@ -40,7 +40,7 @@ class BaseObject : public std::enable_shared_from_this<BaseObject> {
 public:
 	virtual ~BaseObject(){}
 	virtual std::string get_type() const = 0;
-	virtual void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ) = 0;
+	virtual void bounds( trimesh::vec &bmin, trimesh::vec &bmax ) = 0;
 
 	virtual const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return NULL; }
 	virtual void apply_xform( const trimesh::xform &xf ){}

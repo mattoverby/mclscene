@@ -65,21 +65,22 @@ static inline morton_type morton_encode(const morton_encode_type x, const morton
 
 class BVHNode {
 public:
-	BVHNode() : aabb( new AABB ), m_split(0), num_objects(0) { left_child=NULL; right_child=NULL; }
-	virtual ~BVHNode(){}
-
-	void get_edges( std::vector<trimesh::vec> &edges );
-	const std::shared_ptr<AABB> bounds(){ return aabb; }
+	BVHNode() : aabb( new AABB ), m_split(0) { left_child=NULL; right_child=NULL; }
 
 	std::shared_ptr<BVHNode> left_child;
 	std::shared_ptr<BVHNode> right_child;
 	std::shared_ptr<AABB> aabb;
-
+	std::vector< std::shared_ptr<BaseObject> > m_objects; // empty unless a leaf node
 	int m_split; // split axis, used for Object Median BVH build.
-	std::vector< std::shared_ptr<BaseObject> > m_objects;
 
-	// Number of primitives (not nodes) below this node on the tree.
-	int num_objects;
+	bool is_leaf() const { return m_objects.size()>0; }
+
+	void get_edges( std::vector<trimesh::vec> &edges ); // for visual debugging
+	void bounds( trimesh::vec &bmin, trimesh::vec &bmax ){ bmin=aabb->min; bmax=aabb->max; }
+
+	//
+	//	Split functions
+	//
 
 	// Object Median split, round robin axis
 	void spatial_split( const std::vector< std::shared_ptr<BaseObject> > &objects,
@@ -92,16 +93,15 @@ public:
 };
 
 
-class BVHTraversal {
-public:
-	static bool ray_intersect( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload );
-};
+//namespace BVHTraversal {
+//	static bool ray_intersect( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload );
+//};
 
 
 class BVHBuilder {
 public:
-	static int make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=1000 ); // returns num nodes in tree
-	static int make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=1000 ); // returns num nodes in tree
+	static int make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=100 ); // returns num nodes in tree
+	static int make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=100 ); // returns num nodes in tree
 };
 
 

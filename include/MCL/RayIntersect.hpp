@@ -66,8 +66,8 @@ namespace intersect {
 		bool hit = ( (t<payload.t_max) & (t>payload.t_min) & (beta>=0.0f) & (gamma>=0.0f) & (beta+gamma<=1) );
 
 		if( hit ){
-			payload.n = ((n0+n1+n2)/3.f);//alpha*n0 + beta*n1 + gamma*n2;
-//			payload.n = alpha*n0 + beta*n1 + gamma*n2;
+//			payload.n = ((n0+n1+n2)/3.f);
+			payload.n = alpha*n0 + beta*n1 + gamma*n2;
 			payload.t_max = t;
 			payload.hit_point = ray.origin + ray.direction*t;
 			return true;

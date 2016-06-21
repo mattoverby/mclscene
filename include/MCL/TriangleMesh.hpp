@@ -42,7 +42,7 @@ public:
 	trimesh::vec *p0, *p1, *p2, *n0, *n1, *n2;
 	std::string material;
 
-	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
+	void bounds( trimesh::vec &bmin, trimesh::vec &bmax ){
 		AABB aabb; aabb += *p0; aabb += *p1; aabb += *p2;
 		bmin = aabb.min; bmax = aabb.max;
 	}
@@ -78,7 +78,7 @@ public:
 
 	std::string get_material() const { return material; }
 
-	void get_aabb( trimesh::vec &bmin, trimesh::vec &bmax );
+	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 
 	bool ray_intersect( const intersect::Ray &ray, intersect::Payload &payload );
 

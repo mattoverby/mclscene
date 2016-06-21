@@ -12,9 +12,6 @@
 
 	<Object name="obj1" type="box" >
 
-		<boxmin type="vec3" value="0 0 0" />
-		<boxmax type="vec3" value="1 1 1" />
-
 		<width type="int" value="20" />
 		<length type="int" value="20" />
 		<noise type="double" value="0.01" /> 
@@ -23,7 +20,7 @@
 		<radius type="double" value="2" />
 		<tess type="int" value="8" />
 
-		<XForm type="scale" value="2  2  2" />
+		<XForm type="scale" value="1  1  1" />
 		<XForm type="rotate" value="0  0  0" />
 
 		<Material type="string" value="white_flag" />

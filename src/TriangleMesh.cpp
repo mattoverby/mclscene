@@ -24,7 +24,7 @@
 using namespace mcl;
 
 
-void TriangleMesh::get_aabb( trimesh::vec &bmin, trimesh::vec &bmax ){
+void TriangleMesh::bounds( trimesh::vec &bmin, trimesh::vec &bmax ){
 	if( !aabb->valid ){
 		for( int f=0; f<faces.size(); ++f ){
 			(*aabb) += vertices[ faces[f][0] ];

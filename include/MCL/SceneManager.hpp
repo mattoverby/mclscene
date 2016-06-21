@@ -92,7 +92,9 @@ class SceneManager {
 		bool build_components();
 
 		//
-		// Builder callbacks are executing on a call to build_components()
+		// Builder callbacks are executed on a call to build_components().
+		// If build_components is called and the builder vectors are empty, default
+		// ones are added. See DefaultBuilders.hpp.
 		//
 		void add_callback( BuildCamCallback cb ){ cam_builders.push_back( cb ); }
 		void add_callback( BuildObjCallback cb ){ obj_builders.push_back( cb ); }
@@ -132,7 +134,7 @@ class SceneManager {
 		std::vector< BuildMatCallback > mat_builders;
 
 		// Builds bounding sphere
-		void build_boundary();
+		void build_bsphere();
 		trimesh::TriMesh::BSphere bsphere;
 
 }; // end class SceneManager

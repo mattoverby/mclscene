@@ -42,7 +42,7 @@ void BVHNode::spatial_split( const std::vector< std::shared_ptr<BaseObject> > &o
 	// Create the aabb
 	std::vector< point > obj_centers( queue.size() ); // store the centers for later lookup
 	for( int i=0; i<queue.size(); ++i ){
-		vec bmin, bmax; objects[ queue[i] ]->get_aabb( bmin, bmax );
+		vec bmin, bmax; objects[ queue[i] ]->bounds( bmin, bmax );
 		*aabb += bmin; *aabb += bmax;
 		obj_centers[i] = point( (bmin+bmax)*0.5f );
 	}
@@ -69,7 +69,7 @@ void BVHNode::spatial_split( const std::vector< std::shared_ptr<BaseObject> > &o
 	if( right_queue.size()==0 ){ right_queue.push_back( left_queue.back() ); left_queue.pop_back(); }
 
 	// Create the children
-	num_objects = left_queue.size()+right_queue.size();
+//	num_objects = left_queue.size()+right_queue.size();
 	left_child = std::shared_ptr<BVHNode>( new BVHNode() );
 	right_child = std::shared_ptr<BVHNode>( new BVHNode() );
 	left_child->spatial_split( objects, left_queue, ((split_axis+1)%3), max_depth-1 );
@@ -86,6 +86,8 @@ int num_avg_balance = 0;
 
 void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
 	const std::vector< std::pair< morton_type, int > > &morton_codes, const int max_depth ){
+
+	m_split = morton_codes.size() % 3; // Not sure if this is correct...
 
 	// First, see what bit we're at. If it's the last bit of the morton code,
 	// this is a child and we should add the objects to the scene.
@@ -117,7 +119,7 @@ void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<Base
 
 		avg_balance += float(left_codes.size())/float(right_codes.size());
 		num_avg_balance++;
-		num_objects = left_codes.size()+right_codes.size();
+//		num_objects = left_codes.size()+right_codes.size();
 
 		// Create the children
 		assert( left_codes.size() > 0 && right_codes.size() > 0 );
@@ -131,7 +133,7 @@ void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<Base
 
 	// Now that the tree is constructed, create the aabb
 	for( int i=0; i<m_objects.size(); ++i ){
-		trimesh::vec bmin, bmax; m_objects[i]->get_aabb( bmin, bmax );
+		trimesh::vec bmin, bmax; m_objects[i]->bounds( bmin, bmax );
 		*aabb += bmin; *aabb += bmax;
 	}
 	if( left_child != NULL ){ *aabb += *(left_child->aabb); }
@@ -143,7 +145,7 @@ void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<Base
 //	BVH Traversal
 //
 
-
+/*
 bool BVHTraversal::ray_intersect( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload ){
 
 	// See if we even hit the box
@@ -189,7 +191,7 @@ bool BVHTraversal::ray_intersect( const std::shared_ptr<BVHNode> node, const int
 	return false;
 
 } // end ray intersect
-
+*/
 
 int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth ){
 
@@ -209,7 +211,7 @@ int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vecto
 	std::vector< vec > centroids( prims.size() );
 	AABB world_aabb;
 	for( int i=0; i<prims.size(); ++i ){
-		vec bmin, bmax; prims[i]->get_aabb( bmin, bmax );
+		vec bmin, bmax; prims[i]->bounds( bmin, bmax );
 		world_aabb += bmin; world_aabb += bmax;
 		centroids[i]=( (bmin+bmax)*0.5f );
 	}

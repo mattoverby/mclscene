@@ -95,37 +95,22 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 	//
 	//	Box
 	//
-	else if( type == "box" ){
+	else if( type == "box" || type == "cube" ){
+
+
+		//
+		//	For some reason the make_cube function is broken???
+		//	Just use the make beam with 1 chunk for now.
+		//
 
 		std::shared_ptr<TriMesh> tris( new TriMesh() );
 
-		vec boxmin(-1,-1,-1); vec boxmax(1,1,1);
-		int tessellation=1;
+		int tess = 3;
+		int chunks = 1;
 		for( int i=0; i<obj.params.size(); ++i ){
-			if( parse::to_lower(obj.params[i].tag)=="boxmin" ){ boxmin=obj.params[i].as_vec3(); }
-			else if( parse::to_lower(obj.params[i].tag)=="boxmax" ){ boxmax=obj.params[i].as_vec3(); }
-			else if( parse::to_lower(obj.params[i].tag)=="tess" ){ tessellation=obj.params[i].as_int(); }
+			if( parse::to_lower(obj.params[i].tag)=="tess" ){ tess=obj.params[i].as_int(); }
 		}
-
-		tris = std::shared_ptr<trimesh::TriMesh>( new trimesh::TriMesh() );
-
-		// First create a boring cube
-		trimesh::make_cube( tris.get(), tessellation ); // tess=1 -> 12 tris
-		tris.get()->need_bbox();
-
-		// Now translate it so boxmins are the same
-		trimesh::vec offset = tris.get()->bbox.min - boxmin;
-		trimesh::xform t_xf = trimesh::xform::trans(offset[0],offset[1],offset[2]);
-		trimesh::apply_xform(tris.get(), t_xf);
-		tris.get()->bbox.valid = false;
-		tris.get()->need_bbox();
-
-		// Now scale so that boxmaxes are the same
-		trimesh::vec size = tris.get()->bbox.max - boxmax;
-		trimesh::xform s_xf = trimesh::xform::scale(size[0],size[1],size[2]);
-		trimesh::apply_xform(tris.get(), s_xf);
-		tris.get()->bbox.valid = false;
-		tris.get()->need_bbox();
+		make_beam( tris.get(), tess, chunks );
 
 		tris.get()->need_normals();
 		tris.get()->need_tstrips();
