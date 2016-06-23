@@ -45,7 +45,7 @@ public:
 	virtual const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return NULL; }
 	virtual void apply_xform( const trimesh::xform &xf ){}
 	virtual std::string get_material() const { return ""; }
-	virtual bool ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ){ return false; }
+	virtual bool ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ) const { return false; }
 
 	// If an object is made up of other (smaller) objects, they are needed for BVH construction
 	virtual void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){ prims.push_back( shared_from_this() ); }

@@ -23,6 +23,20 @@
 
 using namespace mcl;
 
+TriangleMesh::TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm, std::string mat ) :
+	tris(tm), vertices(tm->vertices), normals(tm->normals), faces(tm->faces),
+	material(mat), aabb(new AABB) {
+
+	// Build triangle refs if they don't exist yet
+	make_tri_refs();
+	for( int f=0; f<faces.size(); ++f ){
+		(*aabb) += vertices[ faces[f][0] ];
+		(*aabb) += vertices[ faces[f][1] ];
+		(*aabb) += vertices[ faces[f][2] ];
+	}
+
+} // end constructor
+
 
 void TriangleMesh::bounds( trimesh::vec &bmin, trimesh::vec &bmax ){
 	if( !aabb->valid ){
@@ -33,6 +47,18 @@ void TriangleMesh::bounds( trimesh::vec &bmin, trimesh::vec &bmax ){
 		}
 	}
 	bmin = aabb->min; bmax = aabb->max;
+}
+
+
+void TriangleMesh::apply_xform( const trimesh::xform &xf ){
+	trimesh::apply_xform( tris.get(), xf );
+	// Update the bounding box
+	aabb->valid = false;
+	for( int f=0; f<faces.size(); ++f ){
+		(*aabb) += vertices[ faces[f][0] ];
+		(*aabb) += vertices[ faces[f][1] ];
+		(*aabb) += vertices[ faces[f][2] ];
+	}
 }
 
 
@@ -57,13 +83,10 @@ void TriangleMesh::make_tri_refs(){
 } // end make triangle references
 
 
-bool TriangleMesh::ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ){
+bool TriangleMesh::ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ) const {
 
 	// Check aabb first
 	if( !aabb->ray_intersect( ray.origin, ray.direction, payload.t_min, payload.t_max ) ){ return false; }
-
-	// Build triangle refs if they don't exist yet
-	if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
 
 	bool hit = false;
 	for( int i=0; i<tri_refs.size(); ++i ){

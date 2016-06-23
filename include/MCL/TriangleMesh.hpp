@@ -47,7 +47,7 @@ public:
 		bmin = aabb.min; bmax = aabb.max;
 	}
 
-	bool ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ){
+	bool ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ) const {
 		bool hit = intersect::ray_triangle( ray, *p0, *p1, *p2, *n0, *n1, *n2, payload );
 		if( hit ){ payload.material = material; }
 		return hit;
@@ -61,9 +61,7 @@ public:
 class TriangleMesh : public BaseObject {
 private: std::shared_ptr<trimesh::TriMesh> tris; // tris is actually the data container
 public:
-	TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm, std::string mat="" ) :
-		tris(tm), vertices(tm->vertices), normals(tm->normals), faces(tm->faces),
-		material(mat), aabb(new AABB) {}
+	TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm, std::string mat="" );
 
 	// Mesh data
 	std::vector<trimesh::point> &vertices;
@@ -74,13 +72,13 @@ public:
 
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return tris; }
 
-	void apply_xform( const trimesh::xform &xf ){ trimesh::apply_xform( tris.get(), xf ); }
+	void apply_xform( const trimesh::xform &xf );
 
 	std::string get_material() const { return material; }
 
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 
-	bool ray_intersect( const intersect::Ray &ray, intersect::Payload &payload );
+	bool ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ) const;
 
 	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
 		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
