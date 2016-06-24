@@ -34,27 +34,16 @@ namespace mcl {
 //
 class BaseLight {
 public:
-	BaseLight( trimesh::vec intensity ) : m_intensity(intensity) {}
-
 	virtual ~BaseLight(){}
-
 	virtual std::string get_type() const = 0;
-
-	// A light is sampled from random numbers 0 <= u < 1
-	// If u=0.5 it returns position (or center).
-	virtual trimesh::vec sample( double u1, double u2 ) = 0;
-
-	trimesh::vec m_intensity; // i.e. color
 };
 
 
 class OGLLight : public BaseLight {
 public:
 	// m_type = 0 (directional) or 1 (point)
-	OGLLight() : BaseLight( trimesh::vec(0,0,0) ), m_type(0), m_pos(1,1,0), m_ambient(0.3,0.3,0.3), m_diffuse(.7,.7,.7), m_specular(0.8,0.8,0.8) {}
+	OGLLight() : m_type(0), m_pos(1,1,0), m_ambient(0.3,0.3,0.3), m_diffuse(.7,.7,.7), m_specular(0.8,0.8,0.8) {}
 	std::string get_type() const { return "ogl"; }
-
-	trimesh::vec sample( double u1, double u2 ){ return m_pos; }
 
 	int m_type;
 	trimesh::vec m_pos;
