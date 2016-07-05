@@ -292,7 +292,7 @@ bool TriMesh::read_helper(const char *filename, TriMesh *mesh)
 			ok = read_vvd(f, mesh);
 	} else if (c == '#') {
 		char buf[1024];
-		fscanf(f, "%1024s", buf);
+		int sss = fscanf(f, "%1024s", buf);
 		if (LINE_IS("material") || LINE_IS("vertex") ||
 		    LINE_IS("shape_")) {
 			// Assume a ray file
@@ -506,7 +506,7 @@ static bool read_ply(FILE *f, TriMesh *mesh)
 			fseek(f, skip1, SEEK_CUR);
 		else
 			for (int i = 0; i < skip1; i++)
-				fscanf(f, "%s", buf);
+				int sss = fscanf(f, "%s", buf);
 	}
 	if (binary) {
 		if (!read_verts_bin(f, mesh, need_swap, nverts, vert_len,
@@ -525,7 +525,7 @@ static bool read_ply(FILE *f, TriMesh *mesh)
 			fseek(f, skip2, SEEK_CUR);
 		else
 			for (int i = 0; i < skip2; i++)
-				fscanf(f, "%s", buf);
+				int sss = fscanf(f, "%s", buf);
 	}
 
 	if (ngrid) {
@@ -651,7 +651,7 @@ static bool read_vvd(FILE *f, TriMesh *mesh)
 	bool need_swap = we_are_little_endian();
 	const int skip = 127;
 	char buf[skip];
-	fread(buf, skip, 1, f);
+	int sss = fread(buf, skip, 1, f);
 
 	int nverts;
 	if (fread(&nverts, 4, 1, f) != 1) {
@@ -1035,7 +1035,7 @@ static bool read_verts_asc(FILE *f, TriMesh *mesh,
 				if (fscanf(f, "%f", &mesh->confidences[i]) != 1)
 					return false;
 			} else {
-				fscanf(f, " %1024s", buf);
+				int sss = fscanf(f, " %1024s", buf);
 			}
 		}
 	}
@@ -1134,7 +1134,7 @@ static bool read_faces_asc(FILE *f, TriMesh *mesh, int nfaces,
 					return false;
 				}
 			} else {
-				fscanf(f, " %s", buf);
+				int sss = fscanf(f, " %s", buf);
 			}
 		}
 		tess(mesh->vertices, thisface, mesh->faces);

@@ -141,58 +141,6 @@ void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<Base
 }
 
 
-//
-//	BVH Traversal
-//
-
-/*
-bool BVHTraversal::ray_intersect( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload ){
-
-	// See if we even hit the box
-	if( !node->aabb->ray_intersect( ray.origin, ray.direction, payload.t_min, payload.t_max ) ){ return false; }
-
-	// If we have children, progress down the tree
-	if( node->left_child != NULL || node->right_child != NULL ){
-
-		intersect::Payload payload_l=payload; intersect::Payload payload_r=payload;
-		bool left_hit=false, right_hit=false;
-		if( node->left_child != NULL ){ left_hit = ray_intersect( node->left_child, ray, payload_l ); }
-		if( node->right_child != NULL ){ right_hit = ray_intersect( node->right_child, ray, payload_r ); }
-
-		// See which child is closer
-		if( left_hit && right_hit ){
-			if( payload_r.t_max < payload_l.t_max ){
-				payload = payload_r;
-				return true;
-			}
-			payload = payload_l;
-			return true;
-		}
-		else if( right_hit ){
-			payload = payload_r;
-			return true;
-		}
-		else if( left_hit ){
-			payload = payload_l;
-			return true;
-		}
-
-	} // end ray_intersect children
-
-	// Otherwise it's a leaf node, check objects
-	else{
-		bool obj_hit = false;
-		for( int i=0; i<node->m_objects.size(); ++i ){
-			if( node->m_objects[i]->ray_intersect( ray, payload ) ){ obj_hit=true; }
-		}
-		return obj_hit;
-	} // end ray_intersect objects
-
-	return false;
-
-} // end ray intersect
-*/
-
 int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth ){
 
 	root.reset( new BVHNode );
@@ -281,3 +229,85 @@ int BVHBuilder::make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::ve
 //	std::cout << "Object Median BVH made " << n_nodes << " nodes for " << prims.size() << " primitives." << std::endl;
 }
 
+
+//
+//	BVH Traversal
+//
+
+
+bool BVHTraversal::closest_hit( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload ){
+
+	// See if we hit the box
+	if( !node->aabb->ray_intersect( ray.origin, ray.direction, payload.t_min, payload.t_max ) ){ return false; }
+
+	// See if there are children to intersect
+	if( node->left_child != NULL || node->right_child != NULL ){
+
+		// If we have children, progress down the tree
+		// TODO better check against which child to traverse
+		intersect::Payload payload_l=payload; intersect::Payload payload_r=payload;
+		bool left_hit=false, right_hit=false;
+		if( node->left_child != NULL ){ left_hit = BVHTraversal::closest_hit( node->left_child, ray, payload_l ); }
+		if( node->right_child != NULL ){ right_hit = BVHTraversal::closest_hit( node->right_child, ray, payload_r ); }
+
+		// See which child is closer
+		if( left_hit && right_hit ){
+			if( payload_r.t_max < payload_l.t_max ){
+				payload = payload_r;
+				return true;
+			}
+			payload = payload_l;
+			return true;
+		}
+		else if( right_hit ){
+			payload = payload_r;
+			return true;
+		}
+		else if( left_hit ){
+			payload = payload_l;
+			return true;
+		}
+
+	} // end intersect children
+
+	// Otherwise it's a leaf node, check objects
+	else{
+
+		// Loop over objects stored on this bvh node
+		bool obj_hit = false;
+		for( int i=0; i<node->m_objects.size(); ++i ){
+			if( node->m_objects[i]->ray_intersect( ray, payload ) ){ obj_hit=true; }
+		}
+		return obj_hit;
+
+	} // end intersect objects
+
+	return false;
+
+} // end ray intersect
+
+
+
+bool BVHTraversal::any_hit( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload ){
+
+	// See if we hit the box
+	if( !node->aabb->ray_intersect( ray.origin, ray.direction, payload.t_min, payload.t_max ) ){ return false; }
+
+	// See if there are children to intersect
+	// TODO better check against which child to traverse
+	if( node->left_child != NULL ){ if( BVHTraversal::any_hit( node->left_child, ray, payload ) ){ return true; } }
+	else if( node->right_child != NULL ){ if( BVHTraversal::any_hit( node->right_child, ray, payload ) ){ return true; } }
+
+	// Otherwise it's a leaf node, check objects
+	else{
+
+		// Loop over objects stored on this bvh node
+		for( int i=0; i<node->m_objects.size(); ++i ){
+			if( node->m_objects[i]->ray_intersect( ray, payload ) ){ return true; }
+		}
+
+	} // end intersect objects
+
+	return false;
+
+} // end ray intersect
