@@ -41,6 +41,20 @@ namespace parse {
 		size_t pos = fname.find_last_of('/');
 		return (std::string::npos == pos) ? "" : fname.substr(0, pos)+'/';
 	}
+
+	// Returns file extention
+	static std::string get_ext( std::string fname ){
+		size_t pos = fname.find_last_of('.');
+		return (std::string::npos == pos) ? "" : fname.substr(pos+1,fname.size());
+	}
+
+	// Returns file name without extention or directory
+	// TODO some basic error checking
+	static std::string get_fname( std::string fname ){
+		std::string dir = fileDir( fname );
+		std::string ext = get_ext( fname );
+		return fname.substr( dir.size(), fname.size()-ext.size()-dir.size()-1 );
+	}
 };
 
 

@@ -71,6 +71,7 @@ public:
 	std::shared_ptr<BVHNode> right_child;
 	std::shared_ptr<AABB> aabb;
 	std::vector< std::shared_ptr<BaseObject> > m_objects; // empty unless a leaf node
+
 	int m_split; // split axis, used for Object Median BVH build.
 
 	bool is_leaf() const { return m_objects.size()>0; }
