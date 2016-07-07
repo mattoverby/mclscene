@@ -12,8 +12,6 @@
 	There is a viewer sample which can render the scene, but requires OpenGL and SFML 2.
 
 	For example, here is the bounding volume heirarchy of a dillo:
-	
-	![BVHDillo](https://raw.githubusercontent.com/over0219/mclscene/master/doc/dillo.png)
 
 # linking
 
