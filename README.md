@@ -12,7 +12,7 @@
 	There is a viewer sample which can render the scene, but requires OpenGL and SFML 2.
 
 	For example, here is the bounding volume heirarchy of a dillo:
-	![BVH Dillo](doc/dillo.png?raw=true)
+	![BVH Dillo](/doc/dillo.png?raw=true)
 
 # linking
 
