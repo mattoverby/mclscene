@@ -813,6 +813,27 @@ static inline Vec<D,T> normalize(Vec<D,T> &v)
 	return v;
 }
 
+// In-place normalization to unit length
+template <size_t D, class T>
+static inline Vec<D,T> unit(const Vec<D,T> &v1)
+{
+	using namespace ::std;
+	Vec<D,T> v = v1;
+	T l = len(v);
+	if (unlikely(l <= T(0))) {
+		v[0] = T(1);
+		for (size_t i = 1; i < D; i++)
+			v[i] = T(0);
+		return v;
+	}
+
+	l = T(1) / l;
+	for (size_t i = 0; i < D; i++)
+		v[i] *= l;
+
+	return v;
+}
+
 
 // Area-weighted triangle face normal
 template <class T>

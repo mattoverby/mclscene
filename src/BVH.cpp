@@ -294,9 +294,8 @@ bool BVHTraversal::any_hit( const std::shared_ptr<BVHNode> node, const intersect
 	if( !node->aabb->ray_intersect( ray.origin, ray.direction, payload.t_min, payload.t_max ) ){ return false; }
 
 	// See if there are children to intersect
-	// TODO better check against which child to traverse
 	if( node->left_child != NULL ){ if( BVHTraversal::any_hit( node->left_child, ray, payload ) ){ return true; } }
-	else if( node->right_child != NULL ){ if( BVHTraversal::any_hit( node->right_child, ray, payload ) ){ return true; } }
+	if( node->right_child != NULL ){ if( BVHTraversal::any_hit( node->right_child, ray, payload ) ){ return true; } }
 
 	// Otherwise it's a leaf node, check objects
 	else{

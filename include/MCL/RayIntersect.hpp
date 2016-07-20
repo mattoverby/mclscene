@@ -33,7 +33,7 @@ namespace intersect {
 		Ray(){ direction=trimesh::vec(0,0,-1); eps=1e-6f; }
 		Ray( trimesh::vec o, trimesh::vec d, float e=1e-6f ){
 			origin=o; direction=d; eps=e;
-			origin += direction*eps;
+			origin += trimesh::unit(direction)*eps;
 		}
 		trimesh::vec origin, direction;
 		float eps;
@@ -67,7 +67,7 @@ namespace intersect {
 		float alpha = 1.f - beta - gamma;
 
 		float t = n.dot( e2 );
-		bool hit = ( (t<payload.t_max) & (t>payload.t_min) & (beta>=-ray.eps) & (gamma>=-ray.eps) & (beta+gamma<=1.f) );
+		bool hit = ( (t<payload.t_max) & (t>payload.t_min) & (beta>=-ray.eps*0.5f) & (gamma>=-ray.eps*0.5f) & (beta+gamma<=1.f) );
 
 		if( hit ){
 //			payload.n = ((n0+n1+n2)/3.f);
