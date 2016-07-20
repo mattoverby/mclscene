@@ -31,7 +31,10 @@ namespace intersect {
 
 	struct Ray {
 		Ray(){ direction=trimesh::vec(0,0,-1); eps=1e-6f; }
-		Ray( trimesh::vec o, trimesh::vec d, float e=1e-6f ){ origin=o; direction=d; eps=e; }
+		Ray( trimesh::vec o, trimesh::vec d, float e=1e-6f ){
+			origin=o; direction=d; eps=e;
+			origin += direction*eps;
+		}
 		trimesh::vec origin, direction;
 		float eps;
 	};
