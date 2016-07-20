@@ -1,7 +1,7 @@
 # mclscene
 
 	By Matt Overby
-	http://www.mattoverby.net
+	[http://www.mattoverby.net](http://www.mattoverby.net)
 
 	mclscene is a generic scene loader for some of my test projects. It parses an XML file
 	and stores metadata, which can then be extracted by another application for whatever purpose.
