@@ -1,6 +1,6 @@
 # mclscene
 
-By Matt Overby
+By Matt Overby  
 [http://www.mattoverby.net](http://www.mattoverby.net)
 
 mclscene is a generic scene loader for some of my test projects. It parses an XML file
@@ -33,12 +33,12 @@ Copyright 2016 Matthew Overby.
 
 MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 Redistribution and use in source and binary forms, with or without modification, are
-permitted provided that the following conditions are met:
+permitted provided that the following conditions are met:  
 1. Redistributions of source code must retain the above copyright notice, this list of
-conditions and the following disclaimer.
+conditions and the following disclaimer.  
 2. Redistributions in binary form must reproduce the above copyright notice, this list
 of conditions and the following disclaimer in the documentation and/or other materials
-provided with the distribution.
+provided with the distribution.  
 THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR  A PARTICULAR PURPOSE
 ARE DISCLAIMED. IN NO EVENT SHALL THE UNIVERSITY OF MINNESOTA, DULUTH OR CONTRIBUTORS BE 
