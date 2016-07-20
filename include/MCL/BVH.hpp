@@ -96,8 +96,8 @@ public:
 
 class BVHBuilder {
 public:
-	static int make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=100 ); // returns num nodes in tree
-	static int make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=100 ); // returns num nodes in tree
+	static int make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=10 ); // returns num nodes in tree
+	static int make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=10 ); // returns num nodes in tree
 };
 
 
