@@ -11,7 +11,7 @@ Currently it only handles triangle/tetrahedral meshes.
 
 There is a viewer sample which can render the scene, but requires OpenGL and SFML 2.
 
-![bvh dillo](https://github.com/over0219/mclscene/raw/master/doc/dillo.png "BVH Dillo")
+![bvh dillo](https://github.com/over0219/mclscene/raw/master/doc/dillo.png "BVH Dillo" =250x)
 
 # linking
 
