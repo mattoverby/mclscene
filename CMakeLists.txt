@@ -85,7 +85,7 @@ set( MCLSCENE_SRCS
 
 # Create the library
 if(SFML_FOUND AND OPENGL_FOUND)
-	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} include/MCL/Gui.hpp src/Gui.cpp include/MCL/ParticleGui.hpp src/ParticleGui.cpp )
+	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} include/MCL/Gui.hpp src/Gui.cpp )
 	add_library( mclscene ${TRIMESH_SRCS} ${MCLSCENE_SRCS} )
 	set( MCLSCENE_LIBRARIES mclscene ${OPENGL_LIBRARIES} ${SFML_LIBRARIES} ${Boost_LIBRARIES} png )
 	include_directories( ${SFML_INCLUDE_DIRS} ${OpenGL_INCLUDE_DIRS} )
@@ -122,8 +122,6 @@ if(MCL_BUILD_SAMPLES)
 		target_link_libraries( mesh_viewer ${MCLSCENE_LIBRARIES} )
 		add_executable( bvh_viewer samples/BVHViewer.cpp )
 		target_link_libraries( bvh_viewer ${MCLSCENE_LIBRARIES} )
-		add_executable( particle_viewer samples/ParticleViewer.cpp )
-		target_link_libraries( particle_viewer ${MCLSCENE_LIBRARIES} )
 	endif(SFML_FOUND AND OPENGL_FOUND)
 
 endif(MCL_BUILD_SAMPLES)
