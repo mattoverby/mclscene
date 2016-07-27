@@ -70,6 +70,8 @@ protected:
 	bool draw_floor;
 	bool draw_red_back; // make the back side of triangles red
 	bool smooth_shade;
+	bool draw_as_particles;
+	int sphereDisplayList;
 
 	std::vector< std::function<void ()> > render_callbacks;
 	std::vector< std::function<void (sf::Event &event)> > event_callbacks;

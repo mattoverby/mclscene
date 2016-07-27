@@ -28,6 +28,7 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 
 	smooth_shade=true;
 	draw_red_back=false;
+	draw_as_particles = false;
 
 	sf::ContextSettings settings;
 	settings.depthBits = 24;
@@ -75,6 +76,13 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 
 void Gui::display(){
 
+	// Create a sphere display list for drawing particles
+	sphereDisplayList = 1;
+	float sphere_rad = 0.1f;
+	glNewList( sphereDisplayList, GL_COMPILE );
+		Draw::drawSphere( 0.f, 0.f, 0.f, sphere_rad, 8 );
+	glEndList();
+
 	// The game loop
 	while( true ){
 
@@ -108,6 +116,7 @@ bool Gui::update( const float screen_dt ){
 			else if( event.key.code == sf::Keyboard::S ){ save_screenshot(); }
 			else if( event.key.code == sf::Keyboard::M ){ save_meshes(); }
 			else if( event.key.code == sf::Keyboard::A ){ smooth_shade = !smooth_shade; }
+			else if( event.key.code == sf::Keyboard::O ){ draw_as_particles = !draw_as_particles; }
 		}
 
 	} // end event loop
@@ -135,8 +144,21 @@ bool Gui::draw( const float screen_dt ){
 	draw_shadow( scene->lights, scene->meshes );
 
 	// Draw the meshes
-	for( int i=0; i<scene->meshes.size(); ++i ){
-		draw_trimesh( trimesh_materials[i], scene->meshes[i].get() );	
+	if( draw_as_particles ){
+		for( int i=0; i<scene->meshes.size(); ++i ){
+			for( int p=0; p<scene->meshes[i]->vertices.size(); ++p ){
+				trimesh::point pt = scene->meshes[i]->vertices[p];
+				glPushMatrix();
+				glColor3f( 1.f, 0.f, 0.f );
+				glTranslatef( pt[0], pt[1], pt[2] );
+				glCallList( sphereDisplayList );
+				glPopMatrix();
+			}
+		}
+	} else {
+		for( int i=0; i<scene->meshes.size(); ++i ){
+			draw_trimesh( trimesh_materials[i], scene->meshes[i].get() );	
+		}
 	}
 
 	for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i](); }
