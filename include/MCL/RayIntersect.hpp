@@ -40,9 +40,9 @@ namespace intersect {
 	};
 
 	struct Payload {
-		Payload(){ t_min=1e-8; t_max=9999999.0; }
+		Payload( const Ray &ray ){ t_min=ray.eps; t_max=9999999.0; launch_point=ray.origin; }
 		double t_min, t_max;
-		trimesh::vec n, hit_point;
+		trimesh::vec n, hit_point, launch_point;
 		std::string material;
 	};
 
