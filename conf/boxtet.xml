@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <mclScene>
 
-	<Object name="box" type="TetMesh" >
-		<File type="string" value="simplebox" />
+	<Object name="box" type="PointCloud" >
+		<File type="string" value="simplebox.node" />
 		<Material type="string" value="blue_diff" />
 	</Object>
 

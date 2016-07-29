@@ -73,7 +73,7 @@ set( MCLSCENE_SRCS
 	include/MCL/Object.hpp
 	include/MCL/BVH.hpp		src/BVH.cpp
 	include/MCL/TriangleMesh.hpp	src/TriangleMesh.cpp
-	include/MCL/ParticleCloud.hpp	src/ParticleCloud.cpp
+	include/MCL/PointCloud.hpp	src/PointCloud.cpp
 	include/MCL/VertexSort.hpp
 	include/MCL/RenderUtils.hpp
 	include/MCL/Camera.hpp		src/Camera.cpp

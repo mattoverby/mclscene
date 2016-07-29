@@ -19,7 +19,7 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#include "MCL/ParticleCloud.hpp"
+#include "MCL/PointCloud.hpp"
 
 using namespace mcl;
 
@@ -32,7 +32,7 @@ namespace parse_helper {
 }
 
 
-std::string ParticleCloud::get_xml( std::string obj_name, int mode ){
+std::string PointCloud::get_xml( std::string obj_name, int mode ){
 
 	// Save the PLY
 	std::stringstream plyfile;
@@ -42,7 +42,7 @@ std::string ParticleCloud::get_xml( std::string obj_name, int mode ){
 	// mclscene
 	if( mode == 0 ){
 		std::stringstream xml;
-		xml << "\t<Object name=\"" << obj_name << "\" type=\"ParticleCloud\" >\n";
+		xml << "\t<Object name=\"" << obj_name << "\" type=\"PointCloud\" >\n";
 		xml << "\t\t<File type=\"string\" value=\"" << plyfile.str() << "\" />\n";
 		xml << "\t\t<Material type=\"string\" value=\"" << material << "\" />\n";
 		xml << "\t</Object>";
@@ -54,7 +54,7 @@ std::string ParticleCloud::get_xml( std::string obj_name, int mode ){
 } // end get xml
 
 
-bool ParticleCloud::load( std::string file ){
+bool PointCloud::load( std::string file, bool fill ){
 
 	std::string ext = parse_helper::to_lower( parse_helper::get_ext( file ) );
 
@@ -79,7 +79,7 @@ bool ParticleCloud::load( std::string file ){
 		// Load the vertices
 		std::ifstream filestream;
 		filestream.open( file.c_str() );
-		if( !filestream ){ std::cerr << "\n**ParticleCloud::load Error: Could not load " << file << std::endl; return false; }
+		if( !filestream ){ std::cerr << "\n**PointCloud::load Error: Could not load " << file << std::endl; return false; }
 
 		std::string header;
 		getline( filestream, header );
@@ -103,7 +103,7 @@ bool ParticleCloud::load( std::string file ){
 			if( starts_with_one ){ idx -= 1; }
 
 			if( idx > vertices.size() ){
-				std::cerr << "\n**ParticleCloud::load Error: Your indices are bad for file " << file << std::endl; return false;
+				std::cerr << "\n**PointCloud::load Error: Your indices are bad for file " << file << std::endl; return false;
 			}
 
 			vertices[idx] = trimesh::point( x, y, z );
@@ -112,13 +112,13 @@ bool ParticleCloud::load( std::string file ){
 		filestream.close();
 
 		for( int i=0; i<vertex_set.size(); ++i ){
-			if( vertex_set[i] == 0 ){ std::cerr << "\n**ParticleCloud::load Error: Your indices are bad for file " << file << std::endl; return false; }
+			if( vertex_set[i] == 0 ){ std::cerr << "\n**PointCloud::load Error: Your indices are bad for file " << file << std::endl; return false; }
 		}
 
 	} // end load node
 
 	else {
-		std::cerr << "\n**ParticleCloud::load Error: I don't know how to load a file of type \"" << ext << "\"" << std::endl;
+		std::cerr << "\n**PointCloud::load Error: I don't know how to load a file of type \"" << ext << "\"" << std::endl;
 		return false;
 	}
 
@@ -130,7 +130,7 @@ bool ParticleCloud::load( std::string file ){
 } // end load ply
 
 
-void ParticleCloud::bounds( trimesh::vec &bmin, trimesh::vec &bmax ){
+void PointCloud::bounds( trimesh::vec &bmin, trimesh::vec &bmax ){
 	if( !aabb->valid ){
 		for( int v=0; v<vertices.size(); ++v ){
 			(*aabb) += vertices[v];
@@ -140,7 +140,7 @@ void ParticleCloud::bounds( trimesh::vec &bmin, trimesh::vec &bmax ){
 } // end bounds
 
 
-void ParticleCloud::update(){
+void PointCloud::update(){
 
 	// Update the bounding box
 	aabb->valid = false;

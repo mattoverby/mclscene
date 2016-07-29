@@ -19,47 +19,50 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_PARTICLECLOUD_H
-#define MCLSCENE_PARTICLECLOUD_H 1
+#ifndef MCLSCENE_POINTCLOUD_H
+#define MCLSCENE_POINTCLOUD_H 1
 
 #include "Object.hpp"
 
 namespace mcl {
 
 //
-//	A particle cloud is just a collection of vertices
+//	A point cloud is just a collection of vertices
 //	stored in a trimesh sans faces/normals.
 //	It used for fluids, gasses, etc...
 //
-//	Eventually I will add support for ray tracing on its convex hull
+//	Eventually I will add support for:
+//		Ray tracing on its convex hull
+//		OGL rendering modes (as points, convex hull, semitransparent spheres, etc...)
 //
 
-class ParticleCloud : public BaseObject {
+class PointCloud : public BaseObject {
 private: std::shared_ptr<trimesh::TriMesh> data;
 public:
-	ParticleCloud( std::string mat="" ) : data(new trimesh::TriMesh), vertices(data->vertices), aabb(new AABB) {}
+	PointCloud( std::string mat="" ) : data(new trimesh::TriMesh), vertices(data->vertices), aabb(new AABB) {}
 
 	// Mesh data
 	std::vector<trimesh::point> &vertices;
 
 	// General getters
-	std::string get_type() const { return "particlecloud"; }
+	std::string get_type() const { return "pointcloud"; }
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return data; }
 	std::string get_material() const { return material; }
 	std::string get_xml( std::string obj_name, int mode=0 );
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 
-	// Tells the cloud that some particle has moved, and the
+	// Tells the cloud that some vertex has moved, and the
 	// bounding box/convex hull needs to be recomputed.
 	void update();
 
-	// A particle cloud can be initialized from a file or adding vertices manually.
+	// A point cloud can be initialized from a file or adding vertices manually.
+	// Only the vertices of the mesh file will be stored. If "fill" is true,
+	// points will be added to fill the inner space of the surface mesh (TODO).
 	// Currently supported file types are
 	//	.ply	(triangle mesh)
 	//	.node	(tet mesh w/o elements)
-	// It will strip out any face/normal information
 	// Returns true on success.
-	bool load( std::string file );
+	bool load( std::string file, bool fill );
 
 private:
 	std::string material;
