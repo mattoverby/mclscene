@@ -28,7 +28,13 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 
 	smooth_shade=true;
 	draw_red_back=false;
-	draw_as_particles = false;
+	draw_points = true;
+
+	sphereDisplayList = 1;
+	float sphere_rad = 0.1f;
+	glNewList( sphereDisplayList, GL_COMPILE );
+		Draw::drawSphere( 0.f, 0.f, 0.f, sphere_rad, 8 );
+	glEndList();
 
 	sf::ContextSettings settings;
 	settings.depthBits = 24;
@@ -76,13 +82,6 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 
 void Gui::display(){
 
-	// Create a sphere display list for drawing particles
-	sphereDisplayList = 1;
-	float sphere_rad = 0.1f;
-	glNewList( sphereDisplayList, GL_COMPILE );
-		Draw::drawSphere( 0.f, 0.f, 0.f, sphere_rad, 8 );
-	glEndList();
-
 	// The game loop
 	while( true ){
 
@@ -121,7 +120,6 @@ bool Gui::update( const float screen_dt ){
 			else if( event.key.code == sf::Keyboard::S ){ save_screenshot(); }
 			else if( event.key.code == sf::Keyboard::M ){ save_meshes(); }
 			else if( event.key.code == sf::Keyboard::A ){ smooth_shade = !smooth_shade; }
-			else if( event.key.code == sf::Keyboard::O ){ draw_as_particles = !draw_as_particles; }
 		}
 
 	} // end event loop
@@ -148,22 +146,8 @@ bool Gui::draw( const float screen_dt ){
 
 	draw_shadow( scene->lights, scene->meshes );
 
-	// Draw the meshes
-	if( draw_as_particles ){
-		for( int i=0; i<scene->meshes.size(); ++i ){
-			for( int p=0; p<scene->meshes[i]->vertices.size(); ++p ){
-				trimesh::point pt = scene->meshes[i]->vertices[p];
-				glPushMatrix();
-				glColor3f( 1.f, 0.f, 0.f );
-				glTranslatef( pt[0], pt[1], pt[2] );
-				glCallList( sphereDisplayList );
-				glPopMatrix();
-			}
-		}
-	} else {
-		for( int i=0; i<scene->meshes.size(); ++i ){
-			draw_trimesh( trimesh_materials[i], scene->meshes[i].get() );	
-		}
+	for( int i=0; i<scene->meshes.size(); ++i ){
+		draw_trimesh( trimesh_materials[i], scene->meshes[i].get() );	
 	}
 
 	for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i](); }
@@ -302,7 +286,7 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 	bool draw_falsecolor = false;
 	bool draw_index = false;
 	bool draw_2side = false;
-	int point_size = 1, line_width = 1;
+	int point_size = 8, line_width = 1;
 
 	if( parse::to_lower(material->get_type())!="ogl" ){ std::cout << "Unknown material type." << std::endl; return; }
 	std::shared_ptr<OGLMaterial> mat = std::static_pointer_cast<OGLMaterial>(material);
@@ -385,13 +369,6 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 	}
 
 	// Main drawing pass
-	if (draw_points || themesh->tstrips.empty()) {
-		// No triangles - draw as points
-		glPointSize(float(point_size));
-		glDrawArrays(GL_POINTS, 0, themesh->vertices.size());
-		glPopMatrix();
-		return;
-	}
 
 	if (draw_edges) {
 		glPolygonOffset(2.0f, 2.0f);
@@ -403,7 +380,25 @@ void Gui::draw_trimesh( std::shared_ptr<BaseMaterial> material, const trimesh::T
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	if( material->has_texture() ){ m_textures.bind( material->m_texture.m_name ); }
-	draw_tstrips(themesh);
+
+	if (draw_points || themesh->tstrips.empty()) {
+
+//		for( int i=0; i<themesh->vertices.size(); ++i ){
+//			const float *pt = themesh->vertices[i];
+//			glPushMatrix();
+//			glTranslatef( pt[0], pt[1], pt[2] );
+//			glCallList( sphereDisplayList );
+//			glPopMatrix();
+//		}
+
+		// No triangles - draw as points
+		glPointSize(float(point_size));
+		glDrawArrays(GL_POINTS, 0, themesh->vertices.size());
+		glPopMatrix();
+
+		return;
+	}
+	else { draw_tstrips(themesh); }
 	m_textures.unbind();
 
 	glDisable(GL_POLYGON_OFFSET_FILL);

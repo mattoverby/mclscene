@@ -70,7 +70,6 @@ protected:
 	bool draw_floor;
 	bool draw_red_back; // make the back side of triangles red
 	bool smooth_shade;
-	bool draw_as_particles;
 	int sphereDisplayList;
 
 	std::vector< std::function<void ()> > render_callbacks;
@@ -85,7 +84,7 @@ protected:
 	trimesh::GLCamera cam;
 	std::shared_ptr<sf::Window> window;
 
-	bool draw_points = false;
+	bool draw_points;
 
 
 

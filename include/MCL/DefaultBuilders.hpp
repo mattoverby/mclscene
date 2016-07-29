@@ -24,6 +24,7 @@
 
 #include "TetMesh.hpp"
 #include "TriangleMesh.hpp"
+#include "ParticleCloud.hpp"
 #include "Material.hpp"
 #include "Light.hpp"
 #include "Camera.hpp"
@@ -282,6 +283,29 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 
 	} // end build tet mesh
 
+
+	//
+	//	Particle Cloud
+	//
+	else if( type == "particlecloud" ){
+
+		std::shared_ptr<ParticleCloud> cloud( new ParticleCloud(material) );
+		std::string filename = "";
+		for( int i=0; i<obj.params.size(); ++i ){
+			if( parse::to_lower(obj.params[i].tag)=="file" ){ filename=obj.params[i].as_string(); }
+		}
+		if( !filename.size() ){ printf("\nParticleCloud Error for obj %s: No file specified", name.c_str()); assert(false); }
+		if( !cloud->load( filename ) ){ printf("\nParticleCloud Error for obj %s: failed to load file %s", name.c_str(), filename.c_str()); assert(false); }
+		std::shared_ptr<BaseObject> new_obj( cloud );
+		new_obj->apply_xform( x_form );
+		return new_obj;
+
+	} // end build particle cloud
+
+
+	//
+	//	Unknown
+	//
 	else{
 		std::cerr << "**Error: I don't know how to create an object of type " << type << std::endl;
 	}
