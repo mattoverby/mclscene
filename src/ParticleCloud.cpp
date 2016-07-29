@@ -60,11 +60,18 @@ bool ParticleCloud::load( std::string file ){
 
 	// Read the file
 	if( ext == "ply" ){
+
 		data.reset( trimesh::TriMesh::read( file ) );
 		if( data.get() == NULL ){
 			data.reset( new trimesh::TriMesh );
 			return false;
 		}
+
+		// Remove any unused data
+		data->normals.clear();
+		data->faces.clear();
+		data->tstrips.clear();
+
 	} // end load ply
 
 	else if( ext == "node" ){
