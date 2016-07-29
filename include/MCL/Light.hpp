@@ -36,6 +36,12 @@ class BaseLight {
 public:
 	virtual ~BaseLight(){}
 	virtual std::string get_type() const = 0;
+
+	// Returns a string containing xml code for saving to a scenefile.
+	// Mode is:
+	//	0 = mclscene
+	//	1 = mitsuba
+	virtual std::string get_xml( std::string light_name, int mode ){ return ""; }
 };
 
 
@@ -45,9 +51,29 @@ public:
 	OGLLight() : m_type(0), m_pos(1,1,0), m_ambient(0.3,0.3,0.3), m_diffuse(.7,.7,.7), m_specular(0.8,0.8,0.8) {}
 	std::string get_type() const { return "ogl"; }
 
-	int m_type;
+	int m_type; // 0 (directional) or 1 (point)
 	trimesh::vec m_pos;
 	trimesh::vec m_ambient, m_diffuse, m_specular; // colors
+
+	std::string get_xml( std::string light_name, int mode ){
+
+		// mclscene
+		if( mode == 0 ){
+			std::stringstream xml;
+			xml << "\t<Light name=\"" << light_name << "\" type=\"ogl\" >\n";
+			xml << "\t\t<Ambient type=\"vec3\" value=\"" << m_ambient.str() << "\" />\n";
+			xml << "\t\t<Diffuse type=\"vec3\" value=\"" << m_diffuse.str() << "\" />\n";
+			xml << "\t\t<Specular type=\"vec3\" value=\"" << m_specular.str() << "\" />\n";
+			if( m_type==0 ){ xml << "\t\t<Direction type=\"vec3\" value=\"" << m_pos.str() << "\" />\n"; }
+			else { xml << "\t\t<Position type=\"vec3\" value=\"" << m_pos.str() << "\" />\n"; }
+			xml << "\t</Light>";
+			return xml.str();
+		}
+
+		return "";
+
+	} // end get xml
+
 };
 
 

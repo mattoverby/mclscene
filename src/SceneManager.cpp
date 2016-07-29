@@ -122,6 +122,62 @@ bool SceneManager::load( std::string xmlfile, bool auto_build ){
 } // end load xml file
 
 
+void SceneManager::save( std::string xmlfile, int mode ){
+
+	// I really should use pugixml instead of string, however that would
+	// increase dependency usage more than I'd like (in the light/object/etc... classes).
+
+	std::stringstream xml;
+	std::cout << "Saving scene file: " << std::flush;
+
+	if( mode == 0 ){
+
+		xml << "<?xml version=\"1.0\"?>\n";
+		xml << "<mclscene>";
+
+		// Loop over objects
+		for( int i=0; i<objects.size(); ++i ){
+			std::stringstream obj_name; obj_name << "object" << i;
+			xml << "\n" << objects[i]->get_xml( obj_name.str(), mode );
+		}
+
+		// Loop over materials, they must retain their original name
+		std::unordered_map< std::string, std::shared_ptr<BaseMaterial> >::iterator mat_iter = materials_map.begin();
+		for( mat_iter; mat_iter != materials_map.end(); ++mat_iter ){
+			xml << "\n" << mat_iter->second->get_xml( mat_iter->first, mode );
+		}
+
+		// Loop over cameras
+		for( int i=0; i<cameras.size(); ++i ){
+			std::stringstream cam_name; cam_name << "camera" << i;
+			xml << "\n" << cameras[i]->get_xml( cam_name.str(), mode );
+		}
+
+		// Loop over lights
+		for( int i=0; i<lights.size(); ++i ){
+			std::stringstream light_name; light_name << "light" << i;
+			xml << "\n" << lights[i]->get_xml( light_name.str(), mode );
+		}
+
+		xml << "\n</mclscene>";
+
+	} else {
+		std::cerr << "SceneManager::save Error: I don't know that save type" << std::endl;
+		return;
+	}
+
+	// Save to a file
+	std::stringstream filename;
+	filename << MCLSCENE_BUILD_DIR << "/" << parse::get_timestamp() << ".xml";
+	std::cout << filename.str() << std::endl;
+	std::ofstream filestream;
+	filestream.open( xmlfile.c_str() );
+	filestream << xml.str();
+	filestream.close();
+
+} // end save
+
+
 bool SceneManager::build_components(){
 
 	// Only build scene components once per load(...) call

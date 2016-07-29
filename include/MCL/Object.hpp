@@ -47,6 +47,12 @@ public:
 	virtual std::string get_material() const { return ""; }
 	virtual bool ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ) const { return false; }
 
+	// Returns a string containing xml code for saving to a scenefile.
+	// Mode is:
+	//	0 = mclscene
+	//	1 = mitsuba
+	virtual std::string get_xml( std::string component_name, int mode=0 ){ return ""; }
+
 	// If an object is made up of other (smaller) objects, they are needed for BVH construction
 	virtual void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){ prims.push_back( shared_from_this() ); }
 };

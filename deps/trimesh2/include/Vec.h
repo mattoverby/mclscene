@@ -14,6 +14,8 @@ Supports the following operations:
 	vec v3(1, 2, 3);	// Initialized to (1, 2, 3)
 	vec v4(v3);		// Copy constructor
 
+	std::string s=v1.str(); // Returns string of form "x y z"
+
 	float farray[3];
 	vec v5 = vec(farray);	// Explicit: "v4 = farray" won't work
 
@@ -70,6 +72,7 @@ step, smoothstep, faceforward, reflect, refract, and angle
 #include <stdexcept>
 #include <iostream>
 #include <algorithm>
+#include <sstream>
 
 
 // Let gcc optimize conditional branches a bit better...
@@ -221,6 +224,17 @@ public:
 		{ return D; }
 	size_type max_size() const
 		{ return D; }
+
+	// String output
+	const std::string str()
+	{
+		std::stringstream str_out;
+		for (size_type i = 0; i < D; i++){
+			if( i>0 ){ str_out << ' '; }
+			str_out << v[i];
+		}
+		return str_out.str();
+	}
 
 	// not equal with threshold
 	bool neq( const Vec<D,T> &x, float thresh )

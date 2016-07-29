@@ -55,6 +55,15 @@ namespace parse {
 		std::string ext = get_ext( fname );
 		return fname.substr( dir.size(), fname.size()-ext.size()-dir.size()-1 );
 	}
+
+	static std::string get_timestamp(){
+		std::string MY_DATE_FORMAT = "h%H_m%M_s%S";
+		const int MY_DATE_SIZE = 20;
+		static char name[MY_DATE_SIZE];
+		time_t now = time(0);
+		strftime(name, sizeof(name), MY_DATE_FORMAT.c_str(), localtime(&now));
+		return std::string(name);
+	}
 };
 
 

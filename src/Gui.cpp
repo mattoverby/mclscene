@@ -113,6 +113,11 @@ bool Gui::update( const float screen_dt ){
 		}
 		else if( event.type == sf::Event::KeyPressed ){
 			if( event.key.code == sf::Keyboard::Escape ){ return false; }
+			else if( event.key.code == sf::Keyboard::F12 ){
+				std::stringstream filename;
+				filename << MCLSCENE_BUILD_DIR << "/" << parse::get_timestamp() << ".xml";
+				scene->save( filename.str(), 0 );
+			}
 			else if( event.key.code == sf::Keyboard::S ){ save_screenshot(); }
 			else if( event.key.code == sf::Keyboard::M ){ save_meshes(); }
 			else if( event.key.code == sf::Keyboard::A ){ smooth_shade = !smooth_shade; }

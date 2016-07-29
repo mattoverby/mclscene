@@ -53,6 +53,12 @@ public:
 	// Returns true on success
 	bool load( std::string filename );
 
+	// Saves the tet mesh to .ele and .node files.
+	// Do not include extensions on the filename argument.
+	void save( std::string filename );
+
+	std::string get_xml( std::string name, int mode );
+
 	// Compute the normals for surface vertices. The inner normals are length zero.
 	void need_normals( bool recompute=true );
 

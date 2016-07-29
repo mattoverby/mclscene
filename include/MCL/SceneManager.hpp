@@ -64,6 +64,16 @@ class SceneManager {
 		bool load( std::string xmlfile, bool auto_build=true );
 
 		//
+		// Exports to a scene file. Mesh files are saved to the build directory.
+		// Note that some of the original scene file information will be lost
+		// (i.e. names, transformations)
+		// Mode is:
+		//	0 = mclscene
+		//	1 = mitsuba (TODO)
+		//
+		void save( std::string xmlfile, int mode=0 );
+
+		//
 		// Computes bounding volume heirarchy (AABB)
 		// Type is either spatial (object median) or linear
 		//

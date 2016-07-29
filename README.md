@@ -24,7 +24,6 @@ ${MCLSCENE_INCLUDE_DIRS} that are set during the build. I will improve this in t
 - Cleanup headers
 - Support for texture wrapping
 - Mesh instancing
-- SceneManager::save
 - Better viewer with shaders
 - Export to other renderers (e.g., mitsuba)
 

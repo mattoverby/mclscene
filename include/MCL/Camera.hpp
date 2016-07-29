@@ -42,6 +42,13 @@ struct OrthonormalBasis {
 class BaseCamera {
 public:
 	virtual ~BaseCamera(){}
+
+
+	// Returns a string containing xml code for saving to a scenefile.
+	// Mode is:
+	//	0 = mclscene
+	//	1 = mitsuba
+	virtual std::string get_xml( std::string camera_name, int mode ){ return ""; }
 };
 
 

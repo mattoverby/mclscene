@@ -63,6 +63,8 @@ private: std::shared_ptr<trimesh::TriMesh> tris; // tris is actually the data co
 public:
 	TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm, std::string mat="" );
 
+	std::string get_xml( std::string obj_name, int mode=0 );
+
 	// Mesh data
 	std::vector<trimesh::point> &vertices;
 	std::vector<trimesh::vec> &normals;

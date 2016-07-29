@@ -52,6 +52,12 @@ public:
 
 	bool has_texture() { return m_texture.m_file.size(); }
 
+	// Returns a string containing xml code for saving to a scenefile.
+	// Mode is:
+	//	0 = mclscene
+	//	1 = mitsuba
+	virtual std::string get_xml( std::string material_name, int mode ){ return ""; }
+
 	TextureResource m_texture;
 };
 
@@ -69,6 +75,25 @@ public:
 	trimesh::vec edge_color;
 
 	std::string get_type() const { return "ogl"; }
+
+	std::string get_xml( std::string material_name, int mode ){
+
+		// mclscene
+		if( mode == 0 ){
+			bool draw_edges = ( edge_color[0]>=0.f && edge_color[1]>=0.f && edge_color[2]>=0.f );
+			std::stringstream xml;
+			xml << "\t<Material name=\"" << material_name << "\" type=\"ogl\" >\n";
+			xml << "\t\t<Diffuse type=\"vec3\" value=\"" << diffuse.str() << "\" />\n";
+			xml << "\t\t<Specular type=\"vec3\" value=\"" << specular.str() << "\" />\n";
+			xml << "\t\t<Shininess type=\"int\" value=\"" << shininess << "\" />\n";
+			if( draw_edges ){ xml << "\t\t<Edges type=\"vec3\" value=\"" << edge_color.str() << "\" />\n"; }
+			xml << "\t</Material>";
+			return xml.str();
+		}
+
+		return "";
+
+	} // end get xml
 };
 
 
