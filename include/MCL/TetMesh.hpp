@@ -51,7 +51,8 @@ public:
 	std::string get_type() const { return "tetmesh"; }
 
 	// Filename is the first part of a tetmesh which must contain an .ele and .node file.
-	// If a ply file is supplied, tetgen will be used to tetrahedralize the mesh.
+	// If a ply file is supplied, tetgen will be used to tetrahedralize the mesh (however,
+	// the ply must be ascii, not binary).
 	// Returns true on success
 	bool load( std::string filename );
 

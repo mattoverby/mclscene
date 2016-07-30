@@ -34787,7 +34787,7 @@ void tetrahedralize(tetgenbehavior *b, tetgenio *in, tetgenio *out,
       ((b->object == tetgenbehavior::OFF) ||
        (b->object == tetgenbehavior::PLY) ||
        (b->object == tetgenbehavior::STL))) {
-    m.outsmesh(b->outfilename);
+//    m.outsmesh(b->outfilename);
   }
 
   if (!out && b->meditview) {
