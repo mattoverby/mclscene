@@ -82,7 +82,7 @@
 
 	<Material name="blue_diff" type="diffuse">
 		<Diffuse type="vec3" value="120  120  255" />
-		<texture type="string" value="../resources/uofm.png" />
+		<texture type="string" value="uofm.png" />
 	</Material>
 
 </mclScene>

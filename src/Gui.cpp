@@ -28,7 +28,7 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 
 	smooth_shade=true;
 	draw_red_back=false;
-	draw_points = true;
+	draw_points = false;
 
 	sphereDisplayList = 1;
 	float sphere_rad = 0.1f;
@@ -68,14 +68,20 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 	} // end draw scene objects
 
 	// build the bvh
-	scene->get_bvh();
+	scene_bvh = scene->get_bvh();
 
-	bsphere = scene->get_bsphere();
-	global_xf = trimesh::xform::trans(0, 0, -10.0f * bsphere.r) *
-		    trimesh::xform::trans(-bsphere.center) * init_xf;
-	cam.setupGL( global_xf * bsphere.center, bsphere.r );
+//	bsphere = scene->get_bsphere();
+//	global_xf = trimesh::xform::trans(0, 0, -10.0f * bsphere.r) *
+//		    trimesh::xform::trans(-bsphere.center) * init_xf;
+//	cam.setupGL( global_xf * bsphere.center, bsphere.r );
+//
+//	std::cout << "Gui bsphere radius: " << bsphere.r << std::endl;
 
-	std::cout << "Gui bsphere radius: " << bsphere.r << std::endl;
+	global_xf = trimesh::xform::trans(0, 0, -10.0f * scene_bvh->aabb->radius()) *
+		    trimesh::xform::trans(-scene_bvh->aabb->center()) * init_xf;
+	cam.setupGL( global_xf * scene_bvh->aabb->center(), scene_bvh->aabb->radius() );
+
+	std::cout << "Scene radius: " << scene_bvh->aabb->radius() << std::endl;
 
 }
 
@@ -108,7 +114,8 @@ bool Gui::update( const float screen_dt ){
 		else if( event.type == sf::Event::Resized ){
 			// adjust the viewport when the window is resized
 			glViewport(0, 0, event.size.width, event.size.height);
-			cam.setupGL( bsphere.center, bsphere.r );
+			cam.setupGL( scene_bvh->aabb->center(), scene_bvh->aabb->radius() );
+//			cam.setupGL( bsphere.center, bsphere.r );
 		}
 		else if( event.type == sf::Event::KeyPressed ){
 			if( event.key.code == sf::Keyboard::Escape ){ return false; }
@@ -138,7 +145,8 @@ bool Gui::draw( const float screen_dt ){
 
 	clear_screen();
 	draw_background();
-	cam.setupGL( global_xf * bsphere.center, bsphere.r+10.f );
+//	cam.setupGL( global_xf * bsphere.center, bsphere.r+10.f );
+	cam.setupGL( global_xf * scene_bvh->aabb->center(), scene_bvh->aabb->radius()+10.f );
 	glPushMatrix();
 	glMultMatrixd(global_xf);
 
@@ -181,8 +189,10 @@ void Gui::check_mouse( const sf::Event &event, const float screen_dt ){
 	else if( sf::Mouse::isButtonPressed( sf::Mouse::Left ) ){ b = Mouse::ROTATE; }
 	else if( sf::Mouse::isButtonPressed( sf::Mouse::Right ) && shift_down ){ b = Mouse::LIGHT; }
 
-	cam.mouse( mouse_pos.x, mouse_pos.y, b, global_xf*bsphere.center, bsphere.r, global_xf );
-	bsphere = scene->get_bsphere(true);
+//	cam.mouse( mouse_pos.x, mouse_pos.y, b, global_xf*bsphere.center, bsphere.r, global_xf );
+//	bsphere = scene->get_bsphere(true);
+	cam.mouse( mouse_pos.x, mouse_pos.y, b, global_xf*scene_bvh->aabb->center(), scene_bvh->aabb->radius(), global_xf );
+//	bsphere = scene->get_bsphere(true);
 
 }
 
@@ -568,7 +578,8 @@ void Gui::draw_shadow( const std::vector<std::shared_ptr<BaseLight> > &lights,
 //	glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 0);
 
 // Checkboard
-	int floor_r = int(bsphere.r*50.f);
+//	int floor_r = int(bsphere.r*50.f);
+	int floor_r = int(scene_bvh->aabb->radius());
 
 	glPushMatrix();
 	glDisable(GL_LIGHTING);

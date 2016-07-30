@@ -46,8 +46,8 @@ public:
 
 	void set_init_xform( trimesh::xform init ){
 		init_xf = init;
-		global_xf = trimesh::xform::trans(0, 0, -10.0f * bsphere.r) *
-			    trimesh::xform::trans(-bsphere.center) * init_xf;
+		global_xf = trimesh::xform::trans(0, 0, -10.0f * scene_bvh->aabb->radius()) *
+			    trimesh::xform::trans(-scene_bvh->aabb->center()) * init_xf;
 	}
 
 protected:
@@ -78,7 +78,7 @@ protected:
 	std::vector< std::shared_ptr<BaseMaterial> > trimesh_materials;
 
 	trimesh::xform global_xf, init_xf;
-	trimesh::TriMesh::BSphere bsphere;
+	std::shared_ptr<BVHNode> scene_bvh;
 	sf::Clock clock;
 	SceneManager *scene;
 	trimesh::GLCamera cam;

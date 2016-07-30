@@ -52,7 +52,7 @@ typedef std::function<std::shared_ptr<BaseMaterial> ( Component &component )> Bu
 class SceneManager {
 
 	public:
-		SceneManager() { root_bvh=NULL; bsphere.r=0.f; }
+		SceneManager() { root_bvh=NULL; }
 
 		//
 		// Load a configuration file, can be called multiple times for different files.
@@ -78,11 +78,6 @@ class SceneManager {
 		// Type is either spatial (object median) or linear
 		//
 		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="linear" );
-
-		//
-		// Computes an exact world bounding sphere
-		//
-		trimesh::TriMesh::BSphere get_bsphere( bool recompute=false );
 
 		//
 		// The scene is a list of components (e.g. Object, Light, etc...)
@@ -142,10 +137,6 @@ class SceneManager {
 		std::vector< BuildObjCallback > obj_builders;
 		std::vector< BuildLightCallback > light_builders;
 		std::vector< BuildMatCallback > mat_builders;
-
-		// Builds bounding sphere
-		void build_bsphere();
-		trimesh::TriMesh::BSphere bsphere;
 
 }; // end class SceneManager
 

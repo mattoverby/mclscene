@@ -25,37 +25,6 @@ using namespace mcl;
 using namespace trimesh;
 
 
-trimesh::TriMesh::BSphere SceneManager::get_bsphere( bool recompute ){
-	if( bsphere.valid && !recompute ){ return bsphere; }
-	build_bsphere();
-	return bsphere;
-}
-
-
-void SceneManager::build_bsphere(){
-
-	bsphere.valid = false;
-	Miniball<3,float> mb;
-
-//	for( int i=0; i<lights.size(); ++i ){
-//		if( lights[i].type=="point" ){ mb.check_in(lights[i].pos); }
-//	}
-
-	for( int i=0; i<objects.size(); ++i ){
-		vec min, max;
-		objects[i]->bounds( min, max );
-		mb.check_in( min ); mb.check_in( max );
-	}
-
-	mb.build();
-	bsphere.center = mb.center();
-	bsphere.r = sqrt(mb.squared_radius());
-	if( std::isnan( bsphere.r ) ){ bsphere.r=0.0; }
-	bsphere.valid = true;
-
-}
-
-
 void SceneManager::build_meshes(){
 
 	if( meshes.size() == objects.size() ){ return; }

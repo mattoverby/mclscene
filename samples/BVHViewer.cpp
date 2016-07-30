@@ -120,7 +120,6 @@ void scale_mesh( std::string dir ){
 
 	// Recomputed bounding volumes
 	scene.get_bvh(true,bvh_mode);
-	scene.get_bsphere(true);
 
 }
 
@@ -148,7 +147,6 @@ void refine_mesh( std::string amt ){
 
 	// Recompute bounding volumes
 	scene.get_bvh(true,bvh_mode);
-	scene.get_bsphere(true);
 
 }
 

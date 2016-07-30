@@ -1,4 +1,4 @@
-# Copyright 2014 Matthew Overby.
+# Copyright 2016 Matthew Overby.
 # 
 # MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 # Redistribution and use in source and binary forms, with or without modification, are
