@@ -23,6 +23,7 @@
 #define MCLSCENE_POINTCLOUD_H 1
 
 #include "Object.hpp"
+#include "tetgen.h" // for point filing
 
 namespace mcl {
 
@@ -67,6 +68,9 @@ public:
 private:
 	std::string material;
 	std::shared_ptr<AABB> aabb;
+
+	// Fills a surface mesh with points
+	void fill_mesh();
 };
 
 

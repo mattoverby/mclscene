@@ -23,6 +23,25 @@
 
 using namespace mcl;
 
+namespace tetmesh_helper {
+	static std::string get_ext( std::string fname ){
+		size_t pos = fname.find_last_of('.');
+		return (std::string::npos == pos) ? "" : fname.substr(pos+1,fname.size());
+	}
+	static std::string to_lower( std::string s ){ std::transform( s.begin(), s.end(), s.begin(), ::tolower ); return s; }
+
+	static char **make_argv( const std::vector<std::string> &s ){
+		char **args;
+		args = new char *[s.size()];
+		for( int i = 0; i < s.size(); ++i ){
+			args[i] = new char[s[i].length() + 1];
+			strcpy( args[i], s[i].c_str());
+		} 
+		return args;
+	}
+} // end helper functions
+
+
 bool TetMesh::load( std::string filename ){
 
 	// Clear old data
@@ -31,10 +50,26 @@ bool TetMesh::load( std::string filename ){
 	normals.clear();
 	faces.clear();
 
-	// Load new data
-	if( !load_node( filename ) ){ return false; }
-	if( !load_ele( filename ) ){ return false; }
-	if( !need_surface() ){ return false; }
+	// Get the extension
+	std::string ext = tetmesh_helper::to_lower( tetmesh_helper::get_ext(filename) );
+
+	// If it's a PLY we need to use tetgen
+	if( ext=="ply" ){
+
+		std::string new_filename = make_tetmesh( filename );
+		if( new_filename.size()==0 ){ return false; }
+		if( !load_node( new_filename ) ){ return false; }
+		if( !load_ele( new_filename ) ){ return false; }
+		if( !need_surface() ){ return false; }
+	}
+
+	else {
+		// Load new data
+		if( !load_node( filename ) ){ return false; }
+		if( !load_ele( filename ) ){ return false; }
+		if( !need_surface() ){ return false; }
+	}
+
 	need_normals();
 	tris->need_tstrips();
 
@@ -64,7 +99,7 @@ void TetMesh::need_normals( bool recompute ){
 		float l2a = trimesh::len2(a), l2b = trimesh::len2(b), l2c = trimesh::len2(c);
 		if (!l2a || !l2b || !l2c)
 			continue;
-		trimesh::vec facenormal = a CROSS b;
+		trimesh::vec facenormal = a.cross( b );
 		normals[faces[i][0]] += facenormal * (1.0f / (l2a * l2c));
 		normals[faces[i][1]] += facenormal * (1.0f / (l2b * l2a));
 		normals[faces[i][2]] += facenormal * (1.0f / (l2c * l2b));
@@ -334,4 +369,72 @@ std::string TetMesh::get_xml( std::string name, int mode ){
 
 	return "";
 }
+
+
+std::string TetMesh::make_tetmesh( std::string filename ){
+
+	std::cout << "\n******************************\n* Tetrahedralizing surface mesh. \n* " <<
+		"Warning: This is buggy and you're better\n* off doing it yourself!" <<
+		"\n******************************\n" << std::endl;
+
+	std::string args = "./tetgen -q " + filename;
+	std::vector<std::string> args_s;
+	args_s.push_back( "./tetgen" );
+	args_s.push_back( filename );
+	args_s.push_back( "-F" ); // suppress .faces
+	args_s.push_back( "-q" ); // quality mesh
+	args_s.push_back( "-Q" ); // quiet terminal output
+	char** args_c = tetmesh_helper::make_argv( args_s );
+
+	tetgenio in, addin, bgmin;
+	tetgenbehavior b;
+
+	if( !b.parse_commandline( args_s.size(),args_c ) ){
+		std::cerr << "\n**TetMesh::tetrahedralize Error: Trouble starting tetgen." << std::endl;
+		return "";
+	}
+	if (b.refine) {
+		if (!in.load_tetmesh(b.infilename)) {
+			std::cerr << "\n**TetMesh::tetrahedralize Error: Error loading " << filename << std::endl;
+			return "";
+		}
+	} else {
+		if (!in.load_plc(b.infilename, (int) b.object)) {
+			std::cerr << "\n**TetMesh::tetrahedralize Error: Error loading " << filename << std::endl;
+			return "";
+		}
+	}
+	if (b.insertaddpoints) {
+		if (!addin.load_node(b.addinfilename)) {
+			addin.numberofpoints = 0l;
+		}
+	}
+	if (b.metric) {
+		if (!bgmin.load_tetmesh(b.bgmeshfilename)) {
+			bgmin.numberoftetrahedra = 0l;
+		}
+	}
+
+	if (bgmin.numberoftetrahedra > 0l) {
+		tetrahedralize(&b, &in, NULL, &addin, &bgmin);
+	} else {
+		tetrahedralize(&b, &in, NULL, &addin, NULL);
+	}
+
+	// Remove last 4 characters (ply)
+	for( int i=0; i<4; ++i ){ filename.pop_back(); }
+	std::string new_filename = filename + ".1";
+
+	std::cout << "Saving mesh files: " << new_filename << " (.node and .ele)" << std::endl;
+	std::cout << "\n******************************\n* Done running tetgen." <<
+		"\n******************************\n" << std::endl;
+	return new_filename;
+
+}
+
+
+
+
+
+
 

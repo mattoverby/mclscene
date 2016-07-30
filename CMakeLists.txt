@@ -42,6 +42,11 @@ set( TRIMESH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/trimesh2" )
 add_subdirectory( ${TRIMESH_DIR} ) # sets TRIMESH_INCLUDE and TRIMESH_SRCS
 include_directories( ${TRIMESH_INCLUDE} )
 
+# tetgen, included in deps/
+set( TETGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/tetgen" )
+add_subdirectory( ${TETGEN_DIR} ) # sets TETGEN_INCLUDE and TETGEN_SRCS
+include_directories( ${TETGEN_INCLUDE} )
+
 # Opengl and SFML used by the gui, not required
 find_package(OpenGL)
 find_package(SFML 2 COMPONENTS system window graphics)
@@ -87,12 +92,12 @@ set( MCLSCENE_SRCS
 # Create the library
 if(SFML_FOUND AND OPENGL_FOUND)
 	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} include/MCL/Gui.hpp src/Gui.cpp )
-	add_library( mclscene ${TRIMESH_SRCS} ${MCLSCENE_SRCS} )
+	add_library( mclscene ${TRIMESH_SRCS} ${TETGEN_SRCS} ${MCLSCENE_SRCS} )
 	set( MCLSCENE_LIBRARIES mclscene ${OPENGL_LIBRARIES} ${SFML_LIBRARIES} ${Boost_LIBRARIES} png )
 	include_directories( ${SFML_INCLUDE_DIRS} ${OpenGL_INCLUDE_DIRS} )
 	link_directories( ${OpenGL_LIBRARY_DIRS} ${SFML_LIBRARY_DIRS} )
 else(SFML_FOUND AND OPENGL_FOUND)
-	add_library( mclscene ${TRIMESH_SRCS} ${MCLSCENE_SRCS} )
+	add_library( mclscene ${TRIMESH_SRCS} ${TETGEN_SRCS} ${MCLSCENE_SRCS} )
 	set( MCLSCENE_LIBRARIES mclscene ${Boost_LIBRARIES} )
 endif(SFML_FOUND AND OPENGL_FOUND)
 

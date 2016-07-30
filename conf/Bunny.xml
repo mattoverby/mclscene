@@ -2,15 +2,15 @@
 <mclScene>
 
 	<background name="bg" type="jpg"  >
-		<file type="string" value="../resources/bg.jpg" />
+		<file type="string" value="bg.jpg" />
 		<floor type="bool" value="0" />
 	</background>
 
-	<Object name="bunny1" type="TriMesh" >
+	<Object name="bunny1" type="TetMesh" >
 
-		<File type="string" value="bunny.ply" />
+		<File type="string" value="box768.ply" />
 
-		<XForm type="scale" value="1  1  1" />
+		<XForm type="scale" value=".1  .1  .1" />
 		<XForm type="translate" value="0  0.2  0" />
 		<XForm type="rotate" value="0  0  0" />
 

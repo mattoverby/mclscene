@@ -24,6 +24,7 @@
 
 #include "MCL/TriangleMesh.hpp"
 #include "MCL/VertexSort.hpp"
+#include "tetgen.h"
 
 namespace mcl {
 
@@ -50,6 +51,7 @@ public:
 	std::string get_type() const { return "tetmesh"; }
 
 	// Filename is the first part of a tetmesh which must contain an .ele and .node file.
+	// If a ply file is supplied, tetgen will be used to tetrahedralize the mesh.
 	// Returns true on success
 	bool load( std::string filename );
 
@@ -87,6 +89,13 @@ private:
 
 	// Computes a surface mesh, called by load
 	bool need_surface();
+
+	// Uses tetgen to tetrahedralize a mesh, returning
+	// the filename of the new files (node and ele)
+	// which are generated and dumped in the same directory
+	// as the original ply.
+	// Returns an empty string on failure.
+	std::string make_tetmesh( std::string filename );
 
 	// Triangle refs are used for BVH hook-in.
 	void make_tri_refs();
