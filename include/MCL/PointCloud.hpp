@@ -52,10 +52,6 @@ public:
 	std::string get_xml( std::string obj_name, int mode=0 );
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 
-	// Tells the cloud that some vertex has moved, and the
-	// bounding box/convex hull needs to be recomputed.
-	void update();
-
 	// A point cloud can be initialized from a file or adding vertices manually.
 	// Only the vertices of the mesh file will be stored. If "fill" is true,
 	// points will be added to fill the inner space of the surface mesh (TODO).
