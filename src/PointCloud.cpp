@@ -122,8 +122,11 @@ bool PointCloud::load( std::string file, bool fill ){
 		return false;
 	}
 
-	// Update the cloud
-	update();
+	// Update the bounding box
+	aabb->valid = false;
+	for( int v=0; v<vertices.size(); ++v ){
+		(*aabb) += vertices[v];
+	}
 
 	return true;
 
@@ -138,17 +141,6 @@ void PointCloud::bounds( trimesh::vec &bmin, trimesh::vec &bmax ){
 	}
 	bmin = aabb->min; bmax = aabb->max;
 } // end bounds
-
-
-void PointCloud::update(){
-
-	// Update the bounding box
-	aabb->valid = false;
-	for( int v=0; v<vertices.size(); ++v ){
-		(*aabb) += vertices[v];
-	}
-
-} // end update
 
 
 void PointCloud::fill_mesh(){
