@@ -48,7 +48,7 @@ namespace Draw {
 	// From: https://stackoverflow.com/questions/1700211/to-dynamically-increment-from-blue-to-red-using-c
 	static inline float blend(float a, float b, float alpha){ return (1.f - alpha) * a + alpha * b; }
 
-	static inline void toggle( bool &var ){ if(var){var=false;}else{var=true;} }
+	static inline void toggle( bool &var ){ var=!var; }
 
 	// gradient should be 0-1. blended needs to be a 3-element array
 	// From https://stackoverflow.com/questions/1700211/to-dynamically-increment-from-blue-to-red-using-c
