@@ -419,7 +419,7 @@ static std::shared_ptr<BaseLight> default_build_light( Component &component ){
 
 } // end build light
 
-/*
+
 //
 //	Default Camera
 //
@@ -429,57 +429,12 @@ static std::shared_ptr<BaseCamera> default_build_camera( Component &component ){
 	std::string name = component.name;
 
 	//
-	//	Perspective Camera
-	//
-	if( type == "perspective" ){
-
-		trimesh::vec pos(0,0,0);
-		trimesh::vec dir(0,0,-1);
-		float focal_length(1.f), plane_width(5.f);
-
-		// Parse args
-		for( int i=0; i<component.params.size(); ++i ){
-
-			if( parse::to_lower(component.params[i].tag)=="position" ){
-				pos=component.params[i].as_vec3();
-			}
-
-			else if( parse::to_lower(component.params[i].tag)=="focal_length" ){
-				focal_length=component.params[i].as_float();
-			}
-
-//			else if( parse::to_lower(component.params[i].tag)=="plane_width" ){
-//				plane_width=component.params[i].as_float();
-//			}
-
-		} // end parse params
-
-		// Position should be known before parsing direction/lookat (so it can be computed)
-		for( int i=0; i<component.params.size(); ++i ){
-
-			if( parse::to_lower(component.params[i].tag)=="direction" ){
-				dir=component.params[i].as_vec3();
-			}
-
-			else if( parse::to_lower(component.params[i].tag)=="lookat" ){
-				dir=pos+component.params[i].as_vec3();
-				trimesh::normalize( dir );
-			}
-
-		} // end parse params
-
-		// Make the camera
-		std::shared_ptr<BaseCamera> cam( new PerspectiveCamera( pos, dir, focal_length ) );
-		return cam;
-	}
-
-	//
 	//	Unknown
 	//
 	return NULL;
 
 } // end build camera
-*/
+
 
 } // end namespace mcl
 

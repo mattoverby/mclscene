@@ -24,6 +24,14 @@
 using namespace mcl;
 using namespace trimesh;
 
+SceneManager::SceneManager() {
+	root_bvh=NULL; 
+	createObject = default_build_object;
+	createCamera = default_build_camera;
+	createLight = default_build_light;
+	createMaterial = default_build_material;
+}
+
 
 void SceneManager::build_meshes(){
 

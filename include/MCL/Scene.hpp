@@ -103,6 +103,115 @@ static std::shared_ptr<mcl::BaseMaterial> make_material( mcl::SceneManager &scen
 } // end make light
 
 
+//
+//	scene::load_xml
+//	Returns true on success
+//
+static bool load_xml( mcl::SceneManager &scene, std::string filename ){
+	using namespace mcl;
+
+	//
+	//	Load the XML file into mcl::Component
+	//
+
+	std::vector< Component > components;
+	std::string xmldir = parse::fileDir( filename );
+	pugi::xml_document doc;
+	pugi::xml_parse_result result = doc.load_file(filename.c_str());
+	if( !result ){
+		std::cerr << "\n**Scene::load_xml Error: Unable to load " << filename << std::endl;
+		return false;
+	}
+
+	// Get the node that stores scene info
+	pugi::xml_node head_node = doc.first_child();
+	while( parse::to_lower(head_node.name()) != "mclscene" && head_node ){ head_node = head_node.next_sibling(); }
+
+	// Now parse scene information
+	for( pugi::xml_node::iterator main_node = head_node.begin(); main_node != head_node.end(); ++main_node ){
+
+		pugi::xml_node curr_node = *main_node;
+		std::string name = curr_node.attribute("name").as_string();
+		std::string type = curr_node.attribute("type").as_string();
+		std::string tag = curr_node.name();
+		if( name.size() == 0 || type.size() == 0 ){
+			std::cerr << "\n**Scene::load_xml Error: Component \"" << curr_node.name() << "\" need a name and type." << std::endl;
+			return false;
+		}
+
+		// Load the parameters
+		std::vector<Param> params;
+		{
+			load_params( params, curr_node );
+			// If any parameters are "file" or "texture" give it the path name from the current execution directory
+			for( int i=0; i<params.size(); ++i ){
+				if( parse::to_lower(params[i].tag) == "file" || parse::to_lower(params[i].tag) == "texture" ){
+					params[i].value = xmldir + params[i].as_string();
+				}
+			}
+		} // end load parameters
+
+		// Create the component
+		components.push_back( Component( tag, name, type ) );
+		components.back().params = params;
+
+	} // end loop scene info
+
+	//
+	//	Now we have a list of components, we can create them with the SceneManager
+	//
+
+	// Loop components and invoke callbacks
+	for( int j=0; j<components.size(); ++j ){
+
+		std::string tag = parse::to_lower(components[j].tag);
+		std::string name = parse::to_lower(components[j].name);
+
+		//	Build Camera
+		if( tag == "camera" ){
+			std::shared_ptr<BaseCamera> cam = scene.createCamera( components[j] );
+			if( cam != NULL ){
+				scene.cameras.push_back( cam );
+				scene.cameras_map[name] = cam;
+			}
+		} // end build Camera
+
+		//	Build Light
+		else if( tag == "light" ){
+			std::shared_ptr<BaseLight> light = scene.createLight( components[j] );
+			if( light != NULL ){
+				scene.lights.push_back( light );
+				scene.lights_map[name] = light;
+			}
+		} // end build Light
+
+		//	Build Material
+		else if( tag == "material" ){
+			std::shared_ptr<BaseMaterial> mat = scene.createMaterial( components[j] );
+			if( mat != NULL ){
+				scene.materials.push_back( mat );
+				scene.materials_map[name] = mat;
+			}
+		} // end build material
+
+		//	Build Object
+		else if( tag == "object" ){
+			std::shared_ptr<BaseObject> obj = scene.createObject( components[j] );
+			if( obj != NULL ){
+				scene.objects.push_back( obj );
+				scene.objects_map[name] = obj;
+			}
+		} // end build object
+
+	} // end loop components
+
+	//
+	//	Success, all done.
+	//
+	return true;
+
+} // end load xml
+
 } // end namespace scene
 
 #endif

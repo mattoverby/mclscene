@@ -52,7 +52,7 @@ typedef std::function<std::shared_ptr<BaseMaterial> ( Component &component )> Bu
 class SceneManager {
 
 	public:
-		SceneManager() { root_bvh=NULL; }
+		SceneManager();
 
 		//
 		// Load a configuration file, can be called multiple times for different files.
@@ -69,7 +69,6 @@ class SceneManager {
 		// (i.e. names, transformations)
 		// Mode is:
 		//	0 = mclscene
-		//	1 = mitsuba (TODO)
 		//
 		void save( std::string xmlfile, int mode=0 );
 
