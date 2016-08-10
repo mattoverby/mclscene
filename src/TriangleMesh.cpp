@@ -38,6 +38,43 @@ TriangleMesh::TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm, std::string ma
 } // end constructor
 
 
+TriangleMesh::TriangleMesh( std::string mat ) : tris(new trimesh::TriMesh()),
+	vertices(tris->vertices), normals(tris->normals), faces(tris->faces),
+	material(mat), aabb(new AABB) {
+} // end constructor
+
+
+bool TriangleMesh::load( std::string filename ){
+
+	// Clear old data
+	vertices.clear();
+	normals.clear();
+	faces.clear();
+	tri_refs.clear();
+
+	// Load the new mesh and copy over data
+	std::shared_ptr<trimesh::TriMesh> newmesh( trimesh::TriMesh::read( filename.c_str() ) );
+	if( newmesh.get() == NULL ){ return false; }
+
+	trimesh::remove_unused_vertices( newmesh.get() );
+	vertices = newmesh->vertices;
+	faces = newmesh->faces;
+	tris->need_normals();
+	tris->need_tstrips();
+
+	// Remake the triangle refs and aabb
+	make_tri_refs();
+	for( int f=0; f<faces.size(); ++f ){
+		(*aabb) += vertices[ faces[f][0] ];
+		(*aabb) += vertices[ faces[f][1] ];
+		(*aabb) += vertices[ faces[f][2] ];
+	}
+
+	return true;
+
+} // end load file
+
+
 void TriangleMesh::bounds( trimesh::vec &bmin, trimesh::vec &bmax ){
 	if( !aabb->valid ){
 		for( int f=0; f<faces.size(); ++f ){

@@ -72,6 +72,7 @@ public:
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return tris; }
 
 	std::string get_material() const { return material; }
+	void set_material( std::string mat ){ material=mat; }
 
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 

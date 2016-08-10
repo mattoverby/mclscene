@@ -1,5 +1,5 @@
 
-#include "MCL/SceneManager.hpp"
+#include "MCL/Scene.hpp"
 
 using namespace mcl;
 

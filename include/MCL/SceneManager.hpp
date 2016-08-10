@@ -101,10 +101,14 @@ class SceneManager {
 		// If build_components is called and the builder vectors are empty, default
 		// ones are added. See DefaultBuilders.hpp.
 		//
-		void add_callback( BuildCamCallback cb ){ cam_builders.push_back( cb ); }
-		void add_callback( BuildObjCallback cb ){ obj_builders.push_back( cb ); }
-		void add_callback( BuildLightCallback cb ){ light_builders.push_back( cb ); }
-		void add_callback( BuildMatCallback cb ){ mat_builders.push_back( cb ); }
+		void add_callback( BuildCamCallback cb ){ cam_builders.push_back( cb ); createCamera = cb; }
+		void add_callback( BuildObjCallback cb ){ obj_builders.push_back( cb ); createObject = cb; }
+		void add_callback( BuildLightCallback cb ){ light_builders.push_back( cb ); createLight = cb; }
+		void add_callback( BuildMatCallback cb ){ mat_builders.push_back( cb ); createMaterial = cb; }
+		BuildObjCallback createObject;
+		BuildCamCallback createCamera;
+		BuildLightCallback createLight;
+		BuildMatCallback createMaterial;
 
 		//
 		// Scene components returned from the builder callbacks.

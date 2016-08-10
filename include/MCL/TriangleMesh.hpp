@@ -38,6 +38,7 @@ public:
 		p0(p0_), p1(p1_), p2(p2_), n0(n0_), n1(n1_), n2(n2_), material(mat) {}
 
 	std::string get_type() const { return "triangle"; }
+	void set_material( std::string mat ){}
 
 	trimesh::vec *p0, *p1, *p2, *n0, *n1, *n2;
 	std::string material;
@@ -62,6 +63,10 @@ class TriangleMesh : public BaseObject {
 private: std::shared_ptr<trimesh::TriMesh> tris; // tris is actually the data container
 public:
 	TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm, std::string mat="" );
+	TriangleMesh( std::string mat="" );
+
+	// Returns true on success
+	bool load( std::string filename );
 
 	std::string get_xml( std::string obj_name, int mode=0 );
 
@@ -77,6 +82,7 @@ public:
 	void apply_xform( const trimesh::xform &xf );
 
 	std::string get_material() const { return material; }
+	void set_material( std::string mat ){ material=mat; }
 
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 

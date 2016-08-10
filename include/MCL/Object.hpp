@@ -44,7 +44,10 @@ public:
 
 	virtual const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return NULL; }
 	virtual void apply_xform( const trimesh::xform &xf ){}
+
 	virtual std::string get_material() const { return ""; }
+	virtual void set_material( std::string mat ) = 0;
+
 	virtual bool ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ) const { return false; }
 
 	// Returns a string containing xml code for saving to a scenefile.

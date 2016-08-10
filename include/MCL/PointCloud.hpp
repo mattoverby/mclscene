@@ -49,6 +49,7 @@ public:
 	std::string get_type() const { return "pointcloud"; }
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return data; }
 	std::string get_material() const { return material; }
+	void set_material( std::string mat ){ material=mat; }
 	std::string get_xml( std::string obj_name, int mode=0 );
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 
