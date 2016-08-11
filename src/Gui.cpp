@@ -152,10 +152,14 @@ bool Gui::draw( const float screen_dt ){
 
 	setup_lighting( scene->lights );
 
-	draw_shadow( scene->lights, scene->meshes );
+//	draw_shadow( scene->lights, scene->meshes );
 
-	for( int i=0; i<scene->meshes.size(); ++i ){
-		draw_trimesh( trimesh_materials[i], scene->meshes[i].get() );	
+//	for( int i=0; i<scene->meshes.size(); ++i ){
+//		draw_trimesh( trimesh_materials[i], scene->meshes[i].get() );	
+//	}
+	for( int i=0; i<scene->objects.size(); ++i ){
+		std::shared_ptr<trimesh::TriMesh> mesh = scene->objects[i]->get_TriMesh();
+		if( mesh.get() != NULL ){ draw_trimesh( trimesh_materials[i], mesh.get() ); }
 	}
 
 	for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i](); }
@@ -478,13 +482,14 @@ void Gui::load_textures(){
 	}
 
 	// Load the backdrop
-	draw_floor = false;
-	for( int i=0; i<scene->components.size(); ++i ){
-		if( parse::to_lower( scene->components[i].tag ) == "background" ){
-			if( scene->components[i].exists("file") ){ m_textures.load( "bg", scene->components[i]["file"].as_string() ); }
-			if( scene->components[i]["floor"].as_bool() == true ){ 	draw_floor = true; }
-		}
-	}
+//	draw_floor = false;
+//	for( int i=0; i<scene->components.size(); ++i ){
+//		if( parse::to_lower( scene->components[i].tag ) == "background" ){
+//			if( scene->components[i].exists("file") ){ m_textures.load( "bg", scene->components[i]["file"].as_string() ); }
+//			if( scene->components[i]["floor"].as_bool() == true ){ 	draw_floor = true; }
+//		}
+//	}
+
 }
 
 

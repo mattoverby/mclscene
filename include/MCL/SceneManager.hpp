@@ -22,32 +22,10 @@
 #ifndef MCLSCENE_SCENEMANAGER_H
 #define MCLSCENE_SCENEMANAGER_H 1
 
-#include "bsphere.h" // in trimesh2
 #include "BVH.hpp"
-#include "Camera.hpp"
-#include "Light.hpp"
-#include "Material.hpp"
 #include "DefaultBuilders.hpp"
-#include <functional>
 
-//
-//	Creating a scene through SceneManager is done in three steps:
-//	1) Add builder callbacks to the SceneManager (optional).
-//	2) Create the scene via component containers (see Param.hpp). This can be done
-//	   programatically or by a call to load(...).
-//	3) If load was not called with auto_build=true, call build_components().
-//
-//
 namespace mcl {
-
-//
-// Callback funcions are invoked on a call to build_components().
-// See details in that function's doc. Note that these functions CAN change the component itself.
-//
-typedef std::function<std::shared_ptr<BaseCamera> ( Component &component )> BuildCamCallback;
-typedef std::function<std::shared_ptr<BaseObject> ( Component &component )> BuildObjCallback;
-typedef std::function<std::shared_ptr<BaseLight> ( Component &component )> BuildLightCallback;
-typedef std::function<std::shared_ptr<BaseMaterial> ( Component &component )> BuildMatCallback;
 
 class SceneManager {
 
@@ -56,17 +34,15 @@ class SceneManager {
 
 		//
 		// Load a configuration file, can be called multiple times for different files.
-		// Additional calls will add (or replace) stuff to the scene.
-		// This fills the components member data. If auto_build is true, build_components
-		// is called after the file is parsed.
+		// Additional calls will add (or replace, if same name) stuff to the scene.
 		// Returns true on success
 		//
-		bool load( std::string xmlfile, bool auto_build=true );
+		bool load( std::string filename );
 
 		//
 		// Exports to a scene file. Mesh files are saved to the build directory.
 		// Note that some of the original scene file information will be lost
-		// (i.e. names, transformations)
+		// (i.e. names)
 		// Mode is:
 		//	0 = mclscene
 		//
@@ -74,43 +50,14 @@ class SceneManager {
 
 		//
 		// Computes bounding volume heirarchy (AABB)
-		// Type is either spatial (object median) or linear
+		// Type is:
+		// 	spatial = object median (slower)
+		//	linear = parallel build w/ morton codes
 		//
 		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="linear" );
 
 		//
-		// The scene is a list of components (e.g. Object, Light, etc...)
-		// This vector is filled on a load(...) call, or you can add to it manually.
-		// When you call build_components, this vector is looped over and the callbacks
-		// are invoked.
-		//
-		std::vector< Component > components;
-		Component &get( std::string name );
-		Component &operator[]( std::string name ){ return get(name); }
-		bool exists( std::string name ) const;
-
-		//
-		// Invokes the callbacks while looping over the components vector.
-		// Returns true on success.
-		//
-		bool build_components();
-
-		//
-		// Builder callbacks are executed on a call to build_components().
-		// If build_components is called and the builder vectors are empty, default
-		// ones are added. See DefaultBuilders.hpp.
-		//
-		void add_callback( BuildCamCallback cb ){ cam_builders.push_back( cb ); createCamera = cb; }
-		void add_callback( BuildObjCallback cb ){ obj_builders.push_back( cb ); createObject = cb; }
-		void add_callback( BuildLightCallback cb ){ light_builders.push_back( cb ); createLight = cb; }
-		void add_callback( BuildMatCallback cb ){ mat_builders.push_back( cb ); createMaterial = cb; }
-		BuildObjCallback createObject;
-		BuildCamCallback createCamera;
-		BuildLightCallback createLight;
-		BuildMatCallback createMaterial;
-
-		//
-		// Scene components returned from the builder callbacks.
+		// Vectors and (duplicate) maps of scene components
 		//
 		std::vector< std::shared_ptr<BaseObject> > objects;
 		std::vector< std::shared_ptr<BaseMaterial> > materials;
@@ -122,24 +69,18 @@ class SceneManager {
 		std::unordered_map< std::string, std::shared_ptr<BaseLight> > lights_map; // name -> light
 
 		//
-		// Vector of trimeshes for objects that have the get_TriMesh() function,
-		// filled by the build_meshes() function which is called by build_components().
-		// I use this for OpenGL rendering of scenes.
+		// Creator Callbacks, invoked on a "load" or "scene::create_<thing>" call.
 		//
-		std::vector< std::shared_ptr<trimesh::TriMesh> > meshes;
+		BuildObjCallback createObject;
+		BuildCamCallback createCamera;
+		BuildLightCallback createLight;
+		BuildMatCallback createMaterial;
 
 	protected:
+
 		// Root bvh is created by build_bvh
 		void build_bvh( int split_mode ); // 0=object median, 1=linear (parallel)
 		std::shared_ptr<BVHNode> root_bvh;
-
-		// Builder vectors
-		void build_meshes(); // fills the meshes vector, called by build_components
-		bool objects_built;
-		std::vector< BuildCamCallback > cam_builders;
-		std::vector< BuildObjCallback > obj_builders;
-		std::vector< BuildLightCallback > light_builders;
-		std::vector< BuildMatCallback > mat_builders;
 
 }; // end class SceneManager
 

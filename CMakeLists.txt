@@ -70,6 +70,7 @@ include_directories( ${Boost_INCLUDE_DIR} )
 # Set up the library, add gui sources if opengl/sfml are found
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 set( MCLSCENE_SRCS
+	include/MCL/Scene.hpp
 	include/MCL/SceneManager.hpp	src/SceneManager.cpp
 	include/MCL/TetMesh.hpp		src/TetMesh.cpp
 	include/MCL/MeshDump.hpp	src/MeshDump.cpp

@@ -23,7 +23,7 @@ ${MCLSCENE_INCLUDE_DIRS} that are set during the build. I will improve this in t
 
 - Cleanup headers and make deps header-only
 - Support for texture wrapping
-- Remove storage of components (takes too much space on big scenes)
+- Support for parsing unique types (not just the 4 I use)
 - Mesh instancing
 - Better viewer with shaders
 - Export to other renderers (e.g., mitsuba, blender)

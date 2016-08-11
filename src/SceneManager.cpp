@@ -25,7 +25,7 @@ using namespace mcl;
 using namespace trimesh;
 
 SceneManager::SceneManager() {
-	root_bvh=NULL; 
+	root_bvh=NULL;
 	createObject = default_build_object;
 	createCamera = default_build_camera;
 	createLight = default_build_light;
@@ -33,31 +33,20 @@ SceneManager::SceneManager() {
 }
 
 
-void SceneManager::build_meshes(){
+bool SceneManager::load( std::string filename ){
 
-	if( meshes.size() == objects.size() ){ return; }
-	meshes.clear();
-	meshes.reserve( objects.size() );
+	//
+	//	Load the XML file into mcl::Component
+	//
 
-	for( int i=0; i<objects.size(); ++i ){
-		std::shared_ptr<trimesh::TriMesh> mesh = objects[i]->get_TriMesh();
-		if( mesh != NULL ){ meshes.push_back( mesh ); }
-	}
-}
-
-
-bool SceneManager::load( std::string xmlfile, bool auto_build ){
-
-	std::string xmldir = parse::fileDir( xmlfile );
-
+	std::vector< Component > components;
+	std::string xmldir = parse::fileDir( filename );
 	pugi::xml_document doc;
-	pugi::xml_parse_result result = doc.load_file(xmlfile.c_str());
+	pugi::xml_parse_result result = doc.load_file(filename.c_str());
 	if( !result ){
-		std::cerr << "\n**SceneManager Error: Unable to load " << xmlfile << std::endl;
+		std::cerr << "\n**SceneManager::load_xml Error: Unable to load " << filename << std::endl;
 		return false;
 	}
-
-	objects_built = false;
 
 	// Get the node that stores scene info
 	pugi::xml_node head_node = doc.first_child();
@@ -71,7 +60,7 @@ bool SceneManager::load( std::string xmlfile, bool auto_build ){
 		std::string type = curr_node.attribute("type").as_string();
 		std::string tag = curr_node.name();
 		if( name.size() == 0 || type.size() == 0 ){
-			std::cerr << "\n**SceneManager Error: Component \"" << curr_node.name() << "\" need a name and type." << std::endl;
+			std::cerr << "\n**SceneManager::load_xml Error: Component \"" << curr_node.name() << "\" need a name and type." << std::endl;
 			return false;
 		}
 
@@ -93,10 +82,60 @@ bool SceneManager::load( std::string xmlfile, bool auto_build ){
 
 	} // end loop scene info
 
-	if( auto_build ){ return build_components(); }
-	return true;
+	//
+	//	Now we have a list of components, we can create them with the SceneManager
+	//
 
-} // end load xml file
+	// Loop components and invoke callbacks
+	for( int j=0; j<components.size(); ++j ){
+
+		std::string tag = parse::to_lower(components[j].tag);
+		std::string name = parse::to_lower(components[j].name);
+
+		//	Build Camera
+		if( tag == "camera" ){
+			std::shared_ptr<BaseCamera> cam = createCamera( components[j] );
+			if( cam != NULL ){
+				cameras.push_back( cam );
+				cameras_map[name] = cam;
+			}
+		} // end build Camera
+
+		//	Build Light
+		else if( tag == "light" ){
+			std::shared_ptr<BaseLight> light = createLight( components[j] );
+			if( light != NULL ){
+				lights.push_back( light );
+				lights_map[name] = light;
+			}
+		} // end build Light
+
+		//	Build Material
+		else if( tag == "material" ){
+			std::shared_ptr<BaseMaterial> mat = createMaterial( components[j] );
+			if( mat != NULL ){
+				materials.push_back( mat );
+				materials_map[name] = mat;
+			}
+		} // end build material
+
+		//	Build Object
+		else if( tag == "object" ){
+			std::shared_ptr<BaseObject> obj = createObject( components[j] );
+			if( obj != NULL ){
+				objects.push_back( obj );
+				objects_map[name] = obj;
+			}
+		} // end build object
+
+	} // end loop components
+
+	//
+	//	Success, all done.
+	//
+	return true;
+	
+} // end load
 
 
 void SceneManager::save( std::string xmlfile, int mode ){
@@ -155,89 +194,6 @@ void SceneManager::save( std::string xmlfile, int mode ){
 } // end save
 
 
-bool SceneManager::build_components(){
-
-	// Only build scene components once per load(...) call
-	if( objects_built ){ return false; }
-
-	// Add default builders
-	if( obj_builders.size()==0 ){ add_callback( BuildObjCallback(default_build_object) ); }
-	if( mat_builders.size()==0 ){ add_callback( BuildMatCallback(default_build_material) ); }
-	if( light_builders.size()==0 ){ add_callback( BuildLightCallback(default_build_light) ); }
-
-	// Loop components and invoke callbacks
-	for( int j=0; j<components.size(); ++j ){
-
-		std::string tag = parse::to_lower(components[j].tag);
-		std::string name = parse::to_lower(components[j].name);
-
-		//	Build Camera
-		if( tag == "camera" ){
-
-			// Call the builders
-			for( int i=0; i<cam_builders.size(); ++i ){
-				std::shared_ptr<BaseCamera> cam = cam_builders[i]( components[j] );
-				if( cam != NULL ){
-					cameras.push_back( cam );
-					cameras_map[name] = cam;
-				}
-			}
-
-		} // end build Camera
-
-		//	Build Light
-		else if( tag == "light" ){
-
-			// Call the builders
-			for( int i=0; i<light_builders.size(); ++i ){
-				std::shared_ptr<BaseLight> light = light_builders[i]( components[j] );
-				if( light != NULL ){
-					lights.push_back( light );
-					lights_map[name] = light;
-				}
-			}
-
-		} // end build Light
-
-		//	Build Material
-		else if( tag == "material" ){
-
-			// Call the builders
-			for( int i=0; i<mat_builders.size(); ++i ){
-				std::shared_ptr<BaseMaterial> mat = mat_builders[i]( components[j] );
-				if( mat != NULL ){
-					materials.push_back( mat );
-					materials_map[name] = mat;
-				}
-			}
-
-		} // end build material
-
-		//	Build Object
-		else if( tag == "object" ){
-
-			// Call the builders
-			for( int i=0; i<obj_builders.size(); ++i ){
-				std::shared_ptr<BaseObject> obj = obj_builders[i]( components[j] );
-				if( obj != NULL ){
-					objects.push_back( obj );
-					objects_map[name] = obj;
-				}
-			}
-
-		} // end build object
-
-	} // end loop components
-
-	build_meshes();
-
-	objects_built = true;
-	return true;
-
-} // end build components
-
-
-
 void SceneManager::build_bvh( int split_mode ){
 
 	if( root_bvh==NULL ){ root_bvh = std::shared_ptr<BVHNode>( new BVHNode() ); }
@@ -272,23 +228,5 @@ std::shared_ptr<BVHNode> SceneManager::get_bvh( bool recompute, std::string type
 
 	if( recompute || root_bvh==NULL ){ build_bvh( split_mode ); }
 	return root_bvh;
-}
-
-
-mcl::Component &SceneManager::get( std::string name ){
-	for( int i=0; i<components.size(); ++i ){
-		if( components[i].name == name ){ return components[i]; }
-	}
-	// not found, add it
-	components.push_back( mcl::Component( "", name, "" ) );
-	return components.back();
-}
-
-
-bool SceneManager::exists( std::string name ) const {
-	for( int i=0; i<components.size(); ++i ){
-		if( components[i].name == name ){ return true; }
-	}
-	return false;
 }
 

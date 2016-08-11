@@ -22,6 +22,7 @@
 #ifndef MCLSCENE_DEFAULTBUILDERS_H
 #define MCLSCENE_DEFAULTBUILDERS_H 1
 
+#include <functional> // for std::function
 #include "TetMesh.hpp"
 #include "TriangleMesh.hpp"
 #include "PointCloud.hpp"
@@ -31,6 +32,15 @@
 #include "../../deps/pugixml/pugixml.hpp"
 
 namespace mcl {
+
+
+//
+//	The builder types
+//
+typedef std::function<std::shared_ptr<BaseCamera> ( Component &component )> BuildCamCallback;
+typedef std::function<std::shared_ptr<BaseObject> ( Component &component )> BuildObjCallback;
+typedef std::function<std::shared_ptr<BaseLight> ( Component &component )> BuildLightCallback;
+typedef std::function<std::shared_ptr<BaseMaterial> ( Component &component )> BuildMatCallback;
 
 
 //
