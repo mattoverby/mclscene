@@ -19,18 +19,21 @@
 #
 # By Matt Overby (http://www.mattoverby.net)
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.1)
 project(mclscene C CXX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+include(build_external_project)
 add_definitions( -DMCLSCENE_BUILD_DIR="${CMAKE_CURRENT_BINARY_DIR}" )
 add_definitions( -DMCLSCENE_SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}" )
 set( CMAKE_BUILD_TYPE Release )
+
 
 #
 #	compilation options
 #
 option(MCL_BUILD_SAMPLES "Build mcl library samples" ON)
+option(MCL_BUILD_RENDERING "Build mclscene gui classes" ON)
 
 
 #
@@ -46,6 +49,14 @@ include_directories( ${TRIMESH_INCLUDE} )
 set( TETGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/tetgen" )
 add_subdirectory( ${TETGEN_DIR} ) # sets TETGEN_INCLUDE and TETGEN_SRCS
 include_directories( ${TETGEN_INCLUDE} )
+
+
+set( GLFW_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw3" ) # hint for FindGLFW.cmake
+set( GLFW_BUILD_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/force_glfw/build/glfw-prefix/src/glfw-build/src" )
+build_external_project(glfw ${GLFW_LOCATION}) # force compilation of glfw before the fine_package call
+find_package(GLFW 3)
+set( GLFW_INCLUDE_DIR ${GLFW_INCLUDE_DIR} ${GLFW_LOCATION}/deps ) # FindGLFW skips deps
+set( GLFW3_LIBRARY_DIRS ${CMAKE_CURRENT_BINARY_DIR}/deps/glfw/src )
 
 # Opengl and SFML used by the gui, not required
 find_package(OpenGL)
@@ -90,16 +101,20 @@ set( MCLSCENE_SRCS
 )
 
 # Create the library
-if(SFML_FOUND AND OPENGL_FOUND)
+if(MCL_BUILD_RENDERING)
+
 	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} include/MCL/Gui.hpp src/Gui.cpp )
 	add_library( mclscene ${TRIMESH_SRCS} ${TETGEN_SRCS} ${MCLSCENE_SRCS} )
-	set( MCLSCENE_LIBRARIES mclscene ${OPENGL_LIBRARIES} ${SFML_LIBRARIES} ${Boost_LIBRARIES} png )
-	include_directories( ${SFML_INCLUDE_DIRS} ${OpenGL_INCLUDE_DIRS} )
-	link_directories( ${OpenGL_LIBRARY_DIRS} ${SFML_LIBRARY_DIRS} )
-else(SFML_FOUND AND OPENGL_FOUND)
+	set( MCLSCENE_LIBRARIES mclscene ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${SFML_LIBRARIES} ${Boost_LIBRARIES} png )
+	include_directories( ${SFML_INCLUDE_DIRS} ${OpenGL_INCLUDE_DIRS} ${GLFW_INCLUDE_DIR} )
+	link_directories( ${OpenGL_LIBRARY_DIRS} ${GLFW3_LIBRARY_DIRS} ${SFML_LIBRARY_DIRS} )
+
+else(MCL_BUILD_RENDERING)
+
 	add_library( mclscene ${TRIMESH_SRCS} ${TETGEN_SRCS} ${MCLSCENE_SRCS} )
 	set( MCLSCENE_LIBRARIES mclscene ${Boost_LIBRARIES} )
-endif(SFML_FOUND AND OPENGL_FOUND)
+
+endif(MCL_BUILD_RENDERING)
 
 # Set the libraries variable in parent scope if exists
 get_directory_property(HasParent PARENT_DIRECTORY)
@@ -121,13 +136,15 @@ if(MCL_BUILD_SAMPLES)
 	add_executable( testbvh samples/BVHTest.cpp )
 	target_link_libraries( testbvh ${MCLSCENE_LIBRARIES} )
 
-	# viewer sample
-	if(SFML_FOUND AND OPENGL_FOUND)
+	# viewer samples
+	if(MCL_BUILD_RENDERING)
+
 		add_definitions( ${OpenGL_DEFINITIONS} )
 		add_executable( mesh_viewer samples/MeshViewer.cpp )
-		target_link_libraries( mesh_viewer ${MCLSCENE_LIBRARIES} )
+		target_link_libraries( mesh_viewer mclscene ${MCLSCENE_LIBRARIES} )
 		add_executable( bvh_viewer samples/BVHViewer.cpp )
 		target_link_libraries( bvh_viewer ${MCLSCENE_LIBRARIES} )
-	endif(SFML_FOUND AND OPENGL_FOUND)
+
+	endif(MCL_BUILD_RENDERING)
 
 endif(MCL_BUILD_SAMPLES)

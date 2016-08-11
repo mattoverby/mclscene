@@ -1,10 +1,11 @@
 
 #include "MCL/SceneManager.hpp"
-#include "MCL/Gui.hpp"
+//#include "MCL/Gui.hpp"
+#include "MCL/NewGui.hpp"
 
 using namespace mcl;
-void event_callback(sf::Event &event);
-void refine_mesh();
+//void event_callback(sf::Event &event);
+//void refine_mesh();
 mcl::SceneManager *g_scene;
 
 int main(int argc, char *argv[]){
@@ -16,18 +17,20 @@ int main(int argc, char *argv[]){
 	if( !scene.load( std::string(argv[1]) ) ){ return 0; }
 	else{ printf( "Successfully loaded xml file.\n"); }
 
-	Gui gui( &scene );
+	NewGui gui;
+	gui.run( argc, argv );
 
-	std::function<void (sf::Event &event)> event_cb(event_callback);
-	gui.add_event_callback( event_cb );
+//	Gui gui( &scene );
 
-	gui.display();
+//	std::function<void (sf::Event &event)> event_cb(event_callback);
+//	gui.add_event_callback( event_cb );
+//	gui.display();
 
 	return 0;
 }
 
 
-
+/*
 void event_callback(sf::Event &event){
 
 	if( event.type == sf::Event::KeyPressed ){
@@ -57,3 +60,4 @@ void refine_mesh(){
 
 	std::cout << "done." << std::endl;
 }
+*/
