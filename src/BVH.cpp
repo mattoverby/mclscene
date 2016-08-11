@@ -243,7 +243,7 @@ void BVHBuilder::spatial_split( std::shared_ptr<BVHNode> &node, const std::vecto
 bool BVHTraversal::closest_hit( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload, std::shared_ptr<BaseObject> *obj ){
 
 	// See if we hit the box
-	if( !node->aabb->ray_intersect( ray.origin, ray.direction, payload.t_min, payload.t_max ) ){ return false; }
+	if( !intersect::ray_aabb( ray, node->aabb->min, node->aabb->max, payload ) ){ return false; }
 
 	// See if there are children to intersect
 	if( node->left_child != NULL || node->right_child != NULL ){
@@ -295,7 +295,7 @@ bool BVHTraversal::closest_hit( const std::shared_ptr<BVHNode> node, const inter
 bool BVHTraversal::any_hit( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload ){
 
 	// See if we hit the box
-	if( !node->aabb->ray_intersect( ray.origin, ray.direction, payload.t_min, payload.t_max ) ){ return false; }
+	if( !intersect::ray_aabb( ray, node->aabb->min, node->aabb->max, payload ) ){ return false; }
 
 	// See if there are children to intersect
 	if( node->left_child != NULL ){ if( BVHTraversal::any_hit( node->left_child, ray, payload ) ){ return true; } }

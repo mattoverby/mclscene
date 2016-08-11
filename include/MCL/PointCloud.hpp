@@ -30,7 +30,7 @@ namespace mcl {
 //
 //	A point cloud is just a collection of vertices
 //	stored in a trimesh sans faces/normals.
-//	It used for fluids, gasses, etc...
+//	It's used for fluids, gasses, etc...
 //
 //	Eventually I will add support for:
 //		Ray tracing on its convex hull
@@ -54,8 +54,8 @@ public:
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 
 	// A point cloud can be initialized from a file or adding vertices manually.
-	// Only the vertices of the mesh file will be stored. If "fill" is true,
-	// points will be added to fill the inner space of the surface mesh (TODO).
+	// If a mesh file is used, the vertices of the mesh become the points of the cloud.
+	// If "fill" is true, points will be added to fill the inner space of the mesh (TODO).
 	// Currently supported file types are
 	//	.ply	(triangle mesh)
 	//	.node	(tet mesh w/o elements)

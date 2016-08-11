@@ -56,7 +56,7 @@ public:
 		else{ min = p; max = p; }
 		valid = true;
 	}
-
+/*
 	inline bool ray_intersect( const trimesh::vec &origin, const trimesh::vec &direction, double &t_min, double &t_max ) const {
 
 		float txmin=0.f, txmax=0.f;
@@ -101,7 +101,7 @@ public:
 
 		return true;
 	}
-
+*/
 };
 
 

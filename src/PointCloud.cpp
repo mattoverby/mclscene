@@ -122,6 +122,8 @@ bool PointCloud::load( std::string file, bool fill ){
 		return false;
 	}
 
+	if( fill ){ fill_mesh(); }
+
 	// Update the bounding box
 	aabb->valid = false;
 	for( int v=0; v<vertices.size(); ++v ){
@@ -145,6 +147,7 @@ void PointCloud::bounds( trimesh::vec &bmin, trimesh::vec &bmax ){
 
 void PointCloud::fill_mesh(){
 
+	std::cerr << "**PointCould::fill_mesh Error: Function not complete yet" << std::endl;
 	// TODO
 }
 

@@ -51,6 +51,7 @@ class SceneManager {
 		//
 		// Creator functions that build a scene component and adds it to the
 		// vectors and maps below. A default name is assigned (e.g. "obj1") if not given.
+		// Calls the builder callbacks.
 		//
 		std::shared_ptr<BaseObject> make_object( std::string type, std::string name="" );
 		std::shared_ptr<BaseLight> make_light( std::string type, std::string name="" );

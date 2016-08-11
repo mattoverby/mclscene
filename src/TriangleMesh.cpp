@@ -123,7 +123,7 @@ void TriangleMesh::make_tri_refs(){
 bool TriangleMesh::ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ) const {
 
 	// Check aabb first
-	if( !aabb->ray_intersect( ray.origin, ray.direction, payload.t_min, payload.t_max ) ){ return false; }
+	if( !intersect::ray_aabb( ray, aabb->min, aabb->max, payload ) ){ return false; }
 
 	bool hit = false;
 	for( int i=0; i<tri_refs.size(); ++i ){
