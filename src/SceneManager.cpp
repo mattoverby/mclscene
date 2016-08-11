@@ -194,39 +194,85 @@ void SceneManager::save( std::string xmlfile, int mode ){
 } // end save
 
 
-void SceneManager::build_bvh( int split_mode ){
+void SceneManager::build_bvh( std::string split_mode ){
 
 	if( root_bvh==NULL ){ root_bvh = std::shared_ptr<BVHNode>( new BVHNode() ); }
 	else{ root_bvh.reset( new BVHNode() ); }
-//	std::chrono::time_point<std::chrono::system_clock> start, end;
 
-	if( split_mode == 0 ){
-//		std::cout << "spatial bvh begin: " << std::flush;
-//		start = std::chrono::system_clock::now();
+	if( split_mode == "spatial" ){
 		int num_nodes = BVHBuilder::make_tree_spatial( root_bvh, objects );
-//		end = std::chrono::system_clock::now();
-//		std::chrono::duration<double> elapsed_seconds = end-start;
-//		std::cout << elapsed_seconds.count() << "s\n";
 	}
 
-	else if( split_mode == 1 ){
-//		std::cout << "linear bvh begin: " << std::flush;
-//		start = std::chrono::system_clock::now();
+	else if( split_mode == "linear" ){
 		int num_nodes = BVHBuilder::make_tree_lbvh( root_bvh, objects );
-//		end = std::chrono::system_clock::now();
-//		std::chrono::duration<double> elapsed_seconds = end-start;
-//		std::cout << elapsed_seconds.count() << "s\n";
 	}
+
+	else{ std::cerr << "**SceneManager::build_bvh Error: I don't know BVH type \"" << split_mode << "\"" << std::endl; }
 
 } // end build bvh
 
 
-std::shared_ptr<BVHNode> SceneManager::get_bvh( bool recompute, std::string type ){
-	int split_mode=1;
-	if( parse::to_lower(type)=="spatial" ){ split_mode=0; }
-	else if( parse::to_lower(type)=="linear" ){ split_mode=1; }
-
-	if( recompute || root_bvh==NULL ){ build_bvh( split_mode ); }
+std::shared_ptr<BVHNode> SceneManager::SceneManager::get_bvh( bool recompute, std::string type ){
+	if( recompute || root_bvh==NULL ){ build_bvh( parse::to_lower(type) ); }
 	return root_bvh;
 }
 
+
+std::shared_ptr<mcl::BaseObject> SceneManager::make_object( std::string type, std::string name ){
+
+	if( name.size()==0 ){ // give it a name if it doesn't have one
+		std::stringstream newname; newname << "obj" << objects.size(); name = newname.str();
+	}
+	Component obj( "object", name, parse::to_lower(type) );
+	std::shared_ptr<BaseObject> newObject = createObject( obj );
+	// Add it to the SceneManager and return it
+	objects.push_back( newObject );
+	objects_map[name] = newObject;
+	return newObject;
+
+} // end make object
+
+
+std::shared_ptr<mcl::BaseLight> SceneManager::make_light( std::string type, std::string name ){
+
+	if( name.size()==0 ){ // give it a name if it doesn't have one
+		std::stringstream newname; newname << "light" << lights.size(); name = newname.str();
+	}
+	Component obj( "light", name, parse::to_lower(type) );
+	std::shared_ptr<BaseLight> newLight = createLight( obj );
+	// Add it to the SceneManager and return it
+	lights.push_back( newLight );
+	lights_map[name] = newLight;
+	return newLight;
+
+} // end make light
+
+
+std::shared_ptr<mcl::BaseCamera> SceneManager::make_camera( std::string type, std::string name ){
+
+	if( name.size()==0 ){ // give it a name if it doesn't have one
+		std::stringstream newname; newname << "camera" << lights.size(); name = newname.str();
+	}
+	Component obj( "camera", name, parse::to_lower(type) );
+	std::shared_ptr<BaseCamera> newCam = createCamera( obj );
+	// Add it to the SceneManager and return it
+	cameras.push_back( newCam );
+	cameras_map[name] = newCam;
+	return newCam;
+
+} // end make light
+
+
+std::shared_ptr<mcl::BaseMaterial> SceneManager::make_material( std::string type, std::string name ){
+
+	if( name.size()==0 ){ // give it a name if it doesn't have one
+		std::stringstream newname; newname << "camera" << lights.size(); name = newname.str();
+	}
+	Component obj( "material", name, parse::to_lower(type) );
+	std::shared_ptr<BaseMaterial> newMat = createMaterial( obj );
+	// Add it to the SceneManager and return it
+	materials.push_back( newMat );
+	materials_map[name] = newMat;
+	return newMat;
+
+} // end make light

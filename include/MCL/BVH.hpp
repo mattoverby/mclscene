@@ -35,10 +35,6 @@ typedef long morton_type;
 typedef unsigned long long morton_encode_type;
 
 namespace helper {
-	static inline trimesh::point face_center( const trimesh::TriMesh::Face &f, const std::vector<trimesh::point> &vertices ){
-		return (vertices[ f[0] ]+vertices[ f[1] ]+vertices[ f[2] ])/3.f;
-	}
-
 	// use: bool is_one = helper::check_bit( myInt, bit_position );
 	static inline bool check_bit( morton_type variable, int bit ){
 		assert( bit >=0 && bit < sizeof(morton_type)*8 );
@@ -62,48 +58,54 @@ static inline morton_type morton_encode(const morton_encode_type x, const morton
 }
 
 
-
 class BVHNode {
 public:
-	BVHNode() : aabb( new AABB ), m_split(0) { left_child=NULL; right_child=NULL; }
+	BVHNode() : aabb( new AABB ) { left_child=NULL; right_child=NULL; }
 
+	// Allocated in make_tree:
 	std::shared_ptr<BVHNode> left_child;
 	std::shared_ptr<BVHNode> right_child;
 	std::shared_ptr<AABB> aabb;
 	std::vector< std::shared_ptr<BaseObject> > m_objects; // empty unless a leaf node
 
-	int m_split; // split axis, used for Object Median BVH build.
-
 	bool is_leaf() const { return m_objects.size()>0; }
-
 	void get_edges( std::vector<trimesh::vec> &edges ); // for visual debugging
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax ){ bmin=aabb->min; bmax=aabb->max; }
-
-	//
-	//	Split functions
-	//
-
-	// Object Median split, round robin axis
-	void spatial_split( const std::vector< std::shared_ptr<BaseObject> > &objects,
-		const std::vector< int > &queue, const int split_axis, const int max_depth );
-
-	// Use the parallel sorting construction (Lauterbach et al. 2009)
-	void lbvh_split( const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
-		const std::vector< std::pair< morton_type, int > > &morton_codes, const int max_depth );
-
 };
 
 
 class BVHBuilder {
 public:
-	static int make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=10 ); // returns num nodes in tree
-	static int make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=10 ); // returns num nodes in tree
+	// Parallel sorting construction (Lauterbach et al. 2009)
+	// returns num nodes in tree
+	static int make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=10 );
+
+	// Object Median split, round robin axis
+	// returns num nodes in tree
+	static int make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=10 );
+
+	// Stats used for profiling:
+	static int n_nodes; // number of nodes in the last-created tree
+	static float avg_balance; // the "balance" of the last-created tree (lousy metric, but whatever)
+	static float runtime_s; // time it took to build the bvh (seconds)
+
+private:
+	static void lbvh_split( std::shared_ptr<BVHNode> &node, const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
+		const std::vector< std::pair< morton_type, int > > &morton_codes, const int max_depth );
+	static void spatial_split( std::shared_ptr<BVHNode> &node, const std::vector< std::shared_ptr<BaseObject> > &objects,
+		const std::vector< int > &queue, const int split_axis, const int max_depth );
+
+	static int num_avg_balance;
 };
 
 
 class BVHTraversal {
 public:
-	static bool closest_hit( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload );
+	// Ray-Scene traversal for closest object (light rays)
+	// Can also be used for selection rays if the last argument is used, as it sets the shared ptr of the object hit.
+	static bool closest_hit( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload, std::shared_ptr<BaseObject> *obj=0 );
+
+	// Ray-Scene traversal for any object, early exit (shadow rays)
 	static bool any_hit( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload );
 };
 

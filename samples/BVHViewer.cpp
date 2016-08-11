@@ -1,5 +1,5 @@
 
-#include "MCL/Scene.hpp"
+#include "MCL/SceneManager.hpp"
 #include "MCL/Gui.hpp"
 
 using namespace mcl;
@@ -55,7 +55,7 @@ void render_callback(){
 			}
 		}
 	
-		bvh->aabb->get_edges( edges );
+//		bvh->aabb->get_edges( edges );
 	} else if( edges.size()<=24 ) {
 		bvh->get_edges( edges );
 	}

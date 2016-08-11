@@ -84,13 +84,13 @@ void TetMesh::need_normals( bool recompute ){
 	if( normals.size() != vertices.size() ){ normals.resize( vertices.size() ); }
 	const int nv = normals.size();
 
-	#pragma omp parallel for
+#pragma omp parallel for
 	for( int i = 0; i < nv; ++i ){
 		normals[i][0] = 0.f; normals[i][1] = 0.f; normals[i][2] = 0.f;
 	}
 
 	int nf = faces.size();
-	#pragma omp parallel for
+#pragma omp parallel for
 	for( int i = 0; i < nf; ++i ){
 		const trimesh::point &p0 = vertices[faces[i][0]];
 		const trimesh::point &p1 = vertices[faces[i][1]];
@@ -105,7 +105,7 @@ void TetMesh::need_normals( bool recompute ){
 		normals[faces[i][2]] += facenormal * (1.0f / (l2c * l2b));
 	}
 
-	#pragma omp parallel for
+#pragma omp parallel for
 	for (int i = 0; i < nv; i++){ trimesh::normalize(normals[i]); }
 
 } // end compute normals
@@ -114,12 +114,12 @@ void TetMesh::need_normals( bool recompute ){
 // Transform the mesh by the given matrix
 void TetMesh::apply_xform( const trimesh::xform &xf ){
 	int nv = vertices.size();
-	#pragma omp parallel for
+#pragma omp parallel for
 	for (int i = 0; i < nv; i++){ vertices[i] = xf * vertices[i]; }
 
 	if( !normals.empty() ){
 		trimesh::xform nxf = trimesh::norm_xf(xf);
-		#pragma omp parallel for
+#pragma omp parallel for
 		for (int i = 0; i < nv; i++) {
 			normals[i] = nxf * normals[i];
 			trimesh::normalize(normals[i]);

@@ -33,41 +33,29 @@ public:
 	AABB() : valid(false) {}
 	AABB( trimesh::vec min_, trimesh::vec max_ ) : min(min_), max(max_), valid(false) {}
 	trimesh::vec min, max;
+	bool valid;
 
-	// Fills the vector with points that make the edge lines.
-	// Used for visual debugging in OpenGL.
-	void get_edges( std::vector<trimesh::vec> &edges ){
-		using namespace trimesh;
+	trimesh::vec center(){ return (min+max)*0.5f; }
 
-		// Bottom quad
-		point a = min;
-		point b( max[0], min[1], min[2] );
-		point c( max[0], min[1], max[2] );
-		point d( min[0], min[1], max[2] );
-		// Top quad
-		point e( min[0], max[1], min[2] );
-		point f( max[0], max[1], min[2] );
-		point g = max;
-		point h( min[0], max[1], max[2] );
+	float radius(){ return trimesh::len(max-min)*0.5f; }
 
-		// make edges
-		// bottom
-		edges.push_back( a ); edges.push_back( b );
-		edges.push_back( a ); edges.push_back( d );
-		edges.push_back( c ); edges.push_back( b );
-		edges.push_back( c ); edges.push_back( d );
-		// top
-		edges.push_back( e ); edges.push_back( f );
-		edges.push_back( e ); edges.push_back( h );
-		edges.push_back( g ); edges.push_back( f );
-		edges.push_back( g ); edges.push_back( h );
-		// columns
-		edges.push_back( d ); edges.push_back( h );
-		edges.push_back( min ); edges.push_back( e );
-		edges.push_back( b ); edges.push_back( f );
-		edges.push_back( c ); edges.push_back( max );
+	AABB& operator+(const trimesh::vec& p){
+		if( valid ){ min.min(p); max.max(p); }
+		else{ min = p; max = p; }
+		valid = true;
+	}
 
-	} // end make edges
+	AABB& operator+=(const AABB& aabb){
+		if( valid ){ min.min( aabb.min ); max.max( aabb.max ); }
+		else{ min = aabb.min; max = aabb.max; }
+		valid = true;
+	}
+
+	AABB& operator+=(const trimesh::vec& p){
+		if( valid ){ min.min(p); max.max(p); }
+		else{ min = p; max = p; }
+		valid = true;
+	}
 
 	inline bool ray_intersect( const trimesh::vec &origin, const trimesh::vec &direction, double &t_min, double &t_max ) const {
 
@@ -114,29 +102,6 @@ public:
 		return true;
 	}
 
-	trimesh::vec center(){ return (min+max)*0.5f; }
-
-	float radius(){ return trimesh::len(max-min)*0.5f; }
-
-	AABB& operator+(const trimesh::vec& p){
-		if( valid ){ min.min(p); max.max(p); }
-		else{ min = p; max = p; }
-		valid = true;
-	}
-
-	AABB& operator+=(const AABB& aabb){
-		if( valid ){ min.min( aabb.min ); max.max( aabb.max ); }
-		else{ min = aabb.min; max = aabb.max; }
-		valid = true;
-	}
-
-	AABB& operator+=(const trimesh::vec& p){
-		if( valid ){ min.min(p); max.max(p); }
-		else{ min = p; max = p; }
-		valid = true;
-	}
-
-	bool valid;
 };
 
 

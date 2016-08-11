@@ -70,7 +70,6 @@ namespace intersect {
 		bool hit = ( (t<payload.t_max) & (t>payload.t_min) & (beta>=-ray.eps*0.5f) & (gamma>=-ray.eps*0.5f) & (beta+gamma<=1.f) );
 
 		if( hit ){
-//			payload.n = ((n0+n1+n2)/3.f);
 			payload.n = alpha*n0 + beta*n1 + gamma*n2;
 			payload.t_max = t;
 			payload.hit_point = ray.origin + ray.direction*t;

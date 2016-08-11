@@ -25,6 +25,15 @@
 #include "BVH.hpp"
 #include "DefaultBuilders.hpp"
 
+//
+//	Loading a scene with SceneManager:
+//	1) Overwrite the build callbacks with your own methods, if needed.
+//		See include/MCL/DefaultBuilders.hpp for details.
+//	2) Load an XML file with SceneManager::load (see conf/ for examples).
+//		OR you can use the make_object, make_light, make_camera, and make_material
+//		functions. They return shared pointers of the scene component
+//		and you can set the settings directly.
+//
 namespace mcl {
 
 class SceneManager {
@@ -40,6 +49,15 @@ class SceneManager {
 		bool load( std::string filename );
 
 		//
+		// Creator functions that build a scene component and adds it to the
+		// vectors and maps below. A default name is assigned (e.g. "obj1") if not given.
+		//
+		std::shared_ptr<BaseObject> make_object( std::string type, std::string name="" );
+		std::shared_ptr<BaseLight> make_light( std::string type, std::string name="" );
+		std::shared_ptr<BaseCamera> make_camera( std::string type, std::string name="" );
+		std::shared_ptr<BaseMaterial> make_material( std::string type, std::string name="" );
+
+		//
 		// Exports to a scene file. Mesh files are saved to the build directory.
 		// Note that some of the original scene file information will be lost
 		// (i.e. names)
@@ -49,15 +67,17 @@ class SceneManager {
 		void save( std::string xmlfile, int mode=0 );
 
 		//
-		// Computes bounding volume heirarchy (AABB)
+		// Computes bounding volume heirarchy (AABB).
+		// Eventually I will add better heuristics.
 		// Type is:
-		// 	spatial = object median (slower)
+		// 	spatial = object median (slower, but more balanced)
 		//	linear = parallel build w/ morton codes
 		//
-		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="linear" );
+		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="spatial" );
 
 		//
-		// Vectors and (duplicate) maps of scene components
+		// Vectors and maps of scene components.
+		// The shared pointers in the vectors and maps are duplicates, and exist twice for convenience.
 		//
 		std::vector< std::shared_ptr<BaseObject> > objects;
 		std::vector< std::shared_ptr<BaseMaterial> > materials;
@@ -69,7 +89,8 @@ class SceneManager {
 		std::unordered_map< std::string, std::shared_ptr<BaseLight> > lights_map; // name -> light
 
 		//
-		// Creator Callbacks, invoked on a "load" or "scene::create_<thing>" call.
+		// Creator Callbacks, invoked on a "load" or "create_<thing>" call.
+		// These can be changed to whatever. For more details, see include/MCL/DefaultBuilders.hpp
 		//
 		BuildObjCallback createObject;
 		BuildCamCallback createCamera;
@@ -78,8 +99,8 @@ class SceneManager {
 
 	protected:
 
-		// Root bvh is created by build_bvh
-		void build_bvh( int split_mode ); // 0=object median, 1=linear (parallel)
+		// Root bvh is created by build_bvh. split_mode assumed lower case
+		void build_bvh( std::string split_mode );
 		std::shared_ptr<BVHNode> root_bvh;
 
 }; // end class SceneManager

@@ -24,128 +24,23 @@
 
 using namespace mcl;
 
-
-void BVHNode::get_edges( std::vector<trimesh::vec> &edges ){
-	aabb->get_edges( edges );
-	if( left_child != NULL ){ left_child->get_edges( edges ); }
-	if( right_child != NULL ){ right_child->get_edges( edges ); }
-}
-
-int n_nodes = 0;
-
-void BVHNode::spatial_split( const std::vector< std::shared_ptr<BaseObject> > &objects,
-	const std::vector< int > &queue, const int split_axis, const int max_depth ) {
-	using namespace trimesh;
-
-	m_split = split_axis;
-
-	// Create the aabb
-	std::vector< point > obj_centers( queue.size() ); // store the centers for later lookup
-	for( int i=0; i<queue.size(); ++i ){
-		vec bmin, bmax; objects[ queue[i] ]->bounds( bmin, bmax );
-		*aabb += bmin; *aabb += bmax;
-		obj_centers[i] = point( (bmin+bmax)*0.5f );
-	}
-	point center = aabb->center();
-
-	// If num faces == 1, we're done
-	if( queue.size()==0 ){ return; }
-	else if( queue.size()==1 || max_depth <= 0 ){
-		m_objects.reserve( queue.size() );
-		for( int i=0; i<queue.size(); ++i ){ m_objects.push_back( objects[ queue[i] ] ); }
-		return;
-	}
-
-	// Split faces
-	std::vector<int> left_queue, right_queue;
-	for( int i=0; i<queue.size(); ++i ){
-		double oc = obj_centers[i][split_axis];
-		if( oc <= center[ split_axis ] ){ left_queue.push_back( queue[i] ); }
-		else if( oc > center[ split_axis ] ){ right_queue.push_back( queue[i] ); }
-	}
-
-	// Check to make sure things got sorted. Sometimes small meshes fail.
-	if( left_queue.size()==0 ){ left_queue.push_back( right_queue.back() ); right_queue.pop_back(); }
-	if( right_queue.size()==0 ){ right_queue.push_back( left_queue.back() ); left_queue.pop_back(); }
-
-	// Create the children
-//	num_objects = left_queue.size()+right_queue.size();
-	left_child = std::shared_ptr<BVHNode>( new BVHNode() );
-	right_child = std::shared_ptr<BVHNode>( new BVHNode() );
-	left_child->spatial_split( objects, left_queue, ((split_axis+1)%3), max_depth-1 );
-	right_child->spatial_split( objects, right_queue, ((split_axis+1)%3), max_depth-1 );
-	n_nodes += 2;
-
-} // end build spatial split tree
-
-
-float avg_balance = 0.f;
-int num_avg_balance = 0;
-
-
-
-void BVHNode::lbvh_split( const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
-	const std::vector< std::pair< morton_type, int > > &morton_codes, const int max_depth ){
-
-	m_split = morton_codes.size() % 3; // Not sure if this is correct...
-
-	// First, see what bit we're at. If it's the last bit of the morton code,
-	// this is a child and we should add the objects to the scene.
-	if( bit == 0 || max_depth <= 0 || morton_codes.size() == 1 ){
-		m_objects.reserve( morton_codes.size() );
-		for( int i=0; i<morton_codes.size(); ++i ){ m_objects.push_back( prims[ morton_codes[i].second ] ); }
-	} // end add objects
-
-	// Check the morton codes at the bit.
-	// 0 = left child, 1 = right child.
-	else{
-		std::vector< std::pair< morton_type, int > > left_codes, right_codes;
-		for( int i=0; i<morton_codes.size(); ++i ){
-
-			if( helper::check_bit( morton_codes[i].first, bit ) ){
-				right_codes.push_back( morton_codes[i] );
-
-//		std::cout << bit << ":\t" << std::bitset<8*8>( morton_codes[i].first ) << std::endl;
-
-			} else {
-				left_codes.push_back( morton_codes[i] );
-			}
-
-		} // end sort morton codes
-
-		// Check to make sure things got sorted. Sometimes small meshes fail.
-		if( left_codes.size()==0 ){ left_codes.push_back( right_codes.back() ); right_codes.pop_back(); }
-		if( right_codes.size()==0 ){ right_codes.push_back( left_codes.back() ); left_codes.pop_back(); }
-
-		avg_balance += float(left_codes.size())/float(right_codes.size());
-		num_avg_balance++;
-//		num_objects = left_codes.size()+right_codes.size();
-
-		// Create the children
-		assert( left_codes.size() > 0 && right_codes.size() > 0 );
-		left_child = std::shared_ptr<BVHNode>( new BVHNode() );
-		right_child = std::shared_ptr<BVHNode>( new BVHNode() );
-		left_child->lbvh_split( bit-1, prims, left_codes, max_depth-1 );
-		right_child->lbvh_split( bit-1, prims, right_codes, max_depth-1 );
-		n_nodes += 2;
-
-	} // end create childrend
-
-	// Now that the tree is constructed, create the aabb
-	for( int i=0; i<m_objects.size(); ++i ){
-		trimesh::vec bmin, bmax; m_objects[i]->bounds( bmin, bmax );
-		*aabb += bmin; *aabb += bmax;
-	}
-	if( left_child != NULL ){ *aabb += *(left_child->aabb); }
-	if( right_child != NULL ){ *aabb += *(right_child->aabb); }
-}
+// Used for stats:
+int BVHBuilder::n_nodes = 0;
+float BVHBuilder::avg_balance = 0.f;
+int BVHBuilder::num_avg_balance = 0;
+float BVHBuilder::runtime_s = 0.f;
 
 
 int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth ){
 
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	start = std::chrono::system_clock::now();
+
 	root.reset( new BVHNode );
 
 	n_nodes = 1;
+	avg_balance = 0.f;
+	num_avg_balance = 0;
 
 	using namespace trimesh;
 
@@ -171,7 +66,7 @@ int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vecto
 
 	// Assign morton codes
 	std::vector< std::pair< morton_type, int > > morton_codes( prims.size() );
-	#pragma omp parallel for
+#pragma omp parallel for
 	for( int i=0; i<prims.size(); ++i ){
 
 		// Scale the centroid to a value between 0 and max_scaled and convert to integer.
@@ -189,10 +84,10 @@ int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vecto
 	bool found=false;
 	for( start_bit; start_bit > 1 && !found; --start_bit ){
 
-		#pragma omp parallel for
+#pragma omp parallel for
 		for( int i=0; i<morton_codes.size(); ++i ){
 			if( helper::check_bit( morton_codes[i].first, start_bit ) ){
-				#pragma omp critical
+#pragma omp critical
 				{ found=true; }
 			}
 		}
@@ -200,19 +95,81 @@ int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vecto
 	} // end find starting bit
 
 	// Now that we have the morton codes, we can recursively build the BVH in a top down manner
-	root->lbvh_split( start_bit, prims, morton_codes, max_depth );
+	lbvh_split( root, start_bit, prims, morton_codes, max_depth );
 
-//	std::cout << "\nLBVH Balance: " << avg_balance / float(num_avg_balance) << std::endl;
-//	std::cout << "Linear BVH made " << n_nodes << " nodes for " << prims.size() << " primitives." << std::endl;
+	end = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = end-start;
+	runtime_s = float(elapsed_seconds.count());
 
 	return n_nodes;
 
 }
 
 
+void BVHBuilder::lbvh_split( std::shared_ptr<BVHNode> &node,
+	const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
+	const std::vector< std::pair< morton_type, int > > &morton_codes, const int max_depth ){
+
+	// First, see what bit we're at. If it's the last bit of the morton code,
+	// this is a child and we should add the objects to the scene.
+	if( bit == 0 || max_depth <= 0 || morton_codes.size() == 1 ){
+		node->m_objects.reserve( morton_codes.size() );
+		for( int i=0; i<morton_codes.size(); ++i ){ node->m_objects.push_back( prims[ morton_codes[i].second ] ); }
+	} // end add objects
+
+	// Check the morton codes at the bit.
+	// 0 = left child, 1 = right child.
+	else{
+		std::vector< std::pair< morton_type, int > > left_codes, right_codes;
+		for( int i=0; i<morton_codes.size(); ++i ){
+
+			if( helper::check_bit( morton_codes[i].first, bit ) ){
+				right_codes.push_back( morton_codes[i] );
+			} else {
+				left_codes.push_back( morton_codes[i] );
+			}
+
+		} // end sort morton codes
+
+		// Check to make sure things got sorted. Sometimes small meshes fail.
+		if( left_codes.size()==0 ){ left_codes.push_back( right_codes.back() ); right_codes.pop_back(); }
+		if( right_codes.size()==0 ){ right_codes.push_back( left_codes.back() ); left_codes.pop_back(); }
+
+		avg_balance += float(left_codes.size())/float(right_codes.size());
+		num_avg_balance++;
+//		num_objects = left_codes.size()+right_codes.size();
+
+		// Create the children
+		assert( left_codes.size() > 0 && right_codes.size() > 0 );
+		node->left_child = std::shared_ptr<BVHNode>( new BVHNode() );
+		node->right_child = std::shared_ptr<BVHNode>( new BVHNode() );
+		lbvh_split( node->left_child, bit-1, prims, left_codes, max_depth-1 );
+		lbvh_split( node->right_child, bit-1, prims, right_codes, max_depth-1 );
+		n_nodes += 2;
+
+	} // end create childrend
+
+	// Now that the tree is constructed, create the aabb
+	for( int i=0; i<node->m_objects.size(); ++i ){
+		trimesh::vec bmin, bmax;
+		node->m_objects[i]->bounds( bmin, bmax );
+		*(node->aabb) += bmin; *(node->aabb) += bmax;
+	}
+	if( node->left_child != NULL ){ *(node->aabb) += *(node->left_child->aabb); }
+	if( node->right_child != NULL ){ *(node->aabb) += *(node->right_child->aabb); }
+
+}
+
+
+
 int BVHBuilder::make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth ){
 
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	start = std::chrono::system_clock::now();
+
 	n_nodes = 1;
+	avg_balance = 0.f;
+	num_avg_balance = 0;
 
 	// Get all the primitives in the domain and start construction
 	std::vector< std::shared_ptr<BaseObject> > prims;
@@ -222,7 +179,11 @@ int BVHBuilder::make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::ve
 
 	std::vector< int > queue( prims.size() );
 	std::iota( std::begin(queue), std::end(queue), 0 );
-	root->spatial_split( prims, queue, 0, max_depth );
+	spatial_split( root, prims, queue, 0, max_depth );
+
+	end = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = end-start;
+	runtime_s = float(elapsed_seconds.count());
 
 	return n_nodes;
 
@@ -230,12 +191,56 @@ int BVHBuilder::make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::ve
 }
 
 
+void BVHBuilder::spatial_split( std::shared_ptr<BVHNode> &node, const std::vector< std::shared_ptr<BaseObject> > &objects,
+	const std::vector< int > &queue, const int split_axis, const int max_depth ) {
+	using namespace trimesh;
+
+	// Create the aabb
+	std::vector< point > obj_centers( queue.size() ); // store the centers for later lookup
+	for( int i=0; i<queue.size(); ++i ){
+		vec bmin, bmax; objects[ queue[i] ]->bounds( bmin, bmax );
+		*(node->aabb) += bmin; *(node->aabb) += bmax;
+		obj_centers[i] = point( (bmin+bmax)*0.5f );
+	}
+	point center = node->aabb->center();
+
+	// If num faces == 1, we're done
+	if( queue.size()==0 ){ return; }
+	else if( queue.size()==1 || max_depth <= 0 ){
+		node->m_objects.reserve( queue.size() );
+		for( int i=0; i<queue.size(); ++i ){ node->m_objects.push_back( objects[ queue[i] ] ); }
+		return;
+	}
+
+	// Split faces
+	std::vector<int> left_queue, right_queue;
+	for( int i=0; i<queue.size(); ++i ){
+		double oc = obj_centers[i][split_axis];
+		if( oc <= center[ split_axis ] ){ left_queue.push_back( queue[i] ); }
+		else if( oc > center[ split_axis ] ){ right_queue.push_back( queue[i] ); }
+	}
+
+	// Check to make sure things got sorted. Sometimes small meshes fail.
+	if( left_queue.size()==0 ){ left_queue.push_back( right_queue.back() ); right_queue.pop_back(); }
+	if( right_queue.size()==0 ){ right_queue.push_back( left_queue.back() ); left_queue.pop_back(); }
+
+	// Create the children
+//	num_objects = left_queue.size()+right_queue.size();
+	node->left_child = std::shared_ptr<BVHNode>( new BVHNode() );
+	node->right_child = std::shared_ptr<BVHNode>( new BVHNode() );
+	spatial_split( node->left_child, objects, left_queue, ((split_axis+1)%3), max_depth-1 );
+	spatial_split( node->right_child, objects, right_queue, ((split_axis+1)%3), max_depth-1 );
+	n_nodes += 2;
+
+} // end build spatial split tree
+
+
 //
 //	BVH Traversal
 //
 
 
-bool BVHTraversal::closest_hit( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload ){
+bool BVHTraversal::closest_hit( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload, std::shared_ptr<BaseObject> *obj ){
 
 	// See if we hit the box
 	if( !node->aabb->ray_intersect( ray.origin, ray.direction, payload.t_min, payload.t_max ) ){ return false; }
@@ -247,8 +252,8 @@ bool BVHTraversal::closest_hit( const std::shared_ptr<BVHNode> node, const inter
 		// TODO better check against which child to traverse
 		intersect::Payload payload_l=payload; intersect::Payload payload_r=payload;
 		bool left_hit=false, right_hit=false;
-		if( node->left_child != NULL ){ left_hit = BVHTraversal::closest_hit( node->left_child, ray, payload_l ); }
-		if( node->right_child != NULL ){ right_hit = BVHTraversal::closest_hit( node->right_child, ray, payload_r ); }
+		if( node->left_child != NULL ){ left_hit = BVHTraversal::closest_hit( node->left_child, ray, payload_l, obj ); }
+		if( node->right_child != NULL ){ right_hit = BVHTraversal::closest_hit( node->right_child, ray, payload_r, obj ); }
 
 		// See which child is closer
 		if( left_hit && right_hit ){
@@ -276,7 +281,7 @@ bool BVHTraversal::closest_hit( const std::shared_ptr<BVHNode> node, const inter
 		// Loop over objects stored on this bvh node
 		bool obj_hit = false;
 		for( int i=0; i<node->m_objects.size(); ++i ){
-			if( node->m_objects[i]->ray_intersect( ray, payload ) ){ obj_hit=true; }
+			if( node->m_objects[i]->ray_intersect( ray, payload ) ){ obj=&(node->m_objects[i]); obj_hit=true; }
 		}
 		return obj_hit;
 
@@ -285,7 +290,6 @@ bool BVHTraversal::closest_hit( const std::shared_ptr<BVHNode> node, const inter
 	return false;
 
 } // end ray intersect
-
 
 
 bool BVHTraversal::any_hit( const std::shared_ptr<BVHNode> node, const intersect::Ray &ray, intersect::Payload &payload ){
@@ -310,3 +314,44 @@ bool BVHTraversal::any_hit( const std::shared_ptr<BVHNode> node, const intersect
 	return false;
 
 } // end ray intersect
+
+
+void BVHNode::get_edges( std::vector<trimesh::vec> &edges ){
+
+	using namespace trimesh;
+	{
+		vec min = aabb->min;
+		vec max = aabb->max;
+
+		// Bottom quad
+		point a = min;
+		point b( max[0], min[1], min[2] );
+		point c( max[0], min[1], max[2] );
+		point d( min[0], min[1], max[2] );
+		// Top quad
+		point e( min[0], max[1], min[2] );
+		point f( max[0], max[1], min[2] );
+		point g = max;
+		point h( min[0], max[1], max[2] );
+
+		// make edges
+		// bottom
+		edges.push_back( a ); edges.push_back( b );
+		edges.push_back( a ); edges.push_back( d );
+		edges.push_back( c ); edges.push_back( b );
+		edges.push_back( c ); edges.push_back( d );
+		// top
+		edges.push_back( e ); edges.push_back( f );
+		edges.push_back( e ); edges.push_back( h );
+		edges.push_back( g ); edges.push_back( f );
+		edges.push_back( g ); edges.push_back( h );
+		// columns
+		edges.push_back( d ); edges.push_back( h );
+		edges.push_back( min ); edges.push_back( e );
+		edges.push_back( b ); edges.push_back( f );
+		edges.push_back( c ); edges.push_back( max );
+	}
+
+	if( left_child != NULL ){ left_child->get_edges( edges ); }
+	if( right_child != NULL ){ right_child->get_edges( edges ); }
+}
