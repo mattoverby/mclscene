@@ -18,7 +18,7 @@ int main(int argc, char *argv[]){
 	else{ printf( "Successfully loaded xml file.\n"); }
 
 	NewGui gui;
-	gui.run( argc, argv );
+	gui.run( &scene );
 
 //	Gui gui( &scene );
 

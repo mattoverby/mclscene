@@ -3,13 +3,14 @@
 By Matt Overby  
 [http://www.mattoverby.net](http://www.mattoverby.net)
 
-mclscene is a generic scene loader for some of my test projects. It parses an XML file
-and stores metadata, which can then be extracted by another application for whatever purpose.
+mclscene is a generic scene loader for prototyping my projects. It parses an XML scene file
+and creates typical 3D related stuff (e.g. meshes, lights, materials, etc...)
 Included are distributions of: trimesh2 (Szymon Rusinkiewicz, gfx.cs.princeton.edu/proj/trimesh2),
 tetgen (Hang Si, wias-berlin.de/software/tetgen), and pugixml (Arseny Kapoulkine, pugixml.org).
 Currently it only handles triangle/tetrahedral meshes.
 
 There is a viewer sample which can render the scene, but requires OpenGL and SFML 2.
+I'm currently working on a better renderer with glfw.
 
 <img src="https://github.com/over0219/mclscene/raw/master/doc/dillo.png" width="512">
 
@@ -21,7 +22,7 @@ ${MCLSCENE_INCLUDE_DIRS} that are set during the build. I will improve this in t
 
 # todo
 
-- Cleanup headers and make deps header-only
+- Cleanup headers and make it header-only
 - Cleanup object base class and hierarchy
 - Support for texture wrapping
 - Support for parsing new components (not just the 4 I use)
