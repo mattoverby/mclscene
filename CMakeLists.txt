@@ -51,12 +51,12 @@ add_subdirectory( ${TETGEN_DIR} ) # sets TETGEN_INCLUDE and TETGEN_SRCS
 include_directories( ${TETGEN_INCLUDE} )
 
 
-set( GLFW_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw3" ) # hint for FindGLFW.cmake
-set( GLFW_BUILD_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/force_glfw/build/glfw-prefix/src/glfw-build/src" )
-build_external_project(glfw ${GLFW_LOCATION}) # force compilation of glfw before the fine_package call
+#set( GLFW_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw3" ) # hint for FindGLFW.cmake
+#set( GLFW_BUILD_LOCATION "${CMAKE_CURRENT_BINARY_DIR}/force_glfw/build/glfw-prefix/src/glfw-build/src" )
+#build_external_project(glfw ${GLFW_LOCATION}) # force compilation of glfw before the fine_package call
 find_package(GLFW 3)
-set( GLFW_INCLUDE_DIR ${GLFW_INCLUDE_DIR} ${GLFW_LOCATION}/deps ) # FindGLFW skips deps
-set( GLFW3_LIBRARY_DIRS ${CMAKE_CURRENT_BINARY_DIR}/deps/glfw/src )
+#set( GLFW_INCLUDE_DIR ${GLFW_INCLUDE_DIR} ${GLFW_LOCATION}/deps ) # FindGLFW skips deps
+#set( GLFW3_LIBRARY_DIRS ${CMAKE_CURRENT_BINARY_DIR}/deps/glfw/src )
 
 # Opengl and SFML used by the gui, not required
 find_package(OpenGL)
