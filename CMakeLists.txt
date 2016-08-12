@@ -99,7 +99,7 @@ set( MCLSCENE_SRCS
 # Create the library
 if(MCL_BUILD_RENDERING)
 
-	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} include/MCL/Gui.hpp src/Gui.cpp )
+	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} include/MCL/Gui.hpp src/Gui.cpp include/MCL/NewGui.hpp src/NewGui.cpp )
 	add_library( mclscene ${TRIMESH_SRCS} ${TETGEN_SRCS} ${MCLSCENE_SRCS} )
 	set( MCLSCENE_LIBRARIES mclscene ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${SFML_LIBRARIES} ${Boost_LIBRARIES} png )
 	include_directories( ${SFML_INCLUDE_DIRS} ${OpenGL_INCLUDE_DIRS} ${GLFW_INCLUDE_DIR} )

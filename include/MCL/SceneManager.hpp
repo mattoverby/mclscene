@@ -49,16 +49,6 @@ class SceneManager {
 		bool load( std::string filename );
 
 		//
-		// Creator functions that build a scene component and adds it to the
-		// vectors and maps below. A default name is assigned (e.g. "obj1") if not given.
-		// Calls the builder callbacks.
-		//
-		std::shared_ptr<BaseObject> make_object( std::string type, std::string name="" );
-		std::shared_ptr<BaseLight> make_light( std::string type, std::string name="" );
-		std::shared_ptr<BaseCamera> make_camera( std::string type, std::string name="" );
-		std::shared_ptr<BaseMaterial> make_material( std::string type, std::string name="" );
-
-		//
 		// Exports to a scene file. Mesh files are saved to the build directory.
 		// Note that some of the original scene file information will be lost
 		// (i.e. names)
@@ -88,6 +78,25 @@ class SceneManager {
 		std::unordered_map< std::string, std::shared_ptr<BaseMaterial> > materials_map; // name -> material
 		std::unordered_map< std::string, std::shared_ptr<BaseCamera> > cameras_map; // name -> camera
 		std::unordered_map< std::string, std::shared_ptr<BaseLight> > lights_map; // name -> light
+
+		//
+		// Creator functions that build a scene component and adds it to the
+		// vectors and maps below. A default name is assigned (e.g. "obj1") if not given.
+		// Calls the builder callbacks.
+		//
+		std::shared_ptr<BaseObject> make_object( std::string type, std::string name="" );
+		std::shared_ptr<BaseLight> make_light( std::string type, std::string name="" );
+		std::shared_ptr<BaseCamera> make_camera( std::string type, std::string name="" );
+		std::shared_ptr<BaseMaterial> make_material( std::string type, std::string name="" );
+
+		//
+		// In addition to creating the components, the original parameters parsed
+		// from the XML file (if any) are stored as vectors. They are listed in order parsed.
+		//
+		std::unordered_map< std::string, std::vector<Param> > object_params;
+		std::unordered_map< std::string, std::vector<Param> > material_params;
+		std::unordered_map< std::string, std::vector<Param> > camera_params;
+		std::unordered_map< std::string, std::vector<Param> > light_params;
 
 		//
 		// Creator Callbacks, invoked on a "load" or "create_<thing>" call.

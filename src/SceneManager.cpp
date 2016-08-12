@@ -98,6 +98,7 @@ bool SceneManager::load( std::string filename ){
 			if( cam != NULL ){
 				cameras.push_back( cam );
 				cameras_map[name] = cam;
+				camera_params[name] = components[j].params;
 			}
 		} // end build Camera
 
@@ -107,6 +108,7 @@ bool SceneManager::load( std::string filename ){
 			if( light != NULL ){
 				lights.push_back( light );
 				lights_map[name] = light;
+				light_params[name] = components[j].params;
 			}
 		} // end build Light
 
@@ -116,6 +118,7 @@ bool SceneManager::load( std::string filename ){
 			if( mat != NULL ){
 				materials.push_back( mat );
 				materials_map[name] = mat;
+				material_params[name] = components[j].params;
 			}
 		} // end build material
 
@@ -125,6 +128,7 @@ bool SceneManager::load( std::string filename ){
 			if( obj != NULL ){
 				objects.push_back( obj );
 				objects_map[name] = obj;
+				object_params[name] = components[j].params;
 			}
 		} // end build object
 

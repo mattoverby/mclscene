@@ -17,8 +17,8 @@ int main(int argc, char *argv[]){
 	if( !scene.load( std::string(argv[1]) ) ){ return 0; }
 	else{ printf( "Successfully loaded xml file.\n"); }
 
-	NewGui gui;
-	gui.run( &scene );
+	NewGui gui( &scene );
+	int success = gui.display();
 
 //	Gui gui( &scene );
 
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]){
 //	gui.add_event_callback( event_cb );
 //	gui.display();
 
-	return 0;
+	return success;
 }
 
 
