@@ -52,6 +52,8 @@ public:
 	void add_callback( std::function<void ( GLFWwindow* window, float screen_dt )> &cb ){ render_callbacks.push_back( cb ); }
 
 protected:
+	bool run_simulation;
+	float screen_dt;
 	SceneManager *scene;
 	Simulator *sim;
 	double cursorX, cursorY;

@@ -40,9 +40,11 @@ NewGui::NewGui( mcl::SceneManager *scene_, mcl::Simulator *sim_ ) : scene(scene_
 	Input &input = Input::getInstance(); // initialize the singleton
 	cursorX = 0.f;
 	cursorY = 0.f;
-	alpha = 210.f;
-	beta = -70.f;
+	alpha = 0.f;
+	beta = 0.f;
 	zoom = 2.f;
+	run_simulation = false;
+	screen_dt = 0.f;
 
 	// Create a vector of triangle mesh pointer for the simulator
 	for( int i=0; i<scene->objects.size(); ++i ){
@@ -103,12 +105,12 @@ int NewGui::display(){
 	while( !glfwWindowShouldClose(window) ){
 
 		float t = glfwGetTime();
-		float dt_total = t - t_old;
+		screen_dt = t - t_old;
 		t_old = t;
 
 		// Simulation engine:
-		if( sim ){
-			bool s1 = sim->step( dt_total );
+		if( sim && run_simulation ){
+			bool s1 = sim->step( screen_dt );
 			bool s2 = sim->update( mesh_pointers );
 			if( !s1 ){ std::cerr << "\n**NewGui::display Error: Problem in simulation step" << std::endl; }
 			if( !s2 ){ std::cerr << "\n**NewGui::display Error: Problem in mesh update" << std::endl; }
@@ -120,7 +122,7 @@ int NewGui::display(){
 		// Render:
 		clear_screen(window);
 		draw_meshes(window);
-		for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, dt_total ); }
+		for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, screen_dt ); }
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -249,6 +251,12 @@ void NewGui::key_callback(GLFWwindow* window, int key, int scancode, int action,
     {
         case GLFW_KEY_ESCAPE:
             glfwSetWindowShouldClose(window, GLFW_TRUE);
+            break;
+	case GLFW_KEY_SPACE:
+		run_simulation = !run_simulation;
+		break;
+        case GLFW_KEY_P:
+		if( sim ){ sim->step( screen_dt ); }
             break;
         default:
             break;
