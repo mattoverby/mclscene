@@ -53,6 +53,8 @@ public:
 	std::string get_xml( std::string obj_name, int mode=0 );
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 
+	void apply_xform( const trimesh::xform &xf );
+
 	// A point cloud can be initialized from a file or adding vertices manually.
 	// If a mesh file is used, the vertices of the mesh become the points of the cloud.
 	// If "fill" is true, points will be added to fill the inner space of the mesh (TODO).

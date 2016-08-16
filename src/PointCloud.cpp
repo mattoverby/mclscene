@@ -61,16 +61,16 @@ bool PointCloud::load( std::string file, bool fill ){
 	// Read the file
 	if( ext == "ply" ){
 
-		data.reset( trimesh::TriMesh::read( file ) );
-		if( data.get() == NULL ){
-			data.reset( new trimesh::TriMesh );
-			return false;
-		}
+		// Read the mesh file
+		trimesh::TriMesh *newmesh = trimesh::TriMesh::read( file );
 
-		// Remove any unused data
-		data->normals.clear();
-		data->faces.clear();
-		data->tstrips.clear();
+		// Copy over vertices
+		vertices.clear();
+		vertices.resize( newmesh->vertices.size() );
+#pragma omp parallel for
+		for( int i=0; i<newmesh->vertices.size(); ++i ){ vertices[i] = newmesh->vertices[i]; }
+
+		delete newmesh;
 
 	} // end load ply
 
@@ -151,3 +151,11 @@ void PointCloud::fill_mesh(){
 	// TODO
 }
 
+
+void PointCloud::apply_xform( const trimesh::xform &xf ){
+
+	int nv = vertices.size();
+#pragma omp parallel for
+	for (int i = 0; i < nv; i++){ vertices[i] = xf * vertices[i]; }
+
+}

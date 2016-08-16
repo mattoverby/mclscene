@@ -55,8 +55,13 @@ find_package(GLFW 3)
 set( GLFW_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw3" ) # Add glfw3 support headers
 
 # Opengl and SFML used by the gui, not required
-find_package(OpenGL)
+find_package(OpenGL 4)
 find_package(SFML 2 COMPONENTS system window graphics)
+
+# GLEW for shader io
+find_package(GLEW)
+include_directories(${GLEW_INCLUDE_DIRS})
+link_libraries(${GLEW_LIBRARIES})
 
 # OpenMP, not required
 find_package(OpenMP)
@@ -92,6 +97,7 @@ set( MCLSCENE_SRCS
 	include/MCL/Light.hpp
 	include/MCL/AABB.hpp
 	include/MCL/Material.hpp
+	include/MCL/Simulator.hpp
 	include/MCL/RayIntersect.hpp
 	include/MCL/DefaultBuilders.hpp
 )

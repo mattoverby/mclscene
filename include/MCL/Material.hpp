@@ -50,6 +50,12 @@ public:
 
 	virtual std::string get_type() const = 0;
 
+	// For GLSL materials, the shader is the prefix to the
+	// ".vert" and ".frag" files w.r.t. the config directory.
+	// When rendering, if no shader is specified, a default
+	// Blinn-Phong shader is used.
+	virtual std::string get_shader(){ return ""; }
+
 	bool has_texture() { return m_texture.m_file.size(); }
 
 	// Returns a string containing xml code for saving to a scenefile.
@@ -94,6 +100,30 @@ public:
 		return "";
 
 	} // end get xml
+};
+
+
+//
+//	Blinn Phong for glsl
+//
+class glslBlinnPhong : public BaseMaterial {
+public:
+	glslBlinnPhong() : diffuse(.5,.5,.5), specular(0,0,0), shininess(0), shader("") {}
+
+	trimesh::vec diffuse;
+	trimesh::vec specular;
+	int shininess;
+	std::string shader;
+
+//	OGLMaterial() : diffuse(.5,.5,.5), specular(0,0,0), shininess(0), edge_color(-1,-1,-1) {}
+
+//	trimesh::vec diffuse;
+//	trimesh::vec specular;
+//	int shininess;
+//	trimesh::vec edge_color;
+
+	std::string get_type() const { return "glslblinnphong"; }
+	std::string get_xml( std::string material_name, int mode ){ return ""; }
 };
 
 
