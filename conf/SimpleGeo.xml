@@ -7,7 +7,7 @@
 
 
 	<light name="l1" type="ogl" >
-		<direction type="vec3" value="-1 1 0" />
+		<position type="vec3" value="0 5 0" />
 	</light>
 
 	<Object name="obj1" type="box" >
@@ -54,6 +54,8 @@
 
 	<Material name="blue_diff" type="diffuse">
 		<Diffuse value="120  120  255" />
+		<specular value=".8 .8 .8" />
+		<shininess value="32" />
 		<texture value="uofm.png" />
 	</Material>
 

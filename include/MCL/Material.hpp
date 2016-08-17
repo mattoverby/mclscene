@@ -50,12 +50,6 @@ public:
 
 	virtual std::string get_type() const = 0;
 
-	// For GLSL materials, the shader is the prefix to the
-	// ".vert" and ".frag" files w.r.t. the config directory.
-	// When rendering, if no shader is specified, a default
-	// Blinn-Phong shader is used.
-	virtual std::string get_shader(){ return ""; }
-
 	bool has_texture() { return m_texture.m_file.size(); }
 
 	// Returns a string containing xml code for saving to a scenefile.
@@ -89,10 +83,11 @@ public:
 			bool draw_edges = ( edge_color[0]>=0.f && edge_color[1]>=0.f && edge_color[2]>=0.f );
 			std::stringstream xml;
 			xml << "\t<Material name=\"" << material_name << "\" type=\"ogl\" >\n";
-			xml << "\t\t<Diffuse type=\"vec3\" value=\"" << diffuse.str() << "\" />\n";
-			xml << "\t\t<Specular type=\"vec3\" value=\"" << specular.str() << "\" />\n";
-			xml << "\t\t<Shininess type=\"int\" value=\"" << shininess << "\" />\n";
-			if( draw_edges ){ xml << "\t\t<Edges type=\"vec3\" value=\"" << edge_color.str() << "\" />\n"; }
+			xml << "\t\t<Diffuse value=\"" << diffuse.str() << "\" />\n";
+			xml << "\t\t<Specular value=\"" << specular.str() << "\" />\n";
+			xml << "\t\t<Shininess  value=\"" << shininess << "\" />\n";
+			if( draw_edges ){ xml << "\t\t<Edges value=\"" << edge_color.str() << "\" />\n"; }
+			if( this->has_texture() ){ xml << "\t\t<texture value=\"" << this->m_texture.m_file << "\" />\n"; }
 			xml << "\t</Material>";
 			return xml.str();
 		}
@@ -102,30 +97,22 @@ public:
 	} // end get xml
 };
 
-
+/*
 //
 //	Blinn Phong for glsl
 //
-class glslBlinnPhong : public BaseMaterial {
+class glBlinnPhong : public BaseMaterial {
 public:
-	glslBlinnPhong() : diffuse(.5,.5,.5), specular(0,0,0), shininess(0), shader("") {}
+	glBlinnPhong() : diffuse(.5,.5,.5), specular(0,0,0), shininess(0) {}
 
 	trimesh::vec diffuse;
 	trimesh::vec specular;
 	int shininess;
-	std::string shader;
 
-//	OGLMaterial() : diffuse(.5,.5,.5), specular(0,0,0), shininess(0), edge_color(-1,-1,-1) {}
-
-//	trimesh::vec diffuse;
-//	trimesh::vec specular;
-//	int shininess;
-//	trimesh::vec edge_color;
-
-	std::string get_type() const { return "glslblinnphong"; }
-	std::string get_xml( std::string material_name, int mode ){ return ""; }
+	std::string get_type() const { return "glblinnphong"; }
+	std::string get_xml( std::string material_name, int mode ){ return ""; std::cerr << "TODO: glBlinnPhong::get_xml" << std::endl; }
 };
-
+*/
 
 } // end namespace mcl
 

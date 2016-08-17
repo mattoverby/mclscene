@@ -19,35 +19,41 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_SIMULATION_H
-#define MCLSCENE_SIMULATION_H 1
+#ifndef MCLSCENE_RENDERGL_H
+#define MCLSCENE_RENDERGL_H 1
 
-#include "TriMesh.h"
+#include <GL/glew.h>
+#include "MCL/ShaderProgram.hpp"
+#include "MCL/RenderUtils.hpp"
+#include "MCL/SceneManager.hpp"
 
 namespace mcl {
 
-//
-//	Simulation is the class a physics engine would derive from
-//	for an easy plug-in to the renderer.
-//	In the Gui class:
-//	1) The scene is loaded into mclscene
-//	2) TriMeshes are passed to the initialize function
-//	3) Step is called by the gui to invoke a timestep
-//	4) Update is called (after step) by the gui to update the mesh vertices
-//
-//	All functions should return true on success
-//
-//	It's also advisable to give your simulator access to mclscene
-//	via constructor, but not required.
-//
-class Simulator  {
+class RenderGL  {
 public:
 
-	virtual bool initialize( const std::vector< trimesh::TriMesh* > &meshes ) = 0;
-	virtual bool step( float screen_dt ) = 0;
-	virtual bool update( std::vector< trimesh::TriMesh* > &meshes ) = 0;
+	// Initialize shaders. Must be called after
+	// OpenGL context has been created.
+	void init( mcl::SceneManager *scene_ );
 
-}; // end class simulation
+	// Draws a specific object with aspecificgiven material. If material is null,
+	// a default one is used (lambertian red). The object must have get_TriMesh()
+	// function implemented, otherwise nothing is drawn.
+	void draw( std::shared_ptr<BaseObject> obj, std::shared_ptr<BaseMaterial> mat=NULL );
+
+	// Draws all objects in the SceneManager
+	void draw_objects();
+
+	// Draws all lights in the SceneManager that have a shape
+	// (I.e., point lights as a sphere, spot lights as a cone).
+	void draw_lights();
+
+private:
+	std::unique_ptr<ShaderProgram> blinnphong;
+	mcl::SceneManager *scene;
+	int sphereDisplayList;
+
+}; // end class RenderGL
 
 
 } // end namespace mcl

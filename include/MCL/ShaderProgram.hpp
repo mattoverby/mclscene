@@ -121,10 +121,7 @@ void ShaderProgram::init(std::string vertexShaderSource, std::string fragmentSha
 	// Check the program link status and throw a runtime_error if program linkage failed.
 	GLint programLinkSuccess = GL_FALSE;
 	glGetProgramiv(programId, GL_LINK_STATUS, &programLinkSuccess);
-	if (programLinkSuccess != GL_TRUE)
-	{
-		throw std::runtime_error("Problem with init");
-	}
+	if (programLinkSuccess != GL_TRUE){ throw std::runtime_error("Problem with init"); }
 
 	// Validate the shader program
 	glValidateProgram(programId);

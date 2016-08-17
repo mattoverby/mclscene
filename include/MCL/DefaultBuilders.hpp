@@ -348,12 +348,36 @@ static std::shared_ptr<BaseMaterial> default_build_material( Component &componen
 	std::string type = parse::to_lower(component.type);
 	std::string name = component.name;
 
+/*
 	//
 	//	OpenGL Materials
 	//
 //	if( type == "ogl" ){
-	{
+	if( type=="glblinnphong" || type=="blinnphong" ){
 
+		std::shared_ptr<glBlinnPhong> mat( new glBlinnPhong() );
+
+		for( int i=0; i<component.params.size(); ++i ){
+			if( parse::to_lower(component.params[i].tag)=="diffuse" || parse::to_lower(component.params[i].tag)=="color" ){
+				component.params[i].fix_color();
+				mat->diffuse=component.params[i].as_vec3();
+			}
+			else if( parse::to_lower(component.params[i].tag)=="specular" ){
+				component.params[i].fix_color();
+				mat->specular=component.params[i].as_vec3();
+			}
+			else if( parse::to_lower(component.params[i].tag)=="texture" ){
+				mat->m_texture=TextureResource( component.name, component.params[i].as_string() );
+			}
+			else if( parse::to_lower(component.params[i].tag)=="shininess" || parse::to_lower(component.params[i].tag)=="exponent" ){ mat->shininess=component.params[i].as_int(); }
+		}
+
+		std::shared_ptr<BaseMaterial> new_mat( mat );
+		return new_mat;
+
+	}
+	else {
+*/
 		std::shared_ptr<OGLMaterial> mat( new OGLMaterial() );
 		for( int i=0; i<component.params.size(); ++i ){
 			if( parse::to_lower(component.params[i].tag)=="diffuse" || parse::to_lower(component.params[i].tag)=="color" ){
@@ -375,7 +399,7 @@ static std::shared_ptr<BaseMaterial> default_build_material( Component &componen
 		}
 		std::shared_ptr<BaseMaterial> new_mat( mat );
 		return new_mat;
-	}
+//	}
 
 	//
 	//	Unknown
