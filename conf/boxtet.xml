@@ -2,13 +2,13 @@
 <mclScene>
 
 	<Object name="box" type="PointCloud" >
-		<File type="string" value="simplebox.node" />
-		<Material type="string" value="blue_diff" />
+		<File value="simplebox.node" />
+		<Material value="blue_diff" />
 	</Object>
 
 	<Material name="blue_diff" type="ogl"  >
-		<Diffuse type="vec3" value="120  120  255" />
-		<edges type="vec3" value="0  0  0" />
+		<Diffuse value="120  120  255" />
+		<edges value="0  0  0" />
 	</Material>
 
 </mclScene>

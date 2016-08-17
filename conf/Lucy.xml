@@ -3,20 +3,20 @@
 
 	<Object name="bunny1" type="TriMesh" >
 
-		<File type="string" value="lucy.ply" />
+		<File value="lucy.ply" />
 
-		<XForm type="scale" value="1  1  1" />
-		<XForm type="translate" value="0  0.2  0" />
-		<XForm type="rotate" value="-90  0  0" />
+		<scale value="1  1  1" />
+		<translate value="0  0.2  0" />
+		<rotate value="-90  0  0" />
 
 
-		<Material type="string" value="red_spec" />
+		<Material value="red_spec" />
 	</Object>
 
 
 	<Material name="red_spec" type="specular"  >
-		<Diffuse type="vec3" value="255  120  120" />
-		<Specular type="vec3" value=".3 .3 .3" />
+		<Diffuse value="255  120  120" />
+		<Specular value=".3 .3 .3" />
 	</Material>
 
 </mclScene>

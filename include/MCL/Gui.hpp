@@ -22,8 +22,10 @@
 #ifndef MCLSCENE_GUI_H
 #define MCLSCENE_GUI_H 1
 
+#include <GL/glew.h>
 #include "TextureManager.hpp"
 #include "SceneManager.hpp"
+#include "ShaderProgram.hpp"
 #include <png.h>
 #include "SFML/Window.hpp"
 #include "GLCamera.h"
@@ -60,7 +62,7 @@ protected:
 	virtual void check_mouse( const sf::Event &event, const float screen_dt );
 
 	void draw_background();
-
+ShaderProgram * shader;
 	void load_textures();
 	TextureManager m_textures;
 

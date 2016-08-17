@@ -58,10 +58,19 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 	xform x_form;
 	std::string material = "";
 	for( int i=0; i<obj.params.size(); ++i ){
-		if( parse::to_lower(obj.params[i].tag)=="xform" ){
+
+		std::string tag = parse::to_lower(obj.params[i].tag);
+
+		if( tag=="translate" ){
 			x_form = x_form * obj.params[i].as_xform();
 		}
-		else if( parse::to_lower(obj.params[i].tag)=="material" ){
+		else if( tag=="scale" ){
+			x_form = x_form * obj.params[i].as_xform();
+		}
+		else if( tag=="rotate" ){
+			x_form = x_form * obj.params[i].as_xform();
+		}
+		else if( tag=="material" ){
 			material = obj.params[i].as_string();
 		}
 	}
@@ -215,7 +224,7 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 
 
 	//
-	//	Beam
+	//	Torus
 	//
 	else if( type == "torus" ){
 

@@ -76,16 +76,12 @@ int NewGui::display(){
 	glfwWindowHint(GLFW_SAMPLES, 4); // anti aliasing
 	glEnable(GL_MULTISAMPLE);
 	window = glfwCreateWindow(1024, 768, "Viewer", NULL, NULL);
-	if( !window ){
-		glfwTerminate();
-		return false;
-	}
+	if( !window ){ glfwTerminate(); return false; }
 
 	// Set default callbacks
 	if( !init_callbacks( window ) ){ return (EXIT_FAILURE); }
 
 	glfwMakeContextCurrent(window);
-	//    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 	glfwSwapInterval(1);
 
 	glewInit();

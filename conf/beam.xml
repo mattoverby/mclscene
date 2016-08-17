@@ -3,20 +3,20 @@
 
 	<Object name="uniform_beam_tess5" type="beam" >
 
-		<XForm type="scale" value="1  1  1" />
-		<XForm type="translate" value="0  0  0" />
-		<XForm type="rotate" value="0  0  0" />
+		<scale value="1  1  1" />
+		<translate value="0  0  0" />
+		<rotate value="0  0  0" />
 
-		<tess type="int" value="4" />
-		<chunks type="int" value="5" />
+		<tess value="4" />
+		<chunks value="5" />
 
-		<Material type="string" value="blue_diff" />
+		<Material value="blue_diff" />
 	</Object>
 
 
 	<Material name="blue_diff" type="diffuse">
-		<Diffuse type="vec3" value="120  120  255" />
-		<edges type="vec3" value="190  190  255" />
+		<Diffuse value="120  120  255" />
+		<edges value="190  190  255" />
 	</Material>
 
 </mclScene>

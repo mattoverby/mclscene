@@ -77,7 +77,7 @@ namespace parse {
 //
 class Param {
 public:
-	Param( std::string tag_, std::string value_, std::string type_ ) : tag(tag_), value(value_), type(type_) {}
+	Param( std::string tag_, std::string value_ ) : tag(tag_), value(value_) {}
 
 	double as_double() const;
 	char as_char() const;
@@ -94,7 +94,6 @@ public:
 	// Stores the parsed data
 	std::string tag;
 	std::string value; // string value
-	std::string type; // string type
 
 	// Some useful vec3 functions:
 	void normalize();
@@ -127,31 +126,35 @@ static void load_params( std::vector<Param> &params, const pugi::xml_node &curr_
 		pugi::xml_node curr_param = *param;
 
 		std::string tag = parse::to_lower( curr_param.name() );
-		std::string type_id = curr_param.attribute("type").value();
 		std::string value = curr_param.attribute("value").value();
-		Param newP( tag, value, type_id );
+		Param newP( tag, value );
 
-		if( tag == "xform" ){
+		if( tag == "scale" ){
+			std::stringstream ss( value );
+			trimesh::vec v; ss >> v[0] >> v[1] >> v[2];
+			trimesh::xform x_form = trimesh::xform::scale(v[0],v[1],v[2]);
+			std::stringstream xf_ss; xf_ss << x_form;
+			newP.value = xf_ss.str();
+		}
 
+		else if( tag == "translate" ){
+			std::stringstream ss( value );
+			trimesh::vec v; ss >> v[0] >> v[1] >> v[2];
+			trimesh::xform x_form = trimesh::xform::trans(v[0],v[1],v[2]);
+			std::stringstream xf_ss; xf_ss << x_form;
+			newP.value = xf_ss.str();
+		}
+
+		else if( tag == "translate" ){
 			std::stringstream ss( value );
 			trimesh::vec v; ss >> v[0] >> v[1] >> v[2];
 
-			trimesh::xform x_form;
-
-			if( parse::to_lower(type_id) == "scale" ){
-				x_form = trimesh::xform::scale(v[0],v[1],v[2]);
-			}
-			else if( parse::to_lower(type_id) == "translate" ){
-				x_form = trimesh::xform::trans(v[0],v[1],v[2]);
-			}
-			else if( parse::to_lower(type_id) == "rotate" ){
 				v *= (M_PI/180.f); // convert to radians
 				trimesh::xform rot;
 				rot = rot * trimesh::xform::rot( v[0], trimesh::vec(1.f,0.f,0.f) );
 				rot = rot * trimesh::xform::rot( v[1], trimesh::vec(0.f,1.f,0.f) );
 				rot = rot * trimesh::xform::rot( v[2], trimesh::vec(0.f,0.f,1.f) );
-				x_form = rot;
-			}
+				trimesh::xform x_form = rot;
 
 			std::stringstream xf_ss; xf_ss << x_form;
 			newP.value = xf_ss.str();

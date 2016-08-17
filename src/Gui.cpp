@@ -48,7 +48,12 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 		sf::Style::Default, settings ) );
 	window.get()->setVerticalSyncEnabled(true);
 
+	glewInit();
 	load_textures();
+
+	shader = new ShaderProgram();
+	shader->initFromFiles("simpleshader.vert", "simpleshader.frag");
+
 
 	// If there are no lights, add a default one
 	if( scene->lights.size() == 0 ){
@@ -262,34 +267,19 @@ void Gui::setup_lighting( const std::vector<std::shared_ptr<BaseLight> > &lights
 } // end setup lighting
 
 
-// Draw triangle strips.  They are stored as length followed by values. By Szymon Rusinkiewicz
+// Draw triangle strips.
 void Gui::draw_tstrips( const trimesh::TriMesh *themesh ){
 
-	static bool use_glArrayElement = false;
-	static bool tested_renderer = false;
-	if (!tested_renderer) {
-		use_glArrayElement = !!strstr(
-			(const char *) glGetString(GL_RENDERER), "Intel");
-		tested_renderer = true;
-	}
-
+//shader->enable();
 	const int *t = &themesh->tstrips[0];
 	const int *end = t + themesh->tstrips.size();
-	if (use_glArrayElement) {
-		while (likely(t < end)) {
-			glBegin(GL_TRIANGLE_STRIP);
-			int striplen = *t++;
-			for (int i = 0; i < striplen; i++)
-				glArrayElement(*t++);
-			glEnd();
-		}
-	} else {
-		while (likely(t < end)) {
-			int striplen = *t++;
-			glDrawElements(GL_TRIANGLE_STRIP, striplen, GL_UNSIGNED_INT, t);
-			t += striplen;
-		}
+	while (likely(t < end)) {
+		int striplen = *t++;
+		glDrawElements(GL_TRIANGLE_STRIP, striplen, GL_UNSIGNED_INT, t);
+		t += striplen;
 	}
+
+//shader->disable();
 
 }
 
