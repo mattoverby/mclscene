@@ -61,11 +61,11 @@ public:
 		if( mode == 0 ){
 			std::stringstream xml;
 			xml << "\t<Light name=\"" << light_name << "\" type=\"ogl\" >\n";
-			xml << "\t\t<Ambient type=\"vec3\" value=\"" << m_ambient.str() << "\" />\n";
-			xml << "\t\t<Diffuse type=\"vec3\" value=\"" << m_diffuse.str() << "\" />\n";
-			xml << "\t\t<Specular type=\"vec3\" value=\"" << m_specular.str() << "\" />\n";
-			if( m_type==0 ){ xml << "\t\t<Direction type=\"vec3\" value=\"" << m_pos.str() << "\" />\n"; }
-			else { xml << "\t\t<Position type=\"vec3\" value=\"" << m_pos.str() << "\" />\n"; }
+			xml << "\t\t<Ambient value=\"" << m_ambient.str() << "\" />\n";
+			xml << "\t\t<Diffuse value=\"" << m_diffuse.str() << "\" />\n";
+			xml << "\t\t<Specular value=\"" << m_specular.str() << "\" />\n";
+			if( m_type==0 ){ xml << "\t\t<Direction value=\"" << m_pos.str() << "\" />\n"; }
+			else { xml << "\t\t<Position value=\"" << m_pos.str() << "\" />\n"; }
 			xml << "\t</Light>";
 			return xml.str();
 		}

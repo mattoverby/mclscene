@@ -77,16 +77,12 @@ int NewGui::display(){
 	glfwWindowHint(GLFW_SAMPLES, 4); // anti aliasing
 	glEnable(GL_MULTISAMPLE);
 	window = glfwCreateWindow(1024, 768, "Viewer", NULL, NULL);
-	if( !window ){
-		glfwTerminate();
-		return false;
-	}
+	if( !window ){ glfwTerminate(); return false; }
 
 	// Set default callbacks
 	if( !init_callbacks( window ) ){ return (EXIT_FAILURE); }
 
 	glfwMakeContextCurrent(window);
-	//    gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 	glfwSwapInterval(1);
 
 	glewInit();
@@ -157,9 +153,11 @@ bool NewGui::init_callbacks( GLFWwindow* window ){
 
 bool NewGui::init_shaders(){
 
-	shader = new ShaderProgram();
+	renderer.init( scene );
 
-	shader->initFromFiles("simpleshader.vert", "simpleshader.frag");
+//	shader = new ShaderProgram();
+//
+//	shader->initFromFiles("simpleshader.vert", "simpleshader.frag");
 
 
 //	for( int i=0; i<scene->objects.size(); ++i ){
@@ -171,42 +169,10 @@ bool NewGui::init_shaders(){
 
 void NewGui::draw_meshes(GLFWwindow* window){
 
-	for( int i=0; i<scene->objects.size(); ++i ){
-		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
-		if( themesh==NULL ){ continue; }
-
-		// Vertices
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer( 3, GL_FLOAT, sizeof(themesh->vertices[0]), &themesh->vertices[0][0] );
-
-		// Normals
-		if (!themesh->normals.empty() ) {
-			glEnableClientState(GL_NORMAL_ARRAY);
-			glNormalPointer( GL_FLOAT, sizeof(themesh->normals[0]), &themesh->normals[0][0] );
-		} else { glDisableClientState(GL_NORMAL_ARRAY); }
-
-		
-		if( scene->objects[i]->get_type()=="pointcloud" ){
-			glColor3f(1,0,0);
-			glPointSize(3.f);
-			glDrawArrays(GL_POINTS, 0, themesh->vertices.size());
-		} // end draw vertices as points
-		else{
-			shader->enable();
-
-			// Triangle strips
-			const int *t = &themesh->tstrips[0];
-			const int *end = t + themesh->tstrips.size();
-			while (likely(t < end)) {
-				int striplen = *t++;
-				glDrawElements(GL_TRIANGLE_STRIP, striplen, GL_UNSIGNED_INT, t);
-				t += striplen;
-			}
-
-			shader->disable();
-		} // end draw as triangle mesh
-
-	} // end loop scene objects
+	renderer.draw_objects();
+//	for( int i=0; i<scene->objects.size(); ++i ){
+//		renderer.draw( scene->objects[i] );
+//	} // end loop scene objects
 
 }
 

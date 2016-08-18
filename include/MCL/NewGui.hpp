@@ -26,10 +26,11 @@
 #include "MCL/SceneManager.hpp"
 #include <linmath.h>
 
-#include <GL/glew.h>
+#include "RenderGL.hpp"
+//#include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "MCL/ShaderProgram.hpp"
-#include "MCL/RenderUtils.hpp"
+//#include "MCL/ShaderProgram.hpp"
+//#include "MCL/RenderUtils.hpp"
 
 namespace mcl {
 
@@ -62,6 +63,7 @@ protected:
 	GLfloat zoom; // zooming in and out
 	ShaderProgram *shader;
 	std::vector< trimesh::TriMesh* > mesh_pointers;
+	RenderGL renderer;
 
 	std::vector< std::function<void ( GLFWwindow* window, float screen_dt )> > render_callbacks;
 

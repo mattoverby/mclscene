@@ -2,48 +2,48 @@
 <mclScene>
 
 	<background name="bg" type="jpg"  >
-		<file type="string" value="bg.jpg" />
-		<floor type="bool" value="0" />
+		<file value="bg.jpg" />
+		<floor value="0" />
 	</background>
 
 	<Object name="bunny1" type="trimesh" >
 
-		<File type="string" value="box768.ply" />
+		<File value="box768.ply" />
 
-		<XForm type="scale" value=".1  .1  .1" />
-		<XForm type="translate" value="0  0.2  0" />
-		<XForm type="rotate" value="0  0  0" />
+		<scale value=".1  .1  .1" />
+		<translate value="0  0.2  0" />
+		<rotate value="0  0  0" />
 
 
-		<Material type="string" value="green_spec" />
+		<Material value="green_spec" />
 	</Object>
 
-	<Object name="bunny2" type="pointcloud" >
+	<Object name="bunny2" type="tetmesh" >
 
-		<File type="string" value="bunny562faces.1.node" />
+		<File value="bunny562faces.1" />
 
-		<XForm type="scale" value="1  1  1" />
-		<XForm type="translate" value="0  0.4  0" />
-		<XForm type="rotate" value="0  0  0" />
+		<Scale value="1  1  1" />
+		<Translate value="0  0.4  0" />
+		<Rotate value="0  0  0" />
 
 
-		<Material type="string" value="blue_diff" />
+		<Material value="blue_diff" />
 	</Object>
 
 
 	<Material name="red_spec" type="ogl"  >
-		<Diffuse type="vec3" value="255  120  120" />
-		<Specular type="vec3" value=".2 .2 .2" />
+		<Diffuse value="255  120  120" />
+		<Specular value=".2 .2 .2" />
 	</Material>
 
 	<Material name="green_spec" type="ogl"  >
-		<Diffuse type="vec3" value="120  250  120" />
-		<Specular type="vec3" value=".2 .2 .2" />
+		<Diffuse value="120  250  120" />
+		<Specular value=".2 .2 .2" />
 	</Material>
 
 	<Material name="blue_diff" type="ogl"  >
-		<Diffuse type="vec3" value="120  120  255" />
-		<edges type="vec3" value="0  0  0" />
+		<Diffuse value="120  120  255" />
+		<edges value="0  0  0" />
 	</Material>
 
 </mclScene>

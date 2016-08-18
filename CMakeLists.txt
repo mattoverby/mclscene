@@ -98,6 +98,7 @@ set( MCLSCENE_SRCS
 	include/MCL/AABB.hpp
 	include/MCL/Material.hpp
 	include/MCL/Simulator.hpp
+	include/MCL/RenderGL.hpp	src/RenderGL.cpp
 	include/MCL/RayIntersect.hpp
 	include/MCL/DefaultBuilders.hpp
 )

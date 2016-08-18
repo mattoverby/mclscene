@@ -145,8 +145,8 @@ std::string TriangleMesh::get_xml( std::string obj_name, int mode ){
 	if( mode == 0 ){
 		std::stringstream xml;
 		xml << "\t<Object name=\"" << obj_name << "\" type=\"TriMesh\" >\n";
-		xml << "\t\t<File type=\"string\" value=\"" << plyfile.str() << "\" />\n";
-		xml << "\t\t<Material type=\"string\" value=\"" << material << "\" />\n";
+		xml << "\t\t<File value=\"" << plyfile.str() << "\" />\n";
+		xml << "\t\t<Material value=\"" << material << "\" />\n";
 		xml << "\t</Object>";
 		return xml.str();
 	}

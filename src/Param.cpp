@@ -66,29 +66,42 @@ trimesh::xform Param::as_xform() const {
 }
 
 void Param::normalize(){
-	if(type=="vec3"){
+std::cout << "TODO: Param::normalize" << std::endl;
+
+	// vec2, vec3, or vec4?
+	std::stringstream sscheck( as_string() );
+	int num_elem = 0;
+	while( sscheck.good() ){ float buff; sscheck >> buff; num_elem++; }
+
+	if(num_elem==3){
 		trimesh::vec v = as_vec3();
 		trimesh::normalize( v );
 		std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2];
 		value = ss.str();
 	}
-	else if(type=="vec2"){
+	else if(num_elem==2){
 		trimesh::vec2 v = as_vec2();
 		trimesh::normalize( v );
 		std::stringstream ss; ss << v[0] << ' ' << v[1];
 		value = ss.str();
 	}
-	else if(type=="vec4"){
+	else if(num_elem==4){
 		trimesh::vec4 v = as_vec4();
 		trimesh::normalize( v );
 		std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2] << ' ' << v[3];
 		value = ss.str();
 	}
+
 }
 
 void Param::fix_color(){
 
-	if(type=="vec3"){
+	// vec2, vec3, or vec4?
+	std::stringstream sscheck( as_string() );
+	int num_elem = 0;
+	while( sscheck.good() ){ float buff; sscheck >> buff; num_elem++; }
+
+	if(num_elem==3){
 		trimesh::vec c = as_vec3();
 
 		for( int ci=0; ci<3; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
@@ -97,7 +110,7 @@ void Param::fix_color(){
 		std::stringstream ss; ss << c[0] << ' ' << c[1] << ' ' << c[2];
 		value = ss.str();
 	}
-	else if(type=="vec2"){
+	else if(num_elem==2){
 		trimesh::vec2 c = as_vec2();
 
 		for( int ci=0; ci<2; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
@@ -106,7 +119,7 @@ void Param::fix_color(){
 		std::stringstream ss; ss << c[0] << ' ' << c[1];
 		value = ss.str();
 	}
-	else if(type=="vec4"){
+	else if(num_elem==4){
 		trimesh::vec4 c = as_vec4();
 
 		for( int ci=0; ci<4; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
@@ -116,7 +129,6 @@ void Param::fix_color(){
 		value = ss.str();
 	}
 
-
 }
 
 
@@ -125,7 +137,7 @@ mcl::Param &Component::get( std::string tag ){
 		if( params[i].tag == tag ){ return params[i]; }
 	}
 	// not found, add it
-	params.push_back( mcl::Param(tag,"","string") );
+	params.push_back( mcl::Param(tag,"") );
 	return params.back();
 }
 
