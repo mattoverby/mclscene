@@ -42,8 +42,9 @@ NewGui::NewGui( mcl::SceneManager *scene_, mcl::Simulator *sim_ ) : scene(scene_
 	cursorY = 0.f;
 	alpha = 0.f;
 	beta = 0.f;
-	zoom = 2.f;
+	zoom = 16.f;
 	run_simulation = false;
+	save_screenshots = false;
 	screen_dt = 0.f;
 
 	// Create a vector of triangle mesh pointer for the simulator
@@ -125,6 +126,7 @@ int NewGui::display(){
 		for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, screen_dt ); }
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+		if(save_screenshots){ save_screenshot(window); }
 	}
 
 	return (EXIT_SUCCESS);
@@ -258,6 +260,10 @@ void NewGui::key_callback(GLFWwindow* window, int key, int scancode, int action,
         case GLFW_KEY_P:
 		if( sim ){ sim->step( screen_dt ); }
             break;
+	case GLFW_KEY_S:
+		save_screenshots=!save_screenshots;
+		std::cout << "save screenshots: " << (int)save_screenshots << std::endl;
+		break;
         default:
             break;
     }
@@ -295,6 +301,29 @@ void NewGui::framebuffer_size_callback(GLFWwindow* window, int width, int height
 	glMatrixMode(GL_PROJECTION);
 	mat4x4_perspective(projection, 60.f * (float) M_PI / 180.f, ratio, 1.f, 1024.f );
 	glLoadMatrixf( (const GLfloat*) projection );
+
+}
+
+
+void NewGui::save_screenshot(GLFWwindow* window){
+
+	std::string MY_DATE_FORMAT = "h%H_m%M_s%S";
+	const int MY_DATE_SIZE = 20;
+	static char name[MY_DATE_SIZE];
+	time_t now = time(0);
+	strftime(name, sizeof(name), MY_DATE_FORMAT.c_str(), localtime(&now));
+
+	int w, h;
+	glfwGetFramebufferSize(window, &w, &h);
+
+	std::stringstream filename;
+	filename << MCLSCENE_BUILD_DIR << "/screenshot_" << name << ".png";
+	unsigned char *pixels = new unsigned char[w*h*3];
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(0,0, w,h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+	mcl::Draw::flip_image(w,h, pixels);
+	mcl::Draw::save_png(filename.str().c_str(), w,h, pixels);
+	delete[] pixels;
 
 }
 

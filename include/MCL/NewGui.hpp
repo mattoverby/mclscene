@@ -53,6 +53,7 @@ public:
 
 protected:
 	bool run_simulation;
+	bool save_screenshots;
 	float screen_dt;
 	SceneManager *scene;
 	Simulator *sim;
@@ -64,6 +65,7 @@ protected:
 
 	std::vector< std::function<void ( GLFWwindow* window, float screen_dt )> > render_callbacks;
 
+	void save_screenshot(GLFWwindow* window);
 	bool init_callbacks(GLFWwindow* window);
 	bool init_shaders();
 	void clear_screen(GLFWwindow* window);
