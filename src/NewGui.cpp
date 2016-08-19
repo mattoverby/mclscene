@@ -48,11 +48,27 @@ NewGui::NewGui( mcl::SceneManager *scene_, mcl::Simulator *sim_ ) : scene(scene_
 	screen_dt = 0.f;
 
 	// Create a vector of triangle mesh pointer for the simulator
-	for( int i=0; i<scene->objects.size(); ++i ){
-		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
+	std::vector< std::vector<mcl::Param> > params;
+	std::unordered_map< std::string, std::shared_ptr<BaseObject> >::iterator it = scene->objects_map.begin();
+	for( it; it != scene->objects_map.end(); ++it ){
+		trimesh::TriMesh *themesh = it->second->get_TriMesh().get();
 		if( themesh==NULL ){ continue; }
 		mesh_pointers.push_back( themesh );
+		params.push_back( scene->object_params[ it->first ] );
 	}
+//	for( int i=0; i<scene->objects.size(); ++i ){
+//		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
+//		if( themesh==NULL ){ continue; }
+//		mesh_pointers.push_back( themesh );
+//		params[
+//	}
+
+	// Initialize the simulator
+	if( sim ){
+		if( !sim->initialize(mesh_pointers, params) ){
+			throw std::runtime_error( "\n**NewGui::display Error: Problem initializing the simulator" );
+		}
+	} // end init sim
 }
 
 
@@ -60,14 +76,6 @@ NewGui::NewGui( mcl::SceneManager *scene_ ) : NewGui(scene_,0) {}
 
 
 int NewGui::display(){
-
-	// Initialize the simulator
-	if( sim ){
-		if( !sim->initialize(mesh_pointers) ){
-			std::cerr << "\n**NewGui::display Error: Problem initializing the simulator" << std::endl;
-			return EXIT_FAILURE;
-		}
-	} // end init sim
 
 	GLFWwindow* window;
 	glfwSetErrorCallback(&Input::error_callback);

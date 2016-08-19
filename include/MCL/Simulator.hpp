@@ -23,6 +23,7 @@
 #define MCLSCENE_SIMULATION_H 1
 
 #include "TriMesh.h"
+#include "MCL/Param.hpp"
 
 namespace mcl {
 
@@ -43,7 +44,8 @@ namespace mcl {
 class Simulator  {
 public:
 
-	virtual bool initialize( const std::vector< trimesh::TriMesh* > &meshes ) = 0;
+	virtual bool initialize( const std::vector< trimesh::TriMesh* > &meshes,
+		const std::vector< std::vector<mcl::Param> > &params ) = 0;
 	virtual bool step( float screen_dt ) = 0;
 	virtual bool update( std::vector< trimesh::TriMesh* > &meshes ) = 0;
 
