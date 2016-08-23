@@ -27,10 +27,7 @@
 #include <linmath.h>
 
 #include "RenderGL.hpp"
-//#include <GL/glew.h>
 #include <GLFW/glfw3.h>
-//#include "MCL/ShaderProgram.hpp"
-//#include "MCL/RenderUtils.hpp"
 
 namespace mcl {
 
@@ -61,17 +58,16 @@ protected:
 	double cursorX, cursorY;
 	GLfloat alpha, beta; // for screen rotations
 	GLfloat zoom; // zooming in and out
-	ShaderProgram *shader;
 	std::vector< trimesh::TriMesh* > mesh_pointers;
 	RenderGL renderer;
+	trimesh::XForm<float> view, projection, model;
 
 	std::vector< std::function<void ( GLFWwindow* window, float screen_dt )> > render_callbacks;
 
 	void save_screenshot(GLFWwindow* window);
 	bool init_callbacks(GLFWwindow* window);
-	bool init_shaders();
 	void clear_screen(GLFWwindow* window);
-	void draw_meshes(GLFWwindow* window);
+
 	void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 	void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	void cursor_position_callback(GLFWwindow* window, double x, double y);

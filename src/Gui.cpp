@@ -51,8 +51,8 @@ Gui::Gui( SceneManager *scene_ ) : scene(scene_) {
 	glewInit();
 	load_textures();
 
-	shader = new ShaderProgram();
-	shader->initFromFiles("simpleshader.vert", "simpleshader.frag");
+//	shader = new ShaderProgram();
+//	shader->initFromFiles("simpleshader.vert", "simpleshader.frag");
 
 
 	// If there are no lights, add a default one

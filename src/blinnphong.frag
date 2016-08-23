@@ -1,45 +1,69 @@
 //#version 330 core
-//out vec4 color;
 
 in vec3 FragPos;
 in vec3 Normal;
-in vec3 EyePos;
+uniform vec3 CamPos;
 
-uniform vec3 diffuse;
-uniform vec3 specular;
-uniform float shininess;
-  
-//uniform vec3 lightPos; 
-//uniform vec3 viewPos;
-//uniform vec3 lightColor;
-//uniform vec3 objectColor;
+//
+//	Materials
+//
+struct Material {
+	vec3 diffuse;
+	vec3 specular;
+	float shininess;
+}; 
+uniform Material material;
 
-void main()
-{
-	vec3 lightColor = vec3(1,1,1);
-	vec3 lightPos = vec3(10,10,0);
+//
+//	Lights
+//
+struct PointLight {    
+	vec3 position;
+	vec3 intensity;
+};
+uniform int num_point_lights;
+#define MAX_NUM_LIGHTS 8
+uniform PointLight pointLights[MAX_NUM_LIGHTS];
 
-	// Ambient
-//	float ambientStrength = 0.1f;
-//	vec3 c_amb = ambientStrength * lightColor;
+//
+//	Color from a point light
+//
+vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir){
 
-	// Angle between light and surface normal
-	vec3 norm = normalize(Normal);
-	vec3 lightDir = normalize(lightPos - FragPos);
-	float cos_theta = dot( norm, lightDir );
+	vec3 lightDir = normalize( light.position - fragPos );
 
-	// Diffuse color
-	vec3 c_diff = diffuse * lightColor * max( 0.f, cos_theta );
+	// Diffuse 
+	float diff = max( dot(normal, lightDir), 0.f );
+	vec3 diffuse = diff * material.diffuse * light.intensity;
 
-	// Specular color coeff using Warn (1983) method
-	vec3 h = normalize( EyePos + lightDir ); // half vector
-	float hdn = max( 0.f, dot( h, norm ) );
-	vec3 c_spec = specular * lightColor * pow( hdn, shininess );
+	// Specular
+	vec3 halfVec = normalize(lightDir + viewDir);
+	float spec = pow( max( dot(normal, halfVec), 0.f ), material.shininess );
+	vec3 specular = spec * material.specular * light.intensity;
 
-	// Set the color
-	vec3 color = c_diff + c_spec;// + c_amb;
-	color.x = min( 1, color.x );
-	color.y = min( 1, color.y );
-	color.z = min( 1, color.z );
-	gl_FragColor = vec4( color, 1.0 );
+	// Attenuation (falloff)
+	float atten = 1.f;
+//	float dist = length( light.position - fragPos )*0.5f;
+//	float atten = 1.f / (1.f + 0.1f*dist + 0.01f*dist*dist);
+
+	// Final color
+	return ( diffuse + specular )*atten;
+}
+
+//
+//	Main
+//
+void main(){
+
+	vec3 result = (0,0,0);
+	vec3 normal = normalize(Normal);
+	vec3 viewDir = normalize(CamPos - FragPos);
+
+	for(int i = 0; i < num_point_lights; i++){
+		result += CalcPointLight(pointLights[i], normal, FragPos, viewDir );
+	}
+
+	gl_FragColor = vec4( result, 1.0 );
 } 
+
+

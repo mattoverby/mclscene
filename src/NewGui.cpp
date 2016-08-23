@@ -38,11 +38,15 @@ std::vector< std::function<void ( GLFWwindow* window, int width, int height )> >
 
 NewGui::NewGui( mcl::SceneManager *scene_, mcl::Simulator *sim_ ) : scene(scene_), sim(sim_) {
 	Input &input = Input::getInstance(); // initialize the singleton
+	float scene_rad = scene->get_bvh()->aabb->radius();
+	std::cout << "Scene Radius: " << scene_rad << std::endl;
+
+	zoom = fabs( scene_rad / sinf( 30.f/2.f ) );
+
 	cursorX = 0.f;
 	cursorY = 0.f;
 	alpha = 0.f;
 	beta = 0.f;
-	zoom = 16.f;
 	run_simulation = false;
 	save_screenshots = false;
 	screen_dt = 0.f;
@@ -94,7 +98,7 @@ int NewGui::display(){
 	glfwSwapInterval(1);
 
 	glewInit();
-	if( !init_shaders() ){ return EXIT_FAILURE; }
+	if( !renderer.init( scene, &model, &view, &projection  ) ){ return EXIT_FAILURE; }
 
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
@@ -104,6 +108,11 @@ int NewGui::display(){
 	glShadeModel(GL_SMOOTH); // Use Gouraud (smooth) shading
 	glEnable(GL_DEPTH_TEST); // Switch on the z-buffer
 	glClearColor(1,1,1,1); // Background color is white
+
+	// Initialize camera
+//	projection = trimesh::XForm<float>::identity(); //trimesh::xform::persp( 45.f, float(width)/float(height), 0.1f, 100.0f );
+//	model = trimesh::xform::rot( -55.0f, trimesh::vec3(1.0f, 0.0f, 0.0f) );
+//	view = trimesh::xform::trans( 0.0f, 0.0f, -3.0f ); 
 
 	// Game loop
 	float t_old = glfwGetTime();
@@ -126,7 +135,8 @@ int NewGui::display(){
 
 		// Render:
 		clear_screen(window);
-		draw_meshes(window);
+		renderer.draw_objects(); // draws all objects
+//		renderer.draw_lights();
 		for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, screen_dt ); }
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -159,46 +169,25 @@ bool NewGui::init_callbacks( GLFWwindow* window ){
 }
 
 
-bool NewGui::init_shaders(){
-
-	renderer.init( scene );
-
-//	shader = new ShaderProgram();
-//
-//	shader->initFromFiles("simpleshader.vert", "simpleshader.frag");
-
-
-//	for( int i=0; i<scene->objects.size(); ++i ){
-//	}
-
-	return true;
-}
-
-
-void NewGui::draw_meshes(GLFWwindow* window){
-
-	renderer.draw_objects();
-//	for( int i=0; i<scene->objects.size(); ++i ){
-//		renderer.draw( scene->objects[i] );
-//	} // end loop scene objects
-
-}
-
-
 void NewGui::clear_screen(GLFWwindow* window){
 
 	// Clear the color and depth buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// We don't want to modify the projection matrix
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+//	glMatrixMode(GL_MODELVIEW);
+//	glLoadIdentity();
 
 	// Move back
-	glTranslatef(0.0, 0.0, -zoom);
+//	glTranslatef(0.0, 0.0, -zoom);
 	// Rotate the view
-	glRotatef(beta, 1.0, 0.0, 0.0);
-	glRotatef(alpha, 0.0, 0.0, 1.0);
+//	glRotatef(beta, 1.0, 0.0, 0.0);
+//	glRotatef(alpha, 0.0, 0.0, 1.0);
+
+	// Update the model view matrices
+	model = trimesh::XForm<float>::rot( beta, trimesh::vec3(1.0f, 0.0f, 0.0f) ) *
+		trimesh::XForm<float>::rot( alpha, trimesh::vec3(0.f, 0.f, 1.f) );
+	view = trimesh::XForm<float>::trans( 0.0f, 0.0f, -zoom ); 
 
 } // end clear screne
 
@@ -247,8 +236,8 @@ void NewGui::key_callback(GLFWwindow* window, int key, int scancode, int action,
 void NewGui::cursor_position_callback(GLFWwindow* window, double x, double y){
 
 	if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED){
-		alpha += (GLfloat) (x - cursorX) / 10.f;
-		beta += (GLfloat) (y - cursorY) / 10.f;
+		alpha += (GLfloat) (x - cursorX) / 100.f;
+		beta += (GLfloat) (y - cursorY) / 100.f;
 		cursorX = x;
 		cursorY = y;
 	}
@@ -257,25 +246,21 @@ void NewGui::cursor_position_callback(GLFWwindow* window, double x, double y){
 
 
 void NewGui::scroll_callback(GLFWwindow* window, double x, double y){
-	zoom -= float(y) / 4.f;
+
+
+	zoom -= float(y);// / scene_d;
 	if( zoom < 0.f ){ zoom=0.f; }
 }
 
 
 void NewGui::framebuffer_size_callback(GLFWwindow* window, int width, int height){
 
+	float scene_d = scene->get_bvh()->aabb->radius()*2.f;
 	float ratio = 1.f;
-	mat4x4 projection;
 	if( height > 0 ){ ratio = (float) width / (float) height; }
 
-	// Setup viewport
 	glViewport(0, 0, width, height);
-
-	// Change to the projection matrix and set our viewing volume
-	glMatrixMode(GL_PROJECTION);
-	mat4x4_perspective(projection, 60.f * (float) M_PI / 180.f, ratio, 1.f, 1024.f );
-	glLoadMatrixf( (const GLfloat*) projection );
-
+	projection = trimesh::XForm<float>::persp( 30.f, ratio, 0.1f, scene_d*8.f );
 }
 
 

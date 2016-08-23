@@ -23,7 +23,8 @@
 #define MCLSCENE_RENDERGL_H 1
 
 #include <GL/glew.h>
-#include "MCL/ShaderProgram.hpp"
+//#include <GL/gl3w.h>
+#include "MCL/Shader.hpp"
 #include "MCL/RenderUtils.hpp"
 #include "MCL/SceneManager.hpp"
 
@@ -34,7 +35,7 @@ public:
 
 	// Initialize shaders. Must be called after
 	// OpenGL context has been created.
-	void init( mcl::SceneManager *scene_ );
+	bool init( mcl::SceneManager *scene_, trimesh::XForm<float> *model_ptr, trimesh::XForm<float> *view_ptr, trimesh::XForm<float> *projection_ptr );
 
 	// Draws a specific object with aspecificgiven material. If material is null,
 	// a default one is used (lambertian red). The object must have get_TriMesh()
@@ -49,9 +50,14 @@ public:
 	void draw_lights();
 
 private:
-	std::unique_ptr<ShaderProgram> blinnphong;
+	std::unique_ptr<Shader> blinnphong;
 	mcl::SceneManager *scene;
 	int sphereDisplayList;
+	std::vector< std::shared_ptr<OGLLight> > lights; // resized at init
+
+	trimesh::XForm<float> *model;
+	trimesh::XForm<float> *view;
+	trimesh::XForm<float> *projection;
 
 }; // end class RenderGL
 

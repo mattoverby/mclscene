@@ -43,25 +43,26 @@ option(MCL_BUILD_RENDERING "Build mclscene gui classes" ON)
 # trimesh, included in deps/
 set( TRIMESH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/trimesh2" )
 add_subdirectory( ${TRIMESH_DIR} ) # sets TRIMESH_INCLUDE and TRIMESH_SRCS
-include_directories( ${TRIMESH_INCLUDE} )
 
 # tetgen, included in deps/
 set( TETGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/tetgen" )
 add_subdirectory( ${TETGEN_DIR} ) # sets TETGEN_INCLUDE and TETGEN_SRCS
-include_directories( ${TETGEN_INCLUDE} )
 
-# GLFW3
-find_package(GLFW 3)
-set( GLFW_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw3" ) # Add glfw3 support headers
+if(MCL_BUILD_RENDERING)
 
-# Opengl and SFML used by the gui, not required
-find_package(OpenGL 4)
-find_package(SFML 2 COMPONENTS system window graphics)
+	# GLFW3
+	find_package(GLFW 3)
+	set( GLFW_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw3" ) # Add glfw3 support headers
 
-# GLEW for shader io
-find_package(GLEW)
-include_directories(${GLEW_INCLUDE_DIRS})
-link_libraries(${GLEW_LIBRARIES})
+	# Opengl and SFML used by the gui, not required
+	find_package(OpenGL 4)
+	find_package(SFML 2 COMPONENTS system window graphics)
+
+	# GLEW for shader io
+	find_package(GLEW)
+	link_libraries(${GLEW_LIBRARIES})
+
+endif(MCL_BUILD_RENDERING)
 
 # OpenMP, not required
 find_package(OpenMP)
@@ -73,7 +74,6 @@ endif()
 # Boost
 set( Boost_USE_STATIC_LIBS ON )
 find_package( Boost COMPONENTS filesystem system REQUIRED )
-include_directories( ${Boost_INCLUDE_DIR} )
 
 #
 #	mclscene library
@@ -96,6 +96,7 @@ set( MCLSCENE_SRCS
 	include/MCL/Camera.hpp		src/Camera.cpp
 	include/MCL/Light.hpp
 	include/MCL/AABB.hpp
+	include/MCL/Shader.hpp
 	include/MCL/Material.hpp
 	include/MCL/Simulator.hpp
 	include/MCL/RenderGL.hpp	src/RenderGL.cpp
@@ -105,25 +106,23 @@ set( MCLSCENE_SRCS
 
 # Create the library
 if(MCL_BUILD_RENDERING)
-
 	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} include/MCL/Gui.hpp src/Gui.cpp include/MCL/NewGui.hpp src/NewGui.cpp )
-	add_library( mclscene ${TRIMESH_SRCS} ${TETGEN_SRCS} ${MCLSCENE_SRCS} )
 	set( MCLSCENE_LIBRARIES mclscene ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${SFML_LIBRARIES} ${Boost_LIBRARIES} png )
-	include_directories( ${SFML_INCLUDE_DIRS} ${OpenGL_INCLUDE_DIRS} ${GLFW_INCLUDE_DIR} )
+	set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${TRIMESH_INCLUDE} ${TETGEN_INCLUDE} ${GLFW_INCLUDE_DIR}
+		${GLEW_INCLUDE_DIRS} ${GL3W_INCLUDE_DIR} ${Boost_INCLUDE_DIR} )
 	link_directories( ${OpenGL_LIBRARY_DIRS} ${GLFW3_LIBRARY_DIRS} ${SFML_LIBRARY_DIRS} )
-
 else(MCL_BUILD_RENDERING)
-
-	add_library( mclscene ${TRIMESH_SRCS} ${TETGEN_SRCS} ${MCLSCENE_SRCS} )
 	set( MCLSCENE_LIBRARIES mclscene ${Boost_LIBRARIES} )
-
+	set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${TRIMESH_INCLUDE} ${TETGEN_INCLUDE} ${Boost_INCLUDE_DIR} )
 endif(MCL_BUILD_RENDERING)
+include_directories( ${MCLSCENE_INCLUDE_DIRS} )
+add_library( mclscene ${TRIMESH_SRCS} ${TETGEN_SRCS} ${MCLSCENE_SRCS} )
 
 # Set the libraries variable in parent scope if exists
 get_directory_property(HasParent PARENT_DIRECTORY)
 if(HasParent)
 	set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} PARENT_SCOPE )
-	set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${TRIMESH_INCLUDE} ${TETGEN_INCLUDE} ${GLFW_INCLUDE_DIR} PARENT_SCOPE )
+	set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} PARENT_SCOPE )
 endif(HasParent)
 
 #

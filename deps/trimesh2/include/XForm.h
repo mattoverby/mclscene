@@ -17,6 +17,7 @@ Supports the following operations:
 	xf=xform::scale(sx,sy,sz);	// An xform that scales
 	xf=xform::ortho(l,r,b,t,n,f);   // Like GLortho
 	xf=xform::frustum(l,r,b,t,n,f);	// Like GLfrustum
+	xf=xform::persp(fovy,ar,n,f);	// Like GLperspective
 	glMultMatrixd(xf);		// Conversion to column-major array
 	bool ok = xf.read("file.xf");	// Read xform from file
 	xf.write("file.xf");		// Write xform to file
@@ -200,6 +201,14 @@ public:
 			        0, T(2)*n*rtb, 0, 0,
 				(r+l)*rrl, (t+b)*rtb, -(f+n)*rfn, -1,
 				0, 0, T(-2)*f*n*rfn, 0);
+	}
+	static XForm<T> persp( double fovy, double aspect, double zNear, double zFar ){
+		double xmin, xmax, ymin, ymax;
+		ymax = zNear * tan(fovy * M_PI / 180.0);
+		ymin = -ymax;
+		xmin = ymin * aspect;
+		xmax = ymax * aspect;
+		return frustum( xmin, xmax, ymin, ymax, zNear, zFar );
 	}
 	// Returns y*x^T, thinking of y and x as column 3-vectors
 	template <class S> static XForm<T> outer(const S &y, const S &x)

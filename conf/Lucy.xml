@@ -1,22 +1,22 @@
 <?xml version="1.0"?>
 <mclScene>
 
+	<light name="l1" type="ogl" >
+		<position type="vec3" value="0 10 0" />
+		<intensity type="vec3" value="1 1 1" />
+	</light>
+
 	<Object name="bunny1" type="TriMesh" >
-
 		<File value="lucy.ply" />
-
-		<scale value="1  1  1" />
-		<translate value="0  0.2  0" />
-		<rotate value="-90  0  0" />
-
-
+		<scale value=".01  .01  .01" />
 		<Material value="red_spec" />
 	</Object>
 
 
-	<Material name="red_spec" type="specular"  >
+	<Material name="red_spec" type="blinnphong"  >
 		<Diffuse value="255  120  120" />
-		<Specular value=".3 .3 .3" />
+		<Specular value=".6 .6 .6" />
+		<shininess value="32" />
 	</Material>
 
 </mclScene>
