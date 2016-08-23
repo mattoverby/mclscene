@@ -19,8 +19,8 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_NEWGUI_H
-#define MCLSCENE_NEWGUI_H 1
+#ifndef MCLSCENE_APPLICATION_H
+#define MCLSCENE_APPLICATION_H 1
 
 #include "MCL/Simulator.hpp"
 #include "MCL/SceneManager.hpp"
@@ -32,49 +32,58 @@
 namespace mcl {
 
 //
-//	NewGui Class
+//	Application Class
 //
 
-class NewGui {
+class Application {
 public:
+	struct Settings {
+		bool save_frames; // saves every render frame to a png
+		bool run_simulation; // run the simulator every frame
+		Settings() : save_frames(false), run_simulation(false) {}
+	};
+
 	// Initializes the the Input singleton so callbacks can be added
-	NewGui( mcl::SceneManager *scene_ );
+	Application( mcl::SceneManager *scene_ );
 
 	// Creates a gui with a combined simulation engine.
-	NewGui( mcl::SceneManager *scene_, mcl::Simulator *sim_ );
+	Application( mcl::SceneManager *scene_, mcl::Simulator *sim_ );
+
+	virtual ~Application(){}
 
 	// Starts the game loop and returns success status
-	int display();
+	virtual int display();
 
-	// Add a callback to the gui that's called every frame
+	// Add a callback to the gui to be called every frame
 	void add_callback( std::function<void ( GLFWwindow* window, float screen_dt )> &cb ){ render_callbacks.push_back( cb ); }
 
 protected:
-	bool run_simulation;
-	bool save_screenshots;
-	float screen_dt;
+	Settings settings;
+	RenderGL::AppCamera camera;
+	RenderGL renderer;
 	SceneManager *scene;
 	Simulator *sim;
+
+	// Runtime stuff:
+	float screen_dt;
 	double cursorX, cursorY;
 	GLfloat alpha, beta; // for screen rotations
 	GLfloat zoom; // zooming in and out
 	std::vector< trimesh::TriMesh* > mesh_pointers;
-	RenderGL renderer;
-	trimesh::XForm<float> view, projection, model;
 
-	std::vector< std::function<void ( GLFWwindow* window, float screen_dt )> > render_callbacks;
-
+	// Utility functions:
 	void save_screenshot(GLFWwindow* window);
 	bool init_callbacks(GLFWwindow* window);
-	void clear_screen(GLFWwindow* window);
 
+	// Callbacks:
+	std::vector< std::function<void ( GLFWwindow* window, float screen_dt )> > render_callbacks;
 	void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 	void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	void cursor_position_callback(GLFWwindow* window, double x, double y);
 	void scroll_callback(GLFWwindow* window, double x, double y);
 	void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
-}; // end class NewGui
+}; // end class Application
 
 
 //

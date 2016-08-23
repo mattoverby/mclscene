@@ -8,6 +8,7 @@ uniform vec3 CamPos;
 //	Materials
 //
 struct Material {
+	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
 	float shininess;
@@ -17,7 +18,7 @@ uniform Material material;
 //
 //	Lights
 //
-struct PointLight {    
+struct PointLight {
 	vec3 position;
 	vec3 intensity;
 };
@@ -32,6 +33,10 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir){
 
 	vec3 lightDir = normalize( light.position - fragPos );
 
+	// Ambient
+	float amb = 0.1f;
+	vec3 ambient = amb * material.ambient * light.intensity;
+
 	// Diffuse 
 	float diff = max( dot(normal, lightDir), 0.f );
 	vec3 diffuse = diff * material.diffuse * light.intensity;
@@ -42,12 +47,11 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir){
 	vec3 specular = spec * material.specular * light.intensity;
 
 	// Attenuation (falloff)
-	float atten = 1.f;
-//	float dist = length( light.position - fragPos )*0.5f;
-//	float atten = 1.f / (1.f + 0.1f*dist + 0.01f*dist*dist);
+	float dist = length( light.position - fragPos )*0.25f;
+	float atten = 1.f / (1.f + 0.1f*dist + 0.01f*dist*dist);
 
 	// Final color
-	return ( diffuse + specular )*atten;
+	return ( ambient + diffuse + specular )*atten;
 }
 
 //

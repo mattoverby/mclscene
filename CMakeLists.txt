@@ -56,7 +56,7 @@ if(MCL_BUILD_RENDERING)
 
 	# Opengl and SFML used by the gui, not required
 	find_package(OpenGL 4)
-	find_package(SFML 2 COMPONENTS system window graphics)
+#	find_package(SFML 2 COMPONENTS system window graphics)
 
 	# GLEW for shader io
 	find_package(GLEW)
@@ -79,7 +79,7 @@ find_package( Boost COMPONENTS filesystem system REQUIRED )
 #	mclscene library
 #
 
-# Set up the library, add gui sources if opengl/sfml are found
+# Set up the library, add gui sources if opengl/glfw are found
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 set( MCLSCENE_SRCS
 	include/MCL/SceneManager.hpp	src/SceneManager.cpp
@@ -106,11 +106,11 @@ set( MCLSCENE_SRCS
 
 # Create the library
 if(MCL_BUILD_RENDERING)
-	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} include/MCL/Gui.hpp src/Gui.cpp include/MCL/NewGui.hpp src/NewGui.cpp )
-	set( MCLSCENE_LIBRARIES mclscene ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${SFML_LIBRARIES} ${Boost_LIBRARIES} png )
+	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} include/MCL/Application.hpp src/Application.cpp )
+	set( MCLSCENE_LIBRARIES mclscene ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${Boost_LIBRARIES} png )
 	set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${TRIMESH_INCLUDE} ${TETGEN_INCLUDE} ${GLFW_INCLUDE_DIR}
 		${GLEW_INCLUDE_DIRS} ${GL3W_INCLUDE_DIR} ${Boost_INCLUDE_DIR} )
-	link_directories( ${OpenGL_LIBRARY_DIRS} ${GLFW3_LIBRARY_DIRS} ${SFML_LIBRARY_DIRS} )
+	link_directories( ${OpenGL_LIBRARY_DIRS} ${GLFW3_LIBRARY_DIRS} )
 else(MCL_BUILD_RENDERING)
 	set( MCLSCENE_LIBRARIES mclscene ${Boost_LIBRARIES} )
 	set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${TRIMESH_INCLUDE} ${TETGEN_INCLUDE} ${Boost_INCLUDE_DIR} )
@@ -144,8 +144,8 @@ if(MCL_BUILD_SAMPLES)
 		add_definitions( ${OpenGL_DEFINITIONS} )
 		add_executable( mesh_viewer samples/MeshViewer.cpp )
 		target_link_libraries( mesh_viewer mclscene ${MCLSCENE_LIBRARIES} )
-		add_executable( bvh_viewer samples/BVHViewer.cpp )
-		target_link_libraries( bvh_viewer ${MCLSCENE_LIBRARIES} )
+#		add_executable( bvh_viewer samples/BVHViewer.cpp )
+#		target_link_libraries( bvh_viewer ${MCLSCENE_LIBRARIES} )
 
 	endif(MCL_BUILD_RENDERING)
 

@@ -19,7 +19,7 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#include "MCL/NewGui.hpp"
+#include "MCL/Application.hpp"
 
 using namespace mcl;
 
@@ -33,23 +33,19 @@ std::vector< std::function<void ( GLFWwindow* window, double x, double y )> > mc
 std::vector< std::function<void ( GLFWwindow* window, int width, int height )> > mcl::Input::framebuffer_size_callbacks;
 
 //
-// NewGui
+// Application
 //
 
-NewGui::NewGui( mcl::SceneManager *scene_, mcl::Simulator *sim_ ) : scene(scene_), sim(sim_) {
+Application::Application( mcl::SceneManager *scene_, mcl::Simulator *sim_ ) : scene(scene_), sim(sim_) {
 	Input &input = Input::getInstance(); // initialize the singleton
 	float scene_rad = scene->get_bvh()->aabb->radius();
 	std::cout << "Scene Radius: " << scene_rad << std::endl;
 
 	zoom = fabs( scene_rad / sinf( 30.f/2.f ) );
-
 	cursorX = 0.f;
 	cursorY = 0.f;
 	alpha = 0.f;
 	beta = 0.f;
-	run_simulation = false;
-	save_screenshots = false;
-	screen_dt = 0.f;
 
 	// Create a vector of triangle mesh pointer for the simulator
 	std::vector< std::vector<mcl::Param> > params;
@@ -60,26 +56,20 @@ NewGui::NewGui( mcl::SceneManager *scene_, mcl::Simulator *sim_ ) : scene(scene_
 		mesh_pointers.push_back( themesh );
 		params.push_back( scene->object_params[ it->first ] );
 	}
-//	for( int i=0; i<scene->objects.size(); ++i ){
-//		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
-//		if( themesh==NULL ){ continue; }
-//		mesh_pointers.push_back( themesh );
-//		params[
-//	}
 
 	// Initialize the simulator
 	if( sim ){
 		if( !sim->initialize(mesh_pointers, params) ){
-			throw std::runtime_error( "\n**NewGui::display Error: Problem initializing the simulator" );
+			throw std::runtime_error( "\n**Application::display Error: Problem initializing the simulator" );
 		}
 	} // end init sim
 }
 
 
-NewGui::NewGui( mcl::SceneManager *scene_ ) : NewGui(scene_,0) {}
+Application::Application( mcl::SceneManager *scene_ ) : Application(scene_,0) {}
 
 
-int NewGui::display(){
+int Application::display(){
 
 	GLFWwindow* window;
 	glfwSetErrorCallback(&Input::error_callback);
@@ -91,72 +81,84 @@ int NewGui::display(){
 	window = glfwCreateWindow(1024, 768, "Viewer", NULL, NULL);
 	if( !window ){ glfwTerminate(); return false; }
 
-	// Set default callbacks
-	if( !init_callbacks( window ) ){ return (EXIT_FAILURE); }
+	if( !init_callbacks( window ) ){ return (EXIT_FAILURE); } // Set default callbacks
 
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1);
 
 	glewInit();
-	if( !renderer.init( scene, &model, &view, &projection  ) ){ return EXIT_FAILURE; }
+	if( !renderer.init( scene, &camera ) ){ return EXIT_FAILURE; } // creates shaders
 
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
-	framebuffer_size_callback(window, width, height);
+	framebuffer_size_callback(window, width, height); // sets the projection matrix
 
 	// Initialize OpenGL
-	glShadeModel(GL_SMOOTH); // Use Gouraud (smooth) shading
-	glEnable(GL_DEPTH_TEST); // Switch on the z-buffer
-	glClearColor(1,1,1,1); // Background color is white
-
-	// Initialize camera
-//	projection = trimesh::XForm<float>::identity(); //trimesh::xform::persp( 45.f, float(width)/float(height), 0.1f, 100.0f );
-//	model = trimesh::xform::rot( -55.0f, trimesh::vec3(1.0f, 0.0f, 0.0f) );
-//	view = trimesh::xform::trans( 0.0f, 0.0f, -3.0f ); 
+	glShadeModel(GL_SMOOTH);
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(1.f,1.f,1.f,1.f); // Background color is white
 
 	// Game loop
 	float t_old = glfwGetTime();
+	screen_dt = 0.f;
 	while( !glfwWindowShouldClose(window) ){
+
+		//
+		//	Update
+		//
 
 		float t = glfwGetTime();
 		screen_dt = t - t_old;
 		t_old = t;
 
 		// Simulation engine:
-		if( sim && run_simulation ){
-			bool s1 = sim->step( screen_dt );
-			bool s2 = sim->update( mesh_pointers );
-			if( !s1 ){ std::cerr << "\n**NewGui::display Error: Problem in simulation step" << std::endl; }
-			if( !s2 ){ std::cerr << "\n**NewGui::display Error: Problem in mesh update" << std::endl; }
+		if( sim && settings.run_simulation ){
+			if( !sim->step( screen_dt ) ){ std::cerr << "\n**Application::display Error: Problem in simulation step" << std::endl; }
+			if( !sim->update( mesh_pointers ) ){ std::cerr << "\n**Application::display Error: Problem in mesh update" << std::endl; }
 
 			// Recalculate normals for trimeshes and tetmeshes
 			for( int i=0; i<mesh_pointers.size(); ++i ){ mesh_pointers[i]->need_normals(true); }
 		}
 
-		// Render:
-		clear_screen(window);
-		renderer.draw_objects(); // draws all objects
-//		renderer.draw_lights();
-		for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, screen_dt ); }
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-		if(save_screenshots){ save_screenshot(window); }
-	}
+		//
+		//	Render
+		//
+
+		{ // Clear screen
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			camera.model = trimesh::XForm<float>::rot( beta, trimesh::vec3(1.0f, 0.0f, 0.0f) ) *
+				trimesh::XForm<float>::rot( alpha, trimesh::vec3(0.f, 0.f, 1.f) );
+			camera.view = trimesh::XForm<float>::trans( 0.0f, 0.0f, -zoom );
+		}
+
+		{ // Render scene stuff
+			renderer.draw_objects(); // draws all objects
+	//		renderer.draw_lights();
+			for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, screen_dt ); }
+		}
+
+		{ // Finalize:
+			glfwSwapBuffers(window);
+			glfwPollEvents();
+			if(settings.save_frames){ save_screenshot(window); }
+		}
+
+	} // end game loop
 
 	return (EXIT_SUCCESS);
 
 } // end display
 
 
-bool NewGui::init_callbacks( GLFWwindow* window ){
+bool Application::init_callbacks( GLFWwindow* window ){
 
 	// Add callbacks to the input class
 	using namespace std::placeholders;    // adds visibility of _1, _2, _3,...
-	Input::key_callbacks.push_back( std::bind( &NewGui::key_callback, this, _1, _2, _3, _4, _5 ) );
-	Input::mouse_button_callbacks.push_back( std::bind( &NewGui::mouse_button_callback, this, _1, _2, _3, _4 ) );
-	Input::cursor_position_callbacks.push_back( std::bind( &NewGui::cursor_position_callback, this, _1, _2, _3 ) );
-	Input::scroll_callbacks.push_back( std::bind( &NewGui::scroll_callback, this, _1, _2, _3 ) );
-	Input::framebuffer_size_callbacks.push_back( std::bind( &NewGui::framebuffer_size_callback, this, _1, _2, _3 ) );
+	Input::key_callbacks.push_back( std::bind( &Application::key_callback, this, _1, _2, _3, _4, _5 ) );
+	Input::mouse_button_callbacks.push_back( std::bind( &Application::mouse_button_callback, this, _1, _2, _3, _4 ) );
+	Input::cursor_position_callbacks.push_back( std::bind( &Application::cursor_position_callback, this, _1, _2, _3 ) );
+	Input::scroll_callbacks.push_back( std::bind( &Application::scroll_callback, this, _1, _2, _3 ) );
+	Input::framebuffer_size_callbacks.push_back( std::bind( &Application::framebuffer_size_callback, this, _1, _2, _3 ) );
 
 	// Bind them to the window
 	glfwSetKeyCallback(window, &Input::key_callback);
@@ -169,31 +171,7 @@ bool NewGui::init_callbacks( GLFWwindow* window ){
 }
 
 
-void NewGui::clear_screen(GLFWwindow* window){
-
-	// Clear the color and depth buffers
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	// We don't want to modify the projection matrix
-//	glMatrixMode(GL_MODELVIEW);
-//	glLoadIdentity();
-
-	// Move back
-//	glTranslatef(0.0, 0.0, -zoom);
-	// Rotate the view
-//	glRotatef(beta, 1.0, 0.0, 0.0);
-//	glRotatef(alpha, 0.0, 0.0, 1.0);
-
-	// Update the model view matrices
-	model = trimesh::XForm<float>::rot( beta, trimesh::vec3(1.0f, 0.0f, 0.0f) ) *
-		trimesh::XForm<float>::rot( alpha, trimesh::vec3(0.f, 0.f, 1.f) );
-	view = trimesh::XForm<float>::trans( 0.0f, 0.0f, -zoom ); 
-
-} // end clear screne
-
-
-
-void NewGui::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+void Application::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
 
     if (button != GLFW_MOUSE_BUTTON_LEFT){ return; }
@@ -208,7 +186,7 @@ void NewGui::mouse_button_callback(GLFWwindow* window, int button, int action, i
 
 
 
-void NewGui::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void Application::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (action != GLFW_PRESS){ return; }
 
@@ -218,14 +196,14 @@ void NewGui::key_callback(GLFWwindow* window, int key, int scancode, int action,
             glfwSetWindowShouldClose(window, GLFW_TRUE);
             break;
 	case GLFW_KEY_SPACE:
-		run_simulation = !run_simulation;
+		settings.run_simulation = !settings.run_simulation;
 		break;
         case GLFW_KEY_P:
 		if( sim ){ sim->step( screen_dt ); }
             break;
 	case GLFW_KEY_S:
-		save_screenshots=!save_screenshots;
-		std::cout << "save screenshots: " << (int)save_screenshots << std::endl;
+		settings.save_frames=!settings.save_frames;
+		std::cout << "save screenshots: " << (int)settings.save_frames << std::endl;
 		break;
         default:
             break;
@@ -233,7 +211,7 @@ void NewGui::key_callback(GLFWwindow* window, int key, int scancode, int action,
 }
 
 
-void NewGui::cursor_position_callback(GLFWwindow* window, double x, double y){
+void Application::cursor_position_callback(GLFWwindow* window, double x, double y){
 
 	if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED){
 		alpha += (GLfloat) (x - cursorX) / 100.f;
@@ -241,30 +219,28 @@ void NewGui::cursor_position_callback(GLFWwindow* window, double x, double y){
 		cursorX = x;
 		cursorY = y;
 	}
-
 }
 
 
-void NewGui::scroll_callback(GLFWwindow* window, double x, double y){
-
-
-	zoom -= float(y);// / scene_d;
+void Application::scroll_callback(GLFWwindow* window, double x, double y){
+	float scene_rad = scene->get_bvh()->aabb->radius();
+	zoom -= float(y) * (scene_rad);
 	if( zoom < 0.f ){ zoom=0.f; }
 }
 
 
-void NewGui::framebuffer_size_callback(GLFWwindow* window, int width, int height){
+void Application::framebuffer_size_callback(GLFWwindow* window, int width, int height){
 
 	float scene_d = scene->get_bvh()->aabb->radius()*2.f;
 	float ratio = 1.f;
 	if( height > 0 ){ ratio = (float) width / (float) height; }
 
 	glViewport(0, 0, width, height);
-	projection = trimesh::XForm<float>::persp( 30.f, ratio, 0.1f, scene_d*8.f );
+	camera.projection = trimesh::XForm<float>::persp( 30.f, ratio, 0.1f, scene_d*8.f );
 }
 
 
-void NewGui::save_screenshot(GLFWwindow* window){
+void Application::save_screenshot(GLFWwindow* window){
 
 	std::string MY_DATE_FORMAT = "h%H_m%M_s%S";
 	const int MY_DATE_SIZE = 20;

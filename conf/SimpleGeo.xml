@@ -7,12 +7,12 @@
 
 
 	<light name="l1" type="ogl" >
-		<position type="vec3" value="0 -4 0" />
+		<position type="vec3" value="0 -6 0" />
 		<intensity type="vec3" value="1 1 1" />
 	</light>
 
 	<light name="l2" type="ogl" >
-		<position type="vec3" value="0 4 0" />
+		<position type="vec3" value="0 6 0" />
 		<intensity type="vec3" value="1 1 1" />
 	</light>
 
@@ -35,10 +35,8 @@
 		<edges value="0  0  0" />
 	</Material>
 
-	<Material name="blue_diff" type="diffuse">
-		<Diffuse value="120  120  255" />
-		<specular value=".8 .8 .8" />
-		<shininess value="32" />
+	<Material name="blue_diff" type="ogl">
+		<preset value="emerald"/>
 	</Material>
 
 </mclScene>

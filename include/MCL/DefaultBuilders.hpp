@@ -347,64 +347,87 @@ static std::shared_ptr<BaseMaterial> default_build_material( Component &componen
 
 	std::string type = parse::to_lower(component.type);
 	std::string name = component.name;
+	std::string lname = parse::to_lower(name);
 
-/*
-	//
-	//	OpenGL Materials
-	//
-//	if( type == "ogl" ){
-	if( type=="glblinnphong" || type=="blinnphong" ){
+	std::shared_ptr<OGLMaterial> mat = NULL;
 
-		std::shared_ptr<glBlinnPhong> mat( new glBlinnPhong() );
+	// If its a preset, load the default values. We check this first
+	// in case they want to overwrite some of the values
+	for( int i=0; i<component.params.size(); ++i ){
 
-		for( int i=0; i<component.params.size(); ++i ){
-			if( parse::to_lower(component.params[i].tag)=="diffuse" || parse::to_lower(component.params[i].tag)=="color" ){
-				component.params[i].fix_color();
-				mat->diffuse=component.params[i].as_vec3();
-			}
-			else if( parse::to_lower(component.params[i].tag)=="specular" ){
-				component.params[i].fix_color();
-				mat->specular=component.params[i].as_vec3();
-			}
-			else if( parse::to_lower(component.params[i].tag)=="texture" ){
-				mat->m_texture=TextureResource( component.name, component.params[i].as_string() );
-			}
-			else if( parse::to_lower(component.params[i].tag)=="shininess" || parse::to_lower(component.params[i].tag)=="exponent" ){ mat->shininess=component.params[i].as_int(); }
+		if( parse::to_lower(component.params[i].tag)=="preset" ){
+			std::string preset = parse::to_lower(component.params[i].as_string());
+
+			// Gemstones
+			if( preset=="emerald"){ mat = make_material( MaterialPreset::Emerald ); }
+			else if( preset=="jade"){ mat = make_material( MaterialPreset::Jade ); }
+			else if( preset=="obsidian"){ mat = make_material( MaterialPreset::Obsidian ); }
+			else if( preset=="pearl"){ mat = make_material( MaterialPreset::Pearl ); }
+			else if( preset=="ruby"){ mat = make_material( MaterialPreset::Ruby ); }
+			else if( preset=="turquoise"){ mat = make_material( MaterialPreset::Turquoise ); }
+
+			// Metals
+			else if( preset=="brass"){ mat = make_material( MaterialPreset::Brass ); }
+			else if( preset=="bronze"){ mat = make_material( MaterialPreset::Bronze ); }
+			else if( preset=="chrome"){ mat = make_material( MaterialPreset::Chrome ); }
+			else if( preset=="copper"){ mat = make_material( MaterialPreset::Copper ); }
+			else if( preset=="gold"){ mat = make_material( MaterialPreset::Gold ); }
+			else if( preset=="silver"){ mat = make_material( MaterialPreset::Silver ); }
+
+			// Plastics
+			else if( preset=="blackplastic"){ mat = make_material( MaterialPreset::BlackPlastic ); }
+			else if( preset=="cyanplastic"){ mat = make_material( MaterialPreset::CyanPlastic ); }
+			else if( preset=="greenplastic"){ mat = make_material( MaterialPreset::GreenPlastic ); }
+			else if( preset=="redpastic"){ mat = make_material( MaterialPreset::RedPastic ); }
+			else if( preset=="whiteplastic"){ mat = make_material( MaterialPreset::WhitePlastic ); }
+			else if( preset=="yellowplastic"){ mat = make_material( MaterialPreset::YellowPlastic ); }
+
+			// Rubber
+			else if( preset=="blackrubber"){ mat = make_material( MaterialPreset::BlackRubber ); }
+			else if( preset=="cyanrubber"){ mat = make_material( MaterialPreset::CyanRubber ); }
+			else if( preset=="greenrubber"){ mat = make_material( MaterialPreset::GreenRubber ); }
+			else if( preset=="redrubber"){ mat = make_material( MaterialPreset::RedRubber ); }
+			else if( preset=="whiterubber"){ mat = make_material( MaterialPreset::WhiteRubber ); }
+			else if( preset=="yellowrubber"){ mat = make_material( MaterialPreset::YellowRubber ); }
 		}
 
-		std::shared_ptr<BaseMaterial> new_mat( mat );
-		return new_mat;
+	} // end check preset
+
+	if( mat == NULL ){ mat = std::shared_ptr<OGLMaterial>( new OGLMaterial() ); }
+
+	// Loop again for a change in params
+	for( int i=0; i<component.params.size(); ++i ){
+
+		if( parse::to_lower(component.params[i].tag)=="ambient" ){
+			component.params[i].fix_color();
+			mat->ambient=component.params[i].as_vec3();
+		}
+		else if( parse::to_lower(component.params[i].tag)=="diffuse" || parse::to_lower(component.params[i].tag)=="color" ){
+			component.params[i].fix_color();
+			mat->diffuse=component.params[i].as_vec3();
+		}
+		else if( parse::to_lower(component.params[i].tag)=="specular" ){
+			component.params[i].fix_color();
+			mat->specular=component.params[i].as_vec3();
+		}
+		else if( parse::to_lower(component.params[i].tag)=="texture" ){
+			mat->m_texture=TextureResource( component.name, component.params[i].as_string() );
+		}
+		else if( parse::to_lower(component.params[i].tag)=="edges" ){
+			component.params[i].fix_color();
+			mat->edge_color=component.params[i].as_vec3();
+		}
+		else if( parse::to_lower(component.params[i].tag)=="shininess" || parse::to_lower(component.params[i].tag)=="exponent" ){ mat->shininess=component.params[i].as_int(); }
 
 	}
-	else {
-*/
-		std::shared_ptr<OGLMaterial> mat( new OGLMaterial() );
-		for( int i=0; i<component.params.size(); ++i ){
-			if( parse::to_lower(component.params[i].tag)=="diffuse" || parse::to_lower(component.params[i].tag)=="color" ){
-				component.params[i].fix_color();
-				mat->diffuse=component.params[i].as_vec3();
-			}
-			else if( parse::to_lower(component.params[i].tag)=="specular" ){
-				component.params[i].fix_color();
-				mat->specular=component.params[i].as_vec3();
-			}
-			else if( parse::to_lower(component.params[i].tag)=="texture" ){
-				mat->m_texture=TextureResource( component.name, component.params[i].as_string() );
-			}
-			else if( parse::to_lower(component.params[i].tag)=="edges" ){
-				component.params[i].fix_color();
-				mat->edge_color=component.params[i].as_vec3();
-			}
-			else if( parse::to_lower(component.params[i].tag)=="shininess" || parse::to_lower(component.params[i].tag)=="exponent" ){ mat->shininess=component.params[i].as_int(); }
-		}
-		std::shared_ptr<BaseMaterial> new_mat( mat );
-		return new_mat;
-//	}
+	std::shared_ptr<BaseMaterial> new_mat( mat );
+	return new_mat;
+
 
 	//
 	//	Unknown
 	//
-	return NULL;
+//	return NULL;
 
 } // end build material
 

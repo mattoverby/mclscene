@@ -32,10 +32,13 @@ namespace mcl {
 
 class RenderGL  {
 public:
+	struct AppCamera {
+		trimesh::XForm<float> model, view, projection;
+	};
 
 	// Initialize shaders. Must be called after
 	// OpenGL context has been created.
-	bool init( mcl::SceneManager *scene_, trimesh::XForm<float> *model_ptr, trimesh::XForm<float> *view_ptr, trimesh::XForm<float> *projection_ptr );
+	bool init( mcl::SceneManager *scene_, AppCamera *cam_ );
 
 	// Draws a specific object with aspecificgiven material. If material is null,
 	// a default one is used (lambertian red). The object must have get_TriMesh()
@@ -52,12 +55,9 @@ public:
 private:
 	std::unique_ptr<Shader> blinnphong;
 	mcl::SceneManager *scene;
-	int sphereDisplayList;
-	std::vector< std::shared_ptr<OGLLight> > lights; // resized at init
+	AppCamera *camera;
 
-	trimesh::XForm<float> *model;
-	trimesh::XForm<float> *view;
-	trimesh::XForm<float> *projection;
+	std::vector< std::shared_ptr<OGLLight> > lights; // resized at init
 
 }; // end class RenderGL
 

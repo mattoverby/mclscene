@@ -178,7 +178,7 @@ GLuint Shader::attribute(const std::string name){
 	// Add the attribute to the map table if it doesn't already exist
 	if( attributes.count(name)==0 ){
 		attributes[name] = glGetAttribLocation( program_id, name.c_str() );
-		if( attributes[name] == -1 ){ throw std::runtime_error("\n**Shader Error: bad attribute"); }
+		if( attributes[name] == -1 ){ throw std::runtime_error("\n**Shader Error: bad attribute ("+name+")"); }
 	}
 	return attributes[name];
 }
@@ -189,7 +189,7 @@ GLuint Shader::uniform(const std::string name){
 	// Add the uniform to the map table if it doesn't already exist
 	if( uniforms.count(name)==0 ){ 
 		uniforms[name] = glGetUniformLocation( program_id, name.c_str() );
-		if( uniforms[name] == -1 ){ throw std::runtime_error("\n**Shader Error: bad uniform"); }
+		if( uniforms[name] == -1 ){ throw std::runtime_error("\n**Shader Error: bad uniform ("+name+")"); }
 	}
 	return uniforms[name];
 }

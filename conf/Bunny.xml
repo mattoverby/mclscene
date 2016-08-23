@@ -6,26 +6,16 @@
 		<floor value="0" />
 	</background>
 
-	<Object name="bunny1" type="trimesh" >
 
-		<File value="box768.ply" />
-
-		<scale value=".1  .1  .1" />
-		<translate value="0  0.2  0" />
-		<rotate value="0  0  0" />
-
-
-		<Material value="green_spec" />
-	</Object>
+	<light name="light1" type="point">
+		<position value="0 1 0"/>
+	</light>
 
 	<Object name="bunny2" type="tetmesh" >
 
 		<File value="bunny562faces.1" />
 
-		<Scale value="1  1  1" />
-		<Translate value="0  0.4  0" />
-		<Rotate value="0  0  0" />
-
+		<Translate value="0 -.06  0" />
 
 		<Material value="blue_diff" />
 	</Object>
@@ -42,8 +32,7 @@
 	</Material>
 
 	<Material name="blue_diff" type="ogl"  >
-		<Diffuse value="120  120  255" />
-		<edges value="0  0  0" />
+		<preset value="greenplastic" />
 	</Material>
 
 </mclScene>

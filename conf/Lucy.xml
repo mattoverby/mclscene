@@ -9,14 +9,12 @@
 	<Object name="bunny1" type="TriMesh" >
 		<File value="lucy.ply" />
 		<scale value=".01  .01  .01" />
-		<Material value="red_spec" />
+		<Material value="pearl" />
 	</Object>
 
 
-	<Material name="red_spec" type="blinnphong"  >
-		<Diffuse value="255  120  120" />
-		<Specular value=".6 .6 .6" />
-		<shininess value="32" />
+	<Material name="pearl" type="blinnphong">
+		<preset value="pearl"/>
 	</Material>
 
 </mclScene>
