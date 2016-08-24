@@ -9,11 +9,10 @@ Included are distributions of:
 trimesh2 (Szymon Rusinkiewicz, gfx.cs.princeton.edu/proj/trimesh2),
 tetgen (Hang Si, wias-berlin.de/software/tetgen),
 pugixml (Arseny Kapoulkine, pugixml.org), and
-soil2 (Jonathan Dummer, http://www.lonesock.net/soil.html).
-Currently it only handles triangle/tetrahedral meshes.
+soil (Jonathan Dummer, lonesock.net/soil.html).
+Currently it only stores triangle/tetrahedral meshes and point clouds.
 
-There is a viewer sample which can render the scene, but requires OpenGL and SFML 2.
-I'm currently working on a better renderer with glfw.
+There is a viewer which can render the scene using OpenGL and GLFW3.
 
 <img src="https://github.com/over0219/mclscene/raw/master/doc/dillo.png" width="512">
 
@@ -21,7 +20,8 @@ I'm currently working on a better renderer with glfw.
 
 The best way to include mclscene in your project is to add it as a submodule with git,
 use cmake to call add_subdirectory, then use the ${MCLSCENE_LIBRARIES} and
-${MCLSCENE_INCLUDE_DIRS} that are set during the build. I will improve this in the future
+${MCLSCENE_INCLUDE_DIRS} that are set during the build. See CMakeLists.txt for more details.
+I will improve this in the future with a proper FindMCLSCENE.cmake.
 
 # todo
 
@@ -30,7 +30,6 @@ ${MCLSCENE_INCLUDE_DIRS} that are set during the build. I will improve this in t
 - Support for texture wrapping
 - Support for parsing new components (not just the 4 I use)
 - Mesh instancing
-- Better viewer with shaders
 - Export to other renderers (e.g., mitsuba, blender)
 
 # license

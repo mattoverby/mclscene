@@ -47,15 +47,16 @@ add_subdirectory( ${TRIMESH_DIR} ) # sets TRIMESH_INCLUDE and TRIMESH_SRCS
 set( TETGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/tetgen" )
 add_subdirectory( ${TETGEN_DIR} ) # sets TETGEN_INCLUDE and TETGEN_SRCS
 
-# soil2, included in deps/
-set( SOIL2_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/soil2" )
-add_subdirectory( ${SOIL2_DIR} ) # sets SOIL2_INCLUDE and SOIL2_SRCS
-
+# Rendering libraries
 if(MCL_BUILD_RENDERING)
 
 	find_package(OpenGL 4)
 	find_package(GLFW 3)
 	find_package(GLEW)
+
+	# soil2, included in deps/
+	set( SOIL2_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/soil2" )
+	add_subdirectory( ${SOIL2_DIR} ) # sets SOIL2_INCLUDE and SOIL2_SRCS
 
 endif(MCL_BUILD_RENDERING)
 
@@ -96,14 +97,14 @@ set( MCLSCENE_SRCS
 
 # Create the library
 set( MCLSCENE_LIBRARIES mclscene )
-set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${TRIMESH_INCLUDE} ${TETGEN_INCLUDE} ${SOIL2_INCLUDE} )
+set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${TRIMESH_INCLUDE} ${TETGEN_INCLUDE} )
 
 # If we want to build with mclscene rendering support, add the window source files
 # and add the libraries/includes to the build variables.
 if(MCL_BUILD_RENDERING)
 	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} ${SOIL2_SRCS} include/MCL/Application.hpp src/Application.cpp )
 	set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${GLEW_LIBRARIES} )
-	set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR} ${GLFW_INCLUDE_DIR} ${GLEW_INCLUDE_DIR} ${GL3W_INCLUDE_DIR} )
+	set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} ${SOIL2_INCLUDE} ${OPENGL_INCLUDE_DIR} ${GLFW_INCLUDE_DIR} ${GLEW_INCLUDE_DIR} ${GL3W_INCLUDE_DIR} )
 endif(MCL_BUILD_RENDERING)
 
 # Finally, include our needed files and add the library
