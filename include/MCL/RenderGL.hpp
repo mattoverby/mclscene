@@ -23,7 +23,6 @@
 #define MCLSCENE_RENDERGL_H 1
 
 #include <GL/glew.h>
-//#include <GL/gl3w.h>
 #include "MCL/Shader.hpp"
 #include "MCL/RenderUtils.hpp"
 #include "MCL/SceneManager.hpp"
@@ -54,6 +53,7 @@ public:
 
 private:
 	std::unique_ptr<Shader> blinnphong;
+	std::unordered_map< std::string, int > textures; // file->texture_id
 	mcl::SceneManager *scene;
 	AppCamera *camera;
 

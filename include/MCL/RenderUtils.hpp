@@ -22,8 +22,7 @@
 #ifndef MCLSCENE_RENDERUTILS_HPP
 #define MCLSCENE_RENDERUTILS_HPP 1
 
-#include <png.h>
-#include <SFML/Graphics.hpp>
+#include <math.h>
 
 namespace mcl {
 
@@ -54,16 +53,6 @@ namespace Draw {
 
 	// Rotate a 3D point p about axis a
 	static inline void rotatePoint( float *p, const float *a, const float &angle);
-
-	// Swap pixel locations
-	static inline void swap( unsigned char &p1, unsigned char &p2 );
-
-	// Flip storage order of image rows
-	static inline void flip_image (int w, int h, unsigned char *pixels);
-
-	// Write an image buffer to a PNG file
-	static inline void save_png (const char *filename, int width, int height,
-		       unsigned char *pixels, bool has_alpha=false);
 
 }; // end namespace Draw
 
@@ -241,71 +230,6 @@ static inline void mcl::Draw::rotatePoint( float *p, const float *a, const float
 	p[0] = tmp[0];
 	p[1] = tmp[1];
 	p[2] = tmp[2];	
-}
-
-// Swap pixel locations
-static inline void mcl::Draw::swap( unsigned char &p1, unsigned char &p2 ){
-	unsigned char temp = p1;
-	p1 = p2;
-	p2 = temp;
-}
-
-// Flip storage order of image rows
-static inline void mcl::Draw::flip_image (int w, int h, unsigned char *pixels) {
-
-    for (int j = 0; j < h/2; j++)
-	for (int i = 0; i < w; i++)
-	    for (int c = 0; c < 3; c++)
-	        swap(pixels[(i+w*j)*3+c], pixels[(i+w*(h-1-j))*3+c]);
-
-}
-
-// Write an image buffer to a PNG file
-static inline void mcl::Draw::save_png (const char *filename, int width, int height,
-	       unsigned char *pixels, bool has_alpha) {
-    FILE* file = fopen(filename, "wb");
-    if (!file) {
-	printf("Couldn't open file %s for writing.\n", filename);
-	return;
-    }
-    // initialize the PNG structures
-    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,
-	                                          NULL, NULL);
-    if (!png_ptr) {
-	printf("Couldn't create a PNG write structure.\n");
-	fclose(file);
-	return;
-    }
-    png_infop info_ptr = png_create_info_struct(png_ptr);
-    if (!info_ptr) {
-	printf("Couldn't create a PNG info structure.\n");
-	png_destroy_write_struct(&png_ptr, NULL);
-	fclose(file);
-	return;
-    }
-    if (setjmp(png_jmpbuf(png_ptr))) {
-	printf("Had a problem writing %s.\n", filename);
-	png_destroy_write_struct(&png_ptr, &info_ptr);
-	fclose(file);
-	return;
-    }
-    png_init_io(png_ptr, file);
-    png_set_IHDR(png_ptr, info_ptr, width, height, 8,
-	         has_alpha ? PNG_COLOR_TYPE_RGBA : PNG_COLOR_TYPE_RGB,
-	         PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
-	         PNG_FILTER_TYPE_DEFAULT);
-    // set the pixel data
-    int channels = has_alpha ? 4 : 3;
-    png_bytep* row_pointers = (png_bytep*) new unsigned char*[height];
-    for (int y = 0; y < height; y++)
-	row_pointers[y] = (png_bytep) &pixels[y*width*channels];
-    png_set_rows(png_ptr, info_ptr, row_pointers);
-    // write the file
-    png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
-    // clean up
-    delete[] row_pointers;
-    png_destroy_write_struct(&png_ptr, &info_ptr);
-    fclose(file);
 }
 
 #endif

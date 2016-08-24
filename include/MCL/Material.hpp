@@ -31,26 +31,15 @@
 ///
 namespace mcl {
 
-
-// Texture resource will eventually have more parameters
-// like mapping algorithm, etc...
-class TextureResource {
-public:
-	TextureResource( std::string name="", std::string file="" ) : m_name(name), m_file(file) {}
-	std::string m_name, m_file;
-};
-
-
 //
 //	Base, pure virtual
 //
 class BaseMaterial {
 public:
+	BaseMaterial() : texture_file(""){}
 	virtual ~BaseMaterial(){}
 
 	virtual std::string get_type() const = 0;
-
-	bool has_texture() { return m_texture.m_file.size(); }
 
 	// Returns a string containing xml code for saving to a scenefile.
 	// Mode is:
@@ -58,7 +47,7 @@ public:
 	//	1 = mitsuba
 	virtual std::string get_xml( std::string material_name, int mode ){ return ""; }
 
-	TextureResource m_texture;
+	std::string texture_file;
 };
 
 
@@ -90,7 +79,7 @@ public:
 			xml << "\t\t<Specular value=\"" << specular.str() << "\" />\n";
 			xml << "\t\t<Shininess  value=\"" << shininess << "\" />\n";
 			if( draw_edges ){ xml << "\t\t<Edges value=\"" << edge_color.str() << "\" />\n"; }
-			if( this->has_texture() ){ xml << "\t\t<texture value=\"" << this->m_texture.m_file << "\" />\n"; }
+			if( texture_file.size() ){ xml << "\t\t<texture value=\"" << texture_file << "\" />\n"; }
 			xml << "\t</Material>";
 			return xml.str();
 		}
@@ -174,7 +163,8 @@ static std::shared_ptr<OGLMaterial> make_material( MaterialPreset m ){
 
 	} // end switch preset
 
-	r->shininess *= 128.f;
+	if( r != NULL ){ r->shininess *= 128.f; }
+	else{ std::cerr << "**make_material Error: Unknown material preset" << std::endl; }
 	return r;
 
 } // end material preset

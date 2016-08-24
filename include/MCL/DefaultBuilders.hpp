@@ -411,7 +411,8 @@ static std::shared_ptr<BaseMaterial> default_build_material( Component &componen
 			mat->specular=component.params[i].as_vec3();
 		}
 		else if( parse::to_lower(component.params[i].tag)=="texture" ){
-			mat->m_texture=TextureResource( component.name, component.params[i].as_string() );
+//			mat->m_texture=TextureResource( component.name, component.params[i].as_string() );
+			mat->texture_file = component.params[i].as_string();
 		}
 		else if( parse::to_lower(component.params[i].tag)=="edges" ){
 			component.params[i].fix_color();

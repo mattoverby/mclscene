@@ -20,6 +20,7 @@
 // By Matt Overby (http://www.mattoverby.net)
 
 #include "MCL/RenderGL.hpp"
+#include "SOIL2.h"
 
 using namespace mcl;
 
@@ -31,6 +32,7 @@ bool RenderGL::init( mcl::SceneManager *scene_, AppCamera *cam_ ){
 	std::stringstream bp_ss;
 	bp_ss << MCLSCENE_SRC_DIR << "/src/blinnphong.";
 
+	// Create shaders
 	blinnphong = std::unique_ptr<Shader>( new Shader() );
 	blinnphong->init_from_files( bp_ss.str()+"vert", bp_ss.str()+"frag");
 
@@ -39,6 +41,26 @@ bool RenderGL::init( mcl::SceneManager *scene_, AppCamera *cam_ ){
 		// Max number of lights is 8
 		if( scene->lights[l]->get_type()=="ogl" && lights.size() < 8 ){
 			lights.push_back( std::dynamic_pointer_cast<OGLLight>(scene->lights[l]) );
+		}
+	}
+
+	// Load textures
+	std::unordered_map< std::string, std::shared_ptr<BaseMaterial> >::iterator mIter = scene->materials_map.begin();
+	for( mIter; mIter != scene->materials_map.end(); ++mIter ){
+		if( mIter->second->texture_file.size() ){
+
+			int channels, tex_width, tex_height;
+			GLuint texture_id = SOIL_load_OGL_texture( mIter->second->texture_file.c_str(), &tex_width, &tex_height, &channels, SOIL_LOAD_AUTO, 0, 0 );
+			if( texture_id == 0 ){ std::cerr << "\n**Texture::load Error: Failed to load file " << mIter->second->texture_file << std::endl; continue; }
+
+			// Add some filters to this texture
+			glBindTexture(GL_TEXTURE_2D, texture_id);
+			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+			glBindTexture(GL_TEXTURE_2D, 0);
+
+			// Store it for later use
+			textures[ mIter->second->texture_file ] = texture_id;
 		}
 	}
 
@@ -71,10 +93,16 @@ void RenderGL::draw( std::shared_ptr<BaseObject> obj, std::shared_ptr<BaseMateri
 	glVertexPointer( 3, GL_FLOAT, sizeof(themesh->vertices[0]), &themesh->vertices[0][0] );
 
 	// Normals
-	if (!themesh->normals.empty() ) {
-		glEnableClientState(GL_NORMAL_ARRAY);
-		glNormalPointer( GL_FLOAT, sizeof(themesh->normals[0]), &themesh->normals[0][0] );
-	} else { glDisableClientState(GL_NORMAL_ARRAY); }
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glNormalPointer( GL_FLOAT, sizeof(themesh->normals[0]), &themesh->normals[0][0] );
+
+	// Texture coordinates
+	GLuint texture_id = 0;
+	if( !themesh->texcoords.empty() && textures.count(mat->texture_file)>0 ){
+		texture_id = textures[ mat->texture_file ];
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(themesh->texcoords[0]), &themesh->texcoords[0][0]);
+	} else { glDisableClientState(GL_TEXTURE_COORD_ARRAY); }
 
 	// Draw a point cloud
 	if( obj->get_type()=="pointcloud" ){
@@ -85,6 +113,7 @@ void RenderGL::draw( std::shared_ptr<BaseObject> obj, std::shared_ptr<BaseMateri
 
 	// Draw the mesh
 	else{
+
 		// Get material properties
 		trimesh::vec ambient(0,0,0);
 		trimesh::vec diffuse(1,0,0);
@@ -100,7 +129,11 @@ void RenderGL::draw( std::shared_ptr<BaseObject> obj, std::shared_ptr<BaseMateri
 			}
 		}	
 
+		glBindTexture(GL_TEXTURE_2D, texture_id);
 		blinnphong->enable();
+
+		// Texture stuff
+		glUniform1i( blinnphong->uniform("hastex"), int(texture_id) );
 
 		// Set the matrices
 		glUniformMatrix4fv( blinnphong->uniform("model"), 1, GL_FALSE, camera->model );
@@ -137,6 +170,7 @@ void RenderGL::draw( std::shared_ptr<BaseObject> obj, std::shared_ptr<BaseMateri
 		}
 
 		blinnphong->disable();
+		glBindTexture(GL_TEXTURE_2D, 0);
 
 	} // end draw as triangle mesh
 

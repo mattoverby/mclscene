@@ -81,7 +81,6 @@ set( MCLSCENE_SRCS
 	include/MCL/RenderGL.hpp	src/RenderGL.cpp
 	include/MCL/BVH.hpp		src/BVH.cpp
 	include/MCL/Param.hpp
-	include/MCL/Texture.hpp
 	include/MCL/Object.hpp
 	include/MCL/VertexSort.hpp
 	include/MCL/RenderUtils.hpp
