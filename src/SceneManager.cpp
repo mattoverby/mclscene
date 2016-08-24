@@ -282,10 +282,7 @@ std::shared_ptr<mcl::BaseMaterial> SceneManager::make_material( std::string type
 } // end make light
 
 
-void SceneManager::make_3pt_lighting( float distance ){
-
-	trimesh::vec o(0,0,0); // scene center
-	if( objects.size()>0 ){ o=get_bvh()->aabb->center(); }	
+void SceneManager::make_3pt_lighting( trimesh::vec center, float distance ){
 
 	// TODO use spotlight instead of point light
 	std::shared_ptr<BaseLight> l0 = make_light( "point", "3pt_key" );
@@ -299,9 +296,9 @@ void SceneManager::make_3pt_lighting( float distance ){
 	float quart_d = distance/4.f;
 
 	// Set positions
-	key->m_pos = o + trimesh::vec(-half_d,0.f,distance);
-	fill->m_pos = o + trimesh::vec(half_d,0.f,distance);
-	back->m_pos = o + trimesh::vec(-half_d,quart_d,-distance);
+	key->m_pos = center + trimesh::vec(-half_d,0.f,distance);
+	fill->m_pos = center + trimesh::vec(half_d,0.f,distance);
+	back->m_pos = center + trimesh::vec(-half_d,quart_d,-distance);
 
 	// Set intensity
 	key->m_diffuse = trimesh::vec(1,1,1);

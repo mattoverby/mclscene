@@ -37,9 +37,11 @@ namespace mcl {
 class Application {
 public:
 	struct Settings {
-		bool save_frames; // saves every render frame to a png
+		bool save_frames; // saves every render frame to a timestamped png in your build directory
 		bool run_simulation; // run the simulator every frame
-		Settings() : save_frames(false), run_simulation(false) {}
+		bool subdivide_meshes; // copy and subdivide the meshes before rendering
+		bool draw_lights;
+		Settings() : save_frames(false), run_simulation(false), subdivide_meshes(false), draw_lights(false) {}
 	};
 
 	// Initializes the the Input singleton so callbacks can be added

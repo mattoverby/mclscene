@@ -39,13 +39,17 @@ public:
 	// OpenGL context has been created.
 	bool init( mcl::SceneManager *scene_, AppCamera *cam_ );
 
-	// Draws a specific object with aspecificgiven material. If material is null,
+	// Draws a triangle mesh object with a material. If material is null,
 	// a default one is used (lambertian red). The object must have get_TriMesh()
 	// function implemented, otherwise nothing is drawn.
-	void draw( std::shared_ptr<BaseObject> obj, std::shared_ptr<BaseMaterial> mat=NULL );
+	void draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMaterial> mat=NULL );
 
 	// Draws all objects in the SceneManager
 	void draw_objects();
+
+	// Draws all the objects in the SceneManager, but subdivides
+	// the meshes before rendering for visual quality.
+	void draw_objects_subdivided();
 
 	// Draws all lights in the SceneManager that have a shape
 	// (I.e., point lights as a sphere, spot lights as a cone).

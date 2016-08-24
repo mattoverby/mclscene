@@ -67,6 +67,13 @@ class SceneManager {
 		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="spatial" );
 
 		//
+		// For a given camera distance from scene center, add lights to make
+		// a three-point lighting rig. Assumes +y is up and camera is facing -z.
+		// This is called by the Gui if no lighting has been added to the scene.
+		//
+		void make_3pt_lighting( trimesh::vec center, float distance );
+
+		//
 		// Vectors and maps of scene components.
 		// The shared pointers in the vectors and maps are duplicates, and exist twice for convenience.
 		//
@@ -88,13 +95,6 @@ class SceneManager {
 		std::shared_ptr<BaseLight> make_light( std::string type, std::string name="" );
 		std::shared_ptr<BaseCamera> make_camera( std::string type, std::string name="" );
 		std::shared_ptr<BaseMaterial> make_material( std::string type, std::string name="" );
-
-		//
-		// For a given camera distance from scene center, add lights to make
-		// a three-point lighting rig. Assumes +y is up and camera is facing -z.
-		// This is called by the Gui if no lighting has been added to the scene.
-		//
-		void make_3pt_lighting( float distance );
 
 		//
 		// In addition to creating the components, the original parameters parsed

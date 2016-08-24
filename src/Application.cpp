@@ -39,9 +39,10 @@ std::vector< std::function<void ( GLFWwindow* window, int width, int height )> >
 Application::Application( mcl::SceneManager *scene_, mcl::Simulator *sim_ ) : scene(scene_), sim(sim_) {
 	Input &input = Input::getInstance(); // initialize the singleton
 	float scene_rad = scene->get_bvh()->aabb->radius();
-	std::cout << "Scene Radius: " << scene_rad << std::endl;
+	trimesh::vec scene_center = scene->get_bvh()->aabb->center();
+	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( scene_center, scene_rad*3.f ); }
 
-	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( scene_rad*3.f ); }
+	std::cout << "Scene Radius: " << scene_rad << std::endl;
 
 	zoom = fabs( scene_rad / sinf( 30.f/2.f ) );
 	cursorX = 0.f;
@@ -53,15 +54,15 @@ Application::Application( mcl::SceneManager *scene_, mcl::Simulator *sim_ ) : sc
 	std::vector< std::vector<mcl::Param> > params;
 	std::unordered_map< std::string, std::shared_ptr<BaseObject> >::iterator it = scene->objects_map.begin();
 	for( it; it != scene->objects_map.end(); ++it ){
+		params.push_back( scene->object_params[ it->first ] );
 		trimesh::TriMesh *themesh = it->second->get_TriMesh().get();
 		if( themesh==NULL ){ continue; }
 		mesh_pointers.push_back( themesh );
-		params.push_back( scene->object_params[ it->first ] );
 	}
 
 	// Initialize the simulator
 	if( sim ){
-		if( !sim->initialize(mesh_pointers, params) ){
+		if( !sim->initialize(scene->objects, params) ){
 			throw std::runtime_error( "\n**Application::display Error: Problem initializing the simulator" );
 		}
 	} // end init sim
@@ -116,7 +117,7 @@ int Application::display(){
 		// Simulation engine:
 		if( sim && settings.run_simulation ){
 			if( !sim->step( screen_dt ) ){ std::cerr << "\n**Application::display Error: Problem in simulation step" << std::endl; }
-			if( !sim->update( mesh_pointers ) ){ std::cerr << "\n**Application::display Error: Problem in mesh update" << std::endl; }
+			if( !sim->update( scene->objects ) ){ std::cerr << "\n**Application::display Error: Problem in mesh update" << std::endl; }
 
 			// Recalculate normals for trimeshes and tetmeshes
 			for( int i=0; i<mesh_pointers.size(); ++i ){ mesh_pointers[i]->need_normals(true); }
@@ -134,8 +135,9 @@ int Application::display(){
 		}
 
 		{ // Render scene stuff
-			renderer.draw_objects(); // draws all objects
-	//		renderer.draw_lights();
+			if( !settings.subdivide_meshes ){ renderer.draw_objects(); } // draws all objects
+			else{ renderer.draw_objects_subdivided(); }
+			if( settings.draw_lights ){ renderer.draw_lights(); }
 			for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, &camera, screen_dt ); }
 		}
 
@@ -190,26 +192,26 @@ void Application::mouse_button_callback(GLFWwindow* window, int button, int acti
 
 void Application::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-    if (action != GLFW_PRESS){ return; }
+	if (action != GLFW_PRESS){ return; }
 
-    switch (key)
-    {
-        case GLFW_KEY_ESCAPE:
-            glfwSetWindowShouldClose(window, GLFW_TRUE);
-            break;
+	switch (key)
+	{
+	case GLFW_KEY_ESCAPE:
+	    glfwSetWindowShouldClose(window, GLFW_TRUE);
+	    break;
 	case GLFW_KEY_SPACE:
 		settings.run_simulation = !settings.run_simulation;
 		break;
-        case GLFW_KEY_P:
+	case GLFW_KEY_P:
 		if( sim ){ sim->step( screen_dt ); }
-            break;
+	    break;
 	case GLFW_KEY_S:
 		settings.save_frames=!settings.save_frames;
 		std::cout << "save screenshots: " << (int)settings.save_frames << std::endl;
 		break;
-        default:
-            break;
-    }
+	default:
+	    break;
+	}
 }
 
 

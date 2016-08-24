@@ -73,19 +73,48 @@ void RenderGL::draw_objects(){
 
 	for( int i=0; i<scene->objects.size(); ++i ){
 		std::string mat = scene->objects[i]->get_material();
+		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
+		if( themesh==NULL ){ continue; }
+
 		if( mat.size() > 0 ){
-			draw( scene->objects[i], scene->materials_map[mat] );
+			draw_mesh( themesh, scene->materials_map[mat] );
 		} else {
-			draw( scene->objects[i] );
+			draw_mesh( themesh );
 		}
 	}
 
 } // end draw objects
 
 
-void RenderGL::draw( std::shared_ptr<BaseObject> obj, std::shared_ptr<BaseMaterial> mat ){
+void RenderGL::draw_objects_subdivided(){
 
-	trimesh::TriMesh *themesh = obj->get_TriMesh().get();
+	for( int i=0; i<scene->objects.size(); ++i ){
+		std::string mat = scene->objects[i]->get_material();
+		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
+		if( themesh==NULL ){ continue; }
+
+		// Subdivide the mesh and draw that
+		trimesh::TriMesh mesh2( *themesh );
+
+		// Only subdivide if necessary
+		if( themesh->vertices.size() > 100 ){
+			trimesh::subdiv( &mesh2 );
+		}
+
+		mesh2.need_normals(true);
+		mesh2.need_tstrips();	
+		if( mat.size() > 0 ){
+			draw_mesh( &mesh2, scene->materials_map[mat] );
+		} else {
+			draw_mesh( &mesh2 );
+		}
+	}
+
+} // end draw objects
+
+
+void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMaterial> mat ){
+
 	if( themesh==NULL ){ return; }
 
 	// Vertices
@@ -93,6 +122,7 @@ void RenderGL::draw( std::shared_ptr<BaseObject> obj, std::shared_ptr<BaseMateri
 	glVertexPointer( 3, GL_FLOAT, sizeof(themesh->vertices[0]), &themesh->vertices[0][0] );
 
 	// Normals
+	if( themesh->normals.size() == 0 ){ themesh->need_normals(true); }
 	glEnableClientState(GL_NORMAL_ARRAY);
 	glNormalPointer( GL_FLOAT, sizeof(themesh->normals[0]), &themesh->normals[0][0] );
 
@@ -105,14 +135,14 @@ void RenderGL::draw( std::shared_ptr<BaseObject> obj, std::shared_ptr<BaseMateri
 	} else { glDisableClientState(GL_TEXTURE_COORD_ARRAY); }
 
 	// Draw a point cloud
-	if( obj->get_type()=="pointcloud" ){
+//	if( obj->get_type()=="pointcloud" ){
 
 		// TODO
 
-	} // end draw vertices as points
+//	} // end draw vertices as points
 
 	// Draw the mesh
-	else{
+//	else{
 
 		// Get material properties
 		trimesh::vec ambient(0,0,0);
@@ -172,7 +202,7 @@ void RenderGL::draw( std::shared_ptr<BaseObject> obj, std::shared_ptr<BaseMateri
 		blinnphong->disable();
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-	} // end draw as triangle mesh
+//	} // end draw as triangle mesh
 
 } // end draw
 
