@@ -23,7 +23,6 @@
 #define MCLSCENE_TETMESH_H 1
 
 #include "MCL/TriangleMesh.hpp"
-#include "MCL/VertexSort.hpp"
 #include "tetgen.h"
 
 namespace mcl {

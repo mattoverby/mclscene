@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <mclScene>
-
+<!--
 	<light name="l1" type="ogl" >
 		<position type="vec3" value="0 10 0" />
 		<intensity type="vec3" value="1 1 1" />
 	</light>
-
+-->
 	<Object name="bunny1" type="TriMesh" >
 		<File value="lucy.ply" />
 		<scale value=".01  .01  .01" />

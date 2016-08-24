@@ -280,3 +280,34 @@ std::shared_ptr<mcl::BaseMaterial> SceneManager::make_material( std::string type
 	return newMat;
 
 } // end make light
+
+
+void SceneManager::make_3pt_lighting( float distance ){
+
+	trimesh::vec o(0,0,0); // scene center
+	if( objects.size()>0 ){ o=get_bvh()->aabb->center(); }	
+
+	// TODO use spotlight instead of point light
+	std::shared_ptr<BaseLight> l0 = make_light( "point", "3pt_key" );
+	std::shared_ptr<BaseLight> l1 = make_light( "point", "3pt_fill" );
+	std::shared_ptr<BaseLight> l2 = make_light( "point", "3pt_keyback" );
+	std::shared_ptr<OGLLight> key = std::dynamic_pointer_cast<OGLLight>( l0 );
+	std::shared_ptr<OGLLight> fill = std::dynamic_pointer_cast<OGLLight>( l1 );
+	std::shared_ptr<OGLLight> back = std::dynamic_pointer_cast<OGLLight>( l2 );
+
+	float half_d = distance/2.f;
+	float quart_d = distance/4.f;
+
+	// Set positions
+	key->m_pos = o + trimesh::vec(-half_d,0.f,distance);
+	fill->m_pos = o + trimesh::vec(half_d,0.f,distance);
+	back->m_pos = o + trimesh::vec(-half_d,quart_d,-distance);
+
+	// Set intensity
+	key->m_diffuse = trimesh::vec(1,1,1);
+	fill->m_diffuse = trimesh::vec(.8,.8,.8);
+	back->m_diffuse = trimesh::vec(.5,.5,.5);
+
+} // end make three point lighting
+
+

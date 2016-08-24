@@ -28,7 +28,6 @@
 #include <chrono>
 #include <bitset>
 
-
 namespace mcl {
 
 typedef long morton_type;
@@ -41,7 +40,6 @@ namespace helper {
 		std::bitset<sizeof(morton_type)*8> bs(variable);
 		return ( bs[bit]==1 );
 	}
-
 }
 
 static inline morton_type morton_encode(const morton_encode_type x, const morton_encode_type y, const morton_encode_type z){

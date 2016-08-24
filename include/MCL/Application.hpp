@@ -24,8 +24,8 @@
 
 #include "MCL/Simulator.hpp"
 #include "MCL/SceneManager.hpp"
-#include <linmath.h>
-
+#include "MCL/Texture.hpp"
+#include "SOIL2.h"
 #include "RenderGL.hpp"
 #include <GLFW/glfw3.h>
 

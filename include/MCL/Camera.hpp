@@ -31,7 +31,24 @@ namespace mcl {
 //	Orthonormal Base
 //
 struct OrthonormalBasis {
-	OrthonormalBasis( trimesh::vec direction, trimesh::vec up = trimesh::vec(0,1,0) );
+
+	OrthonormalBasis( trimesh::vec direction, trimesh::vec up=trimesh::vec(0,1,0) ){
+		using namespace trimesh;
+		W = direction * -1.f;
+		normalize( W );
+		if( W[0] == 0.f && W[2] == 0.f ){
+			up[0]+=0.0001;
+			up[1]-=0.0001;
+			up[2]+=0.0001;
+			normalize( up );
+		}
+
+		U = up.cross( W );
+		normalize( U );
+		V = W.cross( U );
+		normalize( V );
+	} // end ortho base
+
 	trimesh::vec U, V, W;
 };
 

@@ -225,7 +225,6 @@ void BVHBuilder::spatial_split( std::shared_ptr<BVHNode> &node, const std::vecto
 	if( right_queue.size()==0 ){ right_queue.push_back( left_queue.back() ); left_queue.pop_back(); }
 
 	// Create the children
-//	num_objects = left_queue.size()+right_queue.size();
 	node->left_child = std::shared_ptr<BVHNode>( new BVHNode() );
 	node->right_child = std::shared_ptr<BVHNode>( new BVHNode() );
 	spatial_split( node->left_child, objects, left_queue, ((split_axis+1)%3), max_depth-1 );

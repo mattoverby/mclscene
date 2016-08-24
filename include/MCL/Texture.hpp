@@ -19,33 +19,20 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#include "MCL/Camera.hpp"
+#ifndef MCLSCENE_TEXTURE_H
+#define MCLSCENE_TEXTURE_H 1
 
-using namespace mcl;
+#include <string>
+
+namespace mcl {
+	
+class Texture {
+public:
+//TODO
+
+}; // end manager texture
 
 
-OrthonormalBasis::OrthonormalBasis( trimesh::vec direction, trimesh::vec up ){
+} // end namespace mcl
 
-	using namespace trimesh;
-
-	//
-	//  Create UVW
-	//
-
-	W = direction * -1.f;
-	normalize( W );
-
-	if( W[0] == 0.f && W[2] == 0.f ){
-		up[0]+=0.0001;
-		up[1]-=0.0001;
-		up[2]+=0.0001;
-		normalize( up );
-	}
-
-	U = up.cross( W );
-	normalize( U );
-
-	V = W.cross( U );
-	normalize( V );
-
-} // end ortho base
+#endif

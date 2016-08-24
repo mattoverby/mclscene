@@ -52,8 +52,8 @@ namespace Draw {
 	// From https://stackoverflow.com/questions/1700211/to-dynamically-increment-from-blue-to-red-using-c
 	static inline void colorBlend( float *blended, float a[3], float b[3], float gradient );
 
-	// Rotate a point p about axis a
-	static inline sf::Vector3f rotatePoint(const sf::Vector3f &p, const sf::Vector3f &a, const float &angle);
+	// Rotate a 3D point p about axis a
+	static inline void rotatePoint( float *p, const float *a, const float &angle);
 
 	// Swap pixel locations
 	static inline void swap( unsigned char &p1, unsigned char &p2 );
@@ -94,44 +94,44 @@ static inline void mcl::Draw::perspectiveGL(double fovy,double aspect, double zN
 // http://forums.codeguru.com/showthread.php?396078-gluLookAt
 static inline void mcl::Draw::LookAt(const double p_EyeX, const double p_EyeY, const double p_EyeZ, const double p_CenterX,
 	const double p_CenterY, const double p_CenterZ){
-		double l_X = p_EyeX - p_CenterX;
-		double l_Y = p_EyeY - p_CenterY;
-		double l_Z = p_EyeZ - p_CenterZ;
+	double l_X = p_EyeX - p_CenterX;
+	double l_Y = p_EyeY - p_CenterY;
+	double l_Z = p_EyeZ - p_CenterZ;
 
-		if(l_X == l_Y && l_Y == l_Z && l_Z == 0.0f)
-			return;
+	if(l_X == l_Y && l_Y == l_Z && l_Z == 0.0f)
+		return;
 
-		if(l_X == l_Z && l_Z == 0.0f)
-		{
-			if (l_Y < 0.0f)
-				glRotatef(-90.0f, 1, 0, 0);
-			else
-				glRotatef(90.0f, 1, 0, 0);
-			glTranslatef(-l_X, -l_Y, -l_Z);
-			return;
-		}
-	  
-		double l_rX = 0.0f;
-		double l_rY = 0.0f;
-	  
-		double l_hA = (l_X == 0.0f) ? l_Z : hypot(l_X, l_Z);
-		double l_hB;
-		if(l_Z == 0.0f)
-			l_hB = hypot(l_X, l_Y);
+	if(l_X == l_Z && l_Z == 0.0f)
+	{
+		if (l_Y < 0.0f)
+			glRotatef(-90.0f, 1, 0, 0);
 		else
-			l_hB = (l_Y == 0.0f) ? l_hA : hypot(l_Y, l_hA);
-		  
-		l_rX = asin(l_Y / l_hB) * (180 / M_PI);
-		l_rY = asin(l_X / l_hA) * (180 / M_PI);
+			glRotatef(90.0f, 1, 0, 0);
+		glTranslatef(-l_X, -l_Y, -l_Z);
+		return;
+	}
+  
+	double l_rX = 0.0f;
+	double l_rY = 0.0f;
+  
+	double l_hA = (l_X == 0.0f) ? l_Z : hypot(l_X, l_Z);
+	double l_hB;
+	if(l_Z == 0.0f)
+		l_hB = hypot(l_X, l_Y);
+	else
+		l_hB = (l_Y == 0.0f) ? l_hA : hypot(l_Y, l_hA);
+	  
+	l_rX = asin(l_Y / l_hB) * (180 / M_PI);
+	l_rY = asin(l_X / l_hA) * (180 / M_PI);
 
-		glRotated(l_rX, 1, 0, 0);
-		if(l_Z < 0.0f)
-			l_rY += 180.0f;
-		else
-			l_rY = 360.0f - l_rY;
+	glRotated(l_rX, 1, 0, 0);
+	if(l_Z < 0.0f)
+		l_rY += 180.0f;
+	else
+		l_rY = 360.0f - l_rY;
 
-		glRotated(l_rY, 0, 1, 0);
-		glTranslated(-p_EyeX, -p_EyeY, -p_EyeZ);
+	glRotated(l_rY, 0, 1, 0);
+	glTranslated(-p_EyeX, -p_EyeY, -p_EyeZ);
 }
 
 
@@ -208,17 +208,17 @@ static inline void mcl::Draw::colorBlend( float *blended, float a[3], float b[3]
 	blended[2] = blend( a[2], b[2], gradient );
 }
 
-static inline sf::Vector3f mcl::Draw::rotatePoint( const sf::Vector3f &p, const sf::Vector3f &a, const float &angle ){
-	  
+static inline void mcl::Draw::rotatePoint( float *p, const float *a, const float &angle ){
+
 	float pos[3];
-	pos[0] = p.x;
-	pos[1] = p.y;
-	pos[2] = p.z;
+	pos[0] = p[0];
+	pos[1] = p[1];
+	pos[2] = p[2];
 
 	float axis[3];
-	axis[0] = a.x;
-	axis[1] = a.y;
-	axis[2] = a.z;
+	axis[0] = a[0];
+	axis[1] = a[1];
+	axis[2] = a[2];
 
 	float c = cosf((float)angle);
 	float s = sinf((float)angle);
@@ -237,8 +237,10 @@ static inline sf::Vector3f mcl::Draw::rotatePoint( const sf::Vector3f &p, const 
 	tmp[1] = rotMat[1][0] * pos[0] + rotMat[1][1] * pos[1] + rotMat[1][2] * pos[2] + rotMat[1][3];
 	tmp[2] = rotMat[2][0] * pos[0] + rotMat[2][1] * pos[1] + rotMat[2][2] * pos[2] + rotMat[2][3];
   
-	return sf::Vector3f(tmp[0], tmp[1], tmp[2]);
-	
+	// Update p
+	p[0] = tmp[0];
+	p[1] = tmp[1];
+	p[2] = tmp[2];	
 }
 
 // Swap pixel locations

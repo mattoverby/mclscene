@@ -48,23 +48,19 @@ add_subdirectory( ${TRIMESH_DIR} ) # sets TRIMESH_INCLUDE and TRIMESH_SRCS
 set( TETGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/tetgen" )
 add_subdirectory( ${TETGEN_DIR} ) # sets TETGEN_INCLUDE and TETGEN_SRCS
 
+# soil2, included in deps/
+set( SOIL2_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/soil2" )
+add_subdirectory( ${SOIL2_DIR} ) # sets SOIL2_INCLUDE and SOIL2_SRCS
+
 if(MCL_BUILD_RENDERING)
 
-	# GLFW3
-	find_package(GLFW 3)
-	set( GLFW_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw3" ) # Add glfw3 support headers
-
-	# Opengl and SFML used by the gui, not required
 	find_package(OpenGL 4)
-#	find_package(SFML 2 COMPONENTS system window graphics)
-
-	# GLEW for shader io
+	find_package(GLFW 3)
 	find_package(GLEW)
-	link_libraries(${GLEW_LIBRARIES})
 
 endif(MCL_BUILD_RENDERING)
 
-# OpenMP, not required
+# OpenMP
 find_package(OpenMP)
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -80,37 +76,38 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 set( MCLSCENE_SRCS
 	include/MCL/SceneManager.hpp	src/SceneManager.cpp
 	include/MCL/TetMesh.hpp		src/TetMesh.cpp
-	include/MCL/MeshDump.hpp	src/MeshDump.cpp
-	include/MCL/Param.hpp		src/Param.cpp
-	include/MCL/TextureManager.hpp	src/TextureManager.cpp
-	include/MCL/Object.hpp
-	include/MCL/BVH.hpp		src/BVH.cpp
 	include/MCL/TriangleMesh.hpp	src/TriangleMesh.cpp
 	include/MCL/PointCloud.hpp	src/PointCloud.cpp
+	include/MCL/RenderGL.hpp	src/RenderGL.cpp
+	include/MCL/BVH.hpp		src/BVH.cpp
+	include/MCL/Param.hpp
+	include/MCL/Texture.hpp
+	include/MCL/Object.hpp
 	include/MCL/VertexSort.hpp
 	include/MCL/RenderUtils.hpp
-	include/MCL/Camera.hpp		src/Camera.cpp
+	include/MCL/Camera.hpp
 	include/MCL/Light.hpp
 	include/MCL/AABB.hpp
 	include/MCL/Shader.hpp
 	include/MCL/Material.hpp
 	include/MCL/Simulator.hpp
-	include/MCL/RenderGL.hpp	src/RenderGL.cpp
 	include/MCL/RayIntersect.hpp
 	include/MCL/DefaultBuilders.hpp
 )
 
 # Create the library
+set( MCLSCENE_LIBRARIES mclscene )
+set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${TRIMESH_INCLUDE} ${TETGEN_INCLUDE} ${SOIL2_INCLUDE} )
+
+# If we want to build with mclscene rendering support, add the window source files
+# and add the libraries/includes to the build variables.
 if(MCL_BUILD_RENDERING)
-	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} include/MCL/Application.hpp src/Application.cpp )
-	set( MCLSCENE_LIBRARIES mclscene ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${Boost_LIBRARIES} png )
-	set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${TRIMESH_INCLUDE} ${TETGEN_INCLUDE} ${GLFW_INCLUDE_DIR}
-		${GLEW_INCLUDE_DIRS} ${GL3W_INCLUDE_DIR} ${Boost_INCLUDE_DIR} )
-	link_directories( ${OpenGL_LIBRARY_DIRS} ${GLFW3_LIBRARY_DIRS} )
-else(MCL_BUILD_RENDERING)
-	set( MCLSCENE_LIBRARIES mclscene ${Boost_LIBRARIES} )
-	set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${TRIMESH_INCLUDE} ${TETGEN_INCLUDE} ${Boost_INCLUDE_DIR} )
+	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} ${SOIL2_SRCS} include/MCL/Application.hpp src/Application.cpp )
+	set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${GLEW_LIBRARIES} )
+	set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR} ${GLFW_INCLUDE_DIR} ${GLEW_INCLUDE_DIR} ${GL3W_INCLUDE_DIR} )
 endif(MCL_BUILD_RENDERING)
+
+# Finally, include our needed files and add the library
 include_directories( ${MCLSCENE_INCLUDE_DIRS} )
 add_library( mclscene ${TRIMESH_SRCS} ${TETGEN_SRCS} ${MCLSCENE_SRCS} )
 

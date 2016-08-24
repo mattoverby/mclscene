@@ -90,6 +90,13 @@ class SceneManager {
 		std::shared_ptr<BaseMaterial> make_material( std::string type, std::string name="" );
 
 		//
+		// For a given camera distance from scene center, add lights to make
+		// a three-point lighting rig. Assumes +y is up and camera is facing -z.
+		// This is called by the Gui if no lighting has been added to the scene.
+		//
+		void make_3pt_lighting( float distance );
+
+		//
 		// In addition to creating the components, the original parameters parsed
 		// from the XML file (if any) are stored as vectors. They are listed in order parsed.
 		//

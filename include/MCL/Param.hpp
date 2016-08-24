@@ -22,9 +22,9 @@
 #ifndef MCLSCENE_PARAM_H
 #define MCLSCENE_PARAM_H 1
 
-#include "Vec.h"
 #include <string>
 #include <sstream>
+#include "Vec.h"
 #include "XForm.h"
 #include <unordered_map>
 #include "../../deps/pugixml/pugixml.hpp"
@@ -79,25 +79,25 @@ class Param {
 public:
 	Param( std::string tag_, std::string value_ ) : tag(tag_), value(value_) {}
 
-	double as_double() const;
-	char as_char() const;
-	std::string as_string() const;
-	int as_int() const;
-	long as_long() const;
-	bool as_bool() const;
-	float as_float() const;
-	trimesh::vec4 as_vec4() const;
-	trimesh::vec as_vec3() const;
-	trimesh::vec2 as_vec2() const;
-	trimesh::xform as_xform() const;
+	inline double as_double() const { std::stringstream ss(value); double v; ss>>v; return v; }
+	inline char as_char() const { std::stringstream ss(value); char v; ss>>v; return v; }
+	inline std::string as_string() const { return value; }
+	inline int as_int() const { std::stringstream ss(value); int v; ss>>v; return v; }
+	inline long as_long() const { std::stringstream ss(value); long v; ss>>v; return v; }
+	inline bool as_bool() const { std::stringstream ss(value); bool v; ss>>v; return v; }
+	inline float as_float() const { std::stringstream ss(value); float v; ss>>v; return v; }
+	inline trimesh::vec4 as_vec4() const;
+	inline trimesh::vec as_vec3() const;
+	inline trimesh::vec2 as_vec2() const;
+	inline trimesh::xform as_xform() const;
 
 	// Stores the parsed data
 	std::string tag;
 	std::string value; // string value
 
 	// Some useful vec3 functions:
-	void normalize();
-	void fix_color(); // if 0-255, sets 0-1
+	inline void normalize();
+	inline void fix_color(); // if 0-255, sets 0-1
 };
 
 
@@ -109,9 +109,9 @@ class Component {
 public:
 	Component( std::string tag_, std::string name_, std::string type_ ) : tag(tag_), name(name_), type(type_) {}
 	std::string tag, name, type;
-	Param &get( std::string tag );
-	Param &operator[]( std::string tag ){ return get(tag); }
-	bool exists( std::string tag ) const;
+	inline Param &get( std::string tag );
+	inline Param &operator[]( std::string tag ){ return get(tag); }
+	inline bool exists( std::string tag ) const;
 	std::vector<Param> params;
 };
 
@@ -165,6 +165,123 @@ static void load_params( std::vector<Param> &params, const pugi::xml_node &curr_
 	} // end loop params
 
 } // end load parameters
+
+
+//
+//	Implementation of Class functions
+//
+
+
+trimesh::vec Param::as_vec3() const {
+	std::stringstream ss(value);
+	trimesh::vec v;
+	for( int i=0; i<3; ++i ){ ss>>v[i]; }
+	return v;
+}
+
+trimesh::vec2 Param::as_vec2() const {
+	std::stringstream ss(value);
+	trimesh::vec2 v;
+	for( int i=0; i<2; ++i ){ ss>>v[i]; }
+	return v;
+}
+
+trimesh::vec4 Param::as_vec4() const {
+	std::stringstream ss(value);
+	trimesh::vec4 v;
+	for( int i=0; i<4; ++i ){ ss>>v[i]; }
+	return v;
+}
+
+trimesh::xform Param::as_xform() const {
+	trimesh::xform x_form;
+	std::stringstream ss(value);
+	ss >> x_form;
+	return x_form;
+}
+
+void Param::normalize(){
+
+	// vec2, vec3, or vec4?
+	std::stringstream sscheck( as_string() );
+	int num_elem = 0;
+	while( sscheck.good() ){ float buff; sscheck >> buff; num_elem++; }
+
+	if(num_elem==3){
+		trimesh::vec v = as_vec3();
+		trimesh::normalize( v );
+		std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2];
+		value = ss.str();
+	}
+	else if(num_elem==2){
+		trimesh::vec2 v = as_vec2();
+		trimesh::normalize( v );
+		std::stringstream ss; ss << v[0] << ' ' << v[1];
+		value = ss.str();
+	}
+	else if(num_elem==4){
+		trimesh::vec4 v = as_vec4();
+		trimesh::normalize( v );
+		std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2] << ' ' << v[3];
+		value = ss.str();
+	}
+
+}
+
+void Param::fix_color(){
+
+	// vec2, vec3, or vec4?
+	std::stringstream sscheck( as_string() );
+	int num_elem = 0;
+	while( sscheck.good() ){ float buff; sscheck >> buff; num_elem++; }
+
+	if(num_elem==3){
+		trimesh::vec c = as_vec3();
+
+		for( int ci=0; ci<3; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
+		if( c[0] > 1.0 || c[1] > 1.0 || c[2] > 1.0 ){ for( int ci=0; ci<3; ++ci ){ c[ci]/=255.f; } } // from 0-255 to 0-1
+
+		std::stringstream ss; ss << c[0] << ' ' << c[1] << ' ' << c[2];
+		value = ss.str();
+	}
+	else if(num_elem==2){
+		trimesh::vec2 c = as_vec2();
+
+		for( int ci=0; ci<2; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
+		if( c[0] > 1.0 || c[1] > 1.0 ){ for( int ci=0; ci<2; ++ci ){ c[ci]/=255.f; } } // from 0-255 to 0-1
+
+		std::stringstream ss; ss << c[0] << ' ' << c[1];
+		value = ss.str();
+	}
+	else if(num_elem==4){
+		trimesh::vec4 c = as_vec4();
+
+		for( int ci=0; ci<4; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
+		if( c[0] > 1.0 || c[1] > 1.0 || c[2] > 1.0 || c[3] > 1.0 ){ for( int ci=0; ci<4; ++ci ){ c[ci]/=255.f; } } // from 0-255 to 0-1
+
+		std::stringstream ss; ss << c[0] << ' ' << c[1] << ' ' << c[2] << ' ' << c[3];
+		value = ss.str();
+	}
+
+}
+
+
+mcl::Param &Component::get( std::string tag ){
+	for( int i=0; i<params.size(); ++i ){
+		if( params[i].tag == tag ){ return params[i]; }
+	}
+	// not found, add it
+	params.push_back( mcl::Param(tag,"") );
+	return params.back();
+}
+
+
+bool Component::exists( std::string tag ) const {
+	for( int i=0; i<params.size(); ++i ){
+		if( params[i].tag == tag ){ return true; }
+	}
+	return false;
+}
 
 
 } // end namespace mcl

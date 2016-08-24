@@ -56,52 +56,7 @@ public:
 		else{ min = p; max = p; }
 		valid = true;
 	}
-/*
-	inline bool ray_intersect( const trimesh::vec &origin, const trimesh::vec &direction, double &t_min, double &t_max ) const {
 
-		float txmin=0.f, txmax=0.f;
-		float dirX = 1.f / direction[0];
-		if( dirX >= 0.0 ){
-			txmin = dirX * ( min[0] - origin[0] );
-			txmax = dirX * ( max[0] - origin[0] );
-		}
-		else{
-			txmax = dirX * ( min[0] - origin[0] );
-			txmin = dirX * ( max[0] - origin[0] );
-		}
-
-		float tymin=0.f, tymax=0.f;
-		float dirY = 1.f / direction[1];
-		if( direction[1] >= 0.0 ){
-			tymin = dirY * ( min[1] - origin[1] );
-			tymax = dirY * ( max[1] - origin[1] );
-		}
-		else{
-			tymax = dirY * ( min[1] - origin[1] );
-			tymin = dirY * ( max[1] - origin[1] );
-		}
-
-		// First check: x/y axis
-		if( txmin > tymax || tymin > txmax ){ return false; }
-
-		float tzmin=0.f, tzmax=0.f;
-		float dirZ = 1.f / direction[2];
-		if( direction[2] >= 0.0 ){
-			tzmin = dirZ * ( min[2] - origin[2] );
-			tzmax = dirZ * ( max[2] - origin[2] );
-		}
-		else{
-			tzmax = dirZ * ( min[2] - origin[2] );
-			tzmin = dirZ * ( max[2] - origin[2] );
-		}
-
-		// Second check: z axis
-		if( txmin > tzmax || tzmin > txmax ){ return false; }
-		if( tymin > tzmax || tzmin > tymax ){ return false; }
-
-		return true;
-	}
-*/
 };
 
 

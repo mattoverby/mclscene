@@ -41,6 +41,8 @@ Application::Application( mcl::SceneManager *scene_, mcl::Simulator *sim_ ) : sc
 	float scene_rad = scene->get_bvh()->aabb->radius();
 	std::cout << "Scene Radius: " << scene_rad << std::endl;
 
+	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( scene_rad*3.f ); }
+
 	zoom = fabs( scene_rad / sinf( 30.f/2.f ) );
 	cursorX = 0.f;
 	cursorY = 0.f;
@@ -253,12 +255,7 @@ void Application::save_screenshot(GLFWwindow* window){
 
 	std::stringstream filename;
 	filename << MCLSCENE_BUILD_DIR << "/screenshot_" << name << ".png";
-	unsigned char *pixels = new unsigned char[w*h*3];
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0,0, w,h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-	mcl::Draw::flip_image(w,h, pixels);
-	mcl::Draw::save_png(filename.str().c_str(), w,h, pixels);
-	delete[] pixels;
+	SOIL_save_screenshot( filename.str().c_str(), SOIL_SAVE_TYPE_PNG, 0, 0, w, h );
 
 }
 

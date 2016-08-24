@@ -48,7 +48,7 @@ public:
 class OGLLight : public BaseLight {
 public:
 	// m_type = 0 (directional) or 1 (point)
-	OGLLight() : m_type(0), m_pos(1,1,0), m_ambient(0.3,0.3,0.3), m_diffuse(.7,.7,.7), m_specular(0.8,0.8,0.8) {}
+	OGLLight() : m_type(1), m_pos(1,1,0), m_ambient(0.3,0.3,0.3), m_diffuse(.7,.7,.7), m_specular(0.8,0.8,0.8) {}
 	std::string get_type() const { return "ogl"; }
 
 	int m_type; // 0 (directional) or 1 (point)

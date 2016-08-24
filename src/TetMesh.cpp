@@ -20,6 +20,7 @@
 // By Matt Overby (http://www.mattoverby.net)
 
 #include "MCL/TetMesh.hpp"
+#include "MCL/VertexSort.hpp"
 
 using namespace mcl;
 
