@@ -55,7 +55,7 @@ public:
 	virtual int display();
 
 	// Add a callback to the gui to be called every frame
-	void add_callback( std::function<void ( GLFWwindow* window, float screen_dt )> &cb ){ render_callbacks.push_back( cb ); }
+	void add_callback( std::function<void ( GLFWwindow* window, RenderGL::AppCamera *cam, float screen_dt )> &cb ){ render_callbacks.push_back( cb ); }
 
 protected:
 	Settings settings;
@@ -76,7 +76,7 @@ protected:
 	bool init_callbacks(GLFWwindow* window);
 
 	// Callbacks:
-	std::vector< std::function<void ( GLFWwindow* window, float screen_dt )> > render_callbacks;
+	std::vector< std::function<void ( GLFWwindow* window, RenderGL::AppCamera *cam, float screen_dt )> > render_callbacks;
 	void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 	void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	void cursor_position_callback(GLFWwindow* window, double x, double y);

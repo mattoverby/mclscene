@@ -136,8 +136,8 @@ if(MCL_BUILD_SAMPLES)
 		add_definitions( ${OpenGL_DEFINITIONS} )
 		add_executable( mesh_viewer samples/MeshViewer.cpp )
 		target_link_libraries( mesh_viewer mclscene ${MCLSCENE_LIBRARIES} )
-#		add_executable( bvh_viewer samples/BVHViewer.cpp )
-#		target_link_libraries( bvh_viewer ${MCLSCENE_LIBRARIES} )
+		add_executable( bvh_viewer samples/BVHViewer.cpp )
+		target_link_libraries( bvh_viewer ${MCLSCENE_LIBRARIES} )
 
 	endif(MCL_BUILD_RENDERING)
 

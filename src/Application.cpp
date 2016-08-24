@@ -136,7 +136,7 @@ int Application::display(){
 		{ // Render scene stuff
 			renderer.draw_objects(); // draws all objects
 	//		renderer.draw_lights();
-			for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, screen_dt ); }
+			for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, &camera, screen_dt ); }
 		}
 
 		{ // Finalize:

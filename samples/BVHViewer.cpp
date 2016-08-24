@@ -1,15 +1,13 @@
 
 #include "MCL/SceneManager.hpp"
-#include "MCL/Gui.hpp"
+#include "MCL/Application.hpp"
 
 using namespace mcl;
 
 SceneManager scene;
-void render_callback();
-void event_callback(sf::Event &event);
+void render_callback(GLFWwindow* window, RenderGL::AppCamera *cam, float screen_dt);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 std::vector< bool > traversal; // 0 = left, 1 = right
-void scale_mesh( std::string dir );
-void refine_mesh( std::string amt );
 bool view_all = false;
 std::string bvh_mode = "linear";
 std::vector<trimesh::point> edges;
@@ -24,22 +22,24 @@ int main(int argc, char *argv[]){
 	// Build the initial bvh
 	scene.get_bvh(true,bvh_mode);
 
-	Gui gui( &scene );
+	Application app( &scene );
 
-	std::function<void ()> draw_cb(render_callback);
-	gui.add_render_callback( draw_cb );
+	// Add a render callback to draw the BVH
+	std::function<void ( GLFWwindow* window, RenderGL::AppCamera *cam, float screen_dt )> draw_cb(render_callback);
+	app.add_callback( draw_cb );
 
-	std::function<void (sf::Event &event)> event_cb(event_callback);
-	gui.add_event_callback( event_cb );
+	// Add a key callback to change the viewer settings
+	std::function<void ( GLFWwindow* window, int key, int scancode, int action, int mods )> key_cb(key_callback);
+	Input::key_callbacks.push_back( key_cb );
 
-	gui.display();
+	app.display();
 
 	return 0;
 }
 
 
 
-void render_callback(){
+void render_callback(GLFWwindow* window, RenderGL::AppCamera *cam, float screen_dt){
 
 	std::shared_ptr<BVHNode> bvh = scene.get_bvh();
 	if( !view_all ){
@@ -60,13 +60,18 @@ void render_callback(){
 		bvh->get_edges( edges );
 	}
 
+	trimesh::XForm<float> xf = cam->projection * cam->view * cam->model;
+
 //		glLineWidth(10.f);
 	glDisable(GL_LIGHTING);
 	glColor3f(1.0, 0.0, 0.0);
 	glBegin(GL_LINES);
 	for( int j=0; j<edges.size(); j+=2 ){
-		glVertex3f(edges[j][0],edges[j][1],edges[j][2]);
-		glVertex3f(edges[j+1][0],edges[j+1][1],edges[j+1][2]);
+//		glMultMatrixf(xform);
+		trimesh::vec e1 = xf*edges[j];
+		trimesh::vec e2 = xf*edges[j+1];
+		glVertex3f(e1[0],e1[1],e1[2]);
+		glVertex3f(e2[0],e2[1],e2[2]);
 	}
 	glEnd();
 	glEnable(GL_LIGHTING);
@@ -74,81 +79,38 @@ void render_callback(){
 }
 
 
-void event_callback(sf::Event &event){
+void key_callback( GLFWwindow* window, int key, int scancode, int action, int mods ){
 
+	if (action != GLFW_PRESS){ return; }
+
+	switch(key){
+
+	case GLFW_KEY_M:
+		if( bvh_mode=="spatial" ){ bvh_mode="linear"; }
+		else{ bvh_mode = "spatial"; }
+		edges.clear();
+		scene.get_bvh(true,bvh_mode);
+		std::cout << "BVH Mode: " << bvh_mode << std::endl;
+		break;
+	case GLFW_KEY_DOWN:
+		view_all = !view_all;
+		break;
+	}
+
+
+/*
 	if( event.type == sf::Event::KeyPressed ){
 
 		if( event.key.code == sf::Keyboard::Up && traversal.size() ){ traversal.pop_back(); }
 		else if( event.key.code == sf::Keyboard::Left ){ traversal.push_back( false ); }
 		else if( event.key.code == sf::Keyboard::Right ){ traversal.push_back( true ); }
-		else if( event.key.code == sf::Keyboard::Down ){ view_all = !view_all; }
 		else if( event.key.code == sf::Keyboard::R ){ refine_mesh("-"); }
-		else if( event.key.code == sf::Keyboard::M ){ 
-			if( bvh_mode=="spatial" ){ bvh_mode="linear"; }
-			else{ bvh_mode = "spatial"; }
-			edges.clear();
-			scene.get_bvh(true,bvh_mode);
-		}
 		else if( event.key.code == sf::Keyboard::Numpad6 ){ scale_mesh("+x"); }
 		else if( event.key.code == sf::Keyboard::Numpad4 ){ scale_mesh("-x"); }
 		else if( event.key.code == sf::Keyboard::Numpad8 ){ scale_mesh("+y"); }
 		else if( event.key.code == sf::Keyboard::Numpad2 ){ scale_mesh("-y"); }
 	}
+*/
 }
-
-
-void scale_mesh( std::string dir ){
-
-	edges.clear();
-	float scale_x=1.f;
-	float scale_y=1.f;
-	if( dir=="+x" ){ scale_x = 1.1f; }
-	else if( dir=="-x" ){ scale_x = 0.9f; }
-	else if( dir=="+y" ){ scale_y = 1.1f; }
-	else if( dir=="-y" ){ scale_y = 0.9f; }
-
-	trimesh::xform scale = trimesh::xform::scale(scale_x,scale_y,1.f);
-	if( scene.objects.size() < 1 ){ return; }
-
-	// Scale the object and remake the BVH
-//	trimesh::vec center = trimesh::mesh_center_of_mass( scene.objects[0]->get_TriMesh().get() );
-//	trimesh::xform translate_in = trimesh::xform::scale(-center[0],-center[1],-center[2]);
-//	trimesh::xform translate_out = trimesh::xform::scale(center[0],center[1],center[2]);
-//	trimesh::xform x_form = translate_out * scale * translate_in;
-
-	scene.objects[0]->apply_xform( scale );
-
-	// Recomputed bounding volumes
-	scene.get_bvh(true,bvh_mode);
-
-}
-
-
-void refine_mesh( std::string amt ){
-
-	edges.clear();
-	if( scene.objects.size() != 1 ){ return; }
-
-	std::shared_ptr<BVHNode> bvh = scene.get_bvh();
-	trimesh::TriMesh *mesh = scene.objects[0]->get_TriMesh().get();
-	trimesh::box b( bvh->aabb->min ); b+=bvh->aabb->max;
-	b.min[1] += ((b.max[1]-b.min[1])*0.05f);
-
-	std::cout << "Clipping mesh. Vertices before: " << scene.objects[0]->get_TriMesh()->vertices.size() << std::flush;
-	trimesh::clip( mesh, b );
-	trimesh::remove_unused_vertices( mesh );
-//	mesh->normals.clear();
-//	mesh->faces.clear();
-//	mesh->tstrips.clear();
-//	mesh->need_faces();
-//	mesh->need_normals();
-//	mesh->need_tstrips();
-	std::cout << ", vertices after: " << scene.objects[0]->get_TriMesh()->vertices.size() << std::endl;
-
-	// Recompute bounding volumes
-	scene.get_bvh(true,bvh_mode);
-
-}
-
 
 
