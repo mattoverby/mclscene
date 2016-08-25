@@ -23,6 +23,8 @@
 #define MCLSCENE_TRIANGLEMESH_H 1
 
 #include "Object.hpp"
+#include "AABB.hpp"
+#include "TriMesh_algo.h"
 
 namespace mcl {
 
@@ -48,9 +50,9 @@ public:
 		bmin = aabb.min; bmax = aabb.max;
 	}
 
-	bool ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ) const {
+	bool ray_intersect( const intersect::Ray *ray, intersect::Payload *payload ) const {
 		bool hit = intersect::ray_triangle( ray, *p0, *p1, *p2, *n0, *n1, *n2, payload );
-		if( hit ){ payload.material = material; }
+		if( hit ){ payload->material = material; }
 		return hit;
 	}
 };
@@ -86,12 +88,12 @@ public:
 
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 
-	bool ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ) const;
-
 	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
 		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
 		prims.insert( prims.end(), tri_refs.begin(), tri_refs.end() );
 	}
+
+//	bool ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ) const;
 
 private:
 	std::shared_ptr<AABB> aabb;

@@ -34,14 +34,7 @@ namespace mcl {
 
 namespace Draw {
 
-	// Replacement for gluPerspective
-	static inline void perspectiveGL(double fovy,double aspect, double zNear, double zFar);
-
-	// Replacement for gluLookat
-	static inline void LookAt(const double p_EyeX, const double p_EyeY, const double p_EyeZ,
-		const double p_CenterX, const double p_CenterY, const double p_CenterZ);
-
-	// Draws a sphere the bad way. Best to make this a display list...
+	// Draws a sphere the bad way.
 	static inline void drawSphere( float x, float y, float z, float r, int dimensions );
 
 	// From: https://stackoverflow.com/questions/1700211/to-dynamically-increment-from-blue-to-red-using-c
@@ -52,7 +45,7 @@ namespace Draw {
 	static inline void colorBlend( float *blended, float a[3], float b[3], float gradient );
 
 	// Rotate a 3D point p about axis a
-	static inline void rotatePoint( float *p, const float *a, const float &angle);
+	static inline void rotatePoint( float *p, const float *a, const float &angle );
 
 }; // end namespace Draw
 
@@ -63,66 +56,6 @@ namespace Draw {
 //////////////////////
 /// Implementations Below
 //////////////////////
-
-// From:
-// http://en.sfml-dev.org/forums/index.php?topic=137.0
-static inline void mcl::Draw::perspectiveGL(double fovy,double aspect, double zNear, double zFar){
-	// Start in projection mode.
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	double xmin, xmax, ymin, ymax;
-	ymax = zNear * tan(fovy * M_PI / 360.0);
-	ymin = -ymax;
-	xmin = ymin * aspect;
-	xmax = ymax * aspect;
-	glFrustum(xmin, xmax, ymin, ymax, zNear, zFar);
-}
-
-
-// From:
-// http://forums.codeguru.com/showthread.php?396078-gluLookAt
-static inline void mcl::Draw::LookAt(const double p_EyeX, const double p_EyeY, const double p_EyeZ, const double p_CenterX,
-	const double p_CenterY, const double p_CenterZ){
-	double l_X = p_EyeX - p_CenterX;
-	double l_Y = p_EyeY - p_CenterY;
-	double l_Z = p_EyeZ - p_CenterZ;
-
-	if(l_X == l_Y && l_Y == l_Z && l_Z == 0.0f)
-		return;
-
-	if(l_X == l_Z && l_Z == 0.0f)
-	{
-		if (l_Y < 0.0f)
-			glRotatef(-90.0f, 1, 0, 0);
-		else
-			glRotatef(90.0f, 1, 0, 0);
-		glTranslatef(-l_X, -l_Y, -l_Z);
-		return;
-	}
-  
-	double l_rX = 0.0f;
-	double l_rY = 0.0f;
-  
-	double l_hA = (l_X == 0.0f) ? l_Z : hypot(l_X, l_Z);
-	double l_hB;
-	if(l_Z == 0.0f)
-		l_hB = hypot(l_X, l_Y);
-	else
-		l_hB = (l_Y == 0.0f) ? l_hA : hypot(l_Y, l_hA);
-	  
-	l_rX = asin(l_Y / l_hB) * (180 / M_PI);
-	l_rY = asin(l_X / l_hA) * (180 / M_PI);
-
-	glRotated(l_rX, 1, 0, 0);
-	if(l_Z < 0.0f)
-		l_rY += 180.0f;
-	else
-		l_rY = 360.0f - l_rY;
-
-	glRotated(l_rY, 0, 1, 0);
-	glTranslated(-p_EyeX, -p_EyeY, -p_EyeZ);
-}
-
 
 
 static inline void mcl::Draw::drawSphere( float x, float y, float z, float r, int dimensions ) {

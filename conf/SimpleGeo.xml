@@ -1,31 +1,22 @@
 <?xml version="1.0"?>
 <mclScene>
-	<background name="bg" type="jpg">
-		<floor value="0" />
-	</background>
-
 
 	<Object name="obj1" type="box" >
 		<width value="20" />
 		<length value="20" />
-		<Material value="white_flag" />
+		<Material value="red" />
 	</Object>
 
 	<Object name="obj2" type="torus" >
 		<tess_ph value="20" />
 		<tess_th value="50" />
 		<inner_radius value="0.75" />
-		<Material value="blue_diff" />
+		<Material value="emerald" />
 	</Object>
 
 
-	<Material name="white_flag" type="diffuse">
+	<Material name="red" type="blinnphong">
 		<Diffuse value="1  0  0" />
-		<edges value="0  0  0" />
-	</Material>
-
-	<Material name="blue_diff" type="ogl">
-		<preset value="emerald"/>
 	</Material>
 
 </mclScene>

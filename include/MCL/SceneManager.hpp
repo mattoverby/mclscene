@@ -32,7 +32,7 @@
 //	2) Load an XML file with SceneManager::load (see conf/ for examples).
 //		OR you can use the make_object, make_light, make_camera, and make_material
 //		functions. They return shared pointers of the scene component
-//		and you can set the settings directly.
+//		and you can set the parameters directly.
 //
 namespace mcl {
 
@@ -58,11 +58,10 @@ class SceneManager {
 		void save( std::string xmlfile, int mode=0 );
 
 		//
-		// Computes bounding volume heirarchy (AABB).
-		// Eventually I will add better heuristics.
+		// Computes bounding volume heirarchy (AABB). Eventually I will add better heuristics.
 		// Type is:
-		// 	spatial = object median (slower, but more balanced)
-		//	linear = parallel build w/ morton codes
+		// 	spatial = object median (slower, better balanced)
+		//	linear = parallel build w/ morton codes (probably has an error somewhere)
 		//
 		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="spatial" );
 
@@ -76,9 +75,9 @@ class SceneManager {
 		//
 		// Vectors and maps of scene components.
 		// The shared pointers in the vectors and maps are duplicates, and exist twice for convenience.
+		// Note that materials are only stored in the map as their reference name is used by objects.
 		//
 		std::vector< std::shared_ptr<BaseObject> > objects;
-		std::vector< std::shared_ptr<BaseMaterial> > materials;
 		std::vector< std::shared_ptr<BaseCamera> > cameras;
 		std::vector< std::shared_ptr<BaseLight> > lights;
 		std::unordered_map< std::string, std::shared_ptr<BaseObject> > objects_map; // name -> object

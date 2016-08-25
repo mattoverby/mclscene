@@ -23,6 +23,15 @@ use cmake to call add_subdirectory, then use the ${MCLSCENE_LIBRARIES} and
 ${MCLSCENE_INCLUDE_DIRS} that are set during the build. See CMakeLists.txt for more details.
 I will improve this in the future with a proper FindMCLSCENE.cmake.
 
+# materials
+
+There are several usable materials with [preset Blinn-Phong parameters](http://devernay.free.fr/cours/opengl/materials.html).
+To reference them in the scene file, use the following names:
+Emerald, Jade, Obsidian, Pearl, Ruby, Turquoise,
+Brass, Bronze, Chrome, Copper, Gold, Silver,
+BlackPlastic, CyanPlastic, GreenPlastic, RedPastic, WhitePlastic, YellowPlastic,
+BlackRubber, CyanRubber, GreenRubber, RedRubber, WhiteRubber, and YellowRubber.
+
 # todo
 
 - Cleanup headers and make it header-only

@@ -17,22 +17,18 @@
 
 		<Translate value="0 -.06  0" />
 
-		<Material value="blue_diff" />
+		<Material value="green_spec" />
 	</Object>
 
 
-	<Material name="red_spec" type="ogl"  >
+	<Material name="red_spec" type="BlinnPhong"  >
 		<Diffuse value="255  120  120" />
 		<Specular value=".2 .2 .2" />
 	</Material>
 
-	<Material name="green_spec" type="ogl"  >
+	<Material name="green_spec" type="BlinnPhong"  >
 		<Diffuse value="120  250  120" />
 		<Specular value=".2 .2 .2" />
-	</Material>
-
-	<Material name="blue_diff" type="ogl"  >
-		<preset value="greenplastic" />
 	</Material>
 
 </mclScene>

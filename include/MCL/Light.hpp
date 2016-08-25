@@ -68,7 +68,6 @@ public:
 		return "";
 
 	} // end get xml
-
 };
 
 

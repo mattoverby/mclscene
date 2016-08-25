@@ -119,7 +119,7 @@ void TriangleMesh::make_tri_refs(){
 
 } // end make triangle references
 
-
+/*
 bool TriangleMesh::ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ) const {
 
 	// Check aabb first
@@ -132,7 +132,7 @@ bool TriangleMesh::ray_intersect( const intersect::Ray &ray, intersect::Payload 
 
 	return hit;
 }
-
+*/
 
 std::string TriangleMesh::get_xml( std::string obj_name, int mode ){
 

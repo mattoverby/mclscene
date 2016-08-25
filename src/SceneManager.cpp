@@ -116,7 +116,6 @@ bool SceneManager::load( std::string filename ){
 		else if( tag == "material" ){
 			std::shared_ptr<BaseMaterial> mat = createMaterial( components[j] );
 			if( mat != NULL ){
-				materials.push_back( mat );
 				materials_map[name] = mat;
 				material_params[name] = components[j].params;
 			}
@@ -129,6 +128,17 @@ bool SceneManager::load( std::string filename ){
 				objects.push_back( obj );
 				objects_map[name] = obj;
 				object_params[name] = components[j].params;
+
+				// Check if it has a material preset for the name
+				if( components[j].exists("material") ){
+					std::string material_name = components[j].get("material").as_string();
+					MaterialPreset m = material_str_to_preset( material_name );
+					if( m != MaterialPreset::Unknown && materials_map.count(material_name)==0 ){
+						std::shared_ptr<BaseMaterial> mat = make_preset_material( m );
+						materials_map[material_name] = mat;
+						material_params[material_name] = std::vector<Param>(); // should add params here
+					}
+				} // end add material preset
 			}
 		} // end build object
 
@@ -275,7 +285,6 @@ std::shared_ptr<mcl::BaseMaterial> SceneManager::make_material( std::string type
 	Component obj( "material", name, parse::to_lower(type) );
 	std::shared_ptr<BaseMaterial> newMat = createMaterial( obj );
 	// Add it to the SceneManager and return it
-	materials.push_back( newMat );
 	materials_map[name] = newMat;
 	return newMat;
 

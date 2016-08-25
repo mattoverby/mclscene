@@ -24,6 +24,7 @@
 
 #include "Object.hpp"
 #include "tetgen.h" // for point filing
+#include "AABB.hpp"
 
 namespace mcl {
 

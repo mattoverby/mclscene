@@ -149,11 +149,11 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 	// Get material properties
 	trimesh::vec ambient(0,0,0);
 	trimesh::vec diffuse(1,0,0);
-	trimesh::vec specular(.8,.8,.8);
-	float shininess = 32.f;
+	trimesh::vec specular(.6,.6,.6);
+	float shininess = 16.f;
 	if( mat!=NULL ){ // Need to have a better way than dynamic cast
-		if( mat->get_type()=="ogl" ){
-			std::shared_ptr<OGLMaterial> glMat = std::dynamic_pointer_cast<OGLMaterial>(mat);
+		if( mat->get_type()=="blinnphong" ){
+			std::shared_ptr<BlinnPhong> glMat = std::dynamic_pointer_cast<BlinnPhong>(mat);
 			ambient = glMat->ambient;
 			diffuse = glMat->diffuse;
 			specular = glMat->specular;

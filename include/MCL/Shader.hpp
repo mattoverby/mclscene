@@ -36,16 +36,15 @@
 
 //
 //	Example use:
-//
+//	Shader myshader;
 //	< OpenGL context creation >
-//	Shader *myshader = new Shader();
-//	myshader->init_from_files( "shader.vert", "shader.frag" );
+//	myshader.init_from_files( "myshader.vert", "myshader.frag" );
 //	while( rendering ){
 //		< OpenGL view stuff >
-//		myshader->enable();
-//		glUniform3f( myshader->uniform("color"), 1.f, 0.f, 0.f );
+//		myshader.enable();
+//		glUniform3f( myshader.uniform("color"), 1.f, 0.f, 0.f );
 //		< Draw stuff >
-//		myshader->disable();
+//		myshader.disable();
 //	}
 //	delete myshader;
 //
@@ -54,16 +53,15 @@ namespace mcl {
 
 class Shader {
 public:
-	// Do not allocate until after the opengl context has been created!
-	Shader() : initialized(false), program_id(glCreateProgram()){ glUseProgram(program_id); }
+	Shader() : program_id(0) {}
 
 	~Shader(){ glDeleteProgram(program_id); }
 
+	// Init the shader from files (must create OpenGL context first!)
 	inline void init_from_files( std::string vertex_file, std::string frag_file );
 
-	inline void init_from_strings( std::string vertex_source, std::string frag_source ){
-		init(vertex_source, frag_source);
-	}
+	// Init the shader from strings (must create OpenGL context first!)
+	inline void init_from_strings( std::string vertex_source, std::string frag_source ){ init(vertex_source, frag_source); }
 
 	inline void enable();
 
@@ -79,7 +77,6 @@ private:
 	GLuint program_id;
 	GLuint vertex_id;
 	GLuint fragment_id;
-	bool initialized;
 
 	std::unordered_map<std::string, GLuint> attributes;
 	std::unordered_map<std::string, GLuint> uniforms;
@@ -120,6 +117,11 @@ GLuint Shader::compile( std::string source, GLenum type ){
 
 void Shader::init(std::string vertex_source, std::string frag_source){
 
+	// Create the resource
+	program_id = glCreateProgram();
+	if( program_id == 0 ){ throw std::runtime_error("\n**glCreateProgram Error"); }
+	glUseProgram(program_id);
+
 	// Compile the shaders and return their id values
 	vertex_id = compile(vertex_source, GL_VERTEX_SHADER);
 	fragment_id = compile(frag_source, GL_FRAGMENT_SHADER);
@@ -145,7 +147,7 @@ void Shader::init(std::string vertex_source, std::string frag_source){
 	glGetProgramiv(program_id, GL_VALIDATE_STATUS, &programValidatationStatus);
 	if( programValidatationStatus != GL_TRUE ){ throw std::runtime_error("\n**Shader Error: Problem with validation"); }
 
-	initialized = true;
+	glUseProgram(0);
 }
 
 
@@ -168,7 +170,7 @@ void Shader::init_from_files( std::string vertex_file, std::string frag_file ){
 
 
 void Shader::enable(){
-	if( initialized ){ glUseProgram(program_id); }
+	if( program_id!=0 ){ glUseProgram(program_id); }
 	else{ throw std::runtime_error("\n**Shader Error: Can't enable, not initialized"); }
 }
 
