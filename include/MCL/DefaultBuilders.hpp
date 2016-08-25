@@ -449,34 +449,24 @@ static std::shared_ptr<BaseLight> default_build_light( Component &component ){
 	//
 	//	OpenGL Light
 	//
-//	if( type == "ogl" ){
-	{
-		std::shared_ptr<OGLLight> light( new OGLLight() );
+	if( type == "point" ){
+
+		std::shared_ptr<PointLight> light( new PointLight() );
 		for( int i=0; i<component.params.size(); ++i ){
-			if( parse::to_lower(component.params[i].tag)=="diffuse" ){
+			std::string tag = parse::to_lower(component.params[i].tag);
+			if( tag=="intensity" || tag=="color" ){
 				component.params[i].fix_color();
-				light->m_diffuse=component.params[i].as_vec3();
+				light->intensity=component.params[i].as_vec3();
 			}
-			else if( parse::to_lower(component.params[i].tag)=="ambient" ){
-				component.params[i].fix_color();
-				light->m_ambient=component.params[i].as_vec3();
-			}
-			else if( parse::to_lower(component.params[i].tag)=="specular" ){
-				component.params[i].fix_color();
-				light->m_specular=component.params[i].as_vec3();
-			}
-			else if( parse::to_lower(component.params[i].tag)=="position" ){
-				light->m_pos=component.params[i].as_vec3();
-				light->m_type=1; // point light
-			}
-			else if( parse::to_lower(component.params[i].tag)=="direction" ){
-				component.params[i].normalize();
-				light->m_pos=component.params[i].as_vec3();
-				light->m_type=0; // directional light
+			else if( tag=="position" ){
+				light->position=component.params[i].as_vec3();
 			}
 		}
 		std::shared_ptr<BaseLight> new_light( light );
 		return new_light;
+	}
+	else{
+		std::cerr << "**Error: I don't know how to create a light of type " << type << std::endl;
 	}
 
 	//

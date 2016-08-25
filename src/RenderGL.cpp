@@ -39,8 +39,8 @@ bool RenderGL::init( mcl::SceneManager *scene_, AppCamera *cam_ ){
 	// Get lighting properties
 	for( int l=0; l<scene->lights.size(); ++l ){
 		// Max number of lights is 8
-		if( scene->lights[l]->get_type()=="ogl" && lights.size() < 8 ){
-			lights.push_back( std::dynamic_pointer_cast<OGLLight>(scene->lights[l]) );
+		if( scene->lights[l]->get_type()=="point" && point_lights.size() < 8 ){
+			point_lights.push_back( std::dynamic_pointer_cast<PointLight>(scene->lights[l]) );
 		}
 	}
 
@@ -179,15 +179,15 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 	glUniform3f( blinnphong->uniform("CamPos"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
 
 	// Set lighting properties
-	glUniform1i( blinnphong->uniform("num_point_lights"), lights.size() );
-	for( int l=0; l<lights.size(); ++l ){
+	glUniform1i( blinnphong->uniform("num_point_lights"), point_lights.size() );
+	for( int l=0; l<point_lights.size(); ++l ){
 
-		OGLLight *light = lights[l].get();
+		PointLight *light = point_lights[l].get();
 		std::stringstream array_ss; array_ss << "pointLights[" << l << "].";
 		std::string array_str = array_ss.str();
 
-		glUniform3f( blinnphong->uniform(array_str+"position"), light->m_pos[0], light->m_pos[1], light->m_pos[2] );
-		glUniform3f( blinnphong->uniform(array_str+"intensity"), light->m_diffuse[0], light->m_diffuse[1], light->m_diffuse[2] );
+		glUniform3f( blinnphong->uniform(array_str+"position"), light->position[0], light->position[1], light->position[2] );
+		glUniform3f( blinnphong->uniform(array_str+"intensity"), light->intensity[0], light->intensity[1], light->intensity[2] );
 	}
 
 	// Set material properties
@@ -227,7 +227,7 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 
 void RenderGL::draw_lights(){
 
-	for( int i=0; i<lights.size(); ++i ){
+	for( int i=0; i<point_lights.size(); ++i ){
 		//TODO
 	}
 

@@ -62,7 +62,7 @@ private:
 	mcl::SceneManager *scene;
 	AppCamera *camera;
 
-	std::vector< std::shared_ptr<OGLLight> > lights; // resized at init
+	std::vector< std::shared_ptr<PointLight> > point_lights; // resized at init
 
 }; // end class RenderGL
 

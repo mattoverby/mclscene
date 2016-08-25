@@ -45,27 +45,22 @@ public:
 };
 
 
-class OGLLight : public BaseLight {
+class PointLight : public BaseLight {
 public:
 	// m_type = 0 (directional) or 1 (point)
-	OGLLight() : m_type(1), m_pos(1,1,0), m_ambient(0.3,0.3,0.3), m_diffuse(.7,.7,.7), m_specular(0.8,0.8,0.8) {}
-	std::string get_type() const { return "ogl"; }
+	PointLight() : position(0,0,0), intensity(1,1,1) {}
+	std::string get_type() const { return "point"; }
 
-	int m_type; // 0 (directional) or 1 (point)
-	trimesh::vec m_pos;
-	trimesh::vec m_ambient, m_diffuse, m_specular; // colors
+	trimesh::vec position, intensity;
 
 	std::string get_xml( std::string light_name, int mode ){
 
 		// mclscene
 		if( mode == 0 ){
 			std::stringstream xml;
-			xml << "\t<Light name=\"" << light_name << "\" type=\"ogl\" >\n";
-			xml << "\t\t<Ambient value=\"" << m_ambient.str() << "\" />\n";
-			xml << "\t\t<Diffuse value=\"" << m_diffuse.str() << "\" />\n";
-			xml << "\t\t<Specular value=\"" << m_specular.str() << "\" />\n";
-			if( m_type==0 ){ xml << "\t\t<Direction value=\"" << m_pos.str() << "\" />\n"; }
-			else { xml << "\t\t<Position value=\"" << m_pos.str() << "\" />\n"; }
+			xml << "\t<Light name=\"" << light_name << "\" type=\"point\" >\n";
+			xml << "\t\t<Intensity value=\"" << intensity.str() << "\" />\n";
+			xml << "\t\t<Position value=\"" << position.str() << "\" />\n";
 			xml << "\t</Light>";
 			return xml.str();
 		}

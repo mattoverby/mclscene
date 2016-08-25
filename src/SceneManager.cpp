@@ -288,22 +288,22 @@ void SceneManager::make_3pt_lighting( trimesh::vec center, float distance ){
 	std::shared_ptr<BaseLight> l0 = make_light( "point", "3pt_key" );
 	std::shared_ptr<BaseLight> l1 = make_light( "point", "3pt_fill" );
 	std::shared_ptr<BaseLight> l2 = make_light( "point", "3pt_keyback" );
-	std::shared_ptr<OGLLight> key = std::dynamic_pointer_cast<OGLLight>( l0 );
-	std::shared_ptr<OGLLight> fill = std::dynamic_pointer_cast<OGLLight>( l1 );
-	std::shared_ptr<OGLLight> back = std::dynamic_pointer_cast<OGLLight>( l2 );
+	std::shared_ptr<PointLight> key = std::dynamic_pointer_cast<PointLight>( l0 );
+	std::shared_ptr<PointLight> fill = std::dynamic_pointer_cast<PointLight>( l1 );
+	std::shared_ptr<PointLight> back = std::dynamic_pointer_cast<PointLight>( l2 );
 
 	float half_d = distance/2.f;
 	float quart_d = distance/4.f;
 
 	// Set positions
-	key->m_pos = center + trimesh::vec(-half_d,0.f,distance);
-	fill->m_pos = center + trimesh::vec(half_d,0.f,distance);
-	back->m_pos = center + trimesh::vec(-half_d,quart_d,-distance);
+	key->position = center + trimesh::vec(-half_d,0.f,distance);
+	fill->position = center + trimesh::vec(half_d,0.f,distance);
+	back->position = center + trimesh::vec(-half_d,quart_d,-distance);
 
 	// Set intensity
-	key->m_diffuse = trimesh::vec(1,1,1);
-	fill->m_diffuse = trimesh::vec(.8,.8,.8);
-	back->m_diffuse = trimesh::vec(.5,.5,.5);
+	key->intensity = trimesh::vec(1,1,1);
+	fill->intensity = trimesh::vec(.8,.8,.8);
+	back->intensity = trimesh::vec(.5,.5,.5);
 
 } // end make three point lighting
 
