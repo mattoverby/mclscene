@@ -76,10 +76,13 @@ void RenderGL::draw_objects(){
 		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
 		if( themesh==NULL ){ continue; }
 
+		bool solid = true;
+		if( scene->objects[i]->get_type()=="pointcloud" ){ solid = false; }
+
 		if( mat.size() > 0 ){
-			draw_mesh( themesh, scene->materials_map[mat] );
+			draw_mesh( themesh, scene->materials_map[mat], solid );
 		} else {
-			draw_mesh( themesh );
+			draw_mesh( themesh, NULL, solid );
 		}
 	}
 
@@ -106,14 +109,14 @@ void RenderGL::draw_objects_subdivided(){
 		if( mat.size() > 0 ){
 			draw_mesh( &mesh2, scene->materials_map[mat] );
 		} else {
-			draw_mesh( &mesh2 );
+			draw_mesh( &mesh2, NULL );
 		}
 	}
 
 } // end draw objects
 
 
-void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMaterial> mat ){
+void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMaterial> mat, bool solid ){
 
 	if( themesh==NULL ){ return; }
 
@@ -134,61 +137,70 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 		glTexCoordPointer(2, GL_FLOAT, sizeof(themesh->texcoords[0]), &themesh->texcoords[0][0]);
 	} else { glDisableClientState(GL_TEXTURE_COORD_ARRAY); }
 
-	// Draw a point cloud
-//	if( obj->get_type()=="pointcloud" ){
+	// Color array -> todo
+//	if( !themesh->colors.empty() ){
+//		glEnableClientState(GL_COLOR_ARRAY);
+//		glColorPointer(3, GL_FLOAT, sizeof(themesh->colors[0]), &themesh->colors[0][0]);
+//	} else { glDisableClientState(GL_COLOR_ARRAY); }
 
-		// TODO
+	// For setting gl_PointSize
+	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-//	} // end draw vertices as points
-
-	// Draw the mesh
-//	else{
-
-		// Get material properties
-		trimesh::vec ambient(0,0,0);
-		trimesh::vec diffuse(1,0,0);
-		trimesh::vec specular(.8,.8,.8);
-		float shininess = 32.f;
-		if( mat!=NULL ){ // Need to have a better way than dynamic cast
-			if( mat->get_type()=="ogl" ){
-				std::shared_ptr<OGLMaterial> glMat = std::dynamic_pointer_cast<OGLMaterial>(mat);
-				ambient = glMat->ambient;
-				diffuse = glMat->diffuse;
-				specular = glMat->specular;
-				shininess = glMat->shininess;
-			}
-		}	
-
-		glBindTexture(GL_TEXTURE_2D, texture_id);
-		blinnphong->enable();
-
-		// Texture stuff
-		glUniform1i( blinnphong->uniform("hastex"), int(texture_id) );
-
-		// Set the matrices
-		glUniformMatrix4fv( blinnphong->uniform("model"), 1, GL_FALSE, camera->model );
-		glUniformMatrix4fv( blinnphong->uniform("view"), 1, GL_FALSE, camera->view );
-		glUniformMatrix4fv( blinnphong->uniform("projection"), 1, GL_FALSE, camera->projection );
-		trimesh::XForm<float> eyepos = trimesh::inv( (camera->projection) * (camera->view) * (camera->model) );
-		glUniform3f( blinnphong->uniform("CamPos"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
-
-		// Set lighting properties
-		glUniform1i( blinnphong->uniform("num_point_lights"), lights.size() );
-		for( int l=0; l<lights.size(); ++l ){
-
-			OGLLight *light = lights[l].get();
-			std::stringstream array_ss; array_ss << "pointLights[" << l << "].";
-			std::string array_str = array_ss.str();
-
-			glUniform3f( blinnphong->uniform(array_str+"position"), light->m_pos[0], light->m_pos[1], light->m_pos[2] );
-			glUniform3f( blinnphong->uniform(array_str+"intensity"), light->m_diffuse[0], light->m_diffuse[1], light->m_diffuse[2] );
+	// Get material properties
+	trimesh::vec ambient(0,0,0);
+	trimesh::vec diffuse(1,0,0);
+	trimesh::vec specular(.8,.8,.8);
+	float shininess = 32.f;
+	if( mat!=NULL ){ // Need to have a better way than dynamic cast
+		if( mat->get_type()=="ogl" ){
+			std::shared_ptr<OGLMaterial> glMat = std::dynamic_pointer_cast<OGLMaterial>(mat);
+			ambient = glMat->ambient;
+			diffuse = glMat->diffuse;
+			specular = glMat->specular;
+			shininess = glMat->shininess;
 		}
+	}
 
-		// Set material properties
-		glUniform3f( blinnphong->uniform("material.ambient"), ambient[0], ambient[1], ambient[2] );
-		glUniform3f( blinnphong->uniform("material.diffuse"), diffuse[0], diffuse[1], diffuse[2] );
-		glUniform3f( blinnphong->uniform("material.specular"), specular[0], specular[1], specular[2] );
-		glUniform1f( blinnphong->uniform("material.shininess"), shininess );
+
+	//
+	//	Set up lighting and materials
+	//
+	glBindTexture(GL_TEXTURE_2D, texture_id);
+	blinnphong->enable();
+
+	// Texture stuff
+	glUniform1i( blinnphong->uniform("hastex"), int(texture_id) );
+
+	// Set the matrices
+	glUniformMatrix4fv( blinnphong->uniform("model"), 1, GL_FALSE, camera->model );
+	glUniformMatrix4fv( blinnphong->uniform("view"), 1, GL_FALSE, camera->view );
+	glUniformMatrix4fv( blinnphong->uniform("projection"), 1, GL_FALSE, camera->projection );
+	trimesh::XForm<float> eyepos = trimesh::inv( (camera->projection) * (camera->view) * (camera->model) );
+	glUniform3f( blinnphong->uniform("CamPos"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
+
+	// Set lighting properties
+	glUniform1i( blinnphong->uniform("num_point_lights"), lights.size() );
+	for( int l=0; l<lights.size(); ++l ){
+
+		OGLLight *light = lights[l].get();
+		std::stringstream array_ss; array_ss << "pointLights[" << l << "].";
+		std::string array_str = array_ss.str();
+
+		glUniform3f( blinnphong->uniform(array_str+"position"), light->m_pos[0], light->m_pos[1], light->m_pos[2] );
+		glUniform3f( blinnphong->uniform(array_str+"intensity"), light->m_diffuse[0], light->m_diffuse[1], light->m_diffuse[2] );
+	}
+
+	// Set material properties
+	glUniform3f( blinnphong->uniform("material.ambient"), ambient[0], ambient[1], ambient[2] );
+	glUniform3f( blinnphong->uniform("material.diffuse"), diffuse[0], diffuse[1], diffuse[2] );
+	glUniform3f( blinnphong->uniform("material.specular"), specular[0], specular[1], specular[2] );
+	glUniform1f( blinnphong->uniform("material.shininess"), shininess );
+
+
+	//
+	//	Draw a solid mesh
+	//
+	if( solid ){
 
 		// Triangle strips
 		const int *t = &themesh->tstrips[0];
@@ -199,10 +211,16 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 			t += striplen;
 		}
 
-		blinnphong->disable();
-		glBindTexture(GL_TEXTURE_2D, 0);
+	} // end draw as triangle mesh
 
-//	} // end draw as triangle mesh
+
+	//
+	//	Draw a point cloud with gl points for now
+	//
+	else { glDrawArrays(GL_POINTS, 0, themesh->vertices.size()); }
+
+	blinnphong->disable();
+	glBindTexture(GL_TEXTURE_2D, 0);
 
 } // end draw
 

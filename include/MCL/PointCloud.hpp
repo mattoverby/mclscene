@@ -44,6 +44,7 @@ public:
 
 	// Mesh data
 	std::vector<trimesh::point> &vertices;
+	std::vector<double> radii;
 
 	// General getters
 	std::string get_type() const { return "pointcloud"; }
@@ -63,6 +64,11 @@ public:
 	//	.node	(tet mesh w/o elements)
 	// Returns true on success.
 	bool load( std::string file, bool fill );
+
+	// After vertices are added, you can compute radii instead of assigning them.
+	// Radii will be assigned to each point based off a density estimator (delta).
+	// delta should be between 0 and 1, with 0 being sparse and 1 being dense.
+	void compute_radii( float delta );
 
 private:
 	std::string material;

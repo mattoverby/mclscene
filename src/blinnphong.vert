@@ -15,4 +15,5 @@ void main()
 	FragPos = gl_Vertex;//vec3( model * gl_Vertex );
 	TexCoord = vec2(0,0);
 	if( hastex>0 ){ TexCoord = gl_MultiTexCoord0; }
+	gl_PointSize = 8.f;
 }

@@ -39,10 +39,11 @@ public:
 	// OpenGL context has been created.
 	bool init( mcl::SceneManager *scene_, AppCamera *cam_ );
 
-	// Draws a triangle mesh object with a material. If material is null,
+	// Draws a triangle mesh object with a material. If material is NULL,
 	// a default one is used (lambertian red). The object must have get_TriMesh()
 	// function implemented, otherwise nothing is drawn.
-	void draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMaterial> mat=NULL );
+	// If solid is set to false, the mesh is drawn as a point cloud
+	void draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMaterial> mat, bool solid=true );
 
 	// Draws all objects in the SceneManager
 	void draw_objects();

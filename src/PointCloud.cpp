@@ -130,6 +130,9 @@ bool PointCloud::load( std::string file, bool fill ){
 		(*aabb) += vertices[v];
 	}
 
+	// Compute point radii
+	compute_radii( 1.f );
+
 	return true;
 
 } // end load ply
@@ -159,3 +162,20 @@ void PointCloud::apply_xform( const trimesh::xform &xf ){
 	for (int i = 0; i < nv; i++){ vertices[i] = xf * vertices[i]; }
 
 }
+
+
+void PointCloud::compute_radii( float delta ){
+
+	// TODO
+
+	int nv = vertices.size();
+	radii.clear();
+	radii.reserve(nv);
+#pragma omp parallel for
+	for (int i = 0; i < nv; i++){
+		double rad = 0.1f;
+		radii.push_back(rad);
+	}
+}
+
+
