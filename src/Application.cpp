@@ -44,7 +44,7 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 
 	std::cout << "Scene Radius: " << scene_rad << std::endl;
 
-	zoom = fabs( scene_rad / sinf( 30.f/2.f ) );
+	zoom = std::fmaxf( fabs( scene_rad / sinf( 30.f/2.f ) ), 1e-3f );
 	cursorX = 0.f;
 	cursorY = 0.f;
 	alpha = 0.f;
@@ -118,7 +118,7 @@ int Application::display(){
 		{ // Clear screen
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			camera.model = trimesh::XForm<float>::rot( beta, trimesh::vec3(1.0f, 0.0f, 0.0f) ) *
-				trimesh::XForm<float>::rot( alpha, trimesh::vec3(0.f, 0.f, 1.f) );
+				trimesh::XForm<float>::rot( alpha, trimesh::vec3(0.f, 0.f, 1.f) ) * trans;
 			camera.view = trimesh::XForm<float>::trans( 0.0f, 0.0f, -zoom );
 		}
 
@@ -166,13 +166,14 @@ bool Application::init_callbacks( GLFWwindow* window ){
 void Application::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
 
-    if (button != GLFW_MOUSE_BUTTON_LEFT){ return; }
-
-    if (action == GLFW_PRESS){
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        glfwGetCursorPos(window, &cursorX, &cursorY);
-    }
-    else{ glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); }
+	if( action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_LEFT ){
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		glfwGetCursorPos(window, &cursorX, &cursorY);
+	}
+	else if(  action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_LEFT ){
+		// TODO
+	}
+	else{ glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); }
 
 }
 
@@ -218,6 +219,7 @@ void Application::scroll_callback(GLFWwindow* window, double x, double y){
 	float scene_rad = scene->get_bvh()->aabb->radius();
 	zoom -= float(y) * (scene_rad);
 	if( zoom < 0.f ){ zoom=0.f; }
+//std::cout << zoom << std::endl;
 }
 
 

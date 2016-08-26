@@ -68,6 +68,7 @@ class SceneManager {
 		//
 		// For a given camera distance from scene center, add lights to make
 		// a three-point lighting rig. Assumes +y is up and camera is facing -z.
+		// Any previous lights are removed.
 		// This is called by the Gui if no lighting has been added to the scene.
 		//
 		void make_3pt_lighting( trimesh::vec center, float distance );

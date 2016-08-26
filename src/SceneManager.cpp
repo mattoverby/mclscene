@@ -293,6 +293,10 @@ std::shared_ptr<mcl::BaseMaterial> SceneManager::make_material( std::string type
 
 void SceneManager::make_3pt_lighting( trimesh::vec center, float distance ){
 
+	lights.clear();
+	lights_map.clear();
+	light_params.clear();
+
 	// TODO use spotlight instead of point light
 	std::shared_ptr<BaseLight> l0 = make_light( "point", "3pt_key" );
 	std::shared_ptr<BaseLight> l1 = make_light( "point", "3pt_fill" );

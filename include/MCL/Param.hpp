@@ -145,7 +145,7 @@ static void load_params( std::vector<Param> &params, const pugi::xml_node &curr_
 			newP.value = xf_ss.str();
 		}
 
-		else if( tag == "translate" ){
+		else if( tag == "rotate" ){
 			std::stringstream ss( value );
 			trimesh::vec v; ss >> v[0] >> v[1] >> v[2];
 

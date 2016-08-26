@@ -43,6 +43,7 @@ public:
 		bool draw_lights;
 		Settings() : save_frames(false), run_simulation(false), subdivide_meshes(false), draw_lights(false) {}
 	};
+	Settings settings;
 
 	// Initializes the the Input singleton so callbacks can be added
 	Application( mcl::SceneManager *scene_ );
@@ -58,8 +59,12 @@ public:
 	// Add a callback to the gui to be called every frame
 	void add_callback( std::function<void ( GLFWwindow* window, RenderGL::AppCamera *cam, float screen_dt )> &cb ){ render_callbacks.push_back( cb ); }
 
+	// You can set these to starting points
+	GLfloat alpha, beta; // for screen rotations (left click)
+	GLfloat zoom; // zooming in and out (scroll wheel)
+	trimesh::XForm<float> trans; // camera translation (right click)
+
 protected:
-	Settings settings;
 	RenderGL::AppCamera camera;
 	RenderGL renderer;
 	SceneManager *scene;
@@ -68,8 +73,6 @@ protected:
 	// Runtime stuff:
 	float screen_dt;
 	double cursorX, cursorY;
-	GLfloat alpha, beta; // for screen rotations
-	GLfloat zoom; // zooming in and out
 
 	// Utility functions:
 	void save_screenshot(GLFWwindow* window);
