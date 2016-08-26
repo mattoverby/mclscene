@@ -36,7 +36,7 @@ std::vector< std::function<void ( GLFWwindow* window, int width, int height )> >
 // Application
 //
 
-Application::Application( mcl::SceneManager *scene_, mcl::Simulator *sim_ ) : scene(scene_), sim(sim_) {
+Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_) {
 	Input &input = Input::getInstance(); // initialize the singleton
 	float scene_rad = scene->get_bvh()->aabb->radius();
 	trimesh::vec scene_center = scene->get_bvh()->aabb->center();
@@ -49,23 +49,6 @@ Application::Application( mcl::SceneManager *scene_, mcl::Simulator *sim_ ) : sc
 	cursorY = 0.f;
 	alpha = 0.f;
 	beta = 0.f;
-
-	// Create a vector of triangle mesh pointer for the simulator
-	std::vector< std::vector<mcl::Param> > params;
-	std::unordered_map< std::string, std::shared_ptr<BaseObject> >::iterator it = scene->objects_map.begin();
-	for( it; it != scene->objects_map.end(); ++it ){
-		params.push_back( scene->object_params[ it->first ] );
-		trimesh::TriMesh *themesh = it->second->get_TriMesh().get();
-		if( themesh==NULL ){ continue; }
-		mesh_pointers.push_back( themesh );
-	}
-
-	// Initialize the simulator
-	if( sim ){
-		if( !sim->initialize(scene->objects, params) ){
-			throw std::runtime_error( "\n**Application::display Error: Problem initializing the simulator" );
-		}
-	} // end init sim
 }
 
 
@@ -117,10 +100,15 @@ int Application::display(){
 		// Simulation engine:
 		if( sim && settings.run_simulation ){
 			if( !sim->step( screen_dt ) ){ std::cerr << "\n**Application::display Error: Problem in simulation step" << std::endl; }
-			if( !sim->update( scene->objects ) ){ std::cerr << "\n**Application::display Error: Problem in mesh update" << std::endl; }
+			if( !sim->update( scene ) ){ std::cerr << "\n**Application::display Error: Problem in mesh update" << std::endl; }
 
 			// Recalculate normals for trimeshes and tetmeshes
-			for( int i=0; i<mesh_pointers.size(); ++i ){ mesh_pointers[i]->need_normals(true); }
+			// Maybe make the simulator do this?
+			for( int o=0; o<scene->objects.size(); ++o ){
+				trimesh::TriMesh *themesh = scene->objects[o]->get_TriMesh().get();
+				if( themesh==NULL ){ continue; }
+				themesh->need_normals(true);
+			}
 		}
 
 		//

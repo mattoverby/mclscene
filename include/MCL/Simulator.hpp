@@ -22,36 +22,39 @@
 #ifndef MCLSCENE_SIMULATION_H
 #define MCLSCENE_SIMULATION_H 1
 
-#include "MCL/Object.hpp"
-#include "MCL/Param.hpp"
-
-namespace mcl {
+#include "MCL/SceneManager.hpp"
 
 //
-//	Simulation is the class a physics engine would derive from
+//	Simulator is the class a physics engine would derive from
 //	for an easy plug-in to the renderer.
-//	In the Gui class:
-//	1) The scene is loaded into mclscene
-//	2) TriMeshes are passed to the initialize function
-//	3) Step is called by the gui to invoke a timestep
-//	4) Update is called (after step) by the gui to update the mesh vertices
 //
+//	Steps to use:
+//	1) Load a scene into scene manager
+//	2) Call Simulator::initialize
+//	3) Pass the simulator class to the application
 //	All functions should return true on success
 //
-//	It's also advisable to give your simulator access to mclscene
-//	via constructor, but not required.
+//	Example:
+//	using namespace mcl;
+//	SceneManager scene;
+//	scene.load( "somescenefile.xml" );
+//	Simulator *sim = new MyPhysicsSimulator();
+//	sim->initialize( &scene );
+//	Application app( &scene, sim );
+//	app.display();
+//
+//	In the application window, you can invoke Simulator::step
+//	with the P button (or every frame with spacebar).
+//	Simulator::update is called immediately after step, and
+//	this is where you copy new vertex locations to the scene.
 //
 class Simulator  {
 public:
 
-	virtual bool initialize( const std::vector< std::shared_ptr<mcl::BaseObject> > &objects,
-		const std::vector< std::vector<mcl::Param> > &params ) = 0;
+	virtual bool initialize( mcl::SceneManager *scene ) = 0;
 	virtual bool step( float screen_dt ) = 0;
-	virtual bool update( std::vector< std::shared_ptr<mcl::BaseObject> > &objects ) = 0;
+	virtual bool update( mcl::SceneManager *scene ) = 0;
 
 }; // end class simulation
-
-
-} // end namespace mcl
 
 #endif

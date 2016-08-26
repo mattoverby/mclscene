@@ -48,7 +48,7 @@ public:
 	Application( mcl::SceneManager *scene_ );
 
 	// Creates a gui with a combined simulation engine.
-	Application( mcl::SceneManager *scene_, mcl::Simulator *sim_ );
+	Application( mcl::SceneManager *scene_, Simulator *sim_ );
 
 	virtual ~Application(){}
 
@@ -70,7 +70,6 @@ protected:
 	double cursorX, cursorY;
 	GLfloat alpha, beta; // for screen rotations
 	GLfloat zoom; // zooming in and out
-	std::vector< trimesh::TriMesh* > mesh_pointers;
 
 	// Utility functions:
 	void save_screenshot(GLFWwindow* window);
