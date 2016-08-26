@@ -48,13 +48,14 @@
 //	Simulator::update is called immediately after step, and
 //	this is where you copy new vertex locations to the scene.
 //
+namespace mcl {
 class Simulator  {
 public:
 
-	virtual bool initialize( mcl::SceneManager *scene ) = 0;
-	virtual bool step( float screen_dt ) = 0;
+	virtual bool step( const mcl::SceneManager *scene, float screen_dt ) = 0;
 	virtual bool update( mcl::SceneManager *scene ) = 0;
 
 }; // end class simulation
+} // end namespace mcl
 
 #endif

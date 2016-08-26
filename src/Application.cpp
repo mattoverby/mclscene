@@ -99,7 +99,7 @@ int Application::display(){
 
 		// Simulation engine:
 		if( sim && settings.run_simulation ){
-			if( !sim->step( screen_dt ) ){ std::cerr << "\n**Application::display Error: Problem in simulation step" << std::endl; }
+			if( !sim->step( scene, screen_dt ) ){ std::cerr << "\n**Application::display Error: Problem in simulation step" << std::endl; }
 			if( !sim->update( scene ) ){ std::cerr << "\n**Application::display Error: Problem in mesh update" << std::endl; }
 
 			// Recalculate normals for trimeshes and tetmeshes
@@ -191,7 +191,7 @@ void Application::key_callback(GLFWwindow* window, int key, int scancode, int ac
 		settings.run_simulation = !settings.run_simulation;
 		break;
 	case GLFW_KEY_P:
-		if( sim ){ sim->step( screen_dt ); }
+		if( sim ){ sim->step( scene, screen_dt ); }
 	    break;
 	case GLFW_KEY_S:
 		settings.save_frames=!settings.save_frames;
