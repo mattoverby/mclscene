@@ -35,7 +35,7 @@ BlackRubber, CyanRubber, GreenRubber, RedRubber, WhiteRubber, and YellowRubber.
 - Cleanup headers and make it header-only
 - Cleanup object base class and hierarchy
 - Support for texture wrapping
-- Support for parsing custome scene components
+- Support for parsing custom scene components
 - Mesh instancing
 - Export to other renderers (e.g., mitsuba, blender)
 
