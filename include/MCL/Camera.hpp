@@ -22,19 +22,24 @@
 #ifndef MCLSCENE_CAMERA_H
 #define MCLSCENE_CAMERA_H 1
 
-#include <Vec.h>
+#include <math.h>
 
 namespace mcl {
-
 
 //
 //	Orthonormal Base
 //
-struct OrthonormalBasis {
+class OrthonormalBasis {
+public:
+	OrthonormalBasis( float *direction, float *up ){ init( direction, up ); }
 
-	OrthonormalBasis( trimesh::vec direction, trimesh::vec up=trimesh::vec(0,1,0) ){
-		using namespace trimesh;
-		W = direction * -1.f;
+	OrthonormalBasis( float *direction ){ float up[3]={0,1,0}; init( direction, up ); }
+
+	float U[3], V[3], W[3];
+
+private:
+	inline void init( float *direction, float *up ){
+		for( int i=0; i<3; ++i ){ W[i] = direction[i]*-1.f; }
 		normalize( W );
 		if( W[0] == 0.f && W[2] == 0.f ){
 			up[0]+=0.0001;
@@ -42,14 +47,22 @@ struct OrthonormalBasis {
 			up[2]+=0.0001;
 			normalize( up );
 		}
-
-		U = up.cross( W );
+		cross( U, up, W );
 		normalize( U );
-		V = W.cross( U );
+		cross( V, W, U );
 		normalize( V );
-	} // end ortho base
+	}
 
-	trimesh::vec U, V, W;
+	inline void cross( float *result, const float *v1, const float *v2 ){
+		result[0] = v1[1]*v2[2] - v1[2]*v2[1];
+		result[1] = v1[2]*v2[0] - v1[0]*v2[2];
+		result[2] = v1[0]*v2[1] - v1[1]*v2[0];
+	}
+	inline void normalize( float *v ){
+		float l = sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+		if(l>0.f){ v[0]/=l; v[1]/=l; v[2]/=l; }
+	}
+
 };
 
 
