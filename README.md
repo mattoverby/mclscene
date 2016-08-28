@@ -3,14 +3,12 @@
 By Matt Overby  
 [http://www.mattoverby.net](http://www.mattoverby.net)
 
-mclscene is a generic scene loader for prototyping my projects. It parses an XML scene file
-and creates typical 3D related stuff (e.g. meshes, lights, materials, etc...)
+mclscene is a 3D scene loader/manager for prototyping my graphics projects (e.g., physics simulation, ray tracing). It parses an XML scene file and creates typical world components (meshes, lights, materials).
 Included are distributions of:
 trimesh2 (Szymon Rusinkiewicz, gfx.cs.princeton.edu/proj/trimesh2),
 tetgen (Hang Si, wias-berlin.de/software/tetgen),
 pugixml (Arseny Kapoulkine, pugixml.org), and
 soil (Jonathan Dummer, lonesock.net/soil.html).
-Currently it only stores triangle/tetrahedral meshes and point clouds.
 
 There is a viewer which can render the scene using OpenGL and GLFW3.
 
@@ -26,7 +24,7 @@ I will improve this in the future with a proper FindMCLSCENE.cmake.
 # materials
 
 There are several usable materials with [preset Blinn-Phong parameters](http://devernay.free.fr/cours/opengl/materials.html).
-To reference them in the scene file, use the following names:
+To reference them in the scene file use the following names:
 Emerald, Jade, Obsidian, Pearl, Ruby, Turquoise,
 Brass, Bronze, Chrome, Copper, Gold, Silver,
 BlackPlastic, CyanPlastic, GreenPlastic, RedPastic, WhitePlastic, YellowPlastic,
@@ -37,7 +35,7 @@ BlackRubber, CyanRubber, GreenRubber, RedRubber, WhiteRubber, and YellowRubber.
 - Cleanup headers and make it header-only
 - Cleanup object base class and hierarchy
 - Support for texture wrapping
-- Support for parsing new components (not just the 4 I use)
+- Support for parsing custome scene components
 - Mesh instancing
 - Export to other renderers (e.g., mitsuba, blender)
 
