@@ -186,7 +186,7 @@ void Application::key_callback(GLFWwindow* window, int key, int scancode, int ac
 	switch (key)
 	{
 	case GLFW_KEY_ESCAPE:
-	    glfwSetWindowShouldClose(window, GLFW_TRUE);
+	    glfwSetWindowShouldClose(window, true);
 	    break;
 	case GLFW_KEY_SPACE:
 		settings.run_simulation = !settings.run_simulation;
