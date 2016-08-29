@@ -40,7 +40,7 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 	Input &input = Input::getInstance(); // initialize the singleton
 	float scene_rad = scene->get_bvh()->aabb->radius();
 	trimesh::vec scene_center = scene->get_bvh()->aabb->center();
-	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( scene_center, scene_rad*3.f ); }
+	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( scene_center, scene_rad*6.f ); }
 
 	std::cout << "Scene Radius: " << scene_rad << std::endl;
 
@@ -170,7 +170,7 @@ void Application::mouse_button_callback(GLFWwindow* window, int button, int acti
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		glfwGetCursorPos(window, &cursorX, &cursorY);
 	}
-	else if(  action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_LEFT ){
+	else if(  action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_RIGHT ){
 		// TODO
 	}
 	else{ glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); }
@@ -219,7 +219,6 @@ void Application::scroll_callback(GLFWwindow* window, double x, double y){
 	float scene_rad = scene->get_bvh()->aabb->radius();
 	zoom -= float(y) * (scene_rad);
 	if( zoom < 0.f ){ zoom=0.f; }
-//std::cout << zoom << std::endl;
 }
 
 
@@ -227,10 +226,10 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
 
 	float scene_d = scene->get_bvh()->aabb->radius()*2.f;
 	float ratio = 1.f;
-	if( height > 0 ){ ratio = (float) width / (float) height; }
+	if( height > 0 ){ ratio = std::fmaxf( (float) width / (float) height, 1e-6f ); }
 
 	glViewport(0, 0, width, height);
-	camera.projection = trimesh::XForm<float>::persp( 30.f, ratio, 0.1f, scene_d*8.f );
+	camera.projection = trimesh::XForm<float>::persp( settings.fov_deg, ratio, 0.1f, scene_d*16.f );
 }
 
 

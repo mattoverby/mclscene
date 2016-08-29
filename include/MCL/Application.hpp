@@ -41,7 +41,9 @@ public:
 		bool run_simulation; // run the simulator every frame
 		bool subdivide_meshes; // copy and subdivide the meshes before rendering
 		bool draw_lights;
-		Settings() : save_frames(false), run_simulation(false), subdivide_meshes(false), draw_lights(false) {}
+		float fov_deg; // field of view in degrees
+		Settings() : save_frames(false), run_simulation(false),
+			subdivide_meshes(false), draw_lights(false), fov_deg(30.f) {}
 	};
 	Settings settings;
 
@@ -59,6 +61,9 @@ public:
 	// Add a callback to the gui to be called every frame
 	void add_callback( std::function<void ( GLFWwindow* window, RenderGL::AppCamera *cam, float screen_dt )> &cb ){ render_callbacks.push_back( cb ); }
 
+	// You can use the renderer to draw custom objects
+	RenderGL renderer;
+
 	// You can set these to starting points
 	GLfloat alpha, beta; // for screen rotations (left click)
 	GLfloat zoom; // zooming in and out (scroll wheel)
@@ -66,7 +71,6 @@ public:
 
 protected:
 	RenderGL::AppCamera camera;
-	RenderGL renderer;
 	SceneManager *scene;
 	Simulator *sim;
 

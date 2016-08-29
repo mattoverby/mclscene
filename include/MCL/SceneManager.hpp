@@ -74,6 +74,12 @@ class SceneManager {
 		void make_3pt_lighting( trimesh::vec center, float distance );
 
 		//
+		// Computes the (approximate) current radius of the scene.
+		// Excludes lights and cameras.
+		//
+		float radius();
+
+		//
 		// Vectors and maps of scene components.
 		// The shared pointers in the vectors and maps are duplicates, and exist twice for convenience.
 		// Note that materials are only stored in the map as their reference name is used by objects.

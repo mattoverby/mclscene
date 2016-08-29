@@ -311,13 +311,21 @@ void SceneManager::make_3pt_lighting( trimesh::vec center, float distance ){
 	// Set positions
 	key->position = center + trimesh::vec(-half_d,0.f,distance);
 	fill->position = center + trimesh::vec(half_d,0.f,distance);
-	back->position = center + trimesh::vec(-half_d,quart_d,-distance);
+	back->position = center + trimesh::vec(0.f,quart_d,-distance);
 
 	// Set intensity
-	key->intensity = trimesh::vec(1,1,1);
+	key->intensity = trimesh::vec(.9,.9,.9);
 	fill->intensity = trimesh::vec(.8,.8,.8);
-	back->intensity = trimesh::vec(.5,.5,.5);
+	back->intensity = trimesh::vec(.6,.6,.6);
 
 } // end make three point lighting
+
+
+float SceneManager::radius(){
+
+	return get_bvh()->aabb->radius();
+
+} // end compute scene radius
+
 
 
