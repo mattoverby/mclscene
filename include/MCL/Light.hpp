@@ -23,7 +23,6 @@
 #define MCLSCENE_LIGHT_H 1
 
 #include <memory>
-#include <cassert>
 #include "Vec.h"
 
 namespace mcl {

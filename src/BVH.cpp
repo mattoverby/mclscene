@@ -140,7 +140,6 @@ void BVHBuilder::lbvh_split( std::shared_ptr<BVHNode> &node,
 //		num_objects = left_codes.size()+right_codes.size();
 
 		// Create the children
-		assert( left_codes.size() > 0 && right_codes.size() > 0 );
 		node->left_child = std::shared_ptr<BVHNode>( new BVHNode() );
 		node->right_child = std::shared_ptr<BVHNode>( new BVHNode() );
 		lbvh_split( node->left_child, bit-1, prims, left_codes, max_depth-1 );

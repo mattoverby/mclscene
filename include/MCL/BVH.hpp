@@ -36,7 +36,6 @@ typedef unsigned long long morton_encode_type;
 namespace helper {
 	// use: bool is_one = helper::check_bit( myInt, bit_position );
 	static inline bool check_bit( morton_type variable, int bit ){
-		assert( bit >=0 && bit < sizeof(morton_type)*8 );
 		std::bitset<sizeof(morton_type)*8> bs(variable);
 		return ( bs[bit]==1 );
 	}

@@ -3,10 +3,10 @@
 
 	<Object name="plane1" type="plane" >
 		<Material value="texplane" />
-		<rotate value="0 90 0" />
+		<rotate value="0 0 0" />
 	</Object>
 
-	<Material name="texplane" type="ogl">
+	<Material name="texplane" type="blinnphong">
 		<Diffuse value=".5 .5 .5" />
 		<texture value="uofm.png" />
 	</Material>

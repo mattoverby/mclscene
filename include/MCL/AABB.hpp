@@ -23,8 +23,6 @@
 #define MCLSCENE_AABB_H 1
 
 #include "Vec.h"
-#include <memory>
-#include <cassert>
 
 namespace mcl {
 

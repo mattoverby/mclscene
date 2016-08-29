@@ -11,9 +11,9 @@ uniform int hastex;
 void main()
 {
 	gl_Position = projection * view * model * gl_Vertex;
-	Normal = gl_Normal;//transpose(inverse(model)) * vec4( gl_Normal, 0.f );
-	FragPos = gl_Vertex;//vec3( model * gl_Vertex );
+	Normal = gl_Normal;
+	FragPos = vec3( gl_Vertex );
 	TexCoord = vec2(0,0);
-	if( hastex>0 ){ TexCoord = gl_MultiTexCoord0; }
+	if( hastex>0 ){ TexCoord = vec2( gl_MultiTexCoord0 ); }
 	gl_PointSize = 8.f;
 }
