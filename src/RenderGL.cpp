@@ -196,23 +196,24 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 	glUniform3f( blinnphong->uniform("material.specular"), specular[0], specular[1], specular[2] );
 	glUniform1f( blinnphong->uniform("material.shininess"), shininess );
 
-
 	//
 	//	Draw a solid mesh
 	//
 	if( solid ){
 
-		// Triangle strips
-		const int *t = &themesh->tstrips[0];
+		// This doesn't work:
+//		glDrawElements(GL_TRIANGLE_STRIP, themesh->tstrips.size(), GL_UNSIGNED_INT, &themesh->tstrips[0]);
+
+		// But this does: ???
+		int *t = &themesh->tstrips[0];
 		const int *end = t + themesh->tstrips.size();
-		while (likely(t < end)) {
+		while( t < end ){
 			int striplen = *t++;
 			glDrawElements(GL_TRIANGLE_STRIP, striplen, GL_UNSIGNED_INT, t);
 			t += striplen;
 		}
 
 	} // end draw as triangle mesh
-
 
 	//
 	//	Draw a point cloud with gl points for now

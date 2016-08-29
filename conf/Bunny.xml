@@ -1,34 +1,13 @@
 <?xml version="1.0"?>
 <mclScene>
 
-	<background name="bg" type="jpg"  >
-		<file value="bg.jpg" />
-		<floor value="0" />
-	</background>
+	<Object name="bunny2" type="trimesh" >
 
-
-	<light name="light1" type="point">
-		<position value="0 1 0"/>
-	</light>
-
-	<Object name="bunny2" type="tetmesh" >
-
-		<File value="bunny562faces.1" />
+		<File value="bunny.ply" />
 
 		<Translate value="0 -.06  0" />
 
-		<Material value="green_spec" />
+		<Material value="gold" />
 	</Object>
-
-
-	<Material name="red_spec" type="BlinnPhong"  >
-		<Diffuse value="255  120  120" />
-		<Specular value=".2 .2 .2" />
-	</Material>
-
-	<Material name="green_spec" type="BlinnPhong"  >
-		<Diffuse value="120  250  120" />
-		<Specular value=".2 .2 .2" />
-	</Material>
 
 </mclScene>
