@@ -49,6 +49,14 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 	cursorY = 0.f;
 	alpha = 0.f;
 	beta = 0.f;
+
+	// Add callbacks to the input class
+	using namespace std::placeholders;    // adds visibility of _1, _2, _3,...
+	Input::key_callbacks.push_back( std::bind( &Application::key_callback, this, _1, _2, _3, _4, _5 ) );
+	Input::mouse_button_callbacks.push_back( std::bind( &Application::mouse_button_callback, this, _1, _2, _3, _4 ) );
+	Input::cursor_position_callbacks.push_back( std::bind( &Application::cursor_position_callback, this, _1, _2, _3 ) );
+	Input::scroll_callbacks.push_back( std::bind( &Application::scroll_callback, this, _1, _2, _3 ) );
+	Input::framebuffer_size_callbacks.push_back( std::bind( &Application::framebuffer_size_callback, this, _1, _2, _3 ) );
 }
 
 
@@ -67,8 +75,15 @@ int Application::display(){
 	window = glfwCreateWindow(1024, 768, "Viewer", NULL, NULL);
 	if( !window ){ glfwTerminate(); return false; }
 
-	if( !init_callbacks( window ) ){ return (EXIT_FAILURE); } // Set default callbacks
 
+	// Bind callbacks to the window
+	glfwSetKeyCallback(window, &Input::key_callback);
+	glfwSetMouseButtonCallback(window, &Input::mouse_button_callback);
+	glfwSetCursorPosCallback(window, &Input::cursor_position_callback);
+	glfwSetScrollCallback(window, &Input::scroll_callback);
+	glfwSetFramebufferSizeCallback(window, &Input::framebuffer_size_callback);
+
+	// Make current
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1);
 
@@ -141,26 +156,6 @@ int Application::display(){
 
 } // end display
 
-
-bool Application::init_callbacks( GLFWwindow* window ){
-
-	// Add callbacks to the input class
-	using namespace std::placeholders;    // adds visibility of _1, _2, _3,...
-	Input::key_callbacks.push_back( std::bind( &Application::key_callback, this, _1, _2, _3, _4, _5 ) );
-	Input::mouse_button_callbacks.push_back( std::bind( &Application::mouse_button_callback, this, _1, _2, _3, _4 ) );
-	Input::cursor_position_callbacks.push_back( std::bind( &Application::cursor_position_callback, this, _1, _2, _3 ) );
-	Input::scroll_callbacks.push_back( std::bind( &Application::scroll_callback, this, _1, _2, _3 ) );
-	Input::framebuffer_size_callbacks.push_back( std::bind( &Application::framebuffer_size_callback, this, _1, _2, _3 ) );
-
-	// Bind them to the window
-	glfwSetKeyCallback(window, &Input::key_callback);
-	glfwSetMouseButtonCallback(window, &Input::mouse_button_callback);
-	glfwSetCursorPosCallback(window, &Input::cursor_position_callback);
-	glfwSetScrollCallback(window, &Input::scroll_callback);
-	glfwSetFramebufferSizeCallback(window, &Input::framebuffer_size_callback);
-
-	return true;
-}
 
 
 void Application::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)

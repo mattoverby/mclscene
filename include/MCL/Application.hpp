@@ -80,7 +80,6 @@ protected:
 
 	// Utility functions:
 	void save_screenshot(GLFWwindow* window);
-	bool init_callbacks(GLFWwindow* window);
 
 	// Callbacks:
 	std::vector< std::function<void ( GLFWwindow* window, RenderGL::AppCamera *cam, float screen_dt )> > render_callbacks;
