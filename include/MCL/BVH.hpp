@@ -27,6 +27,7 @@
 #include <memory>
 #include <chrono>
 #include <bitset>
+#include <numeric>
 
 namespace mcl {
 
