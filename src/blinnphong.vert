@@ -1,7 +1,7 @@
-#version 130
-out vec3 Normal;
-out vec3 FragPos;
-out vec2 TexCoord;
+#version 120
+varying vec3 Normal;
+varying vec3 FragPos;
+varying vec2 TexCoord;
 
 uniform mat4 model;
 uniform mat4 view;

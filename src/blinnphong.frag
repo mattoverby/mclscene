@@ -1,9 +1,9 @@
-#version 130
+#version 120
 
-in vec3 Normal;
-in vec3 FragPos;
+varying vec3 Normal;
+varying vec3 FragPos;
+varying vec2 TexCoord;
 
-in vec2 TexCoord;
 uniform vec3 CamPos;
 uniform sampler2D theTexture;
 
@@ -71,9 +71,10 @@ void main(){
 		result += CalcPointLight( pointLights[i], normal, FragPos, viewDir );
 	}
 
-	vec4 texColor = vec4(1,1,1,1);
-	if( TexCoord[0]>0.f || TexCoord[1]>0.f ){ texColor = texture2D(theTexture, TexCoord); }
-	gl_FragColor = texColor * vec4( result, 1.0 );
+//	vec4 texColor = vec4(1,1,1,1);
+//	if( TexCoord[0]>0.f || TexCoord[1]>0.f ){ texColor = texture2D(theTexture, TexCoord); }
+//	gl_FragColor = texColor * vec4( result, 1.0 );
+	gl_FragColor = vec4( result, 1.0 );
 
 } 
 
