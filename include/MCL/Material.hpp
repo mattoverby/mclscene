@@ -197,6 +197,8 @@ static std::shared_ptr<BlinnPhong> make_preset_material( MaterialPreset m ){
 	case MaterialPreset::YellowRubber:
 		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.05, 0.05, 0.0), vec(0.5, 0.5, 0.4), vec(0.7, 0.7, 0.04), 0.078125 ) ); break;
 
+	default: break;
+
 	} // end switch preset
 
 	if( r != NULL ){ r->shininess *= 128.f; }

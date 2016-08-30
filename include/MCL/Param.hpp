@@ -122,7 +122,7 @@ public:
 static void load_params( std::vector<Param> &params, const pugi::xml_node &curr_node ){
 
 	pugi::xml_node::iterator param = curr_node.begin();
-	for( param; param != curr_node.end(); ++param ) {
+	for( ; param != curr_node.end(); ++param ) {
 		pugi::xml_node curr_param = *param;
 
 		std::string tag = parse::to_lower( curr_param.name() );

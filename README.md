@@ -10,7 +10,7 @@ tetgen (Hang Si, wias-berlin.de/software/tetgen),
 pugixml (Arseny Kapoulkine, pugixml.org), and
 soil (Jonathan Dummer, lonesock.net/soil.html).
 
-There is a viewer which can render the scene using OpenGL and GLFW3.
+There is a viewer which can render the scene using OpenGL, GLEW, and GLFW3.
 
 <img src="https://github.com/over0219/mclscene/raw/master/doc/dillo.png" width="512">
 
