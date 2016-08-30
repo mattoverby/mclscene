@@ -400,11 +400,6 @@ static std::shared_ptr<BaseLight> default_build_light( Component &component ){
 	std::string type = parse::to_lower(component.type);
 	std::string name = component.name;
 
-//	int m_type;
-//	trimesh::vec m_pos;
-//	trimesh::vec m_ambient, m_diffuse, m_specular; // colors
-
-
 	//
 	//	OpenGL Light
 	//
@@ -419,6 +414,9 @@ static std::shared_ptr<BaseLight> default_build_light( Component &component ){
 			}
 			else if( tag=="position" ){
 				light->position=component.params[i].as_vec3();
+			}
+			else if( tag=="falloff" ){
+				light->falloff=component.params[i].as_vec3();
 			}
 		}
 		std::shared_ptr<BaseLight> new_light( light );
