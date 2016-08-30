@@ -173,7 +173,7 @@ void SceneManager::save( std::string xmlfile, int mode ){
 
 		// Loop over materials, they must retain their original name
 		std::unordered_map< std::string, std::shared_ptr<BaseMaterial> >::iterator mat_iter = materials_map.begin();
-		for( mat_iter; mat_iter != materials_map.end(); ++mat_iter ){
+		for( ; mat_iter != materials_map.end(); ++mat_iter ){
 			xml << "\n" << mat_iter->second->get_xml( mat_iter->first, mode );
 		}
 

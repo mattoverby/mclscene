@@ -82,7 +82,7 @@ int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vecto
 	// Find first non-zero most signficant bit
 	int start_bit = sizeof(morton_type)*8-1;
 	bool found=false;
-	for( start_bit; start_bit > 1 && !found; --start_bit ){
+	for( ; start_bit > 1 && !found; --start_bit ){
 
 #pragma omp parallel for
 		for( int i=0; i<morton_codes.size(); ++i ){

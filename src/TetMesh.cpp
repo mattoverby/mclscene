@@ -257,7 +257,7 @@ bool TetMesh::need_surface(){
 
 	// Loop over face_ids and if a face only exists once (for all tets) its a boundary
 	std::unordered_map< int3, int >::iterator faceIt = face_ids.begin();
-	for( faceIt; faceIt != face_ids.end(); ++faceIt ){
+	for( ; faceIt != face_ids.end(); ++faceIt ){
 		if( faceIt->second == 1 ){
 			int3 f = faceIt->first;
 			faces.push_back( trimesh::TriMesh::Face( f.orig_v[0], f.orig_v[1], f.orig_v[2] ) );

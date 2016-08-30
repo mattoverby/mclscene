@@ -46,7 +46,7 @@ bool RenderGL::init( mcl::SceneManager *scene_, AppCamera *cam_ ){
 
 	// Load textures
 	std::unordered_map< std::string, std::shared_ptr<BaseMaterial> >::iterator mIter = scene->materials_map.begin();
-	for( mIter; mIter != scene->materials_map.end(); ++mIter ){
+	for( ; mIter != scene->materials_map.end(); ++mIter ){
 		if( mIter->second->texture_file.size() ){
 
 			int channels, tex_width, tex_height;
