@@ -74,7 +74,7 @@ int Application::display(){
 	glEnable(GL_MULTISAMPLE);
 	window = glfwCreateWindow(1024, 768, "Viewer", NULL, NULL);
 	if( !window ){ glfwTerminate(); return false; }
-
+	glfwWindowHint(GLFW_SRGB_CAPABLE, true);
 
 	// Bind callbacks to the window
 	glfwSetKeyCallback(window, &Input::key_callback);
@@ -98,6 +98,7 @@ int Application::display(){
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(1.f,1.f,1.f,1.f); // Background color is white
+	if( settings.gamma_correction ){ glEnable(GL_FRAMEBUFFER_SRGB); } // gamma correction
 
 	// Game loop
 	float t_old = glfwGetTime();

@@ -43,8 +43,10 @@ public:
 		bool subdivide_meshes; // copy and subdivide the meshes before rendering
 		bool draw_lights;
 		float fov_deg; // field of view in degrees
+		bool gamma_correction;
 		Settings() : save_frames(false), run_simulation(false),
-			subdivide_meshes(false), draw_lights(false), fov_deg(30.f) {}
+			subdivide_meshes(false), draw_lights(false), fov_deg(30.f),
+			gamma_correction(true) {}
 	};
 	Settings settings;
 
