@@ -188,6 +188,9 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 
 		glUniform3f( blinnphong->uniform(array_str+"position"), light->position[0], light->position[1], light->position[2] );
 		glUniform3f( blinnphong->uniform(array_str+"intensity"), light->intensity[0], light->intensity[1], light->intensity[2] );
+		glUniform1f( blinnphong->uniform(array_str+"con_atten"), 1.f );
+		glUniform1f( blinnphong->uniform(array_str+"lin_atten"), 0.1f );
+		glUniform1f( blinnphong->uniform(array_str+"quad_atten"), 0.01f );
 	}
 
 	// Set material properties

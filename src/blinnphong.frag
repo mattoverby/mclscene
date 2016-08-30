@@ -24,6 +24,9 @@ uniform Material material;
 struct PointLight {
 	vec3 position;
 	vec3 intensity;
+	float con_atten;
+	float lin_atten;
+	float quad_atten;
 };
 uniform int num_point_lights;
 #define MAX_NUM_LIGHTS 8
@@ -46,12 +49,12 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir){
 
 	// Specular
 	vec3 halfVec = normalize(lightDir + viewDir);
-	float spec = pow( max( dot(normal, halfVec), 0.f ), material.shininess );
+	float spec = pow( max( dot(normal, halfVec), 1e-6f ), material.shininess );
 	vec3 specular = spec * material.specular * light.intensity;
 
 	// Attenuation (falloff)
 	float dist = length( light.position - fragPos )*0.25f;
-	float atten = 1.f / (1.f + 0.1f*dist + 0.01f*dist*dist);
+	float atten = 1.f / (light.con_atten + light.lin_atten*dist + light.quad_atten*dist*dist);
 
 	// Final color
 	return ( ambient + diffuse + specular )*atten;
