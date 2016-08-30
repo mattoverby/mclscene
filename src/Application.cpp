@@ -97,8 +97,6 @@ int Application::display(){
 	// Initialize OpenGL
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_DEPTH_TEST);
-	glClearColor(1.f,1.f,1.f,1.f); // Background color is white
-	if( settings.gamma_correction ){ glEnable(GL_FRAMEBUFFER_SRGB); } // gamma correction
 
 	// Game loop
 	float t_old = glfwGetTime();
@@ -132,7 +130,10 @@ int Application::display(){
 		//
 
 		{ // Clear screen
+			glClearColor(settings.clear_color[0],settings.clear_color[1],settings.clear_color[2],1.f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			if( settings.gamma_correction ){ glEnable(GL_FRAMEBUFFER_SRGB); } // gamma correction
+
 			camera.model = trimesh::XForm<float>::rot( beta, trimesh::vec3(1.0f, 0.0f, 0.0f) ) *
 				trimesh::XForm<float>::rot( alpha, trimesh::vec3(0.f, 0.f, 1.f) ) * trans;
 			camera.view = trimesh::XForm<float>::trans( 0.0f, 0.0f, -zoom );

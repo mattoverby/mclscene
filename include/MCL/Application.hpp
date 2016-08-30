@@ -44,9 +44,10 @@ public:
 		bool draw_lights;
 		float fov_deg; // field of view in degrees
 		bool gamma_correction;
+		trimesh::vec clear_color;
 		Settings() : save_frames(false), run_simulation(false),
 			subdivide_meshes(false), draw_lights(false), fov_deg(30.f),
-			gamma_correction(true) {}
+			gamma_correction(true), clear_color(1,1,1) {}
 	};
 	Settings settings;
 
