@@ -71,10 +71,9 @@ int Application::display(){
 	// Initialize the window
 	if (!glfwInit()){ return false; }
 	glfwWindowHint(GLFW_SAMPLES, 4); // anti aliasing
-	glEnable(GL_MULTISAMPLE);
+	glfwWindowHint(GLFW_SRGB_CAPABLE, true); // gamma correction
 	window = glfwCreateWindow(1024, 768, "Viewer", NULL, NULL);
 	if( !window ){ glfwTerminate(); return false; }
-	glfwWindowHint(GLFW_SRGB_CAPABLE, true);
 
 	// Bind callbacks to the window
 	glfwSetKeyCallback(window, &Input::key_callback);
@@ -97,6 +96,7 @@ int Application::display(){
 	// Initialize OpenGL
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_MULTISAMPLE);
 
 	// Game loop
 	float t_old = glfwGetTime();
