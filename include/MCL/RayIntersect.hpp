@@ -27,7 +27,6 @@
 
 namespace mcl {
 
-// Ray and Payload are classes so you can derive from them
 namespace intersect {
 
 	class Ray {
