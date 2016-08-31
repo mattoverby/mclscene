@@ -28,21 +28,6 @@
 //	Simulator is the class a physics engine would derive from
 //	for an easy plug-in to the renderer.
 //
-//	Steps to use:
-//	1) Load a scene into scene manager
-//	2) Call Simulator::initialize
-//	3) Pass the simulator class to the application
-//	All functions should return true on success
-//
-//	Example:
-//	using namespace mcl;
-//	SceneManager scene;
-//	scene.load( "somescenefile.xml" );
-//	Simulator *sim = new MyPhysicsSimulator();
-//	sim->initialize( &scene );
-//	Application app( &scene, sim );
-//	app.display();
-//
 //	In the application window, you can invoke Simulator::step
 //	with the P button (or every frame with spacebar).
 //	Simulator::update is called immediately after step, and
