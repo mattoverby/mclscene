@@ -37,17 +37,19 @@ namespace mcl {
 
 class Application {
 public:
+	// TODO: Pull relevent values from a camera class
 	struct Settings {
 		bool save_frames; // saves every render frame to a timestamped png in your build directory
 		bool run_simulation; // run the simulator every frame
 		bool subdivide_meshes; // copy and subdivide the meshes before rendering
 		bool draw_lights;
+		trimesh::Vec<2,float> clipping; // clipping plane for proj. matrix
 		float fov_deg; // field of view in degrees
 		bool gamma_correction;
 		trimesh::vec clear_color;
 		Settings() : save_frames(false), run_simulation(false),
 			subdivide_meshes(false), draw_lights(false), fov_deg(30.f),
-			gamma_correction(true), clear_color(1,1,1) {}
+			gamma_correction(true), clear_color(1,1,1), clipping(0.1, 1024.f) {}
 	};
 	Settings settings;
 
@@ -81,6 +83,7 @@ protected:
 	// Runtime stuff:
 	float screen_dt;
 	double cursorX, cursorY;
+	float aspect_ratio;
 
 	// Utility functions:
 	void save_screenshot(GLFWwindow* window);

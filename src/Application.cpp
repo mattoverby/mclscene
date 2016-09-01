@@ -44,6 +44,9 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 
 	std::cout << "Scene Radius: " << scene_rad << std::endl;
 
+	aspect_ratio = 1.f;
+	// real aspect_ratio set by framebuffer_size_callback
+
 	zoom = std::fmaxf( fabs( scene_rad / sinf( 30.f/2.f ) ), 1e-3f );
 	cursorX = 0.f;
 	cursorY = 0.f;
@@ -137,6 +140,7 @@ int Application::display(){
 			camera.model = trimesh::XForm<float>::rot( beta, trimesh::vec3(1.0f, 0.0f, 0.0f) ) *
 				trimesh::XForm<float>::rot( alpha, trimesh::vec3(0.f, 0.f, 1.f) ) * trans;
 			camera.view = trimesh::XForm<float>::trans( 0.0f, 0.0f, -zoom );
+			camera.projection = trimesh::XForm<float>::persp( settings.fov_deg, aspect_ratio, settings.clipping[0], settings.clipping[1] );
 		}
 
 		{ // Render scene stuff
@@ -221,12 +225,12 @@ void Application::scroll_callback(GLFWwindow* window, double x, double y){
 
 void Application::framebuffer_size_callback(GLFWwindow* window, int width, int height){
 
-	float scene_d = scene->get_bvh()->aabb->radius()*2.f;
-	float ratio = 1.f;
-	if( height > 0 ){ ratio = std::fmaxf( (float) width / (float) height, 1e-6f ); }
-
+	float scene_d = std::fmaxf( scene->get_bvh()->aabb->radius()*2.f, 0.2f );
+	aspect_ratio = 1.f;
+	if( height > 0 ){ aspect_ratio = std::fmaxf( (float) width / (float) height, 1e-6f ); }
 	glViewport(0, 0, width, height);
-	camera.projection = trimesh::XForm<float>::persp( settings.fov_deg, ratio, 0.1f, scene_d*16.f );
+
+	camera.projection = trimesh::XForm<float>::persp( settings.fov_deg, aspect_ratio, 0.1f, scene_d*16.f );
 }
 
 
