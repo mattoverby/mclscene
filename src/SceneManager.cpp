@@ -328,7 +328,10 @@ void SceneManager::make_3pt_lighting( trimesh::vec center, float distance ){
 
 float SceneManager::radius(){
 
-	return get_bvh()->aabb->radius();
+	// TODO use Ritter's faster bounding sphere approximation code
+	std::shared_ptr<BVHNode> curr_bounds( new BVHNode() );
+	int num_nodes = BVHBuilder::make_tree_lbvh( curr_bounds, objects, 1 );
+	return curr_bounds->aabb->radius();
 
 } // end compute scene radius
 

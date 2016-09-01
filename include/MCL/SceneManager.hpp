@@ -74,8 +74,7 @@ class SceneManager {
 		void make_3pt_lighting( trimesh::vec center, float distance );
 
 		//
-		// Computes the (approximate) current radius of the scene.
-		// Excludes lights and cameras.
+		// Computes the current radius of the scene, excluding lights and cameras.
 		//
 		float radius();
 

@@ -38,7 +38,7 @@ std::vector< std::function<void ( GLFWwindow* window, int width, int height )> >
 
 Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_) {
 	Input &input = Input::getInstance(); // initialize the singleton
-	float scene_rad = scene->get_bvh()->aabb->radius();
+	float scene_rad = scene->radius();
 	trimesh::vec scene_center = scene->get_bvh()->aabb->center();
 	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( scene_center, scene_rad*6.f ); }
 
@@ -217,7 +217,7 @@ void Application::cursor_position_callback(GLFWwindow* window, double x, double 
 
 
 void Application::scroll_callback(GLFWwindow* window, double x, double y){
-	float scene_rad = scene->get_bvh()->aabb->radius();
+	float scene_rad = scene->radius();
 	zoom -= float(y) * (scene_rad);
 	if( zoom < 0.f ){ zoom=0.f; }
 }
@@ -225,7 +225,7 @@ void Application::scroll_callback(GLFWwindow* window, double x, double y){
 
 void Application::framebuffer_size_callback(GLFWwindow* window, int width, int height){
 
-	float scene_d = std::fmaxf( scene->get_bvh()->aabb->radius()*2.f, 0.2f );
+	float scene_d = std::fmaxf( scene->radius()*2.f, 0.2f );
 	aspect_ratio = 1.f;
 	if( height > 0 ){ aspect_ratio = std::fmaxf( (float) width / (float) height, 1e-6f ); }
 	glViewport(0, 0, width, height);
