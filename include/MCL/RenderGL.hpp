@@ -24,7 +24,6 @@
 
 #include <GL/glew.h>
 #include "MCL/Shader.hpp"
-#include "MCL/RenderUtils.hpp"
 #include "MCL/SceneManager.hpp"
 
 namespace mcl {

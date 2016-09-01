@@ -19,6 +19,13 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
+//
+// This class provides int3 and int2 types along with hashes so they can be used as
+// keys in std::unordered_map. The values are sorted, so only unique pairs/triplets
+// are inserted. This allows the counting/finding of outer edges/surfaces of meshes.
+// See TetMesh.cpp for an example.
+//
+
 #ifndef MCLSCENE_VERTEXSORT_H
 #define MCLSCENE_VERTEXSORT_H 1
 

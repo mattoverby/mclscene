@@ -236,3 +236,19 @@ void RenderGL::draw_lights(){
 } // end draw lights
 
 
+// Color blending, saved for reference:
+/*
+	// From: https://stackoverflow.com/questions/1700211/to-dynamically-increment-from-blue-to-red-using-c
+	static inline float blend(float a, float b, float alpha){ return (1.f - alpha) * a + alpha * b; }
+
+	// gradient should be 0-1. blended needs to be a 3-element array
+	// From https://stackoverflow.com/questions/1700211/to-dynamically-increment-from-blue-to-red-using-c
+	static inline void colorBlend( float *blended, float a[3], float b[3], float gradient ){
+		if( gradient > 1.f ){ gradient = 1.f; }
+		if( gradient < 0.f ){ gradient = 0.f; }
+		blended[0] = blend( a[0], b[0], gradient );
+		blended[1] = blend( a[1], b[1], gradient );
+		blended[2] = blend( a[2], b[2], gradient );
+	}
+*/
+
