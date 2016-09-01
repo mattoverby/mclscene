@@ -20,6 +20,7 @@
 // By Matt Overby (http://www.mattoverby.net)
 
 #include "MCL/SceneManager.hpp"
+#include "bsphere.h" // for miniball (trimesh2)
 
 using namespace mcl;
 using namespace trimesh;
@@ -329,9 +330,18 @@ void SceneManager::make_3pt_lighting( trimesh::vec center, float distance ){
 float SceneManager::radius(){
 
 	// TODO use Ritter's faster bounding sphere approximation code
-	std::shared_ptr<BVHNode> curr_bounds( new BVHNode() );
-	int num_nodes = BVHBuilder::make_tree_lbvh( curr_bounds, objects, 1 );
-	return curr_bounds->aabb->radius();
+
+	trimesh::Miniball<3,float> mb;
+
+	for( int i=0; i<objects.size(); ++i ){
+		vec min, max;
+		objects[i]->bounds( min, max );
+		mb.check_in( min ); mb.check_in( max );
+	}
+
+	mb.build();
+//	trimesh::vec center = mb.center();
+	return sqrt(mb.squared_radius());
 
 } // end compute scene radius
 

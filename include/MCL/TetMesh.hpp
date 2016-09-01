@@ -75,6 +75,8 @@ public:
 
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 
+	void update(){ aabb->valid=false; }
+
 	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
 		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
 		prims.insert( prims.end(), tri_refs.begin(), tri_refs.end() );

@@ -41,6 +41,10 @@ public:
 	virtual std::string get_type() const = 0;
 	virtual void bounds( trimesh::vec &bmin, trimesh::vec &bmax ) = 0;
 
+	// When an object's physical parameters are changed, it may need to
+	// update its bounding box, internal parameters, etc...
+	virtual void update(){}
+
 	virtual const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return NULL; }
 	virtual void apply_xform( const trimesh::xform &xf ){} // TODO store xform
 
