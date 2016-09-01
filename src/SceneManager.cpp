@@ -314,9 +314,14 @@ void SceneManager::make_3pt_lighting( trimesh::vec center, float distance ){
 	back->position = center + trimesh::vec(0.f,quart_d,-distance);
 
 	// Set intensity
-	key->intensity = trimesh::vec(.9,.9,.9);
-	fill->intensity = trimesh::vec(.8,.8,.8);
+	key->intensity = trimesh::vec(.8,.8,.8);
+	fill->intensity = trimesh::vec(.6,.6,.6);
 	back->intensity = trimesh::vec(.6,.6,.6);
+
+	// Falloff (none)
+	key->falloff = trimesh::vec(1.f,0.f,0.f);
+	fill->falloff = trimesh::vec(1.f,0.f,0.f);
+	back->falloff = trimesh::vec(1.f,0.f,0.f);
 
 } // end make three point lighting
 
