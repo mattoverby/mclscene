@@ -66,7 +66,6 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 
 Application::Application( mcl::SceneManager *scene_ ) : Application(scene_,0) {}
 
-
 int Application::display(){
 
 	GLFWwindow* window;
@@ -76,7 +75,16 @@ int Application::display(){
 	if (!glfwInit()){ return false; }
 	glfwWindowHint(GLFW_SAMPLES, 4); // anti aliasing
 	glfwWindowHint(GLFW_SRGB_CAPABLE, true); // gamma correction
-	window = glfwCreateWindow(1024, 768, "Viewer", NULL, NULL);
+
+	// Get the monitor max window size
+	const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+	int max_width = mode->width;
+	int max_height = mode->height;
+	if( max_width >= 1920 ){ max_width=1920; max_height=1080; } // just use 1080 if they have it
+	else{ max_width=1366; max_height=768; } // any lower than this... why?
+
+	// Create the glfw window
+	window = glfwCreateWindow(max_width, max_height, "Viewer", NULL, NULL);
 	if( !window ){ glfwTerminate(); return false; }
 
 	// Bind callbacks to the window
