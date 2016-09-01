@@ -20,9 +20,32 @@
 // By Matt Overby (http://www.mattoverby.net)
 
 #include "MCL/BVH.hpp"
-
+#include <chrono>
+#include <bitset>
 
 using namespace mcl;
+
+namespace helper {
+	// use: bool is_one = helper::check_bit( myInt, bit_position );
+	static inline bool check_bit( morton_type variable, int bit ){
+		std::bitset<sizeof(morton_type)*8> bs(variable);
+		return ( bs[bit]==1 );
+	}
+}
+
+static inline morton_type morton_encode(const morton_encode_type x, const morton_encode_type y, const morton_encode_type z){
+	int n_iters = sizeof(morton_type)*8;
+	// Step through the bits and assign them. The x2 for i is required to round-robinish interleaving
+	// and differs from typical morton encoding. Without them, I got thin slices along the x and z axes.
+	morton_type result = 0;
+	for( morton_type i = 0; i<n_iters; ++i ){
+		result |= (x & (morton_type(1) << i)) << i*2
+			| (y & (morton_type(1) << i)) << (i*2 + 1)
+			| (z & (morton_type(1) << i)) << (i*2 + 2);
+	}
+	return result;
+}
+
 
 // Used for stats:
 int BVHBuilder::n_nodes = 0;

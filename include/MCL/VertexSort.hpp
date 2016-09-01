@@ -69,7 +69,7 @@ namespace mcl {
 			);
 		}
 		int operator[](const int i) const {
-			assert(i<3); return orig_v[i];
+			return orig_v[i];
 		}
 		int sorted_v[3]; // vertices SORTED
 		int orig_v[3]; // original vertices
@@ -88,7 +88,7 @@ namespace mcl {
 			);
 		}
 		int operator[](const int i) const {
-			assert(i<2); return orig_v[i];
+			return orig_v[i];
 		}
 		int sorted_v[2]; // vertices SORTED
 		int orig_v[2]; // original vertices

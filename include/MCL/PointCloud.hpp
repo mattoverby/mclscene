@@ -23,7 +23,6 @@
 #define MCLSCENE_POINTCLOUD_H 1
 
 #include "Object.hpp"
-#include "tetgen.h" // for point filing
 #include "AABB.hpp"
 
 namespace mcl {

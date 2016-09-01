@@ -21,6 +21,7 @@
 
 #include "MCL/TetMesh.hpp"
 #include "MCL/VertexSort.hpp"
+#include "tetgen.h"
 
 using namespace mcl;
 

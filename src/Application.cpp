@@ -19,6 +19,7 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
+#include "SOIL2.h"
 #include "MCL/Application.hpp"
 
 using namespace mcl;

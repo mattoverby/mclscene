@@ -20,6 +20,7 @@
 // By Matt Overby (http://www.mattoverby.net)
 
 #include "MCL/PointCloud.hpp"
+#include "tetgen.h" // for point filing
 
 using namespace mcl;
 
