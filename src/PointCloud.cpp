@@ -167,14 +167,13 @@ void PointCloud::apply_xform( const trimesh::xform &xf ){
 void PointCloud::compute_radii( float delta ){
 
 	// TODO
-
+	
 	int nv = vertices.size();
-	radii.clear();
-	radii.reserve(nv);
+	radii.resize(nv);
 #pragma omp parallel for
 	for (int i = 0; i < nv; i++){
 		double rad = 0.1f;
-		radii.push_back(rad);
+		radii[i]=(rad);
 	}
 }
 
