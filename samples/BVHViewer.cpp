@@ -96,21 +96,6 @@ void key_callback( GLFWwindow* window, int key, int scancode, int action, int mo
 		view_all = !view_all;
 		break;
 	}
-
-
-/*
-	if( event.type == sf::Event::KeyPressed ){
-
-		if( event.key.code == sf::Keyboard::Up && traversal.size() ){ traversal.pop_back(); }
-		else if( event.key.code == sf::Keyboard::Left ){ traversal.push_back( false ); }
-		else if( event.key.code == sf::Keyboard::Right ){ traversal.push_back( true ); }
-		else if( event.key.code == sf::Keyboard::R ){ refine_mesh("-"); }
-		else if( event.key.code == sf::Keyboard::Numpad6 ){ scale_mesh("+x"); }
-		else if( event.key.code == sf::Keyboard::Numpad4 ){ scale_mesh("-x"); }
-		else if( event.key.code == sf::Keyboard::Numpad8 ){ scale_mesh("+y"); }
-		else if( event.key.code == sf::Keyboard::Numpad2 ){ scale_mesh("-y"); }
-	}
-*/
 }
 
 
