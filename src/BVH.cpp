@@ -61,16 +61,17 @@ int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vecto
 
 	root.reset( new BVHNode );
 
-	n_nodes = 1;
-	avg_balance = 0.f;
-	num_avg_balance = 0;
-
 	using namespace trimesh;
 
 	// Get all the primitives in the domain
 	std::vector< std::shared_ptr<BaseObject> > prims;
-	for( int i=0; i<objects.size(); ++i ){ objects[i]->get_primitives( prims ); }
+	prims.reserve( n_nodes ); // only helpful if we're recreating
 
+	n_nodes = 1;
+	avg_balance = 0.f;
+	num_avg_balance = 0;
+
+	for( int i=0; i<objects.size(); ++i ){ objects[i]->get_primitives( prims ); }
 	if( prims.size()==0 ){ return 1; }
 
 	// Compute centroids
@@ -189,12 +190,14 @@ int BVHBuilder::make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::ve
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	start = std::chrono::system_clock::now();
 
+	// Get all the primitives in the domain and start construction
+	std::vector< std::shared_ptr<BaseObject> > prims;
+	prims.reserve( n_nodes ); // only helpful if we're recreating
+
 	n_nodes = 1;
 	avg_balance = 0.f;
 	num_avg_balance = 0;
 
-	// Get all the primitives in the domain and start construction
-	std::vector< std::shared_ptr<BaseObject> > prims;
 	for( int i=0; i<objects.size(); ++i ){ objects[i]->get_primitives( prims ); }
 
 	if( prims.size()==0 ){ return 1; }
