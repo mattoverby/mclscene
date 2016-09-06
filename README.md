@@ -43,7 +43,7 @@ BlackRubber, CyanRubber, GreenRubber, RedRubber, WhiteRubber, and YellowRubber.
 
 Copyright 2016 Matthew Overby.
 
-MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
+MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)  
 Redistribution and use in source and binary forms, with or without modification, are
 permitted provided that the following conditions are met:  
 1. Redistributions of source code must retain the above copyright notice, this list of
