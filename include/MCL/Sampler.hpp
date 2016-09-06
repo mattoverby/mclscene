@@ -26,13 +26,13 @@
 #include <math.h>
 
 namespace mcl {
-
+	
+// Randoms (u1, u2, etc...): 0 to 1
 namespace Sampler {
 
 	//
 	//	Uniform Cone
 	//
-	// u1, u2: 0 to 1
 	static void uniform_cone( float u1, float u2, float max_theta, float *vec_3f ){
 		float cos_theta = (1.f - u1) + u1 * cos(max_theta);
 		float sin_theta = sqrtf(1.f - cos_theta*cos_theta);
