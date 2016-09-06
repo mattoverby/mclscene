@@ -23,6 +23,7 @@
 #define MCLSCENE_CAMERA_H 1
 
 #include <math.h>
+#include <string>
 
 namespace mcl {
 
