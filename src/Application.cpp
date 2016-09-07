@@ -72,7 +72,7 @@ int Application::display(){
 	glfwSetErrorCallback(&Input::error_callback);
 
 	// Initialize the window
-	if (!glfwInit()){ return false; }
+	if (!glfwInit()){ return EXIT_FAILURE; }
 	glfwWindowHint(GLFW_SAMPLES, 4); // anti aliasing
 	glfwWindowHint(GLFW_SRGB_CAPABLE, true); // gamma correction
 
@@ -85,7 +85,7 @@ int Application::display(){
 
 	// Create the glfw window
 	window = glfwCreateWindow(max_width, max_height, "Viewer", NULL, NULL);
-	if( !window ){ glfwTerminate(); return false; }
+	if( !window ){ glfwTerminate(); return EXIT_FAILURE; }
 
 	// Bind callbacks to the window
 	glfwSetKeyCallback(window, &Input::key_callback);
@@ -167,7 +167,7 @@ int Application::display(){
 
 	} // end game loop
 
-	return (EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 
 } // end display
 
