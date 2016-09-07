@@ -66,18 +66,19 @@ class SceneManager {
 		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="spatial" );
 
 		//
+		// Computes a naive bounding sphere.
+		// Calls each object's bound function, so may be costly for dynamic scenes.
+		//
+		struct BoundingSphere { trimesh::vec center; double radius; };
+		BoundingSphere get_bsphere( bool recompute=false );
+
+		//
 		// For a given camera distance from scene center, add lights to make
 		// a three-point lighting rig. Assumes +y is up and camera is facing -z.
 		// Any previous lights are removed.
 		// This is called by the Gui if no lighting has been added to the scene.
 		//
 		void make_3pt_lighting( trimesh::vec center, float distance );
-
-		//
-		// Returns the radius of the scene, excluding lights and cameras.
-		// Calls each object's bound function, so may be costly for dynamic scenes.
-		//
-		float radius();
 
 		//
 		// Vectors and maps of scene components.
@@ -125,6 +126,8 @@ class SceneManager {
 		// Root bvh is created by build_bvh. split_mode assumed lower case
 		void build_bvh( std::string split_mode );
 		std::shared_ptr<BVHNode> root_bvh;
+
+		BoundingSphere cached_bsphere;
 
 }; // end class SceneManager
 

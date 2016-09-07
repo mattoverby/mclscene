@@ -27,6 +27,7 @@ using namespace trimesh;
 
 SceneManager::SceneManager() {
 	root_bvh=NULL;
+	cached_bsphere.radius=-1.f;
 	createObject = default_build_object;
 	createCamera = default_build_camera;
 	createLight = default_build_light;
@@ -327,23 +328,22 @@ void SceneManager::make_3pt_lighting( trimesh::vec center, float distance ){
 } // end make three point lighting
 
 
-float SceneManager::radius(){
+SceneManager::BoundingSphere SceneManager::get_bsphere( bool recompute ){
 
 	// TODO use Ritter's faster bounding sphere approximation code
-
-	trimesh::Miniball<3,float> mb;
-
-	for( int i=0; i<objects.size(); ++i ){
-		vec min, max;
-		objects[i]->bounds( min, max );
-		mb.check_in( min ); mb.check_in( max );
+	if( cached_bsphere.radius <= 0.f || recompute ){
+		trimesh::Miniball<3,float> mb;
+		for( int i=0; i<objects.size(); ++i ){
+			vec min, max;
+			objects[i]->bounds( min, max );
+			mb.check_in( min ); mb.check_in( max );
+		}
+		mb.build();
+		cached_bsphere.radius = sqrt(mb.squared_radius());
+		cached_bsphere.center = mb.center();
 	}
 
-	mb.build();
-//	trimesh::vec center = mb.center();
-	return sqrt(mb.squared_radius());
-
-} // end compute scene radius
-
+	return cached_bsphere;
+}
 
 

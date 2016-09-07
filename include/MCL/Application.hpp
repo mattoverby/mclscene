@@ -71,8 +71,8 @@ public:
 
 	// You can set these to starting points
 	GLfloat alpha, beta; // for screen rotations (left click)
+	GLfloat panx, pany; // camera panning (right click)
 	GLfloat zoom; // zooming in and out (scroll wheel)
-	trimesh::XForm<float> trans; // camera translation (right click)
 
 protected:
 	RenderGL::AppCamera camera;
@@ -83,6 +83,8 @@ protected:
 	float screen_dt;
 	double cursorX, cursorY;
 	float aspect_ratio;
+	SceneManager::BoundingSphere bsphere; // recomputed on simulation update
+	bool left_mouse_drag, right_mouse_drag;
 
 	// Utility functions:
 	void save_screenshot(GLFWwindow* window);

@@ -39,20 +39,24 @@ std::vector< std::function<void ( GLFWwindow* window, int width, int height )> >
 
 Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_) {
 	Input &input = Input::getInstance(); // initialize the singleton
-	float scene_rad = scene->radius();
+	bsphere = scene->get_bsphere();
 	trimesh::vec scene_center = scene->get_bvh()->aabb->center();
-	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( scene_center, scene_rad*6.f ); }
+	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( scene_center, bsphere.radius*6.f ); }
 
-	std::cout << "Scene Radius: " << scene_rad << std::endl;
+	std::cout << "Scene Radius: " << bsphere.radius << std::endl;
 
 	aspect_ratio = 1.f;
 	// real aspect_ratio set by framebuffer_size_callback
 
-	zoom = std::fmaxf( fabs( scene_rad / sinf( 30.f/2.f ) ), 1e-3f );
+	zoom = std::fmaxf( fabs( bsphere.radius / sinf( 30.f/2.f ) ), 1e-3f );
 	cursorX = 0.f;
 	cursorY = 0.f;
 	alpha = 0.f;
 	beta = 0.f;
+	panx = 0.f;
+	pany = 0.f;
+	left_mouse_drag = false;
+	right_mouse_drag = false;
 
 	// Add callbacks to the input class
 	using namespace std::placeholders;    // adds visibility of _1, _2, _3,...
@@ -128,6 +132,8 @@ int Application::display(){
 			if( !sim->step( scene, screen_dt ) ){ std::cerr << "\n**Application::display Error: Problem in simulation step" << std::endl; }
 			if( !sim->update( scene ) ){ std::cerr << "\n**Application::display Error: Problem in mesh update" << std::endl; }
 
+			bsphere = scene->get_bsphere(true); // recompute the bounding sphere
+
 			// Recalculate normals for trimeshes and tetmeshes
 			// Maybe make the simulator do this?
 			for( int o=0; o<scene->objects.size(); ++o ){
@@ -146,9 +152,12 @@ int Application::display(){
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			if( settings.gamma_correction ){ glEnable(GL_FRAMEBUFFER_SRGB); } // gamma correction
 
-			camera.model = trimesh::XForm<float>::rot( beta, trimesh::vec3(1.0f, 0.0f, 0.0f) ) *
-				trimesh::XForm<float>::rot( alpha, trimesh::vec3(0.f, 0.f, 1.f) ) * trans;
-			camera.view = trimesh::XForm<float>::trans( 0.0f, 0.0f, -zoom );
+			trimesh::XForm<float> center_trans = trimesh::XForm<float>::trans( -bsphere.center[0], -bsphere.center[1], -bsphere.center[2] );
+
+			camera.model =	trimesh::XForm<float>::rot( beta, trimesh::vec3(1.0f, 0.0f, 0.0f) ) *
+					trimesh::XForm<float>::rot( alpha, trimesh::vec3(0.f, 0.f, 1.f) ) *
+					center_trans;
+			camera.view = trimesh::XForm<float>::trans( panx, pany, -zoom );
 			camera.projection = trimesh::XForm<float>::persp( settings.fov_deg, aspect_ratio, settings.clipping[0], settings.clipping[1] );
 		}
 
@@ -173,68 +182,79 @@ int Application::display(){
 
 
 
-void Application::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
-{
+void Application::mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
 
 	if( action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_LEFT ){
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		glfwGetCursorPos(window, &cursorX, &cursorY);
+		left_mouse_drag = true;
+		right_mouse_drag = false;
 	}
 	else if(  action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_RIGHT ){
-		// TODO
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		glfwGetCursorPos(window, &cursorX, &cursorY);
+		right_mouse_drag = true;
+		left_mouse_drag = false;
 	}
-	else{ glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); }
+	else{
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		left_mouse_drag = false;
+		right_mouse_drag = false;
+	}
 
 }
 
 
 
-void Application::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
+void Application::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+
 	if (action != GLFW_PRESS){ return; }
 
-	switch (key)
-	{
+	switch(key){
 	case GLFW_KEY_ESCAPE:
-	    glfwSetWindowShouldClose(window, true);
-	    break;
+		glfwSetWindowShouldClose(window, true);
+		break;
 	case GLFW_KEY_SPACE:
 		settings.run_simulation = !settings.run_simulation;
 		break;
 	case GLFW_KEY_P:
 		if( sim ){ sim->step( scene, screen_dt ); }
-	    break;
+		bsphere = scene->get_bsphere(true);
+		break;
 	case GLFW_KEY_S:
 		settings.save_frames=!settings.save_frames;
 		std::cout << "save screenshots: " << (int)settings.save_frames << std::endl;
 		break;
 	default:
-	    break;
+		break;
 	}
 }
 
 
 void Application::cursor_position_callback(GLFWwindow* window, double x, double y){
 
-	if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED){
+	if( left_mouse_drag ){
 		alpha += (GLfloat) (x - cursorX) / 100.f;
 		beta += (GLfloat) (y - cursorY) / 100.f;
-		cursorX = x;
-		cursorY = y;
 	}
+	else if( right_mouse_drag ){
+		panx += float(x - cursorX) / 800.f;
+		pany -= float(y - cursorY) / 800.f;
+	}
+	cursorX = x;
+	cursorY = y;
 }
 
 
 void Application::scroll_callback(GLFWwindow* window, double x, double y){
-	float scene_rad = scene->radius();
-	zoom -= float(y) * (scene_rad);
+	zoom -= float(y) * (bsphere.radius);
 	if( zoom < 0.f ){ zoom=0.f; }
 }
 
 
 void Application::framebuffer_size_callback(GLFWwindow* window, int width, int height){
 
-	float scene_d = std::fmaxf( scene->radius()*2.f, 0.2f );
+	float scene_d = std::fmaxf( bsphere.radius*2.f, 0.2f );
 	aspect_ratio = 1.f;
 	if( height > 0 ){ aspect_ratio = std::fmaxf( (float) width / (float) height, 1e-6f ); }
 	glViewport(0, 0, width, height);
