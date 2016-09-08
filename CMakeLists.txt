@@ -78,7 +78,6 @@ set( MCLSCENE_SRCS
 	include/MCL/TetMesh.hpp		src/TetMesh.cpp
 	include/MCL/TriangleMesh.hpp	src/TriangleMesh.cpp
 	include/MCL/PointCloud.hpp	src/PointCloud.cpp
-	include/MCL/RenderGL.hpp	src/RenderGL.cpp
 	include/MCL/BVH.hpp		src/BVH.cpp
 	include/MCL/Param.hpp
 	include/MCL/Object.hpp
@@ -86,7 +85,6 @@ set( MCLSCENE_SRCS
 	include/MCL/Camera.hpp
 	include/MCL/Light.hpp
 	include/MCL/AABB.hpp
-	include/MCL/Shader.hpp
 	include/MCL/Material.hpp
 	include/MCL/Simulator.hpp
 	include/MCL/RayIntersect.hpp
@@ -100,7 +98,11 @@ set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${TRIMESH_INCLUDE
 # If we want to build with mclscene rendering support, add the window source files
 # and add the libraries/includes to the build variables.
 if(MCL_BUILD_RENDERING)
-	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} ${SOIL2_SRCS} include/MCL/Application.hpp src/Application.cpp )
+	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} ${SOIL2_SRCS}
+		include/MCL/Application.hpp src/Application.cpp
+		include/MCL/RenderGL.hpp src/RenderGL.cpp
+		include/MCL/Shader.hpp
+	)
 	set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${GLEW_LIBRARIES} )
 	set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} ${SOIL2_INCLUDE} ${OPENGL_INCLUDE_DIR} ${GLFW_INCLUDE_DIR} ${GLEW_INCLUDE_DIR} )
 endif(MCL_BUILD_RENDERING)
