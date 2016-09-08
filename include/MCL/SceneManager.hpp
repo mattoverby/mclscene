@@ -41,6 +41,8 @@ class SceneManager {
 	public:
 		SceneManager();
 
+		~SceneManager();
+
 		//
 		// Load a configuration file, can be called multiple times for different files.
 		// Additional calls will add (or replace, if same name) stuff to the scene.
@@ -127,7 +129,7 @@ class SceneManager {
 		void build_bvh( std::string split_mode );
 		std::shared_ptr<BVHNode> root_bvh;
 
-		BoundingSphere cached_bsphere;
+		std::unique_ptr<BoundingSphere> cached_bsphere;
 
 }; // end class SceneManager
 

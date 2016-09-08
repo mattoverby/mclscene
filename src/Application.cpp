@@ -39,8 +39,9 @@ std::vector< std::function<void ( GLFWwindow* window, int width, int height )> >
 
 Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_) {
 	Input &input = Input::getInstance(); // initialize the singleton
+
 	bsphere = scene->get_bsphere();
-	trimesh::vec scene_center = scene->get_bvh()->aabb->center();
+	scene_center = bsphere.center;
 	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( scene_center, bsphere.radius*6.f ); }
 
 	std::cout << "Scene Radius: " << bsphere.radius << std::endl;
@@ -152,11 +153,9 @@ int Application::display(){
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			if( settings.gamma_correction ){ glEnable(GL_FRAMEBUFFER_SRGB); } // gamma correction
 
-			trimesh::XForm<float> center_trans = trimesh::XForm<float>::trans( -bsphere.center[0], -bsphere.center[1], -bsphere.center[2] );
-
 			camera.model =	trimesh::XForm<float>::rot( beta, trimesh::vec3(1.0f, 0.0f, 0.0f) ) *
 					trimesh::XForm<float>::rot( alpha, trimesh::vec3(0.f, 0.f, 1.f) ) *
-					center_trans;
+					trimesh::XForm<float>::trans( -scene_center );
 			camera.view = trimesh::XForm<float>::trans( panx, pany, -zoom );
 			camera.projection = trimesh::XForm<float>::persp( settings.fov_deg, aspect_ratio, settings.clipping[0], settings.clipping[1] );
 		}

@@ -27,11 +27,30 @@ using namespace trimesh;
 
 SceneManager::SceneManager() {
 	root_bvh=NULL;
-	cached_bsphere.radius=-1.f;
 	createObject = default_build_object;
 	createCamera = default_build_camera;
 	createLight = default_build_light;
 	createMaterial = default_build_material;
+	cached_bsphere = std::unique_ptr<BoundingSphere>( new BoundingSphere() );
+	cached_bsphere->radius=-1.f;
+}
+
+
+SceneManager::~SceneManager(){
+
+	objects.clear();
+	cameras.clear();
+	lights.clear();
+	objects_map.clear(); // name -> object
+	materials_map.clear(); // name -> material
+	cameras_map.clear(); // name -> camera
+	lights_map.clear(); // name -> light
+
+	object_params.clear();
+	material_params.clear();
+	camera_params.clear();
+	light_params.clear();
+
 }
 
 
@@ -241,9 +260,12 @@ std::shared_ptr<mcl::BaseObject> SceneManager::make_object( std::string type, st
 	}
 	Component obj( "object", name, parse::to_lower(type) );
 	std::shared_ptr<BaseObject> newObject = createObject( obj );
+	if( newObject == NULL ){ return NULL; }
+
 	// Add it to the SceneManager and return it
 	objects.push_back( newObject );
 	objects_map[name] = newObject;
+	object_params[name] = std::vector<Param>();
 	return newObject;
 
 } // end make object
@@ -256,9 +278,12 @@ std::shared_ptr<mcl::BaseLight> SceneManager::make_light( std::string type, std:
 	}
 	Component obj( "light", name, parse::to_lower(type) );
 	std::shared_ptr<BaseLight> newLight = createLight( obj );
+	if( newLight == NULL ){ return NULL; }
+
 	// Add it to the SceneManager and return it
 	lights.push_back( newLight );
 	lights_map[name] = newLight;
+	light_params[name] = std::vector<Param>();
 	return newLight;
 
 } // end make light
@@ -271,9 +296,12 @@ std::shared_ptr<mcl::BaseCamera> SceneManager::make_camera( std::string type, st
 	}
 	Component obj( "camera", name, parse::to_lower(type) );
 	std::shared_ptr<BaseCamera> newCam = createCamera( obj );
+	if( newCam == NULL ){ return NULL; }
+
 	// Add it to the SceneManager and return it
 	cameras.push_back( newCam );
 	cameras_map[name] = newCam;
+	camera_params[name] = std::vector<Param>();
 	return newCam;
 
 } // end make light
@@ -286,8 +314,11 @@ std::shared_ptr<mcl::BaseMaterial> SceneManager::make_material( std::string type
 	}
 	Component obj( "material", name, parse::to_lower(type) );
 	std::shared_ptr<BaseMaterial> newMat = createMaterial( obj );
+	if( newMat == NULL ){ return NULL; }
+
 	// Add it to the SceneManager and return it
 	materials_map[name] = newMat;
+	material_params[name] = std::vector<Param>();
 	return newMat;
 
 } // end make light
@@ -300,9 +331,9 @@ void SceneManager::make_3pt_lighting( trimesh::vec center, float distance ){
 	light_params.clear();
 
 	// TODO use spotlight instead of point light
-	std::shared_ptr<BaseLight> l0 = make_light( "point", "3pt_key" );
-	std::shared_ptr<BaseLight> l1 = make_light( "point", "3pt_fill" );
-	std::shared_ptr<BaseLight> l2 = make_light( "point", "3pt_keyback" );
+	std::shared_ptr<BaseLight> l0 = make_light( "point", "3ptkey" );
+	std::shared_ptr<BaseLight> l1 = make_light( "point", "3ptfill" );
+	std::shared_ptr<BaseLight> l2 = make_light( "point", "3ptback" );
 	std::shared_ptr<PointLight> key = std::dynamic_pointer_cast<PointLight>( l0 );
 	std::shared_ptr<PointLight> fill = std::dynamic_pointer_cast<PointLight>( l1 );
 	std::shared_ptr<PointLight> back = std::dynamic_pointer_cast<PointLight>( l2 );
@@ -331,7 +362,7 @@ void SceneManager::make_3pt_lighting( trimesh::vec center, float distance ){
 SceneManager::BoundingSphere SceneManager::get_bsphere( bool recompute ){
 
 	// TODO use Ritter's faster bounding sphere approximation code
-	if( cached_bsphere.radius <= 0.f || recompute ){
+	if( cached_bsphere->radius <= 0.f || recompute ){
 		trimesh::Miniball<3,float> mb;
 		for( int i=0; i<objects.size(); ++i ){
 			vec min, max;
@@ -339,11 +370,12 @@ SceneManager::BoundingSphere SceneManager::get_bsphere( bool recompute ){
 			mb.check_in( min ); mb.check_in( max );
 		}
 		mb.build();
-		cached_bsphere.radius = sqrt(mb.squared_radius());
-		cached_bsphere.center = mb.center();
+		cached_bsphere->radius = sqrt(mb.squared_radius());
+		cached_bsphere->center = mb.center();
 	}
 
-	return cached_bsphere;
+	BoundingSphere s; s.radius = cached_bsphere->radius; s.center = cached_bsphere->center;
+	return s;
 }
 
 

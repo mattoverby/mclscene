@@ -42,15 +42,15 @@ public:
 		bool run_simulation; // run the simulator every frame
 		bool subdivide_meshes; // copy and subdivide the meshes before rendering
 		bool draw_lights;
-		trimesh::Vec<2,float> clipping; // clipping plane for proj. matrix
 		float fov_deg; // field of view in degrees
 		bool gamma_correction;
 		trimesh::vec clear_color;
+		trimesh::Vec<2,float> clipping; // clipping plane for proj. matrix
+
 		Settings() : save_frames(false), run_simulation(false),
 			subdivide_meshes(false), draw_lights(false), fov_deg(30.f),
 			gamma_correction(true), clear_color(1,1,1), clipping(0.1, 1024.f) {}
-	};
-	Settings settings;
+	} settings;
 
 	// Initializes the the Input singleton so callbacks can be added
 	Application( mcl::SceneManager *scene_ );
@@ -70,9 +70,9 @@ public:
 	RenderGL renderer;
 
 	// You can set these to starting points
-	GLfloat alpha, beta; // for screen rotations (left click)
-	GLfloat panx, pany; // camera panning (right click)
-	GLfloat zoom; // zooming in and out (scroll wheel)
+	float alpha, beta; // for screen rotations (left click)
+	float panx, pany; // camera panning (right click)
+	float zoom; // zooming in and out (scroll wheel)
 
 protected:
 	RenderGL::AppCamera camera;
@@ -84,6 +84,7 @@ protected:
 	double cursorX, cursorY;
 	float aspect_ratio;
 	SceneManager::BoundingSphere bsphere; // recomputed on simulation update
+	trimesh::vec scene_center; // set once in constructor
 	bool left_mouse_drag, right_mouse_drag;
 
 	// Utility functions:

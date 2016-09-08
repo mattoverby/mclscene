@@ -36,6 +36,7 @@
 namespace mcl {
 class Simulator  {
 public:
+	virtual ~Simulator(){}
 
 	// Compute a simulation time step
 	virtual bool step( const mcl::SceneManager *scene, float screen_dt ) = 0;
