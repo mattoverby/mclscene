@@ -37,20 +37,17 @@ SceneManager::SceneManager() {
 
 
 SceneManager::~SceneManager(){
-
 	objects.clear();
 	cameras.clear();
 	lights.clear();
-	objects_map.clear(); // name -> object
-	materials_map.clear(); // name -> material
-	cameras_map.clear(); // name -> camera
-	lights_map.clear(); // name -> light
-
+	objects_map.clear();
+	materials_map.clear();
+	cameras_map.clear();
+	lights_map.clear();
 	object_params.clear();
 	material_params.clear();
 	camera_params.clear();
 	light_params.clear();
-
 }
 
 

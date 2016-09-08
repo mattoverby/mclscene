@@ -40,7 +40,6 @@ class SceneManager {
 
 	public:
 		SceneManager();
-
 		~SceneManager();
 
 		//

@@ -63,13 +63,13 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		std::string tag = parse::to_lower(obj.params[i].tag);
 
 		if( tag=="translate" ){
-			x_form = x_form * obj.params[i].as_xform();
+			x_form = obj.params[i].as_xform() * x_form;
 		}
 		else if( tag=="scale" ){
-			x_form = x_form * obj.params[i].as_xform();
+			x_form = obj.params[i].as_xform() * x_form;
 		}
 		else if( tag=="rotate" ){
-			x_form = x_form * obj.params[i].as_xform();
+			x_form = obj.params[i].as_xform() * x_form;
 		}
 		else if( tag=="material" ){
 			material = obj.params[i].as_string();
