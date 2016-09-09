@@ -143,7 +143,7 @@ else ()
     else ()
         # (*)NIX
         
-#        find_package(Threads REQUIRED)
+        find_package(Threads REQUIRED)
 
         find_package(X11 REQUIRED)
         
