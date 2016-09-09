@@ -45,19 +45,29 @@ public:
 	// update its bounding box, internal parameters, etc...
 	virtual void update(){}
 
+	// Only objects that implement get_TriMesh are rendered with the OpenGL renderer.
+	// If this function returns null in the derived class, it is ignored.
 	virtual const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return NULL; }
-	virtual void apply_xform( const trimesh::xform &xf ){} // TODO store xform
 
+	// The way I've been doing it is immediately applying the transformation
+	// to the underlying mesh. A better approach is to store the xform, and pass it
+	// it to the glsl shaders (or applying it to the ray when ray tracing). This is what
+	// we need to do when instancing meshes.
+	virtual void apply_xform( const trimesh::xform &xf ){}
+
+	// Get/set the material name, as stored in SceneManager::materials_map.
+	// If an object doesn't have a material name, it is ignored by the OpenGL renderer.
 	virtual std::string get_material() const { return ""; }
-	virtual void set_material( std::string mat ) = 0;
+	virtual void set_material( std::string mat ){}
 
-	// Used by BVHTraversal
+	// Used by BVHTraversal.
 	virtual bool ray_intersect( const intersect::Ray *ray, intersect::Payload *payload ) const { return false; }
 
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( std::string component_name, int mode=0 ){ return ""; }
 
-	// If an object is made up of other (smaller) objects, they are needed for BVH construction
+	// If an object is made up of other (smaller) objects, they are needed for BVH construction.
+	// This function expects you to append the prims vector, not overwrite the whole thing.
 	virtual void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){ prims.push_back( shared_from_this() ); }
 };
 

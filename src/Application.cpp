@@ -128,21 +128,7 @@ int Application::display(){
 		t_old = t;
 
 		// Simulation engine:
-		if( sim && settings.run_simulation ){
-			if( !sim->step( scene, screen_dt ) ){ std::cerr << "\n**Application::display Error: Problem in simulation step" << std::endl; }
-			if( !sim->update( scene ) ){ std::cerr << "\n**Application::display Error: Problem in mesh update" << std::endl; }
-
-			trimesh::vec unused;
-			scene->get_bsphere(&unused,&scene_radius,true);
-
-			// Recalculate normals for trimeshes and tetmeshes
-			// Maybe make the simulator do this?
-			for( int o=0; o<scene->objects.size(); ++o ){
-				trimesh::TriMesh *themesh = scene->objects[o]->get_TriMesh().get();
-				if( themesh==NULL ){ continue; }
-				themesh->need_normals(true);
-			}
-		}
+		if( sim && settings.run_simulation ){ run_simulator_step(); }
 
 		//
 		//	Render
@@ -217,11 +203,8 @@ void Application::key_callback(GLFWwindow* window, int key, int scancode, int ac
 		settings.run_simulation = !settings.run_simulation;
 		break;
 	case GLFW_KEY_P:
-		{
-		if( sim ){ sim->step( scene, screen_dt ); }
-		trimesh::vec unused;
-		scene->get_bsphere(&unused,&scene_radius,true);
-		} break;
+		run_simulator_step();
+		break;
 	case GLFW_KEY_S:
 		settings.save_frames=!settings.save_frames;
 		std::cout << "save screenshots: " << (int)settings.save_frames << std::endl;
@@ -279,5 +262,24 @@ void Application::save_screenshot(GLFWwindow* window){
 	filename << MCLSCENE_BUILD_DIR << "/screenshot_" << name << ".png";
 	SOIL_save_screenshot( filename.str().c_str(), SOIL_SAVE_TYPE_PNG, 0, 0, w, h );
 
+}
+
+void Application::run_simulator_step(){
+
+	if( !sim->step( scene, screen_dt ) ){ std::cerr << "\n**Application::display Error: Problem in simulation step" << std::endl; }
+	if( !sim->update( scene ) ){ std::cerr << "\n**Application::display Error: Problem in mesh update" << std::endl; }
+
+	// Recalculate normals for trimeshes and tetmeshes
+	// Should I make the simulator do this?
+	for( int o=0; o<scene->objects.size(); ++o ){
+		scene->objects[o]->update();
+		trimesh::TriMesh *themesh = scene->objects[o]->get_TriMesh().get();
+		if( themesh==NULL ){ continue; }
+		themesh->need_normals(true);
+	}
+
+	// Update the scene radius
+	trimesh::vec unused;
+	scene->get_bsphere(&unused,&scene_radius,true);
 }
 

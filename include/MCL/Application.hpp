@@ -87,6 +87,8 @@ protected:
 	trimesh::vec scene_center; // set once in constructor
 	bool left_mouse_drag, right_mouse_drag;
 
+	void run_simulator_step();
+
 	// Utility functions:
 	void save_screenshot(GLFWwindow* window);
 
