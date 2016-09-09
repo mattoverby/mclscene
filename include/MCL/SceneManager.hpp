@@ -67,8 +67,8 @@ class SceneManager {
 		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="spatial" );
 
 		//
-		// Computes a naive bounding sphere.
-		// Calls each object's bound function, so may be costly for dynamic scenes.
+		// Computes a naive bounding sphere, excluding cameras and lights.
+		// Calls each object's bounds function, so may be costly for dynamic scenes.
 		//
 		struct BoundingSphere { trimesh::vec center; double radius; };
 		BoundingSphere get_bsphere( bool recompute=false );
