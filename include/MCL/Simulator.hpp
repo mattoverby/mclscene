@@ -19,8 +19,8 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_SIMULATION_H
-#define MCLSCENE_SIMULATION_H 1
+#ifndef MCLSCENE_SIMULATOR_H
+#define MCLSCENE_SIMULATOR_H 1
 
 #include "MCL/SceneManager.hpp"
 
@@ -41,7 +41,7 @@ public:
 	// Compute a simulation time step
 	virtual bool step( const mcl::SceneManager *scene, float screen_dt ) = 0;
 	
-	// Update the scene's objects with new vertex positions, colors, etc...
+	// Update the scene's objects with new vertex positions, normals, etc...
 	virtual bool update( mcl::SceneManager *scene ) = 0;
 
 }; // end class simulation

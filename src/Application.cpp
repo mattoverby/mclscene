@@ -269,15 +269,6 @@ void Application::run_simulator_step(){
 	if( !sim->step( scene, screen_dt ) ){ std::cerr << "\n**Application::display Error: Problem in simulation step" << std::endl; }
 	if( !sim->update( scene ) ){ std::cerr << "\n**Application::display Error: Problem in mesh update" << std::endl; }
 
-	// Recalculate normals for trimeshes and tetmeshes
-	// Should I make the simulator do this?
-	for( int o=0; o<scene->objects.size(); ++o ){
-		scene->objects[o]->update();
-		trimesh::TriMesh *themesh = scene->objects[o]->get_TriMesh().get();
-		if( themesh==NULL ){ continue; }
-		themesh->need_normals(true);
-	}
-
 	// Update the scene radius
 	trimesh::vec unused;
 	scene->get_bsphere(&unused,&scene_radius,true);
