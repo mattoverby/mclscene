@@ -46,7 +46,6 @@ public:
 
 class PointLight : public BaseLight {
 public:
-	// m_type = 0 (directional) or 1 (point)
 	PointLight() : position(0,0,0), intensity(1,1,1), falloff(1.f,0.1f,0.01f) {}
 	std::string get_type() const { return "point"; }
 
