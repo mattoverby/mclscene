@@ -73,6 +73,7 @@ void RenderGL::draw_objects(){
 
 	for( int i=0; i<scene->objects.size(); ++i ){
 		std::string mat = scene->objects[i]->get_material();
+		if( parse::to_lower(mat)=="none" ){ continue; }
 		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
 		if( themesh==NULL ){ continue; }
 
@@ -93,6 +94,7 @@ void RenderGL::draw_objects_subdivided(){
 
 	for( int i=0; i<scene->objects.size(); ++i ){
 		std::string mat = scene->objects[i]->get_material();
+		if( parse::to_lower(mat)=="none" ){ continue; }
 		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
 		if( themesh==NULL ){ continue; }
 

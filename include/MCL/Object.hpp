@@ -56,7 +56,8 @@ public:
 	virtual void apply_xform( const trimesh::xform &xf ){}
 
 	// Get/set the material name, as stored in SceneManager::materials_map.
-	// If an object doesn't have a material name, it is ignored by the OpenGL renderer.
+	// If an object doesn't have a material name, it is colored red (default).
+	// If "none" is used, the object is ignored by the OpenGL renderer.
 	virtual std::string get_material() const { return ""; }
 	virtual void set_material( std::string mat ){}
 
