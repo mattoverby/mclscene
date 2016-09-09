@@ -37,9 +37,6 @@ public:
 	virtual std::string get_type() const = 0;
 
 	// Returns a string containing xml code for saving to a scenefile.
-	// Mode is:
-	//	0 = mclscene
-	//	1 = mitsuba
 	virtual std::string get_xml( std::string light_name, int mode ){ return ""; }
 };
 
