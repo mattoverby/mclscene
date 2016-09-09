@@ -70,8 +70,7 @@ class SceneManager {
 		// Computes a naive bounding sphere, excluding cameras and lights.
 		// Calls each object's bounds function, so may be costly for dynamic scenes.
 		//
-		struct BoundingSphere { trimesh::vec center; double radius; };
-		BoundingSphere get_bsphere( bool recompute=false );
+		void get_bsphere( trimesh::vec *center, float *radius, bool recompute=false );
 
 		//
 		// For a given camera distance from scene center, add lights to make
@@ -79,7 +78,7 @@ class SceneManager {
 		// Any previous lights are removed.
 		// This is called by the Gui if no lighting has been added to the scene.
 		//
-		void make_3pt_lighting( trimesh::vec center, float distance );
+		void make_3pt_lighting( const trimesh::vec &center, float distance );
 
 		//
 		// Vectors and maps of scene components.
@@ -128,7 +127,9 @@ class SceneManager {
 		void build_bvh( std::string split_mode );
 		std::shared_ptr<BVHNode> root_bvh;
 
-		std::unique_ptr<BoundingSphere> cached_bsphere;
+		// Cached bounding sphere stats:
+		float last_radius;
+		trimesh::vec last_center;
 
 }; // end class SceneManager
 

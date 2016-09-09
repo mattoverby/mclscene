@@ -31,8 +31,8 @@ SceneManager::SceneManager() {
 	createCamera = default_build_camera;
 	createLight = default_build_light;
 	createMaterial = default_build_material;
-	cached_bsphere = std::unique_ptr<BoundingSphere>( new BoundingSphere() );
-	cached_bsphere->radius=-1.f;
+	last_radius=-1.f;
+	last_center = trimesh::vec(0,0,0);
 }
 
 
@@ -321,7 +321,7 @@ std::shared_ptr<mcl::BaseMaterial> SceneManager::make_material( std::string type
 } // end make light
 
 
-void SceneManager::make_3pt_lighting( trimesh::vec center, float distance ){
+void SceneManager::make_3pt_lighting( const trimesh::vec &center, float distance ){
 
 	lights.clear();
 	lights_map.clear();
@@ -356,10 +356,10 @@ void SceneManager::make_3pt_lighting( trimesh::vec center, float distance ){
 } // end make three point lighting
 
 
-SceneManager::BoundingSphere SceneManager::get_bsphere( bool recompute ){
+void SceneManager::get_bsphere( trimesh::vec *center, float *radius, bool recompute ){
 
 	// TODO use Ritter's faster bounding sphere approximation code
-	if( cached_bsphere->radius <= 0.f || recompute ){
+	if( last_radius <= 0.f || recompute ){
 		trimesh::Miniball<3,float> mb;
 		for( int i=0; i<objects.size(); ++i ){
 			vec min, max;
@@ -367,12 +367,12 @@ SceneManager::BoundingSphere SceneManager::get_bsphere( bool recompute ){
 			mb.check_in( min ); mb.check_in( max );
 		}
 		mb.build();
-		cached_bsphere->radius = sqrt(mb.squared_radius());
-		cached_bsphere->center = mb.center();
+		last_radius = sqrt(mb.squared_radius());
+		last_center = mb.center();
 	}
 
-	BoundingSphere s; s.radius = cached_bsphere->radius; s.center = cached_bsphere->center;
-	return s;
+	*center = last_center;
+	*radius = last_radius;
 }
 
 

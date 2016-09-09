@@ -40,16 +40,15 @@ std::vector< std::function<void ( GLFWwindow* window, int width, int height )> >
 Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_) {
 	Input &input = Input::getInstance(); // initialize the singleton
 
-	bsphere = scene->get_bsphere();
-	scene_center = bsphere.center;
-	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( scene_center, bsphere.radius*6.f ); }
+	scene->get_bsphere(&scene_center,&scene_radius,true);
+	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( scene_center, scene_radius*6.f ); }
 
-	std::cout << "Scene Radius: " << bsphere.radius << std::endl;
+	std::cout << "Scene Radius: " << scene_radius << std::endl;
 
 	aspect_ratio = 1.f;
 	// real aspect_ratio set by framebuffer_size_callback
 
-	zoom = std::fmaxf( fabs( bsphere.radius / sinf( 30.f/2.f ) ), 1e-3f );
+	zoom = std::fmaxf( fabs( scene_radius / sinf( 30.f/2.f ) ), 1e-3f );
 	cursorX = 0.f;
 	cursorY = 0.f;
 	alpha = 0.f;
@@ -133,7 +132,8 @@ int Application::display(){
 			if( !sim->step( scene, screen_dt ) ){ std::cerr << "\n**Application::display Error: Problem in simulation step" << std::endl; }
 			if( !sim->update( scene ) ){ std::cerr << "\n**Application::display Error: Problem in mesh update" << std::endl; }
 
-			bsphere = scene->get_bsphere(true); // recompute the bounding sphere
+			trimesh::vec unused;
+			scene->get_bsphere(&unused,&scene_radius,true);
 
 			// Recalculate normals for trimeshes and tetmeshes
 			// Maybe make the simulator do this?
@@ -217,9 +217,11 @@ void Application::key_callback(GLFWwindow* window, int key, int scancode, int ac
 		settings.run_simulation = !settings.run_simulation;
 		break;
 	case GLFW_KEY_P:
+		{
 		if( sim ){ sim->step( scene, screen_dt ); }
-		bsphere = scene->get_bsphere(true);
-		break;
+		trimesh::vec unused;
+		scene->get_bsphere(&unused,&scene_radius,true);
+		} break;
 	case GLFW_KEY_S:
 		settings.save_frames=!settings.save_frames;
 		std::cout << "save screenshots: " << (int)settings.save_frames << std::endl;
@@ -246,14 +248,14 @@ void Application::cursor_position_callback(GLFWwindow* window, double x, double 
 
 
 void Application::scroll_callback(GLFWwindow* window, double x, double y){
-	zoom -= float(y) * (bsphere.radius);
+	zoom -= float(y) * (scene_radius);
 	if( zoom < 0.f ){ zoom=0.f; }
 }
 
 
 void Application::framebuffer_size_callback(GLFWwindow* window, int width, int height){
 
-	float scene_d = std::fmaxf( bsphere.radius*2.f, 0.2f );
+	float scene_d = std::fmaxf( scene_radius*2.f, 0.2f );
 	aspect_ratio = 1.f;
 	if( height > 0 ){ aspect_ratio = std::fmaxf( (float) width / (float) height, 1e-6f ); }
 	glViewport(0, 0, width, height);

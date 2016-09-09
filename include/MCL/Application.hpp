@@ -83,7 +83,7 @@ protected:
 	float screen_dt;
 	double cursorX, cursorY;
 	float aspect_ratio;
-	SceneManager::BoundingSphere bsphere; // recomputed on simulation update
+	float scene_radius; // recomputed on simulation step
 	trimesh::vec scene_center; // set once in constructor
 	bool left_mouse_drag, right_mouse_drag;
 
