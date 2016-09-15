@@ -755,10 +755,12 @@ static bool read_obj(FILE *f, TriMesh *mesh)
 			}
 			mesh->normals.push_back(vec(x,y,z));
 		} else if( LINE_IS("vt ") || LINE_IS("vt\t")) {
-			float x, y, z;
-			if (sscanf(buf+2, "%f %f %f", &x, &y, &z) != 3) {
-				return false;
-			}
+			std::stringstream ss( buf+2 );
+			float x, y;
+			ss >> x >> y;
+//			if (sscanf(buf+2, "%f %f", &x, &y) != 3) {
+//				return false;
+//			}
 			mesh->texcoords.push_back(vec2(x,y));
 		} else if (LINE_IS("f ") || LINE_IS("f\t") ||
 			   LINE_IS("t ") || LINE_IS("t\t")) {
