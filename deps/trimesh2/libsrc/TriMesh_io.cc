@@ -1655,7 +1655,7 @@ static bool write_ply_ascii(TriMesh *mesh, FILE *f, bool write_norm,
 	if (write_norm)
 		mesh->need_normals();
 
-	bool write_tstrips = !write_grid && !mesh->tstrips.empty();
+	bool write_tstrips = false;//!write_grid && !mesh->tstrips.empty();
 
 	if (!write_ply_header(mesh, f, "ascii", write_grid, write_tstrips,
 			      write_norm, float_color))
@@ -1684,7 +1684,7 @@ static bool write_ply_binary(TriMesh *mesh, FILE *f, bool need_swap,
 	if (write_norm)
 		mesh->need_normals();
 
-	bool write_tstrips = !write_grid && !mesh->tstrips.empty();
+	bool write_tstrips = false;//!write_grid && !mesh->tstrips.empty();
 
 	const char *format = (need_swap ^ we_are_little_endian()) ?
 		"binary_little_endian" : "binary_big_endian";

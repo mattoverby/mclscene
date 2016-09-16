@@ -205,10 +205,15 @@ void Application::key_callback(GLFWwindow* window, int key, int scancode, int ac
 	case GLFW_KEY_P:
 		run_simulator_step();
 		break;
-	case GLFW_KEY_S:
+	case GLFW_KEY_F:
 		settings.save_frames=!settings.save_frames;
 		std::cout << "save screenshots: " << (int)settings.save_frames << std::endl;
 		break;
+	case GLFW_KEY_S:{
+		std::stringstream xml_file; xml_file << MCLSCENE_BUILD_DIR << "/currscene.xml";
+		scene->save( xml_file.str() );
+		std::cout << "exporting scene: " << xml_file.str() << std::endl;
+		} break;
 	default:
 		break;
 	}
