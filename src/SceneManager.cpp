@@ -40,10 +40,10 @@ SceneManager::~SceneManager(){
 	objects.clear();
 	cameras.clear();
 	lights.clear();
-	objects_map.clear();
+//	objects_map.clear();
 	materials_map.clear();
-	cameras_map.clear();
-	lights_map.clear();
+//	cameras_map.clear();
+//	lights_map.clear();
 	object_params.clear();
 	material_params.clear();
 	camera_params.clear();
@@ -115,7 +115,7 @@ bool SceneManager::load( std::string filename ){
 			std::shared_ptr<BaseCamera> cam = createCamera( components[j] );
 			if( cam != NULL ){
 				cameras.push_back( cam );
-				cameras_map[name] = cam;
+//				cameras_map[name] = cam;
 				camera_params[name] = components[j].params;
 			}
 		} // end build Camera
@@ -125,7 +125,7 @@ bool SceneManager::load( std::string filename ){
 			std::shared_ptr<BaseLight> light = createLight( components[j] );
 			if( light != NULL ){
 				lights.push_back( light );
-				lights_map[name] = light;
+//				lights_map[name] = light;
 				light_params[name] = components[j].params;
 			}
 		} // end build Light
@@ -144,7 +144,7 @@ bool SceneManager::load( std::string filename ){
 			std::shared_ptr<BaseObject> obj = createObject( components[j] );
 			if( obj != NULL ){
 				objects.push_back( obj );
-				objects_map[name] = obj;
+//				objects_map[name] = obj;
 				object_params[name] = components[j].params;
 
 				// Check if it has a material preset for the name
@@ -261,7 +261,7 @@ std::shared_ptr<mcl::BaseObject> SceneManager::make_object( std::string type, st
 
 	// Add it to the SceneManager and return it
 	objects.push_back( newObject );
-	objects_map[name] = newObject;
+//	objects_map[name] = newObject;
 	object_params[name] = std::vector<Param>();
 	return newObject;
 
@@ -279,7 +279,7 @@ std::shared_ptr<mcl::BaseLight> SceneManager::make_light( std::string type, std:
 
 	// Add it to the SceneManager and return it
 	lights.push_back( newLight );
-	lights_map[name] = newLight;
+//	lights_map[name] = newLight;
 	light_params[name] = std::vector<Param>();
 	return newLight;
 
@@ -297,7 +297,7 @@ std::shared_ptr<mcl::BaseCamera> SceneManager::make_camera( std::string type, st
 
 	// Add it to the SceneManager and return it
 	cameras.push_back( newCam );
-	cameras_map[name] = newCam;
+//	cameras_map[name] = newCam;
 	camera_params[name] = std::vector<Param>();
 	return newCam;
 
@@ -324,7 +324,7 @@ std::shared_ptr<mcl::BaseMaterial> SceneManager::make_material( std::string type
 void SceneManager::make_3pt_lighting( const trimesh::vec &center, float distance ){
 
 	lights.clear();
-	lights_map.clear();
+//	lights_map.clear();
 	light_params.clear();
 
 	// TODO use spotlight instead of point light

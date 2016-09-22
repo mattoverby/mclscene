@@ -88,10 +88,10 @@ class SceneManager {
 		std::vector< std::shared_ptr<BaseObject> > objects;
 		std::vector< std::shared_ptr<BaseCamera> > cameras;
 		std::vector< std::shared_ptr<BaseLight> > lights;
-		std::unordered_map< std::string, std::shared_ptr<BaseObject> > objects_map; // name -> object
+//		std::unordered_map< std::string, std::shared_ptr<BaseObject> > objects_map; // name -> object
 		std::unordered_map< std::string, std::shared_ptr<BaseMaterial> > materials_map; // name -> material
-		std::unordered_map< std::string, std::shared_ptr<BaseCamera> > cameras_map; // name -> camera
-		std::unordered_map< std::string, std::shared_ptr<BaseLight> > lights_map; // name -> light
+//		std::unordered_map< std::string, std::shared_ptr<BaseCamera> > cameras_map; // name -> camera
+//		std::unordered_map< std::string, std::shared_ptr<BaseLight> > lights_map; // name -> light
 
 		//
 		// Creator functions that build a scene component and adds it to the
