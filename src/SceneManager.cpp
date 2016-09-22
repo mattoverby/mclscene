@@ -77,8 +77,8 @@ bool SceneManager::load( std::string filename ){
 		std::string name = curr_node.attribute("name").as_string();
 		std::string type = curr_node.attribute("type").as_string();
 		std::string tag = curr_node.name();
-		if( name.size() == 0 || type.size() == 0 ){
-			std::cerr << "\n**SceneManager::load_xml Error: Component \"" << curr_node.name() << "\" need a name and type." << std::endl;
+		if( type.size() == 0 ){
+			std::cerr << "\n**SceneManager::load_xml Error: Component \"" << curr_node.name() << "\" need a type." << std::endl;
 			return false;
 		}
 
@@ -115,8 +115,7 @@ bool SceneManager::load( std::string filename ){
 			std::shared_ptr<BaseCamera> cam = createCamera( components[j] );
 			if( cam != NULL ){
 				cameras.push_back( cam );
-//				cameras_map[name] = cam;
-				camera_params[name] = components[j].params;
+				camera_params.push_back( components[j].params );
 			}
 		} // end build Camera
 
@@ -125,13 +124,16 @@ bool SceneManager::load( std::string filename ){
 			std::shared_ptr<BaseLight> light = createLight( components[j] );
 			if( light != NULL ){
 				lights.push_back( light );
-//				lights_map[name] = light;
-				light_params[name] = components[j].params;
+				light_params.push_back( components[j].params );
 			}
 		} // end build Light
 
 		//	Build Material
 		else if( tag == "material" ){
+			if( name.size() == 0 ){
+				std::cerr << "\n**SceneManager::load_xml Error: Materials need a name." << std::endl;
+				return false;
+			}
 			std::shared_ptr<BaseMaterial> mat = createMaterial( components[j] );
 			if( mat != NULL ){
 				materials_map[name] = mat;
@@ -144,8 +146,7 @@ bool SceneManager::load( std::string filename ){
 			std::shared_ptr<BaseObject> obj = createObject( components[j] );
 			if( obj != NULL ){
 				objects.push_back( obj );
-//				objects_map[name] = obj;
-				object_params[name] = components[j].params;
+				object_params.push_back( components[j].params );
 
 				// Check if it has a material preset for the name
 				if( components[j].exists("material") ){
@@ -250,55 +251,43 @@ std::shared_ptr<BVHNode> SceneManager::SceneManager::get_bvh( bool recompute, st
 }
 
 
-std::shared_ptr<mcl::BaseObject> SceneManager::make_object( std::string type, std::string name ){
+std::shared_ptr<mcl::BaseObject> SceneManager::make_object( std::string type ){
 
-	if( name.size()==0 ){ // give it a name if it doesn't have one
-		std::stringstream newname; newname << "obj" << objects.size(); name = newname.str();
-	}
-	Component obj( "object", name, parse::to_lower(type) );
+	Component obj( "object", "", parse::to_lower(type) );
 	std::shared_ptr<BaseObject> newObject = createObject( obj );
 	if( newObject == NULL ){ return NULL; }
 
 	// Add it to the SceneManager and return it
 	objects.push_back( newObject );
-//	objects_map[name] = newObject;
-	object_params[name] = std::vector<Param>();
+	object_params.push_back( std::vector<Param>() );
 	return newObject;
 
 } // end make object
 
 
-std::shared_ptr<mcl::BaseLight> SceneManager::make_light( std::string type, std::string name ){
+std::shared_ptr<mcl::BaseLight> SceneManager::make_light( std::string type ){
 
-	if( name.size()==0 ){ // give it a name if it doesn't have one
-		std::stringstream newname; newname << "light" << lights.size(); name = newname.str();
-	}
-	Component obj( "light", name, parse::to_lower(type) );
+	Component obj( "light", "", parse::to_lower(type) );
 	std::shared_ptr<BaseLight> newLight = createLight( obj );
 	if( newLight == NULL ){ return NULL; }
 
 	// Add it to the SceneManager and return it
 	lights.push_back( newLight );
-//	lights_map[name] = newLight;
-	light_params[name] = std::vector<Param>();
+	light_params.push_back( std::vector<Param>() );
 	return newLight;
 
 } // end make light
 
 
-std::shared_ptr<mcl::BaseCamera> SceneManager::make_camera( std::string type, std::string name ){
+std::shared_ptr<mcl::BaseCamera> SceneManager::make_camera( std::string type ){
 
-	if( name.size()==0 ){ // give it a name if it doesn't have one
-		std::stringstream newname; newname << "camera" << lights.size(); name = newname.str();
-	}
-	Component obj( "camera", name, parse::to_lower(type) );
+	Component obj( "camera", "", parse::to_lower(type) );
 	std::shared_ptr<BaseCamera> newCam = createCamera( obj );
 	if( newCam == NULL ){ return NULL; }
 
 	// Add it to the SceneManager and return it
 	cameras.push_back( newCam );
-//	cameras_map[name] = newCam;
-	camera_params[name] = std::vector<Param>();
+	camera_params.push_back( std::vector<Param>() );
 	return newCam;
 
 } // end make light
@@ -306,9 +295,6 @@ std::shared_ptr<mcl::BaseCamera> SceneManager::make_camera( std::string type, st
 
 std::shared_ptr<mcl::BaseMaterial> SceneManager::make_material( std::string type, std::string name ){
 
-	if( name.size()==0 ){ // give it a name if it doesn't have one
-		std::stringstream newname; newname << "camera" << lights.size(); name = newname.str();
-	}
 	Component obj( "material", name, parse::to_lower(type) );
 	std::shared_ptr<BaseMaterial> newMat = createMaterial( obj );
 	if( newMat == NULL ){ return NULL; }
@@ -324,13 +310,12 @@ std::shared_ptr<mcl::BaseMaterial> SceneManager::make_material( std::string type
 void SceneManager::make_3pt_lighting( const trimesh::vec &center, float distance ){
 
 	lights.clear();
-//	lights_map.clear();
 	light_params.clear();
 
 	// TODO use spotlight instead of point light
-	std::shared_ptr<BaseLight> l0 = make_light( "point", "3ptkey" );
-	std::shared_ptr<BaseLight> l1 = make_light( "point", "3ptfill" );
-	std::shared_ptr<BaseLight> l2 = make_light( "point", "3ptback" );
+	std::shared_ptr<BaseLight> l0 = make_light( "point" );
+	std::shared_ptr<BaseLight> l1 = make_light( "point" );
+	std::shared_ptr<BaseLight> l2 = make_light( "point" );
 	std::shared_ptr<PointLight> key = std::dynamic_pointer_cast<PointLight>( l0 );
 	std::shared_ptr<PointLight> fill = std::dynamic_pointer_cast<PointLight>( l1 );
 	std::shared_ptr<PointLight> back = std::dynamic_pointer_cast<PointLight>( l2 );

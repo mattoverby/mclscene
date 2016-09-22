@@ -81,36 +81,33 @@ class SceneManager {
 		void make_3pt_lighting( const trimesh::vec &center, float distance );
 
 		//
-		// Vectors and maps of scene components.
-		// The shared pointers in the vectors and maps are duplicates, and exist twice for convenience.
-		// Note that materials are only stored in the map as their reference name is used by objects.
+		// Scene components.
+		// Note that materials are stored in a map as their reference name is used by objects.
+		// The components are indexed in listed/added order.
 		//
 		std::vector< std::shared_ptr<BaseObject> > objects;
 		std::vector< std::shared_ptr<BaseCamera> > cameras;
 		std::vector< std::shared_ptr<BaseLight> > lights;
-//		std::unordered_map< std::string, std::shared_ptr<BaseObject> > objects_map; // name -> object
 		std::unordered_map< std::string, std::shared_ptr<BaseMaterial> > materials_map; // name -> material
-//		std::unordered_map< std::string, std::shared_ptr<BaseCamera> > cameras_map; // name -> camera
-//		std::unordered_map< std::string, std::shared_ptr<BaseLight> > lights_map; // name -> light
 
 		//
 		// Creator functions that build a scene component and adds it to the
 		// vectors and maps below. A default name is assigned (e.g. "obj1") if not given.
 		// Calls the builder callbacks.
 		//
-		std::shared_ptr<BaseObject> make_object( std::string type, std::string name="" );
-		std::shared_ptr<BaseLight> make_light( std::string type, std::string name="" );
-		std::shared_ptr<BaseCamera> make_camera( std::string type, std::string name="" );
-		std::shared_ptr<BaseMaterial> make_material( std::string type, std::string name="" );
+		std::shared_ptr<BaseObject> make_object( std::string type );
+		std::shared_ptr<BaseLight> make_light( std::string type );
+		std::shared_ptr<BaseCamera> make_camera( std::string type );
+		std::shared_ptr<BaseMaterial> make_material( std::string type, std::string name );
 
 		//
 		// In addition to creating the components, the original parameters parsed
 		// from the XML file (if any) are stored as vectors. They are listed in order parsed.
 		//
-		std::unordered_map< std::string, std::vector<Param> > object_params;
+		std::vector< std::vector<Param> > object_params;
+		std::vector< std::vector<Param> > camera_params;
+		std::vector< std::vector<Param> > light_params;
 		std::unordered_map< std::string, std::vector<Param> > material_params;
-		std::unordered_map< std::string, std::vector<Param> > camera_params;
-		std::unordered_map< std::string, std::vector<Param> > light_params;
 
 		//
 		// Creator Callbacks, invoked on a "load" or "create_<thing>" call.
