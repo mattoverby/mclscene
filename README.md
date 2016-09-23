@@ -29,7 +29,7 @@ Emerald, Jade, Obsidian, Pearl, Ruby, Turquoise,
 Brass, Bronze, Chrome, Copper, Gold, Silver,
 BlackPlastic, CyanPlastic, GreenPlastic, RedPastic, WhitePlastic, YellowPlastic,
 BlackRubber, CyanRubber, GreenRubber, RedRubber, WhiteRubber, and YellowRubber.
-If you *don't* want a specific object to be rendered, use the material name "none".
+If you *don't* want a specific object to be rendered, use the material name "invisible".
 
 # todo
 

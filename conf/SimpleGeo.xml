@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
 <mclScene>
-<!--
+
 	<Object name="obj1" type="box" >
 		<width value="20" />
 		<length value="20" />
-		<Material value="red" />
+		<Material value="ruby" />
 	</Object>
--->
+
 	<Object name="obj2" type="torus" >
 		<tess_ph value="20" />
 		<tess_th value="50" />

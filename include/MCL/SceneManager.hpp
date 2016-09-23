@@ -103,6 +103,7 @@ class SceneManager {
 		//
 		// Creator functions that build a scene component and adds it to the
 		// vectors above. Calls the builder callbacks.
+		// If you want to make a preset material, see Material.hpp for make_preset_material.
 		//
 		std::shared_ptr<BaseObject> make_object( std::string type );
 		std::shared_ptr<BaseLight> make_light( std::string type );

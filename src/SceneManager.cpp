@@ -132,14 +132,22 @@ bool SceneManager::load( std::string filename ){
 
 				// See if its a material preset
 				if( components[j].exists("material") ){
-					std::string material_name = components[j].get("material").as_string();
-					MaterialPreset m = material_str_to_preset( material_name );
-					if( m != MaterialPreset::Unknown ){
-						std::shared_ptr<BaseMaterial> mat = make_preset_material( m );
+					std::string material_name = parse::to_lower( components[j].get("material").as_string() );
+					if( material_name == "invisible" ){
+						std::shared_ptr<BaseMaterial> mat( new InvisibleMaterial() );
 						int idx = materials.size();
 						materials.push_back( mat );
 						material_params.push_back( std::vector<Param>() );
 						obj->set_material( idx );
+					} else {
+						MaterialPreset m = material_str_to_preset( material_name );
+						if( m != MaterialPreset::Unknown ){
+							std::shared_ptr<BaseMaterial> mat = make_preset_material( m );
+							int idx = materials.size();
+							materials.push_back( mat );
+							material_params.push_back( std::vector<Param>() );
+							obj->set_material( idx );
+						}
 					}
 				}
 			}
@@ -250,6 +258,7 @@ std::shared_ptr<mcl::BaseObject> SceneManager::make_object( std::string type ){
 	// Add it to the SceneManager and return it
 	objects.push_back( newObject );
 	object_params.push_back( std::vector<Param>() );
+
 	return newObject;
 
 } // end make object

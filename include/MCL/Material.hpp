@@ -49,6 +49,14 @@ public:
 
 
 //
+//	For convenience
+//
+class InvisibleMaterial : public BaseMaterial {
+public: std::string get_type() const { return "invisible"; }
+};
+
+
+//
 //	BlinnPhong Material
 //
 class BlinnPhong : public BaseMaterial {
@@ -92,7 +100,7 @@ enum class MaterialPreset {
 	Brass, Bronze, Chrome, Copper, Gold, Silver, // metals
 	BlackPlastic, CyanPlastic, GreenPlastic, RedPastic, WhitePlastic, YellowPlastic, // plastic
 	BlackRubber, CyanRubber, GreenRubber, RedRubber, WhiteRubber, YellowRubber, // rubber
-	Unknown
+	Unknown // Special
 };
 
 static MaterialPreset material_str_to_preset( std::string preset ){
@@ -133,9 +141,14 @@ static MaterialPreset material_str_to_preset( std::string preset ){
 	return MaterialPreset::Unknown;
 }
 
+//
+//	Create a blinn phong material from preset values.
+//	Calling this function does NOT add them to the SceneManager data vectors.
+//
 static std::shared_ptr<BlinnPhong> make_preset_material( MaterialPreset m ){
 	using namespace trimesh;
 	std::shared_ptr<BlinnPhong> r = NULL;
+
 	switch( m ){
 
 	// Gemstones

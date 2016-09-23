@@ -81,6 +81,7 @@ void RenderGL::draw_objects(){
 		if( scene->objects[i]->get_type()=="pointcloud" ){ solid = false; }
 
 		if( mat < scene->materials.size() && mat >= 0 ){
+			if( scene->materials[mat]->get_type() == "invisible" ){ continue; }
 			draw_mesh( themesh, scene->materials[mat], solid );
 		} else {
 			draw_mesh( themesh, NULL, solid );
@@ -109,6 +110,7 @@ void RenderGL::draw_objects_subdivided(){
 		mesh2.need_normals(true);
 		mesh2.need_tstrips();	
 		if( mat < scene->materials.size() && mat >= 0 ){
+			if( scene->materials[mat]->get_type() == "invisible" ){ continue; }
 			draw_mesh( &mesh2, scene->materials[mat] );
 		} else {
 			draw_mesh( &mesh2, NULL );
