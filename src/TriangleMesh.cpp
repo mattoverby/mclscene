@@ -20,12 +20,13 @@
 // By Matt Overby (http://www.mattoverby.net)
 
 #include "MCL/TriangleMesh.hpp"
+#include <chrono>
 
 using namespace mcl;
 
-TriangleMesh::TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm, std::string mat ) :
+TriangleMesh::TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm ) :
 	tris(tm), vertices(tm->vertices), normals(tm->normals), faces(tm->faces),
-	material(mat), aabb(new AABB) {
+	aabb(new AABB) {
 
 	// Build triangle refs if they don't exist yet
 	make_tri_refs();
@@ -38,10 +39,9 @@ TriangleMesh::TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm, std::string ma
 } // end constructor
 
 
-TriangleMesh::TriangleMesh( std::string mat ) : tris(new trimesh::TriMesh()),
+TriangleMesh::TriangleMesh() : tris(new trimesh::TriMesh()),
 	vertices(tris->vertices), normals(tris->normals), faces(tris->faces),
-	material(mat), aabb(new AABB) {
-} // end constructor
+	aabb(new AABB) {} // end constructor
 
 
 bool TriangleMesh::load( std::string filename ){
@@ -112,8 +112,9 @@ void TriangleMesh::make_tri_refs(){
 	for( int i=0; i<faces.size(); ++i ){
 		TriMesh::Face f = faces[i];
 		std::shared_ptr<BaseObject> tri(
-			new TriangleRef( &vertices[f[0]], &vertices[f[1]], &vertices[f[2]], &normals[f[0]], &normals[f[1]], &normals[f[2]], material )
+			new TriangleRef( &vertices[f[0]], &vertices[f[1]], &vertices[f[2]], &normals[f[0]], &normals[f[1]], &normals[f[2]] )
 		);
+		tri->set_material( material );
 		tri_refs.push_back( tri );
 	} // end loop faces
 
@@ -134,19 +135,24 @@ bool TriangleMesh::ray_intersect( const intersect::Ray &ray, intersect::Payload 
 }
 */
 
-std::string TriangleMesh::get_xml( std::string obj_name, int mode ){
+std::string TriangleMesh::get_xml( int mode ){
+
+	using namespace std::chrono;
+	double timems = duration_cast< milliseconds >(
+	    system_clock::now().time_since_epoch()
+	).count();
 
 	// Save the PLY
 	std::stringstream plyfile;
-	plyfile << MCLSCENE_BUILD_DIR<< "/" << obj_name << ".ply";
+	plyfile << MCLSCENE_BUILD_DIR<< "/" << timems << ".ply";
 	tris->write( plyfile.str() );
 
 	// mclscene
 	if( mode == 0 ){
 		std::stringstream xml;
-		xml << "\t<Object name=\"" << obj_name << "\" type=\"TriMesh\" >\n";
+		xml << "\t<Object type=\"TriMesh\" >\n";
 		xml << "\t\t<File value=\"" << plyfile.str() << "\" />\n";
-		xml << "\t\t<Material value=\"" << material << "\" />\n";
+//		xml << "\t\t<Material value=\"" << material << "\" />\n";
 		xml << "\t</Object>";
 		return xml.str();
 	}

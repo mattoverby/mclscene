@@ -21,6 +21,7 @@
 
 #include "MCL/PointCloud.hpp"
 #include "tetgen.h" // for point filing
+#include <chrono>
 
 using namespace mcl;
 
@@ -33,19 +34,24 @@ namespace parse_helper {
 }
 
 
-std::string PointCloud::get_xml( std::string obj_name, int mode ){
+std::string PointCloud::get_xml( int mode ){
+
+	using namespace std::chrono;
+	double timems = duration_cast< milliseconds >(
+	    system_clock::now().time_since_epoch()
+	).count();
 
 	// Save the PLY
 	std::stringstream plyfile;
-	plyfile << MCLSCENE_BUILD_DIR<< "/" << obj_name << ".ply";
+	plyfile << MCLSCENE_BUILD_DIR<< "/" << timems << ".ply";
 	data->write( plyfile.str() );
 
 	// mclscene
 	if( mode == 0 ){
 		std::stringstream xml;
-		xml << "\t<Object name=\"" << obj_name << "\" type=\"PointCloud\" >\n";
+		xml << "\t<Object type=\"PointCloud\" >\n";
 		xml << "\t\t<File type=\"string\" value=\"" << plyfile.str() << "\" />\n";
-		xml << "\t\t<Material type=\"string\" value=\"" << material << "\" />\n";
+//		xml << "\t\t<Material type=\"string\" value=\"" << material << "\" />\n";
 		xml << "\t</Object>";
 		return xml.str();
 	}

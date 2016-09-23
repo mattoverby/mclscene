@@ -45,13 +45,13 @@ bool RenderGL::init( mcl::SceneManager *scene_, AppCamera *cam_ ){
 	}
 
 	// Load textures
-	std::unordered_map< std::string, std::shared_ptr<BaseMaterial> >::iterator mIter = scene->materials_map.begin();
-	for( ; mIter != scene->materials_map.end(); ++mIter ){
-		if( mIter->second->texture_file.size() ){
+	for( int i=0; i<scene->materials.size(); ++i ){
+		std::shared_ptr< BaseMaterial > mat = scene->materials[i];
+		if( mat->texture_file.size() ){
 
 			int channels, tex_width, tex_height;
-			GLuint texture_id = SOIL_load_OGL_texture( mIter->second->texture_file.c_str(), &tex_width, &tex_height, &channels, SOIL_LOAD_AUTO, 0, 0 );
-			if( texture_id == 0 ){ std::cerr << "\n**Texture::load Error: Failed to load file " << mIter->second->texture_file << std::endl; continue; }
+			GLuint texture_id = SOIL_load_OGL_texture( mat->texture_file.c_str(), &tex_width, &tex_height, &channels, SOIL_LOAD_AUTO, 0, 0 );
+			if( texture_id == 0 ){ std::cerr << "\n**Texture::load Error: Failed to load file " << mat->texture_file << std::endl; continue; }
 
 			// Add some filters to this texture
 			glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -60,7 +60,7 @@ bool RenderGL::init( mcl::SceneManager *scene_, AppCamera *cam_ ){
 			glBindTexture(GL_TEXTURE_2D, 0);
 
 			// Store it for later use
-			textures[ mIter->second->texture_file ] = texture_id;
+			textures[ mat->texture_file ] = texture_id;
 		}
 	}
 
@@ -72,16 +72,16 @@ bool RenderGL::init( mcl::SceneManager *scene_, AppCamera *cam_ ){
 void RenderGL::draw_objects(){
 
 	for( int i=0; i<scene->objects.size(); ++i ){
-		std::string mat = scene->objects[i]->get_material();
-		if( parse::to_lower(mat)=="none" ){ continue; }
+		int mat = scene->objects[i]->get_material();
+
 		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
 		if( themesh==NULL ){ continue; }
 
 		bool solid = true;
 		if( scene->objects[i]->get_type()=="pointcloud" ){ solid = false; }
 
-		if( mat.size() > 0 ){
-			draw_mesh( themesh, scene->materials_map[mat], solid );
+		if( mat < scene->materials.size() && mat >= 0 ){
+			draw_mesh( themesh, scene->materials[mat], solid );
 		} else {
 			draw_mesh( themesh, NULL, solid );
 		}
@@ -93,8 +93,8 @@ void RenderGL::draw_objects(){
 void RenderGL::draw_objects_subdivided(){
 
 	for( int i=0; i<scene->objects.size(); ++i ){
-		std::string mat = scene->objects[i]->get_material();
-		if( parse::to_lower(mat)=="none" ){ continue; }
+		int mat = scene->objects[i]->get_material();
+
 		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
 		if( themesh==NULL ){ continue; }
 
@@ -108,8 +108,8 @@ void RenderGL::draw_objects_subdivided(){
 
 		mesh2.need_normals(true);
 		mesh2.need_tstrips();	
-		if( mat.size() > 0 ){
-			draw_mesh( &mesh2, scene->materials_map[mat] );
+		if( mat < scene->materials.size() && mat >= 0 ){
+			draw_mesh( &mesh2, scene->materials[mat] );
 		} else {
 			draw_mesh( &mesh2, NULL );
 		}
@@ -133,10 +133,12 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 
 	// Texture coordinates
 	GLuint texture_id = 0;
-	if( !themesh->texcoords.empty() && textures.count(mat->texture_file)>0 ){
-		texture_id = textures[ mat->texture_file ];
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(themesh->texcoords[0]), &themesh->texcoords[0][0]);
+	if( !themesh->texcoords.empty() && mat != NULL ){
+		if( textures.count(mat->texture_file)>0 ){
+			texture_id = textures[ mat->texture_file ];
+			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			glTexCoordPointer(2, GL_FLOAT, sizeof(themesh->texcoords[0]), &themesh->texcoords[0][0]);
+		} else { glDisableClientState(GL_TEXTURE_COORD_ARRAY); }
 	} else { glDisableClientState(GL_TEXTURE_COORD_ARRAY); }
 
 	// Color array -> todo

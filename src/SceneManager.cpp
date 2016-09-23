@@ -40,10 +40,7 @@ SceneManager::~SceneManager(){
 	objects.clear();
 	cameras.clear();
 	lights.clear();
-//	objects_map.clear();
-	materials_map.clear();
-//	cameras_map.clear();
-//	lights_map.clear();
+	materials.clear();
 	object_params.clear();
 	material_params.clear();
 	camera_params.clear();
@@ -74,7 +71,6 @@ bool SceneManager::load( std::string filename ){
 	for( pugi::xml_node::iterator main_node = head_node.begin(); main_node != head_node.end(); ++main_node ){
 
 		pugi::xml_node curr_node = *main_node;
-		std::string name = curr_node.attribute("name").as_string();
 		std::string type = curr_node.attribute("type").as_string();
 		std::string tag = curr_node.name();
 		if( type.size() == 0 ){
@@ -95,7 +91,7 @@ bool SceneManager::load( std::string filename ){
 		} // end load parameters
 
 		// Create the component
-		components.push_back( Component( tag, name, type ) );
+		components.push_back( Component( tag, "", type ) );
 		components.back().params = params;
 
 	} // end loop scene info
@@ -108,7 +104,6 @@ bool SceneManager::load( std::string filename ){
 	for( int j=0; j<components.size(); ++j ){
 
 		std::string tag = parse::to_lower(components[j].tag);
-		std::string name = parse::to_lower(components[j].name);
 
 		//	Build Camera
 		if( tag == "camera" ){
@@ -128,19 +123,6 @@ bool SceneManager::load( std::string filename ){
 			}
 		} // end build Light
 
-		//	Build Material
-		else if( tag == "material" ){
-			if( name.size() == 0 ){
-				std::cerr << "\n**SceneManager::load_xml Error: Materials need a name." << std::endl;
-				return false;
-			}
-			std::shared_ptr<BaseMaterial> mat = createMaterial( components[j] );
-			if( mat != NULL ){
-				materials_map[name] = mat;
-				material_params[name] = components[j].params;
-			}
-		} // end build material
-
 		//	Build Object
 		else if( tag == "object" ){
 			std::shared_ptr<BaseObject> obj = createObject( components[j] );
@@ -148,18 +130,30 @@ bool SceneManager::load( std::string filename ){
 				objects.push_back( obj );
 				object_params.push_back( components[j].params );
 
-				// Check if it has a material preset for the name
+				// See if its a material preset
 				if( components[j].exists("material") ){
 					std::string material_name = components[j].get("material").as_string();
 					MaterialPreset m = material_str_to_preset( material_name );
-					if( m != MaterialPreset::Unknown && materials_map.count(material_name)==0 ){
+					if( m != MaterialPreset::Unknown ){
 						std::shared_ptr<BaseMaterial> mat = make_preset_material( m );
-						materials_map[material_name] = mat;
-						material_params[material_name] = std::vector<Param>(); // should add params here
+						int idx = materials.size();
+						materials.push_back( mat );
+						material_params.push_back( std::vector<Param>() );
+						obj->set_material( idx );
 					}
-				} // end add material preset
+				}
 			}
 		} // end build object
+
+		//	Build Material
+		if( tag == "material" ){
+			std::shared_ptr<BaseMaterial> mat = createMaterial( components[j] );
+			if( mat != NULL ){
+				int idx = materials.size();
+				materials.push_back( mat );
+				material_params.push_back( components[j].params );
+			}
+		} // end build material
 
 	} // end loop components
 
@@ -186,26 +180,22 @@ void SceneManager::save( std::string xmlfile, int mode ){
 
 		// Loop over objects
 		for( int i=0; i<objects.size(); ++i ){
-			std::stringstream obj_name; obj_name << "object" << i;
-			xml << "\n" << objects[i]->get_xml( obj_name.str(), mode );
+			xml << "\n" << objects[i]->get_xml( mode );
 		}
 
-		// Loop over materials, they must retain their original name
-		std::unordered_map< std::string, std::shared_ptr<BaseMaterial> >::iterator mat_iter = materials_map.begin();
-		for( ; mat_iter != materials_map.end(); ++mat_iter ){
-			xml << "\n" << mat_iter->second->get_xml( mat_iter->first, mode );
+		// Loop over materials, let the name be the index
+		for( int i=0; i<materials.size(); ++i ){
+			xml << "\n" << materials[i]->get_xml( mode );
 		}
 
 		// Loop over cameras
 		for( int i=0; i<cameras.size(); ++i ){
-			std::stringstream cam_name; cam_name << "camera" << i;
-			xml << "\n" << cameras[i]->get_xml( cam_name.str(), mode );
+			xml << "\n" << cameras[i]->get_xml( mode );
 		}
 
 		// Loop over lights
 		for( int i=0; i<lights.size(); ++i ){
-			std::stringstream light_name; light_name << "light" << i;
-			xml << "\n" << lights[i]->get_xml( light_name.str(), mode );
+			xml << "\n" << lights[i]->get_xml( mode );
 		}
 
 		xml << "\n</mclscene>";
@@ -293,15 +283,15 @@ std::shared_ptr<mcl::BaseCamera> SceneManager::make_camera( std::string type ){
 } // end make light
 
 
-std::shared_ptr<mcl::BaseMaterial> SceneManager::make_material( std::string type, std::string name ){
+std::shared_ptr<mcl::BaseMaterial> SceneManager::make_material( std::string type ){
 
-	Component obj( "material", name, parse::to_lower(type) );
+	Component obj( "material", "", parse::to_lower(type) );
 	std::shared_ptr<BaseMaterial> newMat = createMaterial( obj );
 	if( newMat == NULL ){ return NULL; }
 
 	// Add it to the SceneManager and return it
-	materials_map[name] = newMat;
-	material_params[name] = std::vector<Param>();
+	materials.push_back( newMat );
+	material_params.push_back( std::vector<Param>() );
 	return newMat;
 
 } // end make light

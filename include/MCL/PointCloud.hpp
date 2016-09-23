@@ -40,7 +40,7 @@ namespace mcl {
 class PointCloud : public BaseObject {
 private: std::shared_ptr<trimesh::TriMesh> data;
 public:
-	PointCloud( std::string mat="" ) : data(new trimesh::TriMesh), vertices(data->vertices), aabb(new AABB) {}
+	PointCloud() : data(new trimesh::TriMesh), vertices(data->vertices), aabb(new AABB) {}
 
 	// Mesh data
 	std::vector<trimesh::point> &vertices;
@@ -49,9 +49,7 @@ public:
 	// General getters
 	std::string get_type() const { return "pointcloud"; }
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return data; }
-	std::string get_material() const { return material; }
-	void set_material( std::string mat ){ material=mat; }
-	std::string get_xml( std::string obj_name, int mode=0 );
+	std::string get_xml( int mode=0 );
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 	void update(){ aabb->valid=false; }
 
@@ -72,7 +70,6 @@ public:
 	void compute_radii( float delta );
 
 private:
-	std::string material;
 	std::shared_ptr<AABB> aabb;
 
 	// Fills a surface mesh with points

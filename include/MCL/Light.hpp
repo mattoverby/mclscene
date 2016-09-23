@@ -37,7 +37,7 @@ public:
 	virtual std::string get_type() const = 0;
 
 	// Returns a string containing xml code for saving to a scenefile.
-	virtual std::string get_xml( std::string light_name, int mode ){ return ""; }
+	virtual std::string get_xml( int mode ){ return ""; }
 };
 
 
@@ -49,12 +49,12 @@ public:
 	trimesh::vec position, intensity;
 	trimesh::vec falloff; // (constant, linear, quadratic)
 
-	std::string get_xml( std::string light_name, int mode ){
+	std::string get_xml( int mode ){
 
 		// mclscene
 		if( mode == 0 ){
 			std::stringstream xml;
-			xml << "\t<Light name=\"" << light_name << "\" type=\"point\" >\n";
+			xml << "\t<Light type=\"point\" >\n";
 			xml << "\t\t<Intensity value=\"" << intensity.str() << "\" />\n";
 			xml << "\t\t<Position value=\"" << position.str() << "\" />\n";
 			xml << "\t\t<Falloff value=\"" << falloff.str() << "\" />\n";

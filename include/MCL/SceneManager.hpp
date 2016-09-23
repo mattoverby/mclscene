@@ -82,23 +82,14 @@ class SceneManager {
 
 		//
 		// Scene components.
-		// Note that materials are stored in a map as their reference name is used by objects.
 		// The components are indexed in listed/added order.
+		// Note that BaseObject has a "get_material" function which returns an
+		// index into the materials vector (-1 if no material was set).
 		//
 		std::vector< std::shared_ptr<BaseObject> > objects;
 		std::vector< std::shared_ptr<BaseCamera> > cameras;
 		std::vector< std::shared_ptr<BaseLight> > lights;
-		std::unordered_map< std::string, std::shared_ptr<BaseMaterial> > materials_map; // name -> material
-
-		//
-		// Creator functions that build a scene component and adds it to the
-		// vectors and maps below. A default name is assigned (e.g. "obj1") if not given.
-		// Calls the builder callbacks.
-		//
-		std::shared_ptr<BaseObject> make_object( std::string type );
-		std::shared_ptr<BaseLight> make_light( std::string type );
-		std::shared_ptr<BaseCamera> make_camera( std::string type );
-		std::shared_ptr<BaseMaterial> make_material( std::string type, std::string name );
+		std::vector< std::shared_ptr<BaseMaterial> > materials;
 
 		//
 		// In addition to creating the components, the original parameters parsed
@@ -107,7 +98,17 @@ class SceneManager {
 		std::vector< std::vector<Param> > object_params;
 		std::vector< std::vector<Param> > camera_params;
 		std::vector< std::vector<Param> > light_params;
-		std::unordered_map< std::string, std::vector<Param> > material_params;
+		std::vector< std::vector<Param> > material_params;
+
+		//
+		// Creator functions that build a scene component and adds it to the
+		// vectors above. Calls the builder callbacks.
+		//
+		std::shared_ptr<BaseObject> make_object( std::string type );
+		std::shared_ptr<BaseLight> make_light( std::string type );
+		std::shared_ptr<BaseCamera> make_camera( std::string type );
+		std::shared_ptr<BaseMaterial> make_material( std::string type );
+
 
 		//
 		// Creator Callbacks, invoked on a "load" or "create_<thing>" call.

@@ -43,8 +43,8 @@ public:
 	std::vector< trimesh::vec > &normals; // zero length for all non-surface normals
 	std::vector< trimesh::TriMesh::Face > &faces; // surface triangles
 
-	TetMesh( std::string mat="" ) : tris(new trimesh::TriMesh), vertices(tris->vertices), normals(tris->normals), faces(tris->faces),
-		material(mat), aabb(new AABB) {}
+	TetMesh() : tris(new trimesh::TriMesh), vertices(tris->vertices), normals(tris->normals), faces(tris->faces),
+		aabb(new AABB) {}
 
 	std::string get_type() const { return "tetmesh"; }
 
@@ -58,7 +58,7 @@ public:
 	// Do not include extensions on the filename argument.
 	void save( std::string filename );
 
-	std::string get_xml( std::string name, int mode );
+	std::string get_xml( int mode );
 
 	// Compute the normals for surface vertices. The inner normals are length zero.
 	void need_normals( bool recompute=true );
@@ -68,9 +68,6 @@ public:
 
 	// Creates a new trimesh object from ALL vertices and stuff
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return tris; }
-
-	std::string get_material() const { return material; }
-	void set_material( std::string mat ){ material=mat; }
 
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 
@@ -82,7 +79,6 @@ public:
 	}
 
 private:
-	std::string material;
 	std::shared_ptr<AABB> aabb;
 
 	bool load_node( std::string filename );

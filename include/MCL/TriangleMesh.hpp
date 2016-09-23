@@ -36,14 +36,12 @@ namespace mcl {
 class TriangleRef : public BaseObject {
 public:
 	TriangleRef( trimesh::vec *p0_, trimesh::vec *p1_, trimesh::vec *p2_,
-		trimesh::vec *n0_, trimesh::vec *n1_, trimesh::vec *n2_, std::string mat="" ) :
-		p0(p0_), p1(p1_), p2(p2_), n0(n0_), n1(n1_), n2(n2_), material(mat) {}
+		trimesh::vec *n0_, trimesh::vec *n1_, trimesh::vec *n2_ ) :
+		p0(p0_), p1(p1_), p2(p2_), n0(n0_), n1(n1_), n2(n2_) {}
 
 	std::string get_type() const { return "triangle"; }
-	void set_material( std::string mat ){}
 
 	trimesh::vec *p0, *p1, *p2, *n0, *n1, *n2;
-	std::string material;
 
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax ){
 		AABB aabb; aabb += *p0; aabb += *p1; aabb += *p2;
@@ -52,7 +50,7 @@ public:
 
 	bool ray_intersect( const intersect::Ray *ray, intersect::Payload *payload ) const {
 		bool hit = intersect::ray_triangle( ray, *p0, *p1, *p2, *n0, *n1, *n2, payload );
-		if( hit ){ payload->material = material; }
+		if( hit ){ payload->material = this->material; }
 		return hit;
 	}
 };
@@ -64,13 +62,13 @@ public:
 class TriangleMesh : public BaseObject {
 private: std::shared_ptr<trimesh::TriMesh> tris; // tris is actually the data container
 public:
-	TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm, std::string mat="" );
-	TriangleMesh( std::string mat="" );
+	TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm );
+	TriangleMesh();
 
 	// Returns true on success
 	bool load( std::string filename );
 
-	std::string get_xml( std::string obj_name, int mode=0 );
+	std::string get_xml( int mode=0 );
 
 	// Mesh data
 	std::vector<trimesh::point> &vertices;
@@ -82,9 +80,6 @@ public:
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return tris; }
 
 	void apply_xform( const trimesh::xform &xf );
-
-	std::string get_material() const { return material; }
-	void set_material( std::string mat ){ material=mat; }
 
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 
@@ -99,7 +94,6 @@ public:
 
 private:
 	std::shared_ptr<AABB> aabb;
-	std::string material;
 
 	// Triangle refs are used for BVH hook-in.
 	void make_tri_refs();

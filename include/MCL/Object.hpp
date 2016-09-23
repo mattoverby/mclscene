@@ -37,6 +37,7 @@ namespace mcl {
 //
 class BaseObject : public std::enable_shared_from_this<BaseObject> {
 public:
+	BaseObject() : material(-1) {}
 	virtual ~BaseObject(){}
 	virtual std::string get_type() const = 0;
 	virtual void bounds( trimesh::vec &bmin, trimesh::vec &bmax ) = 0;
@@ -58,18 +59,21 @@ public:
 	// Get/set the material name, as stored in SceneManager::materials_map.
 	// If an object doesn't have a material name, it is colored red (default).
 	// If "none" is used, the object is ignored by the OpenGL renderer.
-	virtual std::string get_material() const { return ""; }
-	virtual void set_material( std::string mat ){}
+	virtual int get_material() const { return material; }
+	virtual void set_material( int mat ){ material = mat; }
 
 	// Used by BVHTraversal.
 	virtual bool ray_intersect( const intersect::Ray *ray, intersect::Payload *payload ) const { return false; }
 
 	// Returns a string containing xml code for saving to a scenefile.
-	virtual std::string get_xml( std::string component_name, int mode=0 ){ return ""; }
+	virtual std::string get_xml( int mode=0 ){ return ""; }
 
 	// If an object is made up of other (smaller) objects, they are needed for BVH construction.
 	// This function expects you to append the prims vector, not overwrite the whole thing.
 	virtual void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){ prims.push_back( shared_from_this() ); }
+
+protected:
+	int material;
 };
 
 

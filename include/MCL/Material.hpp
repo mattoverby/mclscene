@@ -42,7 +42,7 @@ public:
 	virtual std::string get_type() const = 0;
 
 	// Returns a string containing xml code for saving to a scenefile.
-	virtual std::string get_xml( std::string material_name, int mode ){ return ""; }
+	virtual std::string get_xml( int mode ){ return ""; }
 
 	std::string texture_file;
 };
@@ -63,12 +63,12 @@ public:
 
 	std::string get_type() const { return "blinnphong"; }
 
-	std::string get_xml( std::string material_name, int mode ){
+	std::string get_xml( int mode ){
 
 		// mclscene
 		if( mode == 0 ){
 			std::stringstream xml;
-			xml << "\t<Material name=\"" << material_name << "\" type=\"blinnphong\" >\n";
+			xml << "\t<Material type=\"blinnphong\" >\n";
 			xml << "\t\t<Ambient value=\"" << ambient.str() << "\" />\n";
 			xml << "\t\t<Diffuse value=\"" << diffuse.str() << "\" />\n";
 			xml << "\t\t<Specular value=\"" << specular.str() << "\" />\n";

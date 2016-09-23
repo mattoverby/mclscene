@@ -14,9 +14,4 @@
 		<Material value="emerald" />
 	</Object>
 
-
-	<Material name="red" type="blinnphong">
-		<Diffuse value="1  0  0" />
-	</Material>
-
 </mclScene>

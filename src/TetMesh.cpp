@@ -22,6 +22,7 @@
 #include "MCL/TetMesh.hpp"
 #include "MCL/VertexSort.hpp"
 #include "tetgen.h"
+#include <chrono>
 
 using namespace mcl;
 
@@ -283,8 +284,9 @@ void TetMesh::make_tri_refs(){
 	for( int i=0; i<faces.size(); ++i ){
 		TriMesh::Face f = faces[i];
 		std::shared_ptr<BaseObject> tri(
-			new TriangleRef( &vertices[f[0]], &vertices[f[1]], &vertices[f[2]], &normals[f[0]], &normals[f[1]], &normals[f[2]], material )
+			new TriangleRef( &vertices[f[0]], &vertices[f[1]], &vertices[f[2]], &normals[f[0]], &normals[f[1]], &normals[f[2]] )
 		);
+		tri->set_material( material );
 		tri_refs.push_back( tri );
 	} // end loop faces
 
@@ -352,19 +354,24 @@ void TetMesh::save( std::string filename ){
 } // end save
 
 
-std::string TetMesh::get_xml( std::string name, int mode ){
+std::string TetMesh::get_xml( int mode ){
+
+	using namespace std::chrono;
+	double timems = duration_cast< milliseconds >(
+	    system_clock::now().time_since_epoch()
+	).count();
 
 	// Save to a NODE and ELE file
 	std::stringstream nodeele;
-	nodeele << MCLSCENE_BUILD_DIR<< "/" << name;
+	nodeele << MCLSCENE_BUILD_DIR<< "/" << timems;
 	save( nodeele.str() );
 	
 	// mclscene
 	if( mode == 0 ){
 		std::stringstream xml;
-		xml << "\t<Object name=\"" << name << "\" type=\"TetMesh\" >\n";
+		xml << "\t<Object type=\"TetMesh\" >\n";
 		xml << "\t\t<File type=\"string\" value=\"" << nodeele.str() << "\" />\n";
-		xml << "\t\t<Material type=\"string\" value=\"" << material << "\" />\n";
+//		xml << "\t\t<Material type=\"string\" value=\"" << material << "\" />\n";
 		xml << "\t</Object>";
 		return xml.str();
 	}

@@ -79,7 +79,7 @@ public:
 	// Mode is:
 	//	0 = mclscene
 	//	1 = mitsuba
-	virtual std::string get_xml( std::string camera_name, int mode ){ return ""; }
+	virtual std::string get_xml( int mode ){ return ""; }
 };
 
 
