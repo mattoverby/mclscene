@@ -45,7 +45,7 @@ namespace intersect {
 		Payload( const Ray *ray ){ t_min=ray->eps; t_max=9999999.0; launch_point=ray->origin; }
 		double t_min, t_max;
 		trimesh::vec n, hit_point, launch_point;
-		std::string material;
+		int material; // index into SceneManager::materials
 	};
 
 	static inline trimesh::vec reflect( const trimesh::vec incident, const trimesh::vec norm ){
