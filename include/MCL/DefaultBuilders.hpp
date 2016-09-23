@@ -108,7 +108,7 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		tris.get()->need_tstrips();
 		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
 		new_obj->apply_xform( x_form );
-		new_obj->set_material( material );
+		if( material >= 0 ){ new_obj->set_material( material ); }
 		return new_obj;
 
 	} // end build sphere
@@ -138,7 +138,7 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		tris.get()->need_tstrips();
 		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
 		new_obj->apply_xform( x_form );
-		new_obj->set_material( material );
+		if( material >= 0 ){ new_obj->set_material( material ); }
 		return new_obj;
 
 	} // end build box
@@ -168,7 +168,7 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		tris.get()->need_tstrips();
 		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
 		new_obj->apply_xform( x_form );
-		new_obj->set_material( material );
+		if( material >= 0 ){ new_obj->set_material( material ); }
 		return new_obj;
 
 	} // end build plane
@@ -196,7 +196,7 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		tris.get()->need_tstrips();
 		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
 		new_obj->apply_xform( x_form );
-		new_obj->set_material( material );
+		if( material >= 0 ){ new_obj->set_material( material ); }
 		return new_obj;
 
 	} // end build beam
@@ -222,7 +222,7 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		tris.get()->need_tstrips();
 		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
 		new_obj->apply_xform( x_form );
-		new_obj->set_material( material );
+		if( material >= 0 ){ new_obj->set_material( material ); }
 		return new_obj;
 
 	} // end build cylinder
@@ -252,7 +252,7 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		tris.get()->need_tstrips();
 		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
 		new_obj->apply_xform( x_form );
-		new_obj->set_material( material );
+		if( material >= 0 ){ new_obj->set_material( material ); }
 		return new_obj;
 
 	}
@@ -285,7 +285,7 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		tris.get()->need_tstrips();
 		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
 		new_obj->apply_xform( x_form );
-		new_obj->set_material( material );
+		if( material >= 0 ){ new_obj->set_material( material ); }
 		return new_obj;
 
 	} // end build trimesh
@@ -306,7 +306,7 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		mesh->need_normals();
 		std::shared_ptr<BaseObject> new_obj( mesh );
 		new_obj->apply_xform( x_form );
-		new_obj->set_material( material );
+		if( material >= 0 ){ new_obj->set_material( material ); }
 		return new_obj;
 
 	} // end build tet mesh
@@ -328,7 +328,7 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		if( !cloud->load( filename, fill ) ){ printf("\n**PointCloud Error for obj %s: failed to load file %s\n", name.c_str(), filename.c_str()); assert(false); }
 		std::shared_ptr<BaseObject> new_obj( cloud );
 		new_obj->apply_xform( x_form );
-		new_obj->set_material( material );
+		if( material >= 0 ){ new_obj->set_material( material ); }
 		return new_obj;
 
 	} // end build particle cloud
