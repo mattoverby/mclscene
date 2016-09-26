@@ -54,7 +54,6 @@ bool SceneManager::load( std::string filename ){
 	//	Load the XML file into mcl::Component
 	//
 
-	std::vector< Component > components;
 	std::string xmldir = parse::fileDir( filename );
 	pugi::xml_document doc;
 	pugi::xml_parse_result result = doc.load_file(filename.c_str());
@@ -72,7 +71,7 @@ bool SceneManager::load( std::string filename ){
 
 		pugi::xml_node curr_node = *main_node;
 		std::string type = curr_node.attribute("type").as_string();
-		std::string tag = curr_node.name();
+		std::string tag = parse::to_lower(curr_node.name());
 		if( type.size() == 0 ){
 			std::cerr << "\n**SceneManager::load_xml Error: Component \"" << curr_node.name() << "\" need a type." << std::endl;
 			return false;
@@ -90,80 +89,72 @@ bool SceneManager::load( std::string filename ){
 			}
 		} // end load parameters
 
-		// Create the component
-		components.push_back( Component( tag, "", type ) );
-		components.back().params = params;
+		Component c( tag, "", type );
+		c.params = params;
 
-	} // end loop scene info
+		// Now build
+		{
+			//	Build Camera
+			if( tag == "camera" ){
+				std::shared_ptr<BaseCamera> cam = createCamera( c );
+				if( cam != NULL ){
+					cameras.push_back( cam );
+					camera_params.push_back( c.params );
+				}
+			} // end build Camera
 
-	//
-	//	Now we have a list of components, we can create them with the SceneManager
-	//
+			//	Build Light
+			else if( tag == "light" ){
+				std::shared_ptr<BaseLight> light = createLight( c );
+				if( light != NULL ){
+					lights.push_back( light );
+					light_params.push_back( c.params );
+				}
+			} // end build Light
 
-	// Loop components and invoke callbacks
-	for( int j=0; j<components.size(); ++j ){
+			//	Build Object
+			else if( tag == "object" ){
+				std::shared_ptr<BaseObject> obj = createObject( c );
+				if( obj != NULL ){
+					objects.push_back( obj );
+					object_params.push_back( c.params );
 
-		std::string tag = parse::to_lower(components[j].tag);
-
-		//	Build Camera
-		if( tag == "camera" ){
-			std::shared_ptr<BaseCamera> cam = createCamera( components[j] );
-			if( cam != NULL ){
-				cameras.push_back( cam );
-				camera_params.push_back( components[j].params );
-			}
-		} // end build Camera
-
-		//	Build Light
-		else if( tag == "light" ){
-			std::shared_ptr<BaseLight> light = createLight( components[j] );
-			if( light != NULL ){
-				lights.push_back( light );
-				light_params.push_back( components[j].params );
-			}
-		} // end build Light
-
-		//	Build Object
-		else if( tag == "object" ){
-			std::shared_ptr<BaseObject> obj = createObject( components[j] );
-			if( obj != NULL ){
-				objects.push_back( obj );
-				object_params.push_back( components[j].params );
-
-				// See if its a material preset
-				if( components[j].exists("material") ){
-					std::string material_name = parse::to_lower( components[j].get("material").as_string() );
-					if( material_name == "invisible" ){
-						std::shared_ptr<BaseMaterial> mat( new InvisibleMaterial() );
-						int idx = materials.size();
-						materials.push_back( mat );
-						material_params.push_back( std::vector<Param>() );
-						obj->set_material( idx );
-					} else {
-						MaterialPreset m = material_str_to_preset( material_name );
-						if( m != MaterialPreset::Unknown ){
-							std::shared_ptr<BaseMaterial> mat = make_preset_material( m );
+					// See if its a material preset
+					if( c.exists("material") ){
+						std::string material_name = parse::to_lower( c.get("material").as_string() );
+						if( material_name == "invisible" ){
+							std::shared_ptr<BaseMaterial> mat( new InvisibleMaterial() );
 							int idx = materials.size();
 							materials.push_back( mat );
 							material_params.push_back( std::vector<Param>() );
 							obj->set_material( idx );
+						} else {
+							MaterialPreset m = material_str_to_preset( material_name );
+							if( m != MaterialPreset::Unknown ){
+								std::shared_ptr<BaseMaterial> mat = make_preset_material( m );
+								int idx = materials.size();
+								materials.push_back( mat );
+								material_params.push_back( std::vector<Param>() );
+								obj->set_material( idx );
+							}
 						}
-					}
+					} // end check material preset
 				}
-			}
-		} // end build object
+			} // end build object
 
-		//	Build Material
-		if( tag == "material" ){
-			std::shared_ptr<BaseMaterial> mat = createMaterial( components[j] );
-			if( mat != NULL ){
-				int idx = materials.size();
-				materials.push_back( mat );
-				material_params.push_back( components[j].params );
-			}
-		} // end build material
+			//	Build Material
+			if( tag == "material" ){
+				std::shared_ptr<BaseMaterial> mat = createMaterial( c );
+				if( mat != NULL ){
+					int idx = materials.size();
+					materials.push_back( mat );
+					material_params.push_back( c.params );
+				}
+			} // end build material
 
-	} // end loop components
+		} // end create component
+
+	} // end loop scene info
 
 	//
 	//	Success, all done.
@@ -227,6 +218,7 @@ void SceneManager::save( std::string xmlfile, int mode ){
 
 void SceneManager::build_bvh( std::string split_mode ){
 
+	split_mode = parse::to_lower(split_mode);
 	if( root_bvh==NULL ){ root_bvh = std::shared_ptr<BVHNode>( new BVHNode() ); }
 	else{ root_bvh.reset( new BVHNode() ); }
 
@@ -244,7 +236,7 @@ void SceneManager::build_bvh( std::string split_mode ){
 
 
 std::shared_ptr<BVHNode> SceneManager::SceneManager::get_bvh( bool recompute, std::string type ){
-	if( recompute || root_bvh==NULL ){ build_bvh( parse::to_lower(type) ); }
+	if( recompute || root_bvh==NULL ){ build_bvh( type ); }
 	return root_bvh;
 }
 

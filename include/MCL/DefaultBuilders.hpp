@@ -51,7 +51,6 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 
 	using namespace trimesh;
 	std::string type = parse::to_lower(obj.type);
-	std::string name = obj.name;
 
 	//
 	//	First build the transform and other common params
@@ -270,12 +269,12 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		for( int i=0; i<obj.params.size(); ++i ){
 			if( parse::to_lower(obj.params[i].tag)=="file" ){ filename=obj.params[i].as_string(); }
 		}
-		if( !filename.size() ){ printf("\n**TriangleMesh Error for obj %s: No file specified\n", name.c_str()); assert(false); } 
+		if( !filename.size() ){ printf("\n**TriangleMesh Error: No file specified\n"); assert(false); } 
 
 		// Try to load the trimesh
 		tris.reset( trimesh::TriMesh::read( filename.c_str() ) );
 		if( tris == NULL ){
-			printf("\n**TriangleMesh Error for obj %s: failed to load file %s\n", name.c_str(), filename.c_str()); assert(false);
+			printf("\n**TriangleMesh Error: failed to load file %s\n", filename.c_str()); assert(false);
 		}
 
 		// Now clean the mesh
@@ -301,8 +300,8 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		for( int i=0; i<obj.params.size(); ++i ){
 			if( parse::to_lower(obj.params[i].tag)=="file" ){ filename=obj.params[i].as_string(); }
 		}
-		if( !filename.size() ){ printf("\n**TetMesh Error for obj %s: No file specified\n", name.c_str()); assert(false); }
-		if( !mesh->load( filename ) ){ printf("\n**TetMesh Error for obj %s: failed to load file %s\n", name.c_str(), filename.c_str()); assert(false); }
+		if( !filename.size() ){ printf("\n**TetMesh Error: No file specified\n"); assert(false); }
+		if( !mesh->load( filename ) ){ printf("\n**TetMesh Error: failed to load file %s\n", filename.c_str()); assert(false); }
 		mesh->need_normals();
 		std::shared_ptr<BaseObject> new_obj( mesh );
 		new_obj->apply_xform( x_form );
@@ -324,8 +323,8 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 			if( parse::to_lower(obj.params[i].tag)=="file" ){ filename=obj.params[i].as_string(); }
 			if( parse::to_lower(obj.params[i].tag)=="fill" ){ fill=obj.params[i].as_bool(); }
 		}
-		if( !filename.size() ){ printf("\n**PointCloud Error for obj %s: No file specified\n", name.c_str()); assert(false); }
-		if( !cloud->load( filename, fill ) ){ printf("\n**PointCloud Error for obj %s: failed to load file %s\n", name.c_str(), filename.c_str()); assert(false); }
+		if( !filename.size() ){ printf("\n**PointCloud Error: No file specified\n"); assert(false); }
+		if( !cloud->load( filename, fill ) ){ printf("\n**PointCloud Error: failed to load file %s\n", filename.c_str()); assert(false); }
 		std::shared_ptr<BaseObject> new_obj( cloud );
 		new_obj->apply_xform( x_form );
 		if( material >= 0 ){ new_obj->set_material( material ); }
@@ -356,8 +355,6 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 static std::shared_ptr<BaseMaterial> default_build_material( Component &component ){
 
 	std::string type = parse::to_lower(component.type);
-	std::string name = component.name;
-	std::string lname = parse::to_lower(name);
 
 	if( type == "blinnphong" ){
 
@@ -407,7 +404,6 @@ static std::shared_ptr<BaseMaterial> default_build_material( Component &componen
 static std::shared_ptr<BaseLight> default_build_light( Component &component ){
 
 	std::string type = parse::to_lower(component.type);
-	std::string name = component.name;
 
 	//
 	//	OpenGL Light
@@ -449,7 +445,8 @@ static std::shared_ptr<BaseLight> default_build_light( Component &component ){
 static std::shared_ptr<BaseCamera> default_build_camera( Component &component ){
 
 	std::string type = parse::to_lower(component.type);
-	std::string name = component.name;
+
+	std::cerr << "**Error: I don't know how to create a camera of type " << type << std::endl;
 
 	//
 	//	Unknown
