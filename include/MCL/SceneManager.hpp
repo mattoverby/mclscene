@@ -44,15 +44,15 @@ class SceneManager {
 
 		//
 		// Load a configuration file, can be called multiple times for different files.
-		// Additional calls will add (or replace, if same name) stuff to the scene.
-		// Returns true on success
+		// Additional calls will add stuff to the scene.
+		// Returns true on success.
 		//
 		bool load( std::string filename );
 
 		//
 		// Exports to a scene file. Mesh files are saved to the build directory.
-		// Note that some of the original scene file information will be lost
-		// (i.e. names)
+		// Note that some of the original scene file information will be lost,
+		// E.g. the original mesh after an xform is applied.
 		// Mode is:
 		//	0 = mclscene
 		//
@@ -111,7 +111,7 @@ class SceneManager {
 		std::shared_ptr<BaseMaterial> make_material( std::string type );
 
 		//
-		// Similar to the make_stuff functions above, only returns derived types.
+		// Similar to the "make_<thing>" functions above, only returns derived types.
 		// I haven't debugged these.
 		//
 		template<typename T> std::shared_ptr<T> make_object( std::string type );
@@ -130,7 +130,8 @@ class SceneManager {
 
 	protected:
 
-		// Root bvh is created by build_bvh. split_mode assumed lower case
+		// Root bvh is created by build_bvh.
+		// build_bvh is called by get_bvh.
 		void build_bvh( std::string split_mode );
 		std::shared_ptr<BVHNode> root_bvh;
 

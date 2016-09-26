@@ -32,6 +32,26 @@ namespace mcl {
 typedef long morton_type;
 typedef unsigned long long morton_encode_type;
 
+//
+//	BVH Initializer class for creating the tree and logging
+//
+class BVHInit {
+public:
+	BVHInit() : max_depth(10), n_nodes(0), avg_balance(0.f), runtime_s(0.f) {}
+	BVHInit( int max_depth_ ) : max_depth(max_depth_), n_nodes(0), avg_balance(0.f), runtime_s(0.f) {}
+
+	// Setup:
+	int max_depth; // The max depth of the tree => 2^(max_depth) nodes
+
+	// Logging (set by BVHBuilder):
+	int n_nodes; // number of nodes in the created tree
+	float avg_balance; // the "balance" of the last-created tree (lousy metric, but whatever)
+	float runtime_s; // time it took to build the bvh (seconds)
+};
+
+//
+//	BVH Node class that the tree is made up of
+//
 class BVHNode {
 public:
 	BVHNode() : aabb( new AABB ) { left_child=NULL; right_child=NULL; }
@@ -47,9 +67,14 @@ public:
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax ){ bmin=aabb->min; bmax=aabb->max; }
 };
 
-
+//
+//	BVH builder class for creating trees
+//
 class BVHBuilder {
 public:
+	// Create a tree using the BVHInit helper
+//	static int make_tree( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects
+
 	// Parallel sorting construction (Lauterbach et al. 2009)
 	// returns num nodes in tree
 	static int make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=10 );
@@ -72,7 +97,9 @@ private:
 	static int num_avg_balance;
 };
 
-
+//
+//	BVH Traversal class for stepping through tree
+//
 class BVHTraversal {
 public:
 	// Ray-Scene traversal for closest object (light rays)
