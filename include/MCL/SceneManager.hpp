@@ -27,7 +27,7 @@
 
 //
 //	Loading a scene with SceneManager:
-//	1) Overwrite the build callbacks with your own methods, if needed.
+//	1) Replace the build callbacks with your own methods, if needed.
 //		See include/MCL/DefaultBuilders.hpp for details.
 //	2) Load an XML file with SceneManager::load (see conf/ for examples).
 //		OR you can use the make_object, make_light, make_camera, and make_material
