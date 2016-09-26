@@ -110,9 +110,17 @@ class SceneManager {
 		std::shared_ptr<BaseCamera> make_camera( std::string type );
 		std::shared_ptr<BaseMaterial> make_material( std::string type );
 
+		//
+		// Similar to the make_stuff functions above, only returns derived types.
+		// I haven't debugged these.
+		//
+		template<typename T> std::shared_ptr<T> make_object( std::string type );
+		template<typename T> std::shared_ptr<T> make_light( std::string type );
+		template<typename T> std::shared_ptr<T> make_camera( std::string type );
+		template<typename T> std::shared_ptr<T> make_material( std::string type );
 
 		//
-		// Creator Callbacks, invoked on a "load" or "create_<thing>" call.
+		// Creator Callbacks, invoked on a "load" or "make_<thing>" call.
 		// These can be changed to whatever. For more details, see include/MCL/DefaultBuilders.hpp
 		//
 		BuildObjCallback createObject;
@@ -131,6 +139,35 @@ class SceneManager {
 		trimesh::vec last_center;
 
 }; // end class SceneManager
+
+//
+//	Static functions
+//
+
+template<typename T> std::shared_ptr<T> SceneManager::make_object( std::string type ){
+	std::shared_ptr<mcl::BaseObject> o = make_object(type);
+	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( o );
+	if( !casted_ptr ){ return NULL; } return casted_ptr;
+}
+
+
+template<typename T> std::shared_ptr<T> SceneManager::make_camera( std::string type ){
+	std::shared_ptr<mcl::BaseObject> o = make_camera(type);
+	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( o );
+	if( !casted_ptr ){ return NULL; } return casted_ptr;
+}
+
+template<typename T> std::shared_ptr<T> SceneManager::make_light( std::string type ){
+	std::shared_ptr<mcl::BaseObject> o = make_light(type);
+	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( o );
+	if( !casted_ptr ){ return NULL; } return casted_ptr;
+}
+
+template<typename T> std::shared_ptr<T> SceneManager::make_material( std::string type ){
+	std::shared_ptr<mcl::BaseObject> o = make_material(type);
+	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( o );
+	if( !casted_ptr ){ return NULL; } return casted_ptr;
+}
 
 } // end namespace mcl
 
