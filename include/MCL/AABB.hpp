@@ -39,8 +39,7 @@ public:
 
 	AABB& operator+(const trimesh::vec& p){
 		if( valid ){ min.min(p); max.max(p); }
-		else{ min = p; max = p; }
-		valid = true;
+		else{ min = p; max = p; valid = true; }
 		return *this;
 	}
 
