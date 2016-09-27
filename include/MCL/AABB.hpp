@@ -46,15 +46,13 @@ public:
 
 	AABB& operator+=(const AABB& aabb){
 		if( valid ){ min.min( aabb.min ); max.max( aabb.max ); }
-		else{ min = aabb.min; max = aabb.max; }
-		valid = true;
+		else{ min = aabb.min; max = aabb.max; valid = true; }
 		return *this;
 	}
 
 	AABB& operator+=(const trimesh::vec& p){
 		if( valid ){ min.min(p); max.max(p); }
-		else{ min = p; max = p; }
-		valid = true;
+		else{ min = p; max = p; valid = true; }
 		return *this;
 	}
 
