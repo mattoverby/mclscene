@@ -66,29 +66,44 @@ bool SceneManager::load( std::string filename ){
 	pugi::xml_node head_node = doc.first_child();
 	while( parse::to_lower(head_node.name()) != "mclscene" && head_node ){ head_node = head_node.next_sibling(); }
 
-	// First, create a mapping for named references
+	// First, create a mapping for named references.
+	// Currently only doing materials and objects
 	int num_materials = 0;
+	int num_objects = 0;
 	std::unordered_map< std::string, int > material_map;
-	pugi::xml_node root = doc.child("mclscene");
-	std::vector<pugi::xml_node> children(root.begin(), root.end()); // grab all children to iterate with omp
-#pragma omp parallel for reduction(+:num_materials)
+	std::unordered_map< std::string, int > object_map;
+	std::vector<pugi::xml_node> children(head_node.begin(), head_node.end()); // grab all children to iterate with omp
+
+	//
+	// Preliminary loop to create the name to index mappings
+	//
+#pragma omp parallel for reduction(+:num_materials,num_objects)
 	for( int i=0; i<children.size(); ++i ){
 		std::string tag = parse::to_lower(children[i].name());
 		std::string name = parse::to_lower(children[i].attribute("name").as_string());
-		if( name.size() > 0 && tag == "material" ){
-			#pragma omp critical
-			{ material_map[name]=num_materials; }
+		if( name.size() > 0 ){
+			if( tag == "material" ){
+				#pragma omp critical
+				{ material_map[name]=num_materials; }
+			}
+			if( tag == "object" ){
+				#pragma omp critical
+				{ object_map[name]=num_objects; }
+			}
 		} // end has a name
-
 		if( tag == "material" ){ num_materials++; }
+		else if( tag == "object" ){ num_objects++; }
 	} // end create name maps
 
-	// Now parse scene information
-	for( pugi::xml_node::iterator main_node = head_node.begin(); main_node != head_node.end(); ++main_node ){
+	//
+	// Now parse scene information and create components
+	//
+	for( int child=0; child<children.size(); ++child ){
 
-		pugi::xml_node curr_node = *main_node;
+		pugi::xml_node curr_node = children[child];
 		std::string type = curr_node.attribute("type").as_string();
 		std::string tag = parse::to_lower(curr_node.name());
+
 		if( type.size() == 0 ){
 			std::cerr << "\n**SceneManager::load_xml Error: Component \"" << curr_node.name() << "\" need a type." << std::endl;
 			return false;
