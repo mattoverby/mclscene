@@ -66,6 +66,23 @@ bool SceneManager::load( std::string filename ){
 	pugi::xml_node head_node = doc.first_child();
 	while( parse::to_lower(head_node.name()) != "mclscene" && head_node ){ head_node = head_node.next_sibling(); }
 
+	// First, create a mapping for named references
+	int num_materials = 0;
+	std::unordered_map< std::string, int > material_map;
+	pugi::xml_node root = doc.child("mclscene");
+	std::vector<pugi::xml_node> children(root.begin(), root.end()); // grab all children to iterate with omp
+#pragma omp parallel for reduction(+:num_materials)
+	for( int i=0; i<children.size(); ++i ){
+		std::string tag = parse::to_lower(children[i].name());
+		std::string name = parse::to_lower(children[i].attribute("name").as_string());
+		if( name.size() > 0 && tag == "material" ){
+			#pragma omp critical
+			{ material_map[name]=num_materials; }
+		} // end has a name
+
+		if( tag == "material" ){ num_materials++; }
+	} // end create name maps
+
 	// Now parse scene information
 	for( pugi::xml_node::iterator main_node = head_node.begin(); main_node != head_node.end(); ++main_node ){
 
@@ -119,7 +136,7 @@ bool SceneManager::load( std::string filename ){
 					objects.push_back( obj );
 					object_params.push_back( c.params );
 
-					// See if its a material preset
+					// See if we can figure out the material
 					if( c.exists("material") ){
 						std::string material_name = parse::to_lower( c.get("material").as_string() );
 						if( material_name == "invisible" ){
@@ -128,7 +145,11 @@ bool SceneManager::load( std::string filename ){
 							materials.push_back( mat );
 							material_params.push_back( std::vector<Param>() );
 							obj->set_material( idx );
-						} else {
+						} // is the special invisible type
+						else if( material_map.count(material_name) > 0 ){
+							obj->set_material( material_map[material_name] );
+						} // is a named material
+						else {
 							MaterialPreset m = material_str_to_preset( material_name );
 							if( m != MaterialPreset::Unknown ){
 								std::shared_ptr<BaseMaterial> mat = make_preset_material( m );
@@ -137,8 +158,8 @@ bool SceneManager::load( std::string filename ){
 								material_params.push_back( std::vector<Param>() );
 								obj->set_material( idx );
 							}
-						}
-					} // end check material preset
+						} // is a material preset
+					}
 				}
 			} // end build object
 

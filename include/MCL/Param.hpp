@@ -100,7 +100,6 @@ public:
 	inline void fix_color(); // if 0-255, sets 0-1
 };
 
-
 //
 //	A component is basically a list of params.
 //	Components are parsed from the xml file and always stored.
