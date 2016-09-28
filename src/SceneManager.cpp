@@ -121,39 +121,37 @@ bool SceneManager::load( std::string filename ){
 			}
 		} // end load parameters
 
-		Component c( tag, "", type );
-		c.params = params;
-
 		// Now build
 		{
 			//	Build Camera
 			if( tag == "camera" ){
-				std::shared_ptr<BaseCamera> cam = createCamera( c );
+				std::shared_ptr<BaseCamera> cam = createCamera( type, params );
 				if( cam != NULL ){
 					cameras.push_back( cam );
-					camera_params.push_back( c.params );
+					camera_params.push_back( params );
 				}
 			} // end build Camera
 
 			//	Build Light
 			else if( tag == "light" ){
-				std::shared_ptr<BaseLight> light = createLight( c );
+				std::shared_ptr<BaseLight> light = createLight( type, params );
 				if( light != NULL ){
 					lights.push_back( light );
-					light_params.push_back( c.params );
+					light_params.push_back( params );
 				}
 			} // end build Light
 
 			//	Build Object
 			else if( tag == "object" ){
-				std::shared_ptr<BaseObject> obj = createObject( c );
+				std::shared_ptr<BaseObject> obj = createObject( type, params );
 				if( obj != NULL ){
 					objects.push_back( obj );
-					object_params.push_back( c.params );
+					object_params.push_back( params );
 
 					// See if we can figure out the material
-					if( c.exists("material") ){
-						std::string material_name = parse::to_lower( c.get("material").as_string() );
+					int mat_param_index = param_index("material",params);
+					if( mat_param_index >= 0 ){
+						std::string material_name = parse::to_lower( params[mat_param_index].as_string() );
 						if( material_name == "invisible" ){
 							std::shared_ptr<BaseMaterial> mat( new InvisibleMaterial() );
 							int idx = materials.size();
@@ -180,11 +178,11 @@ bool SceneManager::load( std::string filename ){
 
 			//	Build Material
 			if( tag == "material" ){
-				std::shared_ptr<BaseMaterial> mat = createMaterial( c );
+				std::shared_ptr<BaseMaterial> mat = createMaterial( type, params );
 				if( mat != NULL ){
 					int idx = materials.size();
 					materials.push_back( mat );
-					material_params.push_back( c.params );
+					material_params.push_back( params );
 				}
 			} // end build material
 
@@ -279,13 +277,13 @@ std::shared_ptr<BVHNode> SceneManager::SceneManager::get_bvh( bool recompute, st
 
 std::shared_ptr<mcl::BaseObject> SceneManager::make_object( std::string type ){
 
-	Component obj( "object", "", parse::to_lower(type) );
-	std::shared_ptr<BaseObject> newObject = createObject( obj );
+	std::vector<Param> params;
+	std::shared_ptr<BaseObject> newObject = createObject( type, params );
 	if( newObject == NULL ){ return NULL; }
 
 	// Add it to the SceneManager and return it
 	objects.push_back( newObject );
-	object_params.push_back( std::vector<Param>() );
+	object_params.push_back( params );
 
 	return newObject;
 
@@ -294,13 +292,13 @@ std::shared_ptr<mcl::BaseObject> SceneManager::make_object( std::string type ){
 
 std::shared_ptr<mcl::BaseLight> SceneManager::make_light( std::string type ){
 
-	Component obj( "light", "", parse::to_lower(type) );
-	std::shared_ptr<BaseLight> newLight = createLight( obj );
+	std::vector<Param> params;
+	std::shared_ptr<BaseLight> newLight = createLight( type, params );
 	if( newLight == NULL ){ return NULL; }
 
 	// Add it to the SceneManager and return it
 	lights.push_back( newLight );
-	light_params.push_back( std::vector<Param>() );
+	light_params.push_back( params );
 	return newLight;
 
 } // end make light
@@ -308,13 +306,13 @@ std::shared_ptr<mcl::BaseLight> SceneManager::make_light( std::string type ){
 
 std::shared_ptr<mcl::BaseCamera> SceneManager::make_camera( std::string type ){
 
-	Component obj( "camera", "", parse::to_lower(type) );
-	std::shared_ptr<BaseCamera> newCam = createCamera( obj );
+	std::vector<Param> params;
+	std::shared_ptr<BaseCamera> newCam = createCamera( type, params );
 	if( newCam == NULL ){ return NULL; }
 
 	// Add it to the SceneManager and return it
 	cameras.push_back( newCam );
-	camera_params.push_back( std::vector<Param>() );
+	camera_params.push_back( params );
 	return newCam;
 
 } // end make light
@@ -322,13 +320,13 @@ std::shared_ptr<mcl::BaseCamera> SceneManager::make_camera( std::string type ){
 
 std::shared_ptr<mcl::BaseMaterial> SceneManager::make_material( std::string type ){
 
-	Component obj( "material", "", parse::to_lower(type) );
-	std::shared_ptr<BaseMaterial> newMat = createMaterial( obj );
+	std::vector<Param> params;
+	std::shared_ptr<BaseMaterial> newMat = createMaterial( type, params );
 	if( newMat == NULL ){ return NULL; }
 
 	// Add it to the SceneManager and return it
 	materials.push_back( newMat );
-	material_params.push_back( std::vector<Param>() );
+	material_params.push_back( params );
 	return newMat;
 
 } // end make light

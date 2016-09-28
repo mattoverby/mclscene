@@ -38,40 +38,40 @@ namespace mcl {
 //
 //	The builder types
 //
-typedef std::function<std::shared_ptr<BaseCamera> ( Component &component )> BuildCamCallback;
-typedef std::function<std::shared_ptr<BaseObject> ( Component &component )> BuildObjCallback;
-typedef std::function<std::shared_ptr<BaseLight> ( Component &component )> BuildLightCallback;
-typedef std::function<std::shared_ptr<BaseMaterial> ( Component &component )> BuildMatCallback;
+typedef std::function<std::shared_ptr<BaseCamera> ( std::string type, std::vector<Param> &params )> BuildCamCallback;
+typedef std::function<std::shared_ptr<BaseObject> ( std::string type, std::vector<Param> &params )> BuildObjCallback;
+typedef std::function<std::shared_ptr<BaseLight> ( std::string type, std::vector<Param> &params )> BuildLightCallback;
+typedef std::function<std::shared_ptr<BaseMaterial> ( std::string type, std::vector<Param> &params )> BuildMatCallback;
 
 
 //
 //	Default Object Builder: Everything is a trimesh or tetmesh.
 //
-static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
+static std::shared_ptr<BaseObject> default_build_object( std::string type, std::vector<Param> &params ){
 
 	using namespace trimesh;
-	std::string type = parse::to_lower(obj.type);
+	type = parse::to_lower(type);
 
 	//
 	//	First build the transform and other common params
 	//
 	xform x_form;
 	int material = -1;
-	for( int i=0; i<obj.params.size(); ++i ){
+	for( int i=0; i<params.size(); ++i ){
 
-		std::string tag = parse::to_lower(obj.params[i].tag);
+		std::string tag = parse::to_lower(params[i].tag);
 
 		if( tag=="translate" ){
-			x_form = obj.params[i].as_xform() * x_form;
+			x_form = params[i].as_xform() * x_form;
 		}
 		else if( tag=="scale" ){
-			x_form = obj.params[i].as_xform() * x_form;
+			x_form = params[i].as_xform() * x_form;
 		}
 		else if( tag=="rotate" ){
-			x_form = obj.params[i].as_xform() * x_form;
+			x_form = params[i].as_xform() * x_form;
 		}
 		else if( tag=="material" ){
-			material = obj.params[i].as_int();
+			material = params[i].as_int();
 		}
 	}
 	
@@ -87,10 +87,10 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		vec center(0,0,0);
 		int tessellation = 1;
 
-		for( int i=0; i<obj.params.size(); ++i ){
-			if( parse::to_lower(obj.params[i].tag)=="radius" ){ radius=obj.params[i].as_double(); }
-			else if( parse::to_lower(obj.params[i].tag)=="center" ){ center=obj.params[i].as_vec3(); }
-			else if( parse::to_lower(obj.params[i].tag)=="tess" ){ tessellation=obj.params[i].as_int(); }
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_double(); }
+			else if( parse::to_lower(params[i].tag)=="center" ){ center=params[i].as_vec3(); }
+			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
 		}
 
 		make_sphere_polar( tris.get(), tessellation, tessellation );
@@ -128,8 +128,8 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 
 		int tess = 3;
 		int chunks = 1;
-		for( int i=0; i<obj.params.size(); ++i ){
-			if( parse::to_lower(obj.params[i].tag)=="tess" ){ tess=obj.params[i].as_int(); }
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="tess" ){ tess=params[i].as_int(); }
 		}
 		make_beam( tris.get(), tess, chunks );
 
@@ -154,10 +154,10 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		int length = 10;
 		double noise = 0.0;
 
-		for( int i=0; i<obj.params.size(); ++i ){
-			if( parse::to_lower(obj.params[i].tag)=="width" ){ width=obj.params[i].as_int(); }
-			else if( parse::to_lower(obj.params[i].tag)=="length" ){ length=obj.params[i].as_int(); }
-			else if( parse::to_lower(obj.params[i].tag)=="noise" ){ noise=obj.params[i].as_double(); }
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="width" ){ width=params[i].as_int(); }
+			else if( parse::to_lower(params[i].tag)=="length" ){ length=params[i].as_int(); }
+			else if( parse::to_lower(params[i].tag)=="noise" ){ noise=params[i].as_double(); }
 		}
 
 		make_sym_plane( tris.get(), width, length );
@@ -183,9 +183,9 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		int tess = 3;
 		int chunks = 5;
 
-		for( int i=0; i<obj.params.size(); ++i ){
-			if( parse::to_lower(obj.params[i].tag)=="tess" ){ tess=obj.params[i].as_int(); }
-			else if( parse::to_lower(obj.params[i].tag)=="chunks" ){ chunks=obj.params[i].as_int(); }
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="tess" ){ tess=params[i].as_int(); }
+			else if( parse::to_lower(params[i].tag)=="chunks" ){ chunks=params[i].as_int(); }
 		}
 
 
@@ -210,10 +210,10 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		float radius = 1.f;
 		int tess_l=10, tess_c=10;
 
-		for( int i=0; i<obj.params.size(); ++i ){
-			if( parse::to_lower(obj.params[i].tag)=="tess_l" ){ tess_l=obj.params[i].as_int(); }
-			if( parse::to_lower(obj.params[i].tag)=="tess_c" ){ tess_c=obj.params[i].as_int(); }
-			else if( parse::to_lower(obj.params[i].tag)=="radius" ){ radius=obj.params[i].as_float(); }
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="tess_l" ){ tess_l=params[i].as_int(); }
+			if( parse::to_lower(params[i].tag)=="tess_c" ){ tess_c=params[i].as_int(); }
+			else if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_float(); }
 		}
 
 		trimesh::make_ccyl( tris.get(), tess_l, tess_c, radius );
@@ -239,11 +239,11 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		float inner_rad = 0.25f;
 		float outer_rad = 1.f; // doesn't do anything?
 
-		for( int i=0; i<obj.params.size(); ++i ){
-			if( parse::to_lower(obj.params[i].tag)=="tess_th" ){ tess_th=obj.params[i].as_int(); }
-			else if( parse::to_lower(obj.params[i].tag)=="tess_ph" ){ tess_ph=obj.params[i].as_int(); }
-			else if( parse::to_lower(obj.params[i].tag)=="inner_radius" ){ inner_rad=obj.params[i].as_float(); }
-//			else if( parse::to_lower(obj.params[i].tag)=="outer_radius" ){ outer_rad=obj.params[i].as_float(); }
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="tess_th" ){ tess_th=params[i].as_int(); }
+			else if( parse::to_lower(params[i].tag)=="tess_ph" ){ tess_ph=params[i].as_int(); }
+			else if( parse::to_lower(params[i].tag)=="inner_radius" ){ inner_rad=params[i].as_float(); }
+//			else if( parse::to_lower(params[i].tag)=="outer_radius" ){ outer_rad=params[i].as_float(); }
 		}
 
 		trimesh::make_torus( tris.get(), tess_th, tess_ph, inner_rad, outer_rad );
@@ -266,8 +266,8 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		tris->set_verbose(0);
 
 		std::string filename = "";
-		for( int i=0; i<obj.params.size(); ++i ){
-			if( parse::to_lower(obj.params[i].tag)=="file" ){ filename=obj.params[i].as_string(); }
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="file" ){ filename=params[i].as_string(); }
 		}
 
 		// Try to load the trimesh
@@ -291,8 +291,8 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 
 		std::shared_ptr<TetMesh> mesh( new TetMesh() );
 		std::string filename = "";
-		for( int i=0; i<obj.params.size(); ++i ){
-			if( parse::to_lower(obj.params[i].tag)=="file" ){ filename=obj.params[i].as_string(); }
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="file" ){ filename=params[i].as_string(); }
 		}
 
 		if( filename.size() ){
@@ -315,9 +315,9 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 		std::shared_ptr<PointCloud> cloud( new PointCloud() );
 		std::string filename = "";
 		bool fill = false;
-		for( int i=0; i<obj.params.size(); ++i ){
-			if( parse::to_lower(obj.params[i].tag)=="file" ){ filename=obj.params[i].as_string(); }
-			if( parse::to_lower(obj.params[i].tag)=="fill" ){ fill=obj.params[i].as_bool(); }
+		for( int i=0; i<params.size(); ++i ){
+			if( parse::to_lower(params[i].tag)=="file" ){ filename=params[i].as_string(); }
+			if( parse::to_lower(params[i].tag)=="fill" ){ fill=params[i].as_bool(); }
 		}
 
 		if( filename.size() ){
@@ -351,35 +351,35 @@ static std::shared_ptr<BaseObject> default_build_object( Component &obj ){
 //
 //	Default Material Builder
 //
-static std::shared_ptr<BaseMaterial> default_build_material( Component &component ){
+static std::shared_ptr<BaseMaterial> default_build_material( std::string type, std::vector<Param> &params ){
 
-	std::string type = parse::to_lower(component.type);
+	type = parse::to_lower(type);
 
 	if( type == "blinnphong" ){
 
 		std::shared_ptr<BlinnPhong> mat( new BlinnPhong() );
 
 		// Loop again for a change in params
-		for( int i=0; i<component.params.size(); ++i ){
+		for( int i=0; i<params.size(); ++i ){
 
-			std::string tag = parse::to_lower(component.params[i].tag);
+			std::string tag = parse::to_lower(params[i].tag);
 
 			if( tag=="ambient" ){
-				component.params[i].fix_color();
-				mat->ambient=component.params[i].as_vec3();
+				params[i].fix_color();
+				mat->ambient=params[i].as_vec3();
 			}
 			else if( tag=="diffuse" || tag=="color" ){
-				component.params[i].fix_color();
-				mat->diffuse=component.params[i].as_vec3();
+				params[i].fix_color();
+				mat->diffuse=params[i].as_vec3();
 			}
 			else if( tag=="specular" ){
-				component.params[i].fix_color();
-				mat->specular=component.params[i].as_vec3();
+				params[i].fix_color();
+				mat->specular=params[i].as_vec3();
 			}
 			else if( tag=="texture" ){
-				mat->texture_file = component.params[i].as_string();
+				mat->texture_file = params[i].as_string();
 			}
-			else if( tag=="shininess" || tag=="exponent" ){ mat->shininess=component.params[i].as_int(); }
+			else if( tag=="shininess" || tag=="exponent" ){ mat->shininess=params[i].as_int(); }
 
 		}
 		std::shared_ptr<BaseMaterial> new_mat( mat );
@@ -400,9 +400,9 @@ static std::shared_ptr<BaseMaterial> default_build_material( Component &componen
 //
 //	Default Light Builder
 //
-static std::shared_ptr<BaseLight> default_build_light( Component &component ){
+static std::shared_ptr<BaseLight> default_build_light( std::string type, std::vector<Param> &params ){
 
-	std::string type = parse::to_lower(component.type);
+	type = parse::to_lower(type);
 
 	//
 	//	OpenGL Light
@@ -410,17 +410,17 @@ static std::shared_ptr<BaseLight> default_build_light( Component &component ){
 	if( type == "point" ){
 
 		std::shared_ptr<PointLight> light( new PointLight() );
-		for( int i=0; i<component.params.size(); ++i ){
-			std::string tag = parse::to_lower(component.params[i].tag);
+		for( int i=0; i<params.size(); ++i ){
+			std::string tag = parse::to_lower(params[i].tag);
 			if( tag=="intensity" || tag=="color" ){
-				component.params[i].fix_color();
-				light->intensity=component.params[i].as_vec3();
+				params[i].fix_color();
+				light->intensity=params[i].as_vec3();
 			}
 			else if( tag=="position" ){
-				light->position=component.params[i].as_vec3();
+				light->position=params[i].as_vec3();
 			}
 			else if( tag=="falloff" ){
-				light->falloff=component.params[i].as_vec3();
+				light->falloff=params[i].as_vec3();
 			}
 		}
 		std::shared_ptr<BaseLight> new_light( light );
@@ -441,9 +441,9 @@ static std::shared_ptr<BaseLight> default_build_light( Component &component ){
 //
 //	Default Camera
 //
-static std::shared_ptr<BaseCamera> default_build_camera( Component &component ){
+static std::shared_ptr<BaseCamera> default_build_camera( std::string type, std::vector<Param> &params ){
 
-	std::string type = parse::to_lower(component.type);
+	type = parse::to_lower(type);
 
 	std::cerr << "**Error: I don't know how to create a camera of type " << type << std::endl;
 
