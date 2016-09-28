@@ -42,7 +42,7 @@ If you *don't* want a specific object to be rendered, use the material name "inv
 
 # license
 
-Copyright 2016 Matthew Overby.
+Copyright (c) 2016 University of Minnesota
 
 MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)  
 Redistribution and use in source and binary forms, with or without modification, are
