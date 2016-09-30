@@ -253,7 +253,7 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
 
 
 void Application::save_screenshot(GLFWwindow* window){
-
+/*
 	std::string MY_DATE_FORMAT = "h%H_m%M_s%S";
 	const int MY_DATE_SIZE = 20;
 	static char name[MY_DATE_SIZE];
@@ -266,7 +266,7 @@ void Application::save_screenshot(GLFWwindow* window){
 	std::stringstream filename;
 	filename << MCLSCENE_BUILD_DIR << "/screenshot_" << name << ".png";
 	SOIL_save_screenshot( filename.str().c_str(), SOIL_SAVE_TYPE_PNG, 0, 0, w, h );
-
+*/
 }
 
 void Application::run_simulator_step(){
