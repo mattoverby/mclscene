@@ -31,8 +31,8 @@ namespace intersect {
 
 	class Ray {
 	public:
-		Ray(){ direction=trimesh::vec(0,0,-1); eps=1e-6f; }
-		Ray( trimesh::vec o, trimesh::vec d, float e=1e-6f ){
+		Ray(){ direction=trimesh::vec(0,0,-1); eps=1e-5f; }
+		Ray( trimesh::vec o, trimesh::vec d, float e=1e-5f ){
 			origin=o; direction=d; eps=e;
 			origin += trimesh::unit(direction)*eps;
 		}
