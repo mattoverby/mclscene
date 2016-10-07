@@ -26,7 +26,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 
 //
@@ -105,7 +105,7 @@ class ArgParser {
 		}
 
 	protected:
-		std::map< std::string, std::string > args; // [ arg, value ]
+		std::unordered_map< std::string, std::string > args; // [ arg, value ]
 
 		const void formTable( const std::vector<std::string> &args_strings ) {
 			std::string curr_label = "";
