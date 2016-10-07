@@ -54,12 +54,11 @@ int BVHBuilder::num_avg_balance = 0;
 float BVHBuilder::runtime_s = 0.f;
 
 
-int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth ){
+int BVHBuilder::make_tree_lbvh( BVHNode *root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth ){
 
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	start = std::chrono::system_clock::now();
-
-	root.reset( new BVHNode );
+	if( root == NULL ){ root = new BVHNode(); }
 
 	using namespace trimesh;
 
@@ -130,7 +129,7 @@ int BVHBuilder::make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vecto
 }
 
 
-void BVHBuilder::lbvh_split( std::shared_ptr<BVHNode> &node,
+void BVHBuilder::lbvh_split( BVHNode *node,
 	const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
 	const std::vector< std::pair< morton_type, int > > &morton_codes, const int max_depth ){
 
@@ -164,8 +163,8 @@ void BVHBuilder::lbvh_split( std::shared_ptr<BVHNode> &node,
 //		num_objects = left_codes.size()+right_codes.size();
 
 		// Create the children
-		node->left_child = std::shared_ptr<BVHNode>( new BVHNode() );
-		node->right_child = std::shared_ptr<BVHNode>( new BVHNode() );
+		node->left_child = new BVHNode();
+		node->right_child = new BVHNode();
 		lbvh_split( node->left_child, bit-1, prims, left_codes, max_depth-1 );
 		lbvh_split( node->right_child, bit-1, prims, right_codes, max_depth-1 );
 		n_nodes += 2;
@@ -185,10 +184,11 @@ void BVHBuilder::lbvh_split( std::shared_ptr<BVHNode> &node,
 
 
 
-int BVHBuilder::make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth ){
+int BVHBuilder::make_tree_spatial( BVHNode *root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth ){
 
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	start = std::chrono::system_clock::now();
+	if( root == NULL ){ root = new BVHNode(); }
 
 	// Get all the primitives in the domain and start construction
 	std::vector< std::shared_ptr<BaseObject> > prims;
@@ -211,19 +211,17 @@ int BVHBuilder::make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::ve
 	runtime_s = float(elapsed_seconds.count());
 
 	return n_nodes;
-
-//	std::cout << "Object Median BVH made " << n_nodes << " nodes for " << prims.size() << " primitives." << std::endl;
 }
 
 
-void BVHBuilder::spatial_split( std::shared_ptr<BVHNode> &node, const std::vector< std::shared_ptr<BaseObject> > &objects,
+void BVHBuilder::spatial_split( BVHNode *node, const std::vector< std::shared_ptr<BaseObject> > &prims,
 	const std::vector< int > &queue, const int split_axis, const int max_depth ) {
 	using namespace trimesh;
 
 	// Create the aabb
 	std::vector< point > obj_centers( queue.size() ); // store the centers for later lookup
 	for( int i=0; i<queue.size(); ++i ){
-		vec bmin, bmax; objects[ queue[i] ]->bounds( bmin, bmax );
+		vec bmin, bmax; prims[ queue[i] ]->bounds( bmin, bmax );
 		*(node->aabb) += bmin; *(node->aabb) += bmax;
 		obj_centers[i] = point( (bmin+bmax)*0.5f );
 	}
@@ -233,7 +231,7 @@ void BVHBuilder::spatial_split( std::shared_ptr<BVHNode> &node, const std::vecto
 	if( queue.size()==0 ){ return; }
 	else if( queue.size()==1 || max_depth <= 0 ){
 		node->m_objects.reserve( queue.size() );
-		for( int i=0; i<queue.size(); ++i ){ node->m_objects.push_back( objects[ queue[i] ] ); }
+		for( int i=0; i<queue.size(); ++i ){ node->m_objects.push_back( prims[ queue[i] ] ); }
 		return;
 	}
 
@@ -250,10 +248,10 @@ void BVHBuilder::spatial_split( std::shared_ptr<BVHNode> &node, const std::vecto
 	if( right_queue.size()==0 ){ right_queue.push_back( left_queue.back() ); left_queue.pop_back(); }
 
 	// Create the children
-	node->left_child = std::shared_ptr<BVHNode>( new BVHNode() );
-	node->right_child = std::shared_ptr<BVHNode>( new BVHNode() );
-	spatial_split( node->left_child, objects, left_queue, ((split_axis+1)%3), max_depth-1 );
-	spatial_split( node->right_child, objects, right_queue, ((split_axis+1)%3), max_depth-1 );
+	node->left_child = new BVHNode();
+	node->right_child = new BVHNode();
+	spatial_split( node->left_child, prims, left_queue, ((split_axis+1)%3), max_depth-1 );
+	spatial_split( node->right_child, prims, right_queue, ((split_axis+1)%3), max_depth-1 );
 	n_nodes += 2;
 
 } // end build spatial split tree
@@ -264,7 +262,7 @@ void BVHBuilder::spatial_split( std::shared_ptr<BVHNode> &node, const std::vecto
 //
 
 
-bool BVHTraversal::closest_hit( const std::shared_ptr<BVHNode> node, const intersect::Ray *ray, intersect::Payload *payload, std::shared_ptr<BaseObject> *obj ){
+bool BVHTraversal::closest_hit( const BVHNode* node, const intersect::Ray *ray, intersect::Payload *payload, std::shared_ptr<BaseObject> *obj ){
 
 	// See if we hit the box
 	if( !intersect::ray_aabb( ray, node->aabb->min, node->aabb->max, payload ) ){ return false; }
@@ -296,7 +294,7 @@ bool BVHTraversal::closest_hit( const std::shared_ptr<BVHNode> node, const inter
 } // end ray intersect
 
 
-bool BVHTraversal::any_hit( const std::shared_ptr<BVHNode> node, const intersect::Ray *ray, intersect::Payload *payload ){
+bool BVHTraversal::any_hit( const BVHNode* node, const intersect::Ray *ray, intersect::Payload *payload ){
 
 	// See if we hit the box
 	if( !intersect::ray_aabb( ray, node->aabb->min, node->aabb->max, payload ) ){ return false; }

@@ -101,22 +101,6 @@ public:
 };
 
 
-//
-//	A component is basically a list of params.
-//	Components are parsed from the xml file and always stored.
-//
-/*
-class Component {
-public:
-	Component( std::string tag_, std::string name_, std::string type_ ) : tag(tag_), name(name_), type(type_) {}
-	std::string tag, name, type;
-	inline Param &get( std::string tag );
-	inline Param &operator[]( std::string tag ){ return get(tag); }
-	inline bool exists( std::string tag ) const;
-	std::vector<Param> params;
-};
-*/
-
 // Given a vector of paramters (created with load_params)
 // see if one with a particular tag exists. Returns index of param, -1 otherwise
 static int param_index( std::string tag, const std::vector<Param> &params ){
@@ -274,25 +258,6 @@ void Param::fix_color(){
 	}
 
 }
-
-/*
-mcl::Param &Component::get( std::string tag ){
-	for( int i=0; i<params.size(); ++i ){
-		if( params[i].tag == tag ){ return params[i]; }
-	}
-	// not found, add it
-	params.push_back( mcl::Param(tag,"") );
-	return params.back();
-}
-
-
-bool Component::exists( std::string tag ) const {
-	for( int i=0; i<params.size(); ++i ){
-		if( params[i].tag == tag ){ return true; }
-	}
-	return false;
-}
-*/
 
 } // end namespace mcl
 

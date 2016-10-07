@@ -68,8 +68,8 @@ bool SceneManager::load( std::string filename ){
 
 	// First, create a mapping for named references.
 	// Currently only doing materials and objects
-	int num_materials = 0;
-	int num_objects = 0;
+	int num_materials = 0; int num_objects = 0;
+	int num_cameras = 0; int num_lights = 0;
 	std::unordered_map< std::string, int > material_map;
 	std::unordered_map< std::string, int > object_map;
 	std::vector<pugi::xml_node> children(head_node.begin(), head_node.end()); // grab all children to iterate with omp
@@ -77,26 +77,42 @@ bool SceneManager::load( std::string filename ){
 	//
 	// Preliminary loop to create the name to index mappings
 	//
-#pragma omp parallel for reduction(+:num_materials,num_objects)
+#pragma omp parallel for reduction(+:num_materials,num_objects,num_cameras,num_lights)
 	for( int i=0; i<children.size(); ++i ){
 		std::string tag = parse::to_lower(children[i].name());
 		std::string name = parse::to_lower(children[i].attribute("name").as_string());
 		if( name.size() > 0 ){
 			if( tag == "material" ){
-				#pragma omp critical
+#pragma omp critical
 				{ material_map[name]=num_materials; }
 			}
 			if( tag == "object" ){
-				#pragma omp critical
+#pragma omp critical
 				{ object_map[name]=num_objects; }
 			}
 		} // end has a name
+
+		// Increment counters
 		if( tag == "material" ){ num_materials++; }
 		else if( tag == "object" ){ num_objects++; }
+		else if( tag == "camera" ){ num_cameras++; }
+		else if( tag == "light" ){ num_lights++; }
+
 	} // end create name maps
+
+	// Reserve space for scene components
+	objects.reserve(num_objects);
+	object_params.reserve(num_objects);
+	materials.reserve(num_materials);
+	material_params.reserve(num_materials);
+	cameras.reserve(num_cameras);
+	camera_params.reserve(num_cameras);
+	lights.reserve(num_lights);
+	light_params.reserve(num_lights);
 
 	//
 	// Now parse scene information and create components
+	// Not parallelized to maintain correct file-to-index order
 	//
 	for( int child=0; child<children.size(); ++child ){
 
@@ -172,7 +188,7 @@ bool SceneManager::load( std::string filename ){
 								obj->set_material( idx );
 							}
 						} // is a material preset
-					}
+					} // end check material
 				}
 			} // end build object
 
@@ -257,11 +273,11 @@ void SceneManager::build_bvh( std::string split_mode ){
 	else{ root_bvh.reset( new BVHNode() ); }
 
 	if( split_mode == "spatial" ){
-		int num_nodes = BVHBuilder::make_tree_spatial( root_bvh, objects );
+		int num_nodes = BVHBuilder::make_tree_spatial( root_bvh.get(), objects );
 	}
 
 	else if( split_mode == "linear" ){
-		int num_nodes = BVHBuilder::make_tree_lbvh( root_bvh, objects );
+		int num_nodes = BVHBuilder::make_tree_lbvh( root_bvh.get(), objects );
 	}
 
 	else{ std::cerr << "**SceneManager::build_bvh Error: I don't know BVH type \"" << split_mode << "\"" << std::endl; }

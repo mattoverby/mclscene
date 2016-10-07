@@ -41,7 +41,7 @@ int main(int argc, char *argv[]){
 
 void render_callback(GLFWwindow* window, RenderGL::AppCamera *cam, float screen_dt){
 
-	std::shared_ptr<BVHNode> bvh = scene.get_bvh();
+	BVHNode *bvh = scene.get_bvh().get();
 	if( !view_all ){
 		edges.clear();
 		for( int i=0; i<traversal.size(); ++i ){

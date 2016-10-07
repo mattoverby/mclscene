@@ -208,6 +208,8 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 	//
 	if( solid ){
 
+		if( themesh->tstrips.size()==0 ){ themesh->need_tstrips(); }
+
 		// This doesn't work:
 //		glDrawElements(GL_TRIANGLE_STRIP, themesh->tstrips.size(), GL_UNSIGNED_INT, &themesh->tstrips[0]);
 

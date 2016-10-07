@@ -55,12 +55,17 @@ public:
 class BVHNode {
 public:
 	BVHNode() : aabb( new AABB ) { left_child=NULL; right_child=NULL; }
+	~BVHNode() {
+		delete aabb;
+		if( left_child != NULL ){ delete left_child; }
+		if( right_child != NULL){ delete right_child; }
+	}
 
 	// Allocated in make_tree:
-	std::shared_ptr<BVHNode> left_child;
-	std::shared_ptr<BVHNode> right_child;
-	std::shared_ptr<AABB> aabb;
-	std::vector< std::shared_ptr<BaseObject> > m_objects; // empty unless a leaf node
+	BVHNode* left_child;
+	BVHNode* right_child;
+	AABB* aabb;
+	mutable std::vector< std::shared_ptr<BaseObject> > m_objects; // empty unless a leaf node
 
 	bool is_leaf() const { return m_objects.size()>0; }
 	void get_edges( std::vector<trimesh::vec> &edges ); // for visual debugging
@@ -77,11 +82,11 @@ public:
 
 	// Parallel sorting construction (Lauterbach et al. 2009)
 	// returns num nodes in tree
-	static int make_tree_lbvh( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=10 );
+	static int make_tree_lbvh( BVHNode *root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=10 );
 
 	// Object Median split, round robin axis
 	// returns num nodes in tree
-	static int make_tree_spatial( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=10 );
+	static int make_tree_spatial( BVHNode *root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=10 );
 
 	// Stats used for profiling:
 	static int n_nodes; // number of nodes in the last-created tree
@@ -89,9 +94,9 @@ public:
 	static float runtime_s; // time it took to build the bvh (seconds)
 
 private:
-	static void lbvh_split( std::shared_ptr<BVHNode> &node, const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
+	static void lbvh_split( BVHNode *node, const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
 		const std::vector< std::pair< morton_type, int > > &morton_codes, const int max_depth );
-	static void spatial_split( std::shared_ptr<BVHNode> &node, const std::vector< std::shared_ptr<BaseObject> > &objects,
+	static void spatial_split( BVHNode *node, const std::vector< std::shared_ptr<BaseObject> > &prims,
 		const std::vector< int > &queue, const int split_axis, const int max_depth );
 
 	static int num_avg_balance;
@@ -104,10 +109,10 @@ class BVHTraversal {
 public:
 	// Ray-Scene traversal for closest object (light rays)
 	// Can also be used for selection rays if the last argument is used, as it sets the shared ptr of the object hit.
-	static bool closest_hit( const std::shared_ptr<BVHNode> node, const intersect::Ray *ray, intersect::Payload *payload, std::shared_ptr<BaseObject> *obj=0 );
+	static bool closest_hit( const BVHNode *node, const intersect::Ray *ray, intersect::Payload *payload, std::shared_ptr<BaseObject> *obj=0 );
 
 	// Ray-Scene traversal for any object, early exit (shadow rays)
-	static bool any_hit( const std::shared_ptr<BVHNode> node, const intersect::Ray *ray, intersect::Payload *payload );
+	static bool any_hit( const BVHNode *node, const intersect::Ray *ray, intersect::Payload *payload );
 };
 
 
