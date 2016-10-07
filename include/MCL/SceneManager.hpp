@@ -112,7 +112,7 @@ class SceneManager {
 
 		//
 		// Similar to the "make_<thing>" functions above, only returns derived types.
-		// I haven't debugged these.
+		// Uses dynamic_pointer_cast, and I haven't debugged them.
 		//
 		template<typename T> std::shared_ptr<T> make_object( std::string type );
 		template<typename T> std::shared_ptr<T> make_light( std::string type );
@@ -153,19 +153,19 @@ template<typename T> std::shared_ptr<T> SceneManager::make_object( std::string t
 
 
 template<typename T> std::shared_ptr<T> SceneManager::make_camera( std::string type ){
-	std::shared_ptr<mcl::BaseObject> o = make_camera(type);
+	std::shared_ptr<mcl::BaseCamera> o = make_camera(type);
 	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( o );
 	if( !casted_ptr ){ return NULL; } return casted_ptr;
 }
 
 template<typename T> std::shared_ptr<T> SceneManager::make_light( std::string type ){
-	std::shared_ptr<mcl::BaseObject> o = make_light(type);
+	std::shared_ptr<mcl::BaseLight> o = make_light(type);
 	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( o );
 	if( !casted_ptr ){ return NULL; } return casted_ptr;
 }
 
 template<typename T> std::shared_ptr<T> SceneManager::make_material( std::string type ){
-	std::shared_ptr<mcl::BaseObject> o = make_material(type);
+	std::shared_ptr<mcl::BaseMaterial> o = make_material(type);
 	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( o );
 	if( !casted_ptr ){ return NULL; } return casted_ptr;
 }
