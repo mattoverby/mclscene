@@ -318,7 +318,7 @@ bool BVHTraversal::any_hit( const BVHNode* node, const intersect::Ray *ray, inte
 } // end ray intersect
 
 
-void BVHNode::get_edges( std::vector<trimesh::vec> &edges ){
+void BVHNode::get_edges( std::vector<trimesh::vec> &edges, bool add_children ){
 
 	using namespace trimesh;
 	{
@@ -354,6 +354,6 @@ void BVHNode::get_edges( std::vector<trimesh::vec> &edges ){
 		edges.push_back( c ); edges.push_back( max );
 	}
 
-	if( left_child != NULL ){ left_child->get_edges( edges ); }
-	if( right_child != NULL ){ right_child->get_edges( edges ); }
+	if( left_child != NULL && add_children ){ left_child->get_edges( edges ); }
+	if( right_child != NULL && add_children ){ right_child->get_edges( edges ); }
 }

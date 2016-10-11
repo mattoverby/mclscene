@@ -16,7 +16,7 @@ int main(int argc, char *argv[]){
 
 	t.reset();
 	scene.get_bvh();
-	printf( "BVH Build time: %fms\n", t.elapsed_ms() );
+	printf( "BVH Build time: %fs\n", t.elapsed_s() );
 
 	Application gui( &scene );
 	gui.display();

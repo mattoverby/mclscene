@@ -56,6 +56,7 @@ class BVHNode {
 public:
 	BVHNode() : aabb( new AABB ) { left_child=NULL; right_child=NULL; }
 	~BVHNode() {
+		// Should use a mempool this is slow...
 		delete aabb;
 		if( left_child != NULL ){ delete left_child; }
 		if( right_child != NULL){ delete right_child; }
@@ -68,8 +69,8 @@ public:
 	mutable std::vector< std::shared_ptr<BaseObject> > m_objects; // empty unless a leaf node
 
 	bool is_leaf() const { return m_objects.size()>0; }
-	void get_edges( std::vector<trimesh::vec> &edges ); // for visual debugging
-	void bounds( trimesh::vec &bmin, trimesh::vec &bmax ){ bmin=aabb->min; bmax=aabb->max; }
+	void get_edges( std::vector<trimesh::vec> &edges, bool add_children=true ); // for visual debugging
+	void bounds( trimesh::vec &bmin, trimesh::vec &bmax ) const { bmin=aabb->min; bmax=aabb->max; }
 };
 
 //
