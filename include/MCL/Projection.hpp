@@ -51,11 +51,12 @@ namespace Projection {
 //	Implementation
 //
 
-static trimesh::vec3d Triangle( trimesh::vec3d *triangle, const trimesh::vec3d &point );
+static trimesh::vec3d Projection::Triangle( trimesh::vec3d *tri, const trimesh::vec3d &point ){
+
 	using namespace trimesh;
-	vec3d edge0 = tripoints[1] - tripoints[0];
-	vec3d edge1 = tripoints[2] - tripoints[0];
-	vec3d v0 = tripoints[0] - p;
+	vec3d edge0 = tri[1] - tri[0];
+	vec3d edge1 = tri[2] - tri[0];
+	vec3d v0 = tri[0] - point;
 
 	double a = edge0.dot( edge0 );
 	double b = edge0.dot( edge1 );
@@ -67,68 +68,68 @@ static trimesh::vec3d Triangle( trimesh::vec3d *triangle, const trimesh::vec3d &
 	double t = b*d - a*e;
 
 	if ( s + t < det ) {
-		if ( s < 0.f ) {
-		    if ( t < 0.f ) {
-			if ( d < 0.f ) {
-			    s = clamp( -d/a, 0.f, 1.f );
-			    t = 0.f;
+		if ( s < 0.0 ) {
+		    if ( t < 0.0 ) {
+			if ( d < 0.0 ) {
+			    s = clamp( -d/a, 0.0, 1.0 );
+			    t = 0.0;
 			}
 			else {
-			    s = 0.f;
-			    t = clamp( -e/c, 0.f, 1.f );
+			    s = 0.0;
+			    t = clamp( -e/c, 0.0, 1.0 );
 			}
 		    }
 		    else {
-			s = 0.f;
-			t = clamp( -e/c, 0.f, 1.f );
+			s = 0.0;
+			t = clamp( -e/c, 0.0, 1.0 );
 		    }
 		}
-		else if ( t < 0.f ) {
-		    s = clamp( -d/a, 0.f, 1.f );
-		    t = 0.f;
+		else if ( t < 0.0 ) {
+		    s = clamp( -d/a, 0.0, 1.0 );
+		    t = 0.0;
 		}
 		else {
-		    double invDet = 1.f / det;
+		    double invDet = 1.0 / det;
 		    s *= invDet;
 		    t *= invDet;
 		}
 	}
 	else {
-		if ( s < 0.f ) {
+		if ( s < 0.0 ) {
 		    double tmp0 = b+d;
 		    double tmp1 = c+e;
 		    if ( tmp1 > tmp0 ) {
 			double numer = tmp1 - tmp0;
 			double denom = a-2.0*b+c;
-			s = clamp( numer/denom, 0.f, 1.f );
+			s = clamp( numer/denom, 0.0, 1.0 );
 			t = 1.0-s;
 		    }
 		    else {
-			t = clamp( -e/c, 0.f, 1.f );
-			s = 0.f;
+			t = clamp( -e/c, 0.0, 1.0 );
+			s = 0.0;
 		    }
 		}
-		else if ( t < 0.f ) {
+		else if ( t < 0.0 ) {
 		    if ( a+d > b+e ) {
 			double numer = c+e-b-d;
 			double denom = a-2.0*b+c;
-			s = clamp( numer/denom, 0.f, 1.f );
+			s = clamp( numer/denom, 0.0, 1.0 );
 			t = 1.0-s;
 		    }
 		    else {
-			s = clamp( -e/c, 0.f, 1.f );
-			t = 0.f;
+			s = clamp( -e/c, 0.0, 1.0 );
+			t = 0.0;
 		    }
 		}
 		else {
 		    double numer = c+e-b-d;
-		    double denom = a-2*b+c;
-		    s = clamp( numer/denom, 0.f, 1.f );
-		    t = 1.f - s;
+		    double denom = a-2.0*b+c;
+		    s = clamp( numer/denom, 0.0, 1.0 );
+		    t = 1.0 - s;
 		}
 	}
 
-	return vec3d( tripoints[0] + s*edge0 + t*edge1 );
+	return vec3d( tri[0] + s*edge0 + t*edge1 );
 
 } // end project triangle
 
