@@ -457,6 +457,7 @@ typedef Vec<4,float> vec4;
 typedef Vec<2,int> ivec2;
 typedef Vec<3,int> ivec3;
 typedef Vec<4,int> ivec4;
+typedef Vec<3,double> vec3d;
 
 
 // Nonmember operators that take two Vecs

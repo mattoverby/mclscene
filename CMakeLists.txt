@@ -72,6 +72,8 @@ endif()
 #
 
 # Set up the library, add gui sources if opengl/glfw are found
+# We don't really need to include the header only classes in MCLSCENE_SRCS
+# but will for now.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 set( MCLSCENE_SRCS
 	include/MCL/SceneManager.hpp	src/SceneManager.cpp
@@ -85,6 +87,8 @@ set( MCLSCENE_SRCS
 	include/MCL/Camera.hpp
 	include/MCL/Light.hpp
 	include/MCL/AABB.hpp
+	include/MCL/Sampler.hpp
+	include/MCL/Projection.hpp
 	include/MCL/Material.hpp
 	include/MCL/Simulator.hpp
 	include/MCL/RayIntersect.hpp
