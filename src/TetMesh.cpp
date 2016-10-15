@@ -21,8 +21,10 @@
 
 #include "MCL/TetMesh.hpp"
 #include "MCL/VertexSort.hpp"
-#include "tetgen.h"
 #include <chrono>
+#ifdef MCLSCENE_ENABLE_TETGEN
+	#include "tetgen.h"
+#endif
 
 using namespace mcl;
 
@@ -59,11 +61,20 @@ bool TetMesh::load( std::string filename ){
 	// If it's a PLY we need to use tetgen
 	if( ext=="ply" ){
 
+		#ifndef MCLSCENE_ENABLE_TETGEN
+
+		std::cerr << "**TetMesh::Load Error: Tetgen not enabled, use CMake flag MCL_ENABLE_TETGEN" << std::endl;
+		return false;
+
+		#else
+
 		std::string new_filename = make_tetmesh( filename );
 		if( new_filename.size()==0 ){ return false; }
 		if( !load_node( new_filename ) ){ return false; }
 		if( !load_ele( new_filename ) ){ return false; }
 		if( !need_surface() ){ return false; }
+
+		#endif
 	}
 
 	else {
@@ -382,6 +393,8 @@ std::string TetMesh::get_xml( int mode ){
 
 std::string TetMesh::make_tetmesh( std::string filename ){
 
+	#ifdef MCLSCENE_ENABLE_TETGEN
+
 	std::cout << "\n******************************\n* Tetrahedralizing surface mesh. \n* " <<
 		"Warning: This is buggy and you're better\n* off doing it yourself!" <<
 		"\n******************************\n" << std::endl;
@@ -439,6 +452,11 @@ std::string TetMesh::make_tetmesh( std::string filename ){
 		"\n******************************\n" << std::endl;
 	return new_filename;
 
+	#else
+
+	return "";
+
+	#endif
 }
 
 

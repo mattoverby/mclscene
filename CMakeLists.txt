@@ -33,7 +33,7 @@ set( CMAKE_BUILD_TYPE Release )
 #
 option(MCL_BUILD_SAMPLES "Build mcl library samples" ON)
 option(MCL_BUILD_RENDERING "Build mclscene gui classes" ON)
-
+option(MCL_ENABLE_TETGEN "Enable tetgen for auto-tetrahedralization of meshes" OFF) # tet gen increases compile time
 
 #
 #	dependencies
@@ -44,8 +44,13 @@ set( TRIMESH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/trimesh2" )
 add_subdirectory( ${TRIMESH_DIR} ) # sets TRIMESH_INCLUDE and TRIMESH_SRCS
 
 # tetgen, included in deps/
+if(MCL_ENABLE_TETGEN)
+add_definitions( -DMCLSCENE_ENABLE_TETGEN )
 set( TETGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/tetgen" )
 add_subdirectory( ${TETGEN_DIR} ) # sets TETGEN_INCLUDE and TETGEN_SRCS
+else(MCL_ENABLE_TETGEN)
+set( TETGEN_SRCS "" )
+endif(MCL_ENABLE_TETGEN)
 
 # Rendering libraries
 if(MCL_BUILD_RENDERING)
