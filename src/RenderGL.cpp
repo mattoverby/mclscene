@@ -77,7 +77,7 @@ void RenderGL::reload_materials(){
 		AppMaterial *appmat = &materials[i];
 
 		// Load the texture if it hasn't been loaded already.
-		if( appmat->texture.size() && textures.count(appmat->texture)>0 ){
+		if( appmat->texture.size() && textures.count(appmat->texture)==0 ){
 
 			int channels, tex_width, tex_height;
 			GLuint texture_id = SOIL_load_OGL_texture( appmat->texture.c_str(), &tex_width, &tex_height, &channels, SOIL_LOAD_AUTO, 0, 0 );
