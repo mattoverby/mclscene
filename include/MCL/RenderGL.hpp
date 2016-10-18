@@ -32,9 +32,12 @@ class RenderGL  {
 public:
 	~RenderGL();
 
+	// The current active camera
+	AppCamera *camera;
+
 	// Initialize shaders. Must be called after
 	// OpenGL context has been created.
-	bool init( mcl::SceneManager *scene_, AppCamera *cam_ );
+	bool init( mcl::SceneManager *scene_ );
 
 	// Draws a triangle mesh object with a material. If material is NULL,
 	// a default one is used (lambertian red). The object must have get_TriMesh()
@@ -52,7 +55,10 @@ public:
 	// (I.e., point lights as a sphere, spot lights as a cone).
 	void draw_lights();
 
-	// Update the internal materials if a material in SceneManager has changed.
+	// Update interal cameras if they have changed in SceneManager.
+	void reload_cameras();
+
+	// Update the internal materials if they changed in SceneManager.
 	// Textures cannot be reloaded.
 	void reload_materials();
 
@@ -62,11 +68,15 @@ public:
 private:
 	std::unique_ptr<Shader> blinnphong;
 	std::unordered_map< std::string, int > textures; // file->texture_id
+
+	// Copies of SceneManager components are stored for faster access.
+	// Call the associated reload functions above if you want to make changes.
 	std::vector<AppMaterial> materials;
 	std::vector<AppLight> lights;
+	std::vector<AppCamera> cameras;
+	int active_camera_idx;
 
 	mcl::SceneManager *scene;
-	AppCamera *camera;
 
 }; // end class RenderGL
 

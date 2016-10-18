@@ -36,7 +36,6 @@ namespace mcl {
 
 class Application {
 public:
-	// TODO: Pull relevent values from a camera class
 	struct Settings {
 		bool save_frames; // saves every render frame to a timestamped png in your build directory
 		bool run_simulation; // run the simulator every frame
@@ -75,7 +74,6 @@ public:
 	float zoom; // zooming in and out (scroll wheel)
 
 protected:
-	AppCamera camera;
 	SceneManager *scene;
 	Simulator *sim;
 

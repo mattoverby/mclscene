@@ -34,10 +34,10 @@ RenderGL::~RenderGL(){
 	}
 }
 
-bool RenderGL::init( mcl::SceneManager *scene_, AppCamera *cam_ ){
+bool RenderGL::init( mcl::SceneManager *scene_ ) {
 
 	scene = scene_;
-	camera = cam_;
+	active_camera_idx = 0;
 
 	std::stringstream bp_ss;
 	bp_ss << MCLSCENE_SRC_DIR << "/src/blinnphong.";
@@ -45,6 +45,10 @@ bool RenderGL::init( mcl::SceneManager *scene_, AppCamera *cam_ ){
 	// Create shaders
 	blinnphong = std::unique_ptr<Shader>( new Shader() );
 	blinnphong->init_from_files( bp_ss.str()+"vert", bp_ss.str()+"frag");
+
+	// Create cameras
+	reload_cameras();
+	camera = &cameras[active_camera_idx];
 
 	// Get lighting properties
 	reload_lights();
@@ -101,6 +105,23 @@ void RenderGL::reload_lights(){
 			lights.push_back( AppLight() );
 			scene->lights[l]->get_app( lights[l] );
 		}
+	}
+
+} // end reload lights
+
+
+void RenderGL::reload_cameras(){
+
+	for( int i=0; i<scene->cameras.size(); ++i ){
+		if( i < cameras.size() ){ scene->cameras[i]->get_app( cameras[i] ); }
+		else{
+			cameras.push_back( AppCamera() );
+			scene->cameras[i]->get_app( cameras[i] );
+		}
+	}
+
+	if( cameras.size()==0 ){
+		cameras.push_back( AppCamera() );
 	}
 
 } // end reload lights
