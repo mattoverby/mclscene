@@ -113,6 +113,7 @@ public:
 	static bool closest_hit( const BVHNode *node, const intersect::Ray *ray, intersect::Payload *payload, std::shared_ptr<BaseObject> *obj=0 );
 
 	// Ray-Scene traversal for any object, early exit (shadow rays)
+	// Remember to set your t_max in the payload!
 	static bool any_hit( const BVHNode *node, const intersect::Ray *ray, intersect::Payload *payload );
 };
 

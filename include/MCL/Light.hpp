@@ -27,6 +27,13 @@
 
 namespace mcl {
 
+struct AppLight {
+	AppLight() : position(0,0,0), intensity(1,1,1), falloff(1,0.1f,0.01f), directional(false) {}
+	trimesh::vec position, intensity;
+	trimesh::vec falloff; // (constant, linear, quadratic)
+	bool directional; // if true, position is actually direction
+};
+
 
 //
 //	Base, pure virtual
@@ -34,39 +41,37 @@ namespace mcl {
 class BaseLight {
 public:
 	virtual ~BaseLight(){}
-	virtual std::string get_type() const = 0;
+
+	// Get lighting information as used by mcl::Application
+	virtual void get_app( AppLight &light ){}
 
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode ){ return ""; }
 };
 
 
-class PointLight : public BaseLight {
+//
+//	Default light type (point/directional)
+//
+class DefaultLight : public BaseLight {
 public:
-	PointLight() : position(0,0,0), intensity(1,1,1), falloff(1.f,0.1f,0.01f) {}
-	std::string get_type() const { return "point"; }
-
-	trimesh::vec position, intensity;
-	trimesh::vec falloff; // (constant, linear, quadratic)
-
+	void get_app( AppLight &l ){ l=light; }
 	std::string get_xml( int mode ){
-
-		// mclscene
-		if( mode == 0 ){
-			std::stringstream xml;
+		std::stringstream xml;
+		if( light.directional ){
+			xml << "\t<Light type=\"directional\" >\n";
+			xml << "\t\t<Direction value=\"" << light.position.str() << "\" />\n";
+		} else{
 			xml << "\t<Light type=\"point\" >\n";
-			xml << "\t\t<Intensity value=\"" << intensity.str() << "\" />\n";
-			xml << "\t\t<Position value=\"" << position.str() << "\" />\n";
-			xml << "\t\t<Falloff value=\"" << falloff.str() << "\" />\n";
-			xml << "\t</Light>";
-			return xml.str();
+			xml << "\t\t<Position value=\"" << light.position.str() << "\" />\n";
 		}
-
-		return "";
-
+		xml << "\t\t<Intensity value=\"" << light.intensity.str() << "\" />\n";
+		xml << "\t\t<Falloff value=\"" << light.falloff.str() << "\" />\n";
+		xml << "\t</Light>";
+		return xml.str();
 	} // end get xml
+	AppLight light;
 };
-
 
 } // end namespace mcl
 

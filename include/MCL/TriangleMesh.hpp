@@ -39,8 +39,6 @@ public:
 		trimesh::vec *n0_, trimesh::vec *n1_, trimesh::vec *n2_ ) :
 		p0(p0_), p1(p1_), p2(p2_), n0(n0_), n1(n1_), n2(n2_) {}
 
-	std::string get_type() const { return "triangle"; }
-
 	trimesh::vec *p0, *p1, *p2, *n0, *n1, *n2;
 
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax ){
@@ -74,8 +72,6 @@ public:
 	std::vector<trimesh::point> &vertices;
 	std::vector<trimesh::vec> &normals;
 	std::vector<trimesh::TriMesh::Face> &faces;
-
-	std::string get_type() const { return "trimesh"; }
 
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return tris; }
 

@@ -39,7 +39,7 @@ class BaseObject : public std::enable_shared_from_this<BaseObject> {
 public:
 	BaseObject() : material(-1) {}
 	virtual ~BaseObject(){}
-	virtual std::string get_type() const = 0;
+
 	virtual void bounds( trimesh::vec &bmin, trimesh::vec &bmax ) = 0;
 
 	// When an object's physical parameters are changed, it may need to

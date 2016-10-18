@@ -24,6 +24,16 @@
 
 using namespace mcl;
 
+
+RenderGL::~RenderGL(){
+	// Release texture memory
+	std::unordered_map< std::string, int >::iterator it = textures.begin();
+	for( ; it != textures.end(); ++it ){
+		GLuint texid = it->second;
+		glDeleteTextures(1, &texid);
+	}
+}
+
 bool RenderGL::init( mcl::SceneManager *scene_, AppCamera *cam_ ){
 
 	scene = scene_;
@@ -37,21 +47,37 @@ bool RenderGL::init( mcl::SceneManager *scene_, AppCamera *cam_ ){
 	blinnphong->init_from_files( bp_ss.str()+"vert", bp_ss.str()+"frag");
 
 	// Get lighting properties
-	for( int l=0; l<scene->lights.size(); ++l ){
-		// Max number of lights is 8
-		if( scene->lights[l]->get_type()=="point" && point_lights.size() < 8 ){
-			point_lights.push_back( std::dynamic_pointer_cast<PointLight>(scene->lights[l]) );
-		}
-	}
+	reload_lights();
 
-	// Load textures
+	// Load the materials and textures
+	reload_materials();
+
+	return true;
+
+} // end init shaders
+
+
+void RenderGL::reload_materials(){
+
+	// Load the materials and textures
 	for( int i=0; i<scene->materials.size(); ++i ){
+
+		// Get the app information of the material
 		std::shared_ptr< BaseMaterial > mat = scene->materials[i];
-		if( mat->texture_file.size() ){
+		if( i < materials.size() ){ mat->get_app( materials[i] ); }
+		else{
+			// A new material has appeared
+			materials.push_back( AppMaterial() );
+			mat->get_app( materials[i] );
+		}
+		AppMaterial *appmat = &materials[i];
+
+		// Load the texture if it hasn't been loaded already.
+		if( appmat->texture.size() && textures.count(appmat->texture)>0 ){
 
 			int channels, tex_width, tex_height;
-			GLuint texture_id = SOIL_load_OGL_texture( mat->texture_file.c_str(), &tex_width, &tex_height, &channels, SOIL_LOAD_AUTO, 0, 0 );
-			if( texture_id == 0 ){ std::cerr << "\n**Texture::load Error: Failed to load file " << mat->texture_file << std::endl; continue; }
+			GLuint texture_id = SOIL_load_OGL_texture( appmat->texture.c_str(), &tex_width, &tex_height, &channels, SOIL_LOAD_AUTO, 0, 0 );
+			if( texture_id == 0 ){ std::cerr << "\n**Texture::load Error: Failed to load file " << appmat->texture << std::endl; continue; }
 
 			// Add some filters to this texture
 			glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -60,32 +86,42 @@ bool RenderGL::init( mcl::SceneManager *scene_, AppCamera *cam_ ){
 			glBindTexture(GL_TEXTURE_2D, 0);
 
 			// Store it for later use
-			textures[ mat->texture_file ] = texture_id;
+			textures[ appmat->texture ] = texture_id;
+		}
+	}	
+
+} // end reload materials
+
+
+void RenderGL::reload_lights(){
+
+	for( int l=0; l<scene->lights.size() && l < 8; ++l ){
+		if( l < lights.size() ){ scene->lights[l]->get_app( lights[l] ); }
+		else{
+			lights.push_back( AppLight() );
+			scene->lights[l]->get_app( lights[l] );
 		}
 	}
 
-	return true;
-
-} // end init shaders
+} // end reload lights
 
 
 void RenderGL::draw_objects(){
 
+	AppMaterial defaultMat;
+
 	for( int i=0; i<scene->objects.size(); ++i ){
+
 		int mat = scene->objects[i]->get_material();
 
 		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
 		if( themesh==NULL ){ continue; }
 
-		bool solid = true;
-		if( scene->objects[i]->get_type()=="pointcloud" ){ solid = false; }
+		AppMaterial *appmat = NULL;
+		if( mat < materials.size() && mat >= 0 ){ appmat = &materials[mat]; }
+		else { appmat = &defaultMat; }
 
-		if( mat < scene->materials.size() && mat >= 0 ){
-			if( scene->materials[mat]->get_type() == "invisible" ){ continue; }
-			draw_mesh( themesh, scene->materials[mat], solid );
-		} else {
-			draw_mesh( themesh, NULL, solid );
-		}
+		draw_mesh( themesh, appmat );
 	}
 
 } // end draw objects
@@ -93,7 +129,10 @@ void RenderGL::draw_objects(){
 
 void RenderGL::draw_objects_subdivided(){
 
+	AppMaterial defaultMat;
+
 	for( int i=0; i<scene->objects.size(); ++i ){
+
 		int mat = scene->objects[i]->get_material();
 
 		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
@@ -108,21 +147,22 @@ void RenderGL::draw_objects_subdivided(){
 		}
 
 		mesh2.need_normals(true);
-		mesh2.need_tstrips();	
-		if( mat < scene->materials.size() && mat >= 0 ){
-			if( scene->materials[mat]->get_type() == "invisible" ){ continue; }
-			draw_mesh( &mesh2, scene->materials[mat] );
-		} else {
-			draw_mesh( &mesh2, NULL );
-		}
+		mesh2.need_tstrips();
+
+		AppMaterial *appmat = NULL;
+		if( mat < materials.size() && mat >= 0 ){ appmat = &materials[mat]; }
+		else { appmat = &defaultMat; }
+
+		draw_mesh( &mesh2, appmat );
 	}
 
 } // end draw objects
 
 
-void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMaterial> mat, bool solid ){
+void RenderGL::draw_mesh( trimesh::TriMesh *themesh, AppMaterial* mat ){
 
-	if( themesh==NULL ){ return; }
+	if( themesh==NULL || mat==NULL ){ return; }
+	if( mat->mode == 2 ){ return; } // invisible
 
 	// Vertices
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -135,9 +175,9 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 
 	// Texture coordinates
 	GLuint texture_id = 0;
-	if( !themesh->texcoords.empty() && mat != NULL ){
-		if( textures.count(mat->texture_file)>0 ){
-			texture_id = textures[ mat->texture_file ];
+	if( !themesh->texcoords.empty() ){
+		if( textures.count(mat->texture)>0 ){
+			texture_id = textures[ mat->texture ];
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 			glTexCoordPointer(2, GL_FLOAT, sizeof(themesh->texcoords[0]), &themesh->texcoords[0][0]);
 		} else { glDisableClientState(GL_TEXTURE_COORD_ARRAY); }
@@ -153,19 +193,10 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
 	// Get material properties
-	trimesh::vec ambient(0,0,0);
-	trimesh::vec diffuse(1,0,0);
-	trimesh::vec specular(.6,.6,.6);
-	float shininess = 16.f;
-	if( mat!=NULL ){ // Need to have a better way than dynamic cast
-		if( mat->get_type()=="blinnphong" ){
-			std::shared_ptr<BlinnPhong> glMat = std::dynamic_pointer_cast<BlinnPhong>(mat);
-			ambient = glMat->ambient;
-			diffuse = glMat->diffuse;
-			specular = glMat->specular;
-			shininess = glMat->shininess;
-		}
-	}
+	trimesh::vec ambient = mat->amb;
+	trimesh::vec diffuse = mat->diff;
+	trimesh::vec specular = mat->spec;
+	float shininess = mat->shini;
 
 
 	//
@@ -185,10 +216,10 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 	glUniform3f( blinnphong->uniform("CamPos"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
 
 	// Set lighting properties
-	glUniform1i( blinnphong->uniform("num_point_lights"), point_lights.size() );
-	for( int l=0; l<point_lights.size(); ++l ){
+	glUniform1i( blinnphong->uniform("num_point_lights"), lights.size() );
+	for( int l=0; l<lights.size(); ++l ){
 
-		PointLight *light = point_lights[l].get();
+		AppLight *light = &lights[l];
 		std::stringstream array_ss; array_ss << "pointLights[" << l << "].";
 		std::string array_str = array_ss.str();
 
@@ -205,15 +236,16 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 
 	//
 	//	Draw a solid mesh
+	//	TODO array buffers for tstrips
 	//
-	if( solid ){
+	if( mat->mode==0 ){
 
 		if( themesh->tstrips.size()==0 ){ themesh->need_tstrips(); }
 
 		// This doesn't work:
-//		glDrawElements(GL_TRIANGLE_STRIP, themesh->tstrips.size(), GL_UNSIGNED_INT, &themesh->tstrips[0]);
+//		glDrawElements(GL_TRIANGLE_STRIP, (themesh->tstrips.size()/3), GL_UNSIGNED_INT, &themesh->tstrips[0]);
 
-		// But this does: ???
+		// But this does:
 		int *t = &themesh->tstrips[0];
 		const int *end = t + themesh->tstrips.size();
 		while( t < end ){
@@ -227,7 +259,7 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 	//
 	//	Draw a point cloud with gl points for now
 	//
-	else { glDrawArrays(GL_POINTS, 0, themesh->vertices.size()); }
+	else if( mat->mode==1 ) { glDrawArrays(GL_POINTS, 0, themesh->vertices.size()); }
 
 	blinnphong->disable();
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -236,10 +268,6 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMateria
 
 
 void RenderGL::draw_lights(){
-
-	for( int i=0; i<point_lights.size(); ++i ){
-		//TODO
-	}
 
 } // end draw lights
 

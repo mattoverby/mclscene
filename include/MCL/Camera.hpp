@@ -22,52 +22,14 @@
 #ifndef MCLSCENE_CAMERA_H
 #define MCLSCENE_CAMERA_H 1
 
-#include <math.h>
+#include <XForm.h>
 #include <string>
 
 namespace mcl {
 
-//
-//	Orthonormal Base
-//
-class OrthonormalBasis {
-public:
-	OrthonormalBasis( float *direction, float *up ){ init( direction, up ); }
-	OrthonormalBasis( float *direction ){ float up[3]={0,1,0}; init( direction, up ); }
-	float U[3], V[3], W[3];
-
-private:
-	inline void init( float *direction, float *up ){
-		for( int i=0; i<3; ++i ){ W[i] = direction[i]*-1.f; }
-		normalize( W );
-		normalize( up );
-
-		// Move the up vector if W and up are parallel
-		if( fabs( dot(W,up) ) < 1e-6f ){ for( int i=0; i<3; ++i ){ up[i] += 1e-4f; } }
-
-		cross( U, up, W );
-		normalize( U );
-		cross( V, W, U );
-		normalize( V );
-	}
-
-	inline void cross( float *result, const float *v1, const float *v2 ){
-		result[0] = v1[1]*v2[2] - v1[2]*v2[1];
-		result[1] = v1[2]*v2[0] - v1[0]*v2[2];
-		result[2] = v1[0]*v2[1] - v1[1]*v2[0];
-	}
-	inline float dot( const float *v1, const float *v2 ){
-		float result[3];
-		for( int i=0; i<3; ++i ){ result[i] = v1[i]*v2[i]; }
-		return result[0]+result[1]+result[2];
-	}
-	inline void normalize( float *v ){
-		float l = sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
-		if(l>0.f){ v[0]/=l; v[1]/=l; v[2]/=l; }
-	}
-
+struct AppCamera {
+	trimesh::XForm<float> model, view, projection;
 };
-
 
 //
 //	Base, pure virtual
@@ -76,11 +38,10 @@ class BaseCamera {
 public:
 	virtual ~BaseCamera(){}
 
+	// Return camera matrices for mcl::Application
+	virtual void get_app( AppCamera &cam ){}
 
 	// Returns a string containing xml code for saving to a scenefile.
-	// Mode is:
-	//	0 = mclscene
-	//	1 = mitsuba
 	virtual std::string get_xml( int mode ){ return ""; }
 };
 

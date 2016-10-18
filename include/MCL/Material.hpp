@@ -31,191 +31,53 @@
 ///
 namespace mcl {
 
+// Used by mcl::Application
+struct AppMaterial {
+	AppMaterial() : amb(0,0,0), diff(1,0,0), spec(0,0,0), shini(1), texture(""), mode(0) {}
+	trimesh::vec3 amb, diff, spec;
+	float shini;
+	std::string texture;
+	int mode; // 0=surface, 1=point cloud, 2=invisible
+};
+
 //
 //	Base, pure virtual
 //
 class BaseMaterial {
 public:
-	BaseMaterial() : texture_file(""){}
 	virtual ~BaseMaterial(){}
 
-	virtual std::string get_type() const = 0;
+	// Implement get_app to use the material in mcl::Application
+	virtual void get_app( AppMaterial &mat ){}
 
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode ){ return ""; }
-
-	std::string texture_file;
 };
 
 
 //
-//	For convenience
+//	Default Material
 //
-class InvisibleMaterial : public BaseMaterial {
-public: std::string get_type() const { return "invisible"; }
-};
-
-
-//
-//	BlinnPhong Material
-//
-class BlinnPhong : public BaseMaterial {
+class DefaultBlinnPhong : public BaseMaterial {
 public:
-	BlinnPhong() : ambient(.5,.5,.5), diffuse(.5,.5,.5), specular(0,0,0), shininess(0) {}
-	BlinnPhong( trimesh::vec amb, trimesh::vec diff, trimesh::vec spec, float shini ) : ambient(amb), diffuse(diff), specular(spec), shininess(shini) {}
-
-	trimesh::vec ambient;
-	trimesh::vec diffuse;
-	trimesh::vec specular;
-	float shininess;
-
-	std::string get_type() const { return "blinnphong"; }
-
+	DefaultBlinnPhong(){}
+	DefaultBlinnPhong( trimesh::vec amb, trimesh::vec diff, trimesh::vec spec, float shini ) {
+		mat.amb = amb; mat.diff = diff; mat.spec = spec; mat.shini = shini;
+	}
+	void get_app( AppMaterial &m ){ m=mat; }
 	std::string get_xml( int mode ){
-
-		// mclscene
-		if( mode == 0 ){
-			std::stringstream xml;
-			xml << "\t<Material type=\"blinnphong\" >\n";
-			xml << "\t\t<Ambient value=\"" << ambient.str() << "\" />\n";
-			xml << "\t\t<Diffuse value=\"" << diffuse.str() << "\" />\n";
-			xml << "\t\t<Specular value=\"" << specular.str() << "\" />\n";
-			xml << "\t\t<Shininess  value=\"" << shininess << "\" />\n";
-			if( texture_file.size() ){ xml << "\t\t<texture value=\"" << texture_file << "\" />\n"; }
-			xml << "\t</Material>";
-			return xml.str();
-		}
-
-		return "";
-
-	} // end get xml
+		std::stringstream xml;
+		xml << "\t<Material type=\"blinnphong\" >\n";
+		xml << "\t\t<Ambient value=\"" << mat.amb.str() << "\" />\n";
+		xml << "\t\t<Diffuse value=\"" << mat.diff.str() << "\" />\n";
+		xml << "\t\t<Specular value=\"" << mat.spec.str() << "\" />\n";
+		xml << "\t\t<Shininess  value=\"" << mat.shini << "\" />\n";
+		if( mat.texture.size() ){ xml << "\t\t<texture value=\"" << mat.texture << "\" />\n"; }
+		xml << "\t</Material>";
+		return xml.str();
+	}
+	AppMaterial mat;
 };
-
-//
-//	OpenGL Material Presets
-//	See: http://devernay.free.fr/cours/opengl/materials.html
-//
-enum class MaterialPreset {
-	Emerald, Jade, Obsidian, Pearl, Ruby, Turquoise, // gems
-	Brass, Bronze, Chrome, Copper, Gold, Silver, // metals
-	BlackPlastic, CyanPlastic, GreenPlastic, RedPastic, WhitePlastic, YellowPlastic, // plastic
-	BlackRubber, CyanRubber, GreenRubber, RedRubber, WhiteRubber, YellowRubber, // rubber
-	Unknown // Special
-};
-
-static MaterialPreset material_str_to_preset( std::string preset ){
-	preset = parse::to_lower(preset);
-
-	// Gemstones
-	if( preset=="emerald"){ return ( MaterialPreset::Emerald ); }
-	else if( preset=="jade"){ return ( MaterialPreset::Jade ); }
-	else if( preset=="obsidian"){ return ( MaterialPreset::Obsidian ); }
-	else if( preset=="pearl"){ return ( MaterialPreset::Pearl ); }
-	else if( preset=="ruby"){ return ( MaterialPreset::Ruby ); }
-	else if( preset=="turquoise"){ return ( MaterialPreset::Turquoise ); }
-
-	// Metals
-	else if( preset=="brass"){ return ( MaterialPreset::Brass ); }
-	else if( preset=="bronze"){ return ( MaterialPreset::Bronze ); }
-	else if( preset=="chrome"){ return ( MaterialPreset::Chrome ); }
-	else if( preset=="copper"){ return ( MaterialPreset::Copper ); }
-	else if( preset=="gold"){ return ( MaterialPreset::Gold ); }
-	else if( preset=="silver"){ return ( MaterialPreset::Silver ); }
-
-	// Plastics
-	else if( preset=="blackplastic"){ return ( MaterialPreset::BlackPlastic ); }
-	else if( preset=="cyanplastic"){ return ( MaterialPreset::CyanPlastic ); }
-	else if( preset=="greenplastic"){ return ( MaterialPreset::GreenPlastic ); }
-	else if( preset=="redpastic"){ return ( MaterialPreset::RedPastic ); }
-	else if( preset=="whiteplastic"){ return ( MaterialPreset::WhitePlastic ); }
-	else if( preset=="yellowplastic"){ return ( MaterialPreset::YellowPlastic ); }
-
-	// Rubber
-	else if( preset=="blackrubber"){ return ( MaterialPreset::BlackRubber ); }
-	else if( preset=="cyanrubber"){ return ( MaterialPreset::CyanRubber ); }
-	else if( preset=="greenrubber"){ return ( MaterialPreset::GreenRubber ); }
-	else if( preset=="redrubber"){ return ( MaterialPreset::RedRubber ); }
-	else if( preset=="whiterubber"){ return ( MaterialPreset::WhiteRubber ); }
-	else if( preset=="yellowrubber"){ return ( MaterialPreset::YellowRubber ); }
-
-	return MaterialPreset::Unknown;
-}
-
-//
-//	Create a blinn phong material from preset values.
-//	Calling this function does NOT add them to the SceneManager data vectors.
-//
-static std::shared_ptr<BlinnPhong> make_preset_material( MaterialPreset m ){
-	using namespace trimesh;
-	std::shared_ptr<BlinnPhong> r = NULL;
-
-	switch( m ){
-
-	// Gemstones
-	case MaterialPreset::Emerald:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.0215, 0.1745, 0.0215), vec(0.07568, 0.61424, 0.07568), vec(0.633, 0.727811, 0.633), 0.6 ) ); break;
-	case MaterialPreset::Jade:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.135, 0.2225, 0.1575), vec(0.54, 0.89, 0.63), vec(0.316228, 0.316228, 0.316228), 0.1 ) ); break;
-	case MaterialPreset::Obsidian:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.05375, 0.05, 0.06625), vec(0.18275, 0.17, 0.22525), vec(0.332741, 0.328634, 0.346435), 0.3 ) ); break;
-	case MaterialPreset::Pearl:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.25, 0.20725, 0.20725), vec(1.0, 0.829, 0.829), vec(0.296648, 0.296648, 0.296648), 0.088 ) ); break;
-	case MaterialPreset::Ruby:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.1745, 0.01175, 0.01175), vec(0.61424, 0.04136, 0.04136), vec(0.727811, 0.626959, 0.626959), 0.6 ) ); break;
-	case MaterialPreset::Turquoise:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.1, 0.18725, 0.1745), vec(0.396, 0.74151, 0.69102), vec(0.297254, 0.30829, 0.306678), 0.1 ) ); break;
-
-	// Metals
-	case MaterialPreset::Brass:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.329412, 0.223529, 0.027451), vec(0.780392, 0.568627, 0.113725), vec(0.992157, 0.941176, 0.807843), 0.21794872 ) ); break;
-	case MaterialPreset::Bronze:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.2125, 0.1275, 0.054), vec(0.714, 0.4284, 0.18144), vec(0.393548, 0.271906, 0.166721), 0.2 ) ); break;
-	case MaterialPreset::Chrome:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.25, 0.25, 0.25), vec(0.4, 0.4, 0.4), vec(0.774597, 0.774597, 0.774597), 0.6 ) ); break;
-	case MaterialPreset::Copper:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.19125, 0.0735, 0.0225), vec(0.7038, 0.27048, 0.0828), vec(0.256777, 0.137622, 0.086014), 0.6 ) ); break;
-	case MaterialPreset::Gold:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.24725, 0.1995, 0.0745), vec(0.75164, 0.60648, 0.22648), vec(0.628281, 0.555802, 0.366065), 0.4 ) ); break;
-	case MaterialPreset::Silver:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.19225, 0.19225, 0.19225), vec(0.50754, 0.50754, 0.50754), vec(0.508273, 0.508273, 0.508273), 0.4 ) ); break;
-
-	// Plastics
-	case MaterialPreset::BlackPlastic:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.0, 0.0, 0.0), vec(0.01, 0.01, 0.01), vec(0.50, 0.50, 0.50), 0.25 ) ); break;
-	case MaterialPreset::CyanPlastic:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.0, 0.1, 0.06), vec(0.0, 0.50980392, 0.50980392), vec(0.50196078, 0.50196078, 0.50196078), 0.25 ) ); break;
-	case MaterialPreset::GreenPlastic:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.0, 0.0, 0.0), vec(0.1, 0.35, 0.1), vec(0.45, 0.55, 0.45), 0.25 ) ); break;
-	case MaterialPreset::RedPastic:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.0, 0.0, 0.0), vec(0.5, 0.0, 0.0), vec(0.7, 0.6, 0.6), 0.25 ) ); break;
-	case MaterialPreset::WhitePlastic:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.0, 0.0, 0.0), vec(0.55, 0.55, 0.55), vec(0.70, 0.70, 0.70), 0.25 ) ); break;
-	case MaterialPreset::YellowPlastic:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.0, 0.0, 0.0), vec(0.5, 0.5, 0.0), vec(0.60, 0.60, 0.50), 0.25 ) ); break;
-
-	// Rubbers
-	case MaterialPreset::BlackRubber:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.02, 0.02, 0.02), vec(0.01, 0.01, 0.01), vec(0.4, 0.4, 0.4), 0.078125 ) ); break;
-	case MaterialPreset::CyanRubber:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.0, 0.05, 0.05), vec(0.4, 0.5, 0.5), vec(0.04, 0.7, 0.7), 0.078125 ) ); break;
-	case MaterialPreset::GreenRubber:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.0, 0.05, 0.0), vec(0.4, 0.5, 0.4), vec(0.04, 0.7, 0.04), 0.078125 ) ); break;
-	case MaterialPreset::RedRubber:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.05, 0.0, 0.0), vec(0.5, 0.4, 0.4), vec(0.7, 0.04, 0.04), 0.078125 ) ); break;
-	case MaterialPreset::WhiteRubber:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.05, 0.05, 0.05), vec(0.5, 0.5, 0.5), vec(0.7, 0.7, 0.7), 0.078125 ) ); break;
-	case MaterialPreset::YellowRubber:
-		r= std::shared_ptr<BlinnPhong>( new BlinnPhong( vec(0.05, 0.05, 0.0), vec(0.5, 0.5, 0.4), vec(0.7, 0.7, 0.04), 0.078125 ) ); break;
-
-	default: break;
-
-	} // end switch preset
-
-	if( r != NULL ){ r->shininess *= 128.f; }
-	else{ std::cerr << "**make_preset_material Error: Unknown material preset" << std::endl; }
-	return r;
-
-} // end material preset
 
 
 } // end namespace mcl

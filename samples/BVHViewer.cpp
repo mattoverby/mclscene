@@ -6,7 +6,7 @@
 using namespace mcl;
 
 SceneManager scene;
-void render_callback(GLFWwindow* window, RenderGL::AppCamera *cam, float screen_dt);
+void render_callback(GLFWwindow* window, AppCamera *cam, float screen_dt);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 std::vector< bool > traversal; // 0 = left, 1 = right
 bool view_all = false;
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]){
 	Application app( &scene );
 
 	// Add a render callback to draw the BVH
-	std::function<void ( GLFWwindow* window, RenderGL::AppCamera *cam, float screen_dt )> draw_cb(render_callback);
+	std::function<void ( GLFWwindow* window, AppCamera *cam, float screen_dt )> draw_cb(render_callback);
 	app.add_callback( draw_cb );
 
 	// Add a key callback to change the viewer settings
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]){
 
 
 
-void render_callback(GLFWwindow* window, RenderGL::AppCamera *cam, float screen_dt){
+void render_callback(GLFWwindow* window, AppCamera *cam, float screen_dt){
 
 	BVHNode *bvh = scene.get_bvh().get();
 

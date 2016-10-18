@@ -47,7 +47,6 @@ public:
 	std::vector<double> radii;
 
 	// General getters
-	std::string get_type() const { return "pointcloud"; }
 	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return data; }
 	std::string get_xml( int mode=0 );
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );

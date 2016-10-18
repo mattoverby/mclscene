@@ -166,22 +166,15 @@ bool SceneManager::load( std::string filename ){
 
 					// See if we can figure out the material
 					int mat_param_index = param_index("material",params);
+
 					if( mat_param_index >= 0 ){
 						std::string material_name = parse::to_lower( params[mat_param_index].as_string() );
-						if( material_name == "invisible" ){
-							std::shared_ptr<BaseMaterial> mat( new InvisibleMaterial() );
-							int idx = materials.size();
-							materials.push_back( mat );
-							material_params.push_back( std::vector<Param>() );
-							obj->set_material( idx );
-						} // is the special invisible type
-						else if( material_map.count(material_name) > 0 ){
+						if( material_map.count(material_name) > 0 ){
 							obj->set_material( material_map[material_name] );
 						} // is a named material
 						else {
-							MaterialPreset m = material_str_to_preset( material_name );
-							if( m != MaterialPreset::Unknown ){
-								std::shared_ptr<BaseMaterial> mat = make_preset_material( m );
+							std::shared_ptr<BaseMaterial> mat = make_preset_material( material_name );
+							if( mat != NULL ){
 								int idx = materials.size();
 								materials.push_back( mat );
 								material_params.push_back( std::vector<Param>() );
@@ -357,34 +350,33 @@ void SceneManager::make_3pt_lighting( const trimesh::vec &center, float distance
 	std::shared_ptr<BaseLight> l0 = make_light( "point" );
 	std::shared_ptr<BaseLight> l1 = make_light( "point" );
 	std::shared_ptr<BaseLight> l2 = make_light( "point" );
-	std::shared_ptr<PointLight> key = std::dynamic_pointer_cast<PointLight>( l0 );
-	std::shared_ptr<PointLight> fill = std::dynamic_pointer_cast<PointLight>( l1 );
-	std::shared_ptr<PointLight> back = std::dynamic_pointer_cast<PointLight>( l2 );
+	std::shared_ptr<DefaultLight> key = std::dynamic_pointer_cast<DefaultLight>( l0 );
+	std::shared_ptr<DefaultLight> fill = std::dynamic_pointer_cast<DefaultLight>( l1 );
+	std::shared_ptr<DefaultLight> back = std::dynamic_pointer_cast<DefaultLight>( l2 );
 
 	float half_d = distance/2.f;
 	float quart_d = distance/4.f;
 
 	// Set positions
-	key->position = center + trimesh::vec(-half_d,0.f,distance);
-	fill->position = center + trimesh::vec(half_d,0.f,distance);
-	back->position = center + trimesh::vec(0.f,quart_d,-distance);
+	key->light.position = center + trimesh::vec(-half_d,0.f,distance);
+	fill->light.position = center + trimesh::vec(half_d,0.f,distance);
+	back->light.position = center + trimesh::vec(0.f,quart_d,-distance);
 
 	// Set intensity
-	key->intensity = trimesh::vec(.8,.8,.8);
-	fill->intensity = trimesh::vec(.6,.6,.6);
-	back->intensity = trimesh::vec(.6,.6,.6);
+	key->light.intensity = trimesh::vec(.8,.8,.8);
+	fill->light.intensity = trimesh::vec(.6,.6,.6);
+	back->light.intensity = trimesh::vec(.6,.6,.6);
 
 	// Falloff (none)
-	key->falloff = trimesh::vec(1.f,0.f,0.f);
-	fill->falloff = trimesh::vec(1.f,0.f,0.f);
-	back->falloff = trimesh::vec(1.f,0.f,0.f);
+	key->light.falloff = trimesh::vec(1.f,0.f,0.f);
+	fill->light.falloff = trimesh::vec(1.f,0.f,0.f);
+	back->light.falloff = trimesh::vec(1.f,0.f,0.f);
 
 } // end make three point lighting
 
 
 void SceneManager::get_bsphere( trimesh::vec *center, float *radius, bool recompute ){
 
-	// TODO use Ritter's faster bounding sphere approximation code
 	if( last_radius <= 0.f || recompute ){
 		trimesh::Miniball<3,float> mb;
 		for( int i=0; i<objects.size(); ++i ){

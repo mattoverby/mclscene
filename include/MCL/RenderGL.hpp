@@ -30,9 +30,7 @@ namespace mcl {
 
 class RenderGL  {
 public:
-	struct AppCamera {
-		trimesh::XForm<float> model, view, projection;
-	};
+	~RenderGL();
 
 	// Initialize shaders. Must be called after
 	// OpenGL context has been created.
@@ -41,8 +39,7 @@ public:
 	// Draws a triangle mesh object with a material. If material is NULL,
 	// a default one is used (lambertian red). The object must have get_TriMesh()
 	// function implemented, otherwise nothing is drawn.
-	// If solid is set to false, the mesh is drawn as a point cloud
-	void draw_mesh( trimesh::TriMesh *themesh, std::shared_ptr<BaseMaterial> mat, bool solid=true );
+	void draw_mesh( trimesh::TriMesh *themesh, AppMaterial *mat );
 
 	// Draws all objects in the SceneManager
 	void draw_objects();
@@ -55,13 +52,21 @@ public:
 	// (I.e., point lights as a sphere, spot lights as a cone).
 	void draw_lights();
 
+	// Update the internal materials if a material in SceneManager has changed.
+	// Textures cannot be reloaded.
+	void reload_materials();
+
+	// Update the interal lights vector if lighting in SceneManager has changed.
+	void reload_lights();
+
 private:
 	std::unique_ptr<Shader> blinnphong;
 	std::unordered_map< std::string, int > textures; // file->texture_id
+	std::vector<AppMaterial> materials;
+	std::vector<AppLight> lights;
+
 	mcl::SceneManager *scene;
 	AppCamera *camera;
-
-	std::vector< std::shared_ptr<PointLight> > point_lights; // resized at init
 
 }; // end class RenderGL
 

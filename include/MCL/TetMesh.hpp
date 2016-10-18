@@ -46,8 +46,6 @@ public:
 	TetMesh() : tris(new trimesh::TriMesh), vertices(tris->vertices), normals(tris->normals), faces(tris->faces),
 		aabb(new AABB) {}
 
-	std::string get_type() const { return "tetmesh"; }
-
 	// Filename is the first part of a tetmesh which must contain an .ele and .node file.
 	// If a ply file is supplied, tetgen will be used to tetrahedralize the mesh (however,
 	// the ply must be ascii, not binary).
