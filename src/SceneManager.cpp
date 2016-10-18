@@ -77,17 +77,17 @@ bool SceneManager::load( std::string filename ){
 	//
 	// Preliminary loop to create the name to index mappings
 	//
-#pragma omp parallel for reduction(+:num_materials,num_objects,num_cameras,num_lights)
+//#pragma omp parallel for reduction(+:num_materials,num_objects,num_cameras,num_lights)
 	for( int i=0; i<children.size(); ++i ){
 		std::string tag = parse::to_lower(children[i].name());
 		std::string name = parse::to_lower(children[i].attribute("name").as_string());
 		if( name.size() > 0 ){
 			if( tag == "material" ){
-#pragma omp critical
+//#pragma omp critical
 				{ material_map[name]=num_materials; }
 			}
 			if( tag == "object" ){
-#pragma omp critical
+//#pragma omp critical
 				{ object_map[name]=num_objects; }
 			}
 		} // end has a name

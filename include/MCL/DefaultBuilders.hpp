@@ -490,7 +490,7 @@ static std::shared_ptr<DefaultBlinnPhong> make_preset_material( std::string pres
 	enum class MaterialPreset {
 		Emerald, Jade, Obsidian, Pearl, Ruby, Turquoise, // gems
 		Brass, Bronze, Chrome, Copper, Gold, Silver, // metals
-		BlackPlastic, CyanPlastic, GreenPlastic, RedPastic, WhitePlastic, YellowPlastic, // plastic
+		BlackPlastic, CyanPlastic, GreenPlastic, RedPlastic, WhitePlastic, YellowPlastic, // plastic
 		BlackRubber, CyanRubber, GreenRubber, RedRubber, WhiteRubber, YellowRubber, // rubber
 		Invisible, Unknown // Special
 	};
@@ -519,7 +519,7 @@ static std::shared_ptr<DefaultBlinnPhong> make_preset_material( std::string pres
 	else if( preset=="blackplastic"){ m = ( MaterialPreset::BlackPlastic ); }
 	else if( preset=="cyanplastic"){ m = ( MaterialPreset::CyanPlastic ); }
 	else if( preset=="greenplastic"){ m = ( MaterialPreset::GreenPlastic ); }
-	else if( preset=="redpastic"){ m = ( MaterialPreset::RedPastic ); }
+	else if( preset=="redplastic"){ m = ( MaterialPreset::RedPlastic ); }
 	else if( preset=="whiteplastic"){ m = ( MaterialPreset::WhitePlastic ); }
 	else if( preset=="yellowplastic"){ m = ( MaterialPreset::YellowPlastic ); }
 
@@ -575,7 +575,7 @@ static std::shared_ptr<DefaultBlinnPhong> make_preset_material( std::string pres
 		r= std::shared_ptr<DefaultBlinnPhong>( new DefaultBlinnPhong( vec(0.0, 0.1, 0.06), vec(0.0, 0.50980392, 0.50980392), vec(0.50196078, 0.50196078, 0.50196078), 0.25 ) ); break;
 	case MaterialPreset::GreenPlastic:
 		r= std::shared_ptr<DefaultBlinnPhong>( new DefaultBlinnPhong( vec(0.0, 0.0, 0.0), vec(0.1, 0.35, 0.1), vec(0.45, 0.55, 0.45), 0.25 ) ); break;
-	case MaterialPreset::RedPastic:
+	case MaterialPreset::RedPlastic:
 		r= std::shared_ptr<DefaultBlinnPhong>( new DefaultBlinnPhong( vec(0.0, 0.0, 0.0), vec(0.5, 0.0, 0.0), vec(0.7, 0.6, 0.6), 0.25 ) ); break;
 	case MaterialPreset::WhitePlastic:
 		r= std::shared_ptr<DefaultBlinnPhong>( new DefaultBlinnPhong( vec(0.0, 0.0, 0.0), vec(0.55, 0.55, 0.55), vec(0.70, 0.70, 0.70), 0.25 ) ); break;
