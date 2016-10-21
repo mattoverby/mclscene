@@ -135,16 +135,44 @@ bool TriangleMesh::ray_intersect( const intersect::Ray &ray, intersect::Payload 
 }
 */
 
+
+static std::string get_timestamp_meshname(){
+	std::string MY_DATE_FORMAT = "h%Hm%M";
+	const int MY_DATE_SIZE = 20;
+	static char name[MY_DATE_SIZE];
+	time_t now = time(0);
+	strftime(name, sizeof(name), MY_DATE_FORMAT.c_str(), localtime(&now));
+	return std::string(name);
+}
+
+static bool mesh_exists( const std::string& name ){
+	std::ifstream f(name.c_str());
+	return f.good();
+}
+
 std::string TriangleMesh::get_xml( int mode ){
 
-	using namespace std::chrono;
-	double timems = duration_cast< milliseconds >(
-	    system_clock::now().time_since_epoch()
-	).count();
+	std::string timestamp = get_timestamp_meshname();
+	std::string filename = "";
+
+	// Get mesh number by using mesh_exists
+	// Not an elegant solution but fine for now.
+	int mesh_num = 0;
+	for( int i=0; i<10000; ++i ){
+		std::stringstream fn; fn << timestamp << "-" << mesh_num << ".ply";
+		if( !mesh_exists( fn.str() ) ){ filename = fn.str(); break; }
+		mesh_num++;
+	}
+
+	if( !filename.size() ){
+		std::cerr << "TriangleMesh::Error: Problem exporting file for scene save" << std::endl;
+		return "";
+	}
+
 
 	// Save the PLY
 	std::stringstream plyfile;
-	plyfile << MCLSCENE_BUILD_DIR<< "/" << timems << ".ply";
+	plyfile << MCLSCENE_BUILD_DIR<< "/" << filename;
 	tris->write( plyfile.str() );
 
 	// mclscene

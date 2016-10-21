@@ -205,7 +205,7 @@ void Application::key_callback(GLFWwindow* window, int key, int scancode, int ac
 	case GLFW_KEY_P:
 		run_simulator_step();
 		break;
-	case GLFW_KEY_F:
+	case GLFW_KEY_T:
 		settings.save_frames=!settings.save_frames;
 		std::cout << "save screenshots: " << (int)settings.save_frames << std::endl;
 		break;
