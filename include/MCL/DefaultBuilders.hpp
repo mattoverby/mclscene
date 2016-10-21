@@ -38,7 +38,7 @@ namespace mcl {
 //
 //	The builder types
 //
-typedef std::function<std::shared_ptr<BaseCamera> ( std::string type, std::vector<Param> &params )> BuildCamCallback;
+typedef std::function<std::shared_ptr<Camera> ( std::string type, std::vector<Param> &params )> BuildCamCallback;
 typedef std::function<std::shared_ptr<BaseObject> ( std::string type, std::vector<Param> &params )> BuildObjCallback;
 typedef std::function<std::shared_ptr<BaseLight> ( std::string type, std::vector<Param> &params )> BuildLightCallback;
 typedef std::function<std::shared_ptr<Material> ( std::string type, std::vector<Param> &params )> BuildMatCallback;
@@ -462,11 +462,21 @@ static std::shared_ptr<BaseLight> default_build_light( std::string type, std::ve
 //
 //	Default Camera
 //
-static std::shared_ptr<BaseCamera> default_build_camera( std::string type, std::vector<Param> &params ){
+static std::shared_ptr<Camera> default_build_camera( std::string type, std::vector<Param> &params ){
 
 	type = parse::to_lower(type);
 
-	std::cerr << "**Error: I don't know how to create a camera of type " << type << std::endl;
+	//
+	//	Default (TODO: params)
+	//
+	if( type == "default" ){
+		std::shared_ptr<Camera> cam( new Camera() );
+		return cam;
+	}
+
+	else{
+		std::cerr << "**Error: I don't know how to create a camera of type " << type << std::endl;
+	}
 
 	//
 	//	Unknown

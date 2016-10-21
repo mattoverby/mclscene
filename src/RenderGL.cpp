@@ -46,9 +46,9 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	blinnphong = std::unique_ptr<Shader>( new Shader() );
 	blinnphong->init_from_files( bp_ss.str()+"vert", bp_ss.str()+"frag");
 
-	// Create cameras
-	reload_cameras();
-	camera = &cameras[active_camera_idx];
+	// Create a camera if one does not exist
+	if( !scene->cameras.size() ){ camera = scene->make_camera( "default" ).get(); }
+	else{ camera = scene->cameras[active_camera_idx].get(); }
 
 	// Get lighting properties
 	reload_lights();
@@ -97,23 +97,6 @@ void RenderGL::reload_lights(){
 			lights.push_back( AppLight() );
 			scene->lights[l]->get_app( lights[l] );
 		}
-	}
-
-} // end reload lights
-
-
-void RenderGL::reload_cameras(){
-
-	for( int i=0; i<scene->cameras.size(); ++i ){
-		if( i < cameras.size() ){ scene->cameras[i]->get_app( cameras[i] ); }
-		else{
-			cameras.push_back( AppCamera() );
-			scene->cameras[i]->get_app( cameras[i] );
-		}
-	}
-
-	if( cameras.size()==0 ){
-		cameras.push_back( AppCamera() );
 	}
 
 } // end reload lights
@@ -218,10 +201,10 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, Material* mat ){
 	glUniform1i( blinnphong->uniform("hastex"), int(texture_id) );
 
 	// Set the matrices
-	glUniformMatrix4fv( blinnphong->uniform("model"), 1, GL_FALSE, camera->model );
-	glUniformMatrix4fv( blinnphong->uniform("view"), 1, GL_FALSE, camera->view );
-	glUniformMatrix4fv( blinnphong->uniform("projection"), 1, GL_FALSE, camera->projection );
-	trimesh::XForm<float> eyepos = trimesh::inv( (camera->projection) * (camera->view) * (camera->model) );
+	glUniformMatrix4fv( blinnphong->uniform("model"), 1, GL_FALSE, camera->app.model );
+	glUniformMatrix4fv( blinnphong->uniform("view"), 1, GL_FALSE, camera->app.view );
+	glUniformMatrix4fv( blinnphong->uniform("projection"), 1, GL_FALSE, camera->app.projection );
+	trimesh::XForm<float> eyepos = trimesh::inv( (camera->app.projection) * (camera->app.view) * (camera->app.model) );
 	glUniform3f( blinnphong->uniform("CamPos"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
 
 	// Set lighting properties

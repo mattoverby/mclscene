@@ -139,11 +139,11 @@ int Application::display(){
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			if( settings.gamma_correction ){ glEnable(GL_FRAMEBUFFER_SRGB); } // gamma correction
 
-			renderer.camera->model = trimesh::XForm<float>::rot( beta, trimesh::vec3(1.0f, 0.0f, 0.0f) ) *
+			renderer.camera->app.model = trimesh::XForm<float>::rot( beta, trimesh::vec3(1.0f, 0.0f, 0.0f) ) *
 					trimesh::XForm<float>::rot( alpha, trimesh::vec3(0.f, 0.f, 1.f) ) *
 					trimesh::XForm<float>::trans( -scene_center );
-			renderer.camera->view = trimesh::XForm<float>::trans( panx, pany, -zoom );
-			renderer.camera->projection = trimesh::XForm<float>::persp( settings.fov_deg, aspect_ratio, settings.clipping[0], settings.clipping[1] );
+			renderer.camera->app.view = trimesh::XForm<float>::trans( panx, pany, -zoom );
+			renderer.camera->app.projection = trimesh::XForm<float>::persp( settings.fov_deg, aspect_ratio, settings.clipping[0], settings.clipping[1] );
 		}
 
 		{ // Render scene stuff
@@ -248,7 +248,7 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
 	if( height > 0 ){ aspect_ratio = std::fmaxf( (float) width / (float) height, 1e-6f ); }
 	glViewport(0, 0, width, height);
 
-	renderer.camera->projection = trimesh::XForm<float>::persp( settings.fov_deg, aspect_ratio, 0.1f, scene_d*16.f );
+	renderer.camera->app.projection = trimesh::XForm<float>::persp( settings.fov_deg, aspect_ratio, 0.1f, scene_d*16.f );
 }
 
 

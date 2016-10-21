@@ -33,7 +33,7 @@ public:
 	~RenderGL();
 
 	// The current active camera
-	AppCamera *camera;
+	Camera *camera;
 
 	// Initialize shaders. Must be called after
 	// OpenGL context has been created.
@@ -55,9 +55,6 @@ public:
 	// (I.e., point lights as a sphere, spot lights as a cone).
 	void draw_lights();
 
-	// Update interal cameras if they have changed in SceneManager.
-	void reload_cameras();
-
 	// Update the interal lights vector if lighting in SceneManager has changed.
 	void reload_lights();
 
@@ -69,11 +66,7 @@ private:
 	Material defaultMat;
 	std::unordered_map< std::string, int > textures; // file->texture_id
 
-	// Copies of SceneManager components are stored for faster access.
-	// Call the associated reload functions above if you want to make changes.
-//	std::vector<AppMaterial> materials;
 	std::vector<AppLight> lights;
-	std::vector<AppCamera> cameras;
 	int active_camera_idx;
 
 	mcl::SceneManager *scene;

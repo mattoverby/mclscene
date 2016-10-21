@@ -27,22 +27,21 @@
 
 namespace mcl {
 
-struct AppCamera {
-	trimesh::XForm<float> model, view, projection;
-};
-
 //
-//	Base, pure virtual
+//	Camera base class
 //
-class BaseCamera {
+class Camera {
 public:
-	virtual ~BaseCamera(){}
-
-	// Return camera matrices for mcl::Application
-	virtual void get_app( AppCamera &cam ){}
+	virtual ~Camera(){}
 
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode ){ return ""; }
+
+	// Used by mcl::Application
+	// This data is used by the mclscene OpenGL renderer
+	struct AppData {
+		trimesh::XForm<float> model, view, projection;
+	} app ;
 };
 
 

@@ -87,7 +87,7 @@ class SceneManager {
 		// index into the materials vector (-1 if no material was set).
 		//
 		std::vector< std::shared_ptr<BaseObject> > objects;
-		std::vector< std::shared_ptr<BaseCamera> > cameras;
+		std::vector< std::shared_ptr<Camera> > cameras;
 		std::vector< std::shared_ptr<BaseLight> > lights;
 		std::vector< std::shared_ptr<Material> > materials;
 
@@ -107,7 +107,7 @@ class SceneManager {
 		//
 		std::shared_ptr<BaseObject> make_object( std::string type );
 		std::shared_ptr<BaseLight> make_light( std::string type );
-		std::shared_ptr<BaseCamera> make_camera( std::string type );
+		std::shared_ptr<Camera> make_camera( std::string type );
 		std::shared_ptr<Material> make_material( std::string type );
 
 		//
@@ -153,7 +153,7 @@ template<typename T> std::shared_ptr<T> SceneManager::make_object( std::string t
 
 
 template<typename T> std::shared_ptr<T> SceneManager::make_camera( std::string type ){
-	std::shared_ptr<mcl::BaseCamera> o = make_camera(type);
+	std::shared_ptr<mcl::Camera> o = make_camera(type);
 	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( o );
 	if( !casted_ptr ){ return NULL; } return casted_ptr;
 }

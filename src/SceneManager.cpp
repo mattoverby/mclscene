@@ -141,7 +141,7 @@ bool SceneManager::load( std::string filename ){
 		{
 			//	Build Camera
 			if( tag == "camera" ){
-				std::shared_ptr<BaseCamera> cam = createCamera( type, params );
+				std::shared_ptr<Camera> cam = createCamera( type, params );
 				if( cam != NULL ){
 					cameras.push_back( cam );
 					camera_params.push_back( params );
@@ -313,10 +313,10 @@ std::shared_ptr<mcl::BaseLight> SceneManager::make_light( std::string type ){
 } // end make light
 
 
-std::shared_ptr<mcl::BaseCamera> SceneManager::make_camera( std::string type ){
+std::shared_ptr<mcl::Camera> SceneManager::make_camera( std::string type ){
 
 	std::vector<Param> params;
-	std::shared_ptr<BaseCamera> newCam = createCamera( type, params );
+	std::shared_ptr<Camera> newCam = createCamera( type, params );
 	if( newCam == NULL ){ return NULL; }
 
 	// Add it to the SceneManager and return it
