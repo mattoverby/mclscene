@@ -173,7 +173,7 @@ bool SceneManager::load( std::string filename ){
 							obj->set_material( material_map[material_name] );
 						} // is a named material
 						else {
-							std::shared_ptr<BaseMaterial> mat = make_preset_material( material_name );
+							std::shared_ptr<Material> mat = make_preset_material( material_name );
 							if( mat != NULL ){
 								int idx = materials.size();
 								materials.push_back( mat );
@@ -187,7 +187,7 @@ bool SceneManager::load( std::string filename ){
 
 			//	Build Material
 			if( tag == "material" ){
-				std::shared_ptr<BaseMaterial> mat = createMaterial( type, params );
+				std::shared_ptr<Material> mat = createMaterial( type, params );
 				if( mat != NULL ){
 					int idx = materials.size();
 					materials.push_back( mat );
@@ -327,10 +327,10 @@ std::shared_ptr<mcl::BaseCamera> SceneManager::make_camera( std::string type ){
 } // end make light
 
 
-std::shared_ptr<mcl::BaseMaterial> SceneManager::make_material( std::string type ){
+std::shared_ptr<mcl::Material> SceneManager::make_material( std::string type ){
 
 	std::vector<Param> params;
-	std::shared_ptr<BaseMaterial> newMat = createMaterial( type, params );
+	std::shared_ptr<Material> newMat = createMaterial( type, params );
 	if( newMat == NULL ){ return NULL; }
 
 	// Add it to the SceneManager and return it

@@ -53,35 +53,27 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	// Get lighting properties
 	reload_lights();
 
-	// Load the materials and textures
-	reload_materials();
+	load_textures();
 
 	return true;
 
 } // end init shaders
 
 
-void RenderGL::reload_materials(){
+void RenderGL::load_textures(){
 
 	// Load the materials and textures
 	for( int i=0; i<scene->materials.size(); ++i ){
 
 		// Get the app information of the material
-		std::shared_ptr< BaseMaterial > mat = scene->materials[i];
-		if( i < materials.size() ){ mat->get_app( materials[i] ); }
-		else{
-			// A new material has appeared
-			materials.push_back( AppMaterial() );
-			mat->get_app( materials[i] );
-		}
-		AppMaterial *appmat = &materials[i];
+		std::shared_ptr< Material > mat = scene->materials[i];
 
 		// Load the texture if it hasn't been loaded already.
-		if( appmat->texture.size() && textures.count(appmat->texture)==0 ){
+		if( mat->app.texture.size() && textures.count(mat->app.texture)==0 ){
 
 			int channels, tex_width, tex_height;
-			GLuint texture_id = SOIL_load_OGL_texture( appmat->texture.c_str(), &tex_width, &tex_height, &channels, SOIL_LOAD_AUTO, 0, 0 );
-			if( texture_id == 0 ){ std::cerr << "\n**Texture::load Error: Failed to load file " << appmat->texture << std::endl; continue; }
+			GLuint texture_id = SOIL_load_OGL_texture( mat->app.texture.c_str(), &tex_width, &tex_height, &channels, SOIL_LOAD_AUTO, 0, 0 );
+			if( texture_id == 0 ){ std::cerr << "\n**Texture::load Error: Failed to load file " << mat->app.texture << std::endl; continue; }
 
 			// Add some filters to this texture
 			glBindTexture(GL_TEXTURE_2D, texture_id);
@@ -90,7 +82,7 @@ void RenderGL::reload_materials(){
 			glBindTexture(GL_TEXTURE_2D, 0);
 
 			// Store it for later use
-			textures[ appmat->texture ] = texture_id;
+			textures[ mat->app.texture ] = texture_id;
 		}
 	}	
 
@@ -129,8 +121,6 @@ void RenderGL::reload_cameras(){
 
 void RenderGL::draw_objects(){
 
-	AppMaterial defaultMat;
-
 	for( int i=0; i<scene->objects.size(); ++i ){
 
 		int mat = scene->objects[i]->get_material();
@@ -138,8 +128,8 @@ void RenderGL::draw_objects(){
 		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
 		if( themesh==NULL ){ continue; }
 
-		AppMaterial *appmat = NULL;
-		if( mat < materials.size() && mat >= 0 ){ appmat = &materials[mat]; }
+		Material *appmat = NULL;
+		if( mat < scene->materials.size() && mat >= 0 ){ appmat = scene->materials[mat].get(); }
 		else { appmat = &defaultMat; }
 
 		draw_mesh( themesh, appmat );
@@ -149,8 +139,6 @@ void RenderGL::draw_objects(){
 
 
 void RenderGL::draw_objects_subdivided(){
-
-	AppMaterial defaultMat;
 
 	for( int i=0; i<scene->objects.size(); ++i ){
 
@@ -170,8 +158,8 @@ void RenderGL::draw_objects_subdivided(){
 		mesh2.need_normals(true);
 		mesh2.need_tstrips();
 
-		AppMaterial *appmat = NULL;
-		if( mat < materials.size() && mat >= 0 ){ appmat = &materials[mat]; }
+		Material *appmat = NULL;
+		if( mat < scene->materials.size() && mat >= 0 ){ appmat = scene->materials[mat].get(); }
 		else { appmat = &defaultMat; }
 
 		draw_mesh( &mesh2, appmat );
@@ -180,10 +168,10 @@ void RenderGL::draw_objects_subdivided(){
 } // end draw objects
 
 
-void RenderGL::draw_mesh( trimesh::TriMesh *themesh, AppMaterial* mat ){
+void RenderGL::draw_mesh( trimesh::TriMesh *themesh, Material* mat ){
 
 	if( themesh==NULL || mat==NULL ){ return; }
-	if( mat->mode == 2 ){ return; } // invisible
+	if( mat->app.mode == 2 ){ return; } // invisible
 
 	// Vertices
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -197,8 +185,8 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, AppMaterial* mat ){
 	// Texture coordinates
 	GLuint texture_id = 0;
 	if( !themesh->texcoords.empty() ){
-		if( textures.count(mat->texture)>0 ){
-			texture_id = textures[ mat->texture ];
+		if( textures.count(mat->app.texture)>0 ){
+			texture_id = textures[ mat->app.texture ];
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 			glTexCoordPointer(2, GL_FLOAT, sizeof(themesh->texcoords[0]), &themesh->texcoords[0][0]);
 		} else { glDisableClientState(GL_TEXTURE_COORD_ARRAY); }
@@ -214,10 +202,10 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, AppMaterial* mat ){
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
 	// Get material properties
-	trimesh::vec ambient = mat->amb;
-	trimesh::vec diffuse = mat->diff;
-	trimesh::vec specular = mat->spec;
-	float shininess = mat->shini;
+	trimesh::vec ambient = mat->app.amb;
+	trimesh::vec diffuse = mat->app.diff;
+	trimesh::vec specular = mat->app.spec;
+	float shininess = mat->app.shini;
 
 
 	//
@@ -259,7 +247,7 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, AppMaterial* mat ){
 	//	Draw a solid mesh
 	//	TODO array buffers for tstrips
 	//
-	if( mat->mode==0 ){
+	if( mat->app.mode==0 ){
 
 		if( themesh->tstrips.size()==0 ){ themesh->need_tstrips(); }
 
@@ -280,7 +268,7 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, AppMaterial* mat ){
 	//
 	//	Draw a point cloud with gl points for now
 	//
-	else if( mat->mode==1 ) { glDrawArrays(GL_POINTS, 0, themesh->vertices.size()); }
+	else if( mat->app.mode==1 ) { glDrawArrays(GL_POINTS, 0, themesh->vertices.size()); }
 
 	blinnphong->disable();
 	glBindTexture(GL_TEXTURE_2D, 0);

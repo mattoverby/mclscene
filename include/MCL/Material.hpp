@@ -31,52 +31,40 @@
 ///
 namespace mcl {
 
-// Used by mcl::Application
-struct AppMaterial {
-	AppMaterial() : amb(0,0,0), diff(1,0,0), spec(0,0,0), shini(1), texture(""), mode(0) {}
-	trimesh::vec3 amb, diff, spec;
-	float shini;
-	std::string texture;
-	int mode; // 0=surface, 1=point cloud, 2=invisible
-};
-
 //
-//	Base, pure virtual
+//	Base material class
 //
-class BaseMaterial {
+class Material {
 public:
-	virtual ~BaseMaterial(){}
+	Material(){}
+	Material( trimesh::vec amb, trimesh::vec diff, trimesh::vec spec, float shini ) {
+		app.amb = amb; app.diff = diff; app.spec = spec; app.shini = shini; }
 
-	// Implement get_app to use the material in mcl::Application
-	virtual void get_app( AppMaterial &mat ){}
+	virtual ~Material(){}
 
 	// Returns a string containing xml code for saving to a scenefile.
-	virtual std::string get_xml( int mode ){ return ""; }
-};
-
-
-//
-//	Default Material
-//
-class DefaultBlinnPhong : public BaseMaterial {
-public:
-	DefaultBlinnPhong(){}
-	DefaultBlinnPhong( trimesh::vec amb, trimesh::vec diff, trimesh::vec spec, float shini ) {
-		mat.amb = amb; mat.diff = diff; mat.spec = spec; mat.shini = shini;
-	}
-	void get_app( AppMaterial &m ){ m=mat; }
-	std::string get_xml( int mode ){
+	virtual std::string get_xml( int mode ){
 		std::stringstream xml;
 		xml << "\t<Material type=\"blinnphong\" >\n";
-		xml << "\t\t<Ambient value=\"" << mat.amb.str() << "\" />\n";
-		xml << "\t\t<Diffuse value=\"" << mat.diff.str() << "\" />\n";
-		xml << "\t\t<Specular value=\"" << mat.spec.str() << "\" />\n";
-		xml << "\t\t<Shininess  value=\"" << mat.shini << "\" />\n";
-		if( mat.texture.size() ){ xml << "\t\t<texture value=\"" << mat.texture << "\" />\n"; }
+		xml << "\t\t<Ambient value=\"" << app.amb.str() << "\" />\n";
+		xml << "\t\t<Diffuse value=\"" << app.diff.str() << "\" />\n";
+		xml << "\t\t<Specular value=\"" << app.spec.str() << "\" />\n";
+		xml << "\t\t<Shininess  value=\"" << app.shini << "\" />\n";
+		if( app.texture.size() ){ xml << "\t\t<texture value=\"" << app.texture << "\" />\n"; }
 		xml << "\t</Material>";
 		return xml.str();
 	}
-	AppMaterial mat;
+
+	// Used by mcl::Application
+	// This data is used by the mclscene OpenGL renderer
+	struct AppData {
+		AppData() : amb(0,0,0), diff(1,0,0), spec(0,0,0), shini(1), texture(""), mode(0) {}
+		trimesh::vec3 amb, diff, spec;
+		float shini;
+		std::string texture;
+		int mode; // 0=surface, 1=point cloud, 2=invisible
+	} app ;
+
 };
 
 

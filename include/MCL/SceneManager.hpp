@@ -89,7 +89,7 @@ class SceneManager {
 		std::vector< std::shared_ptr<BaseObject> > objects;
 		std::vector< std::shared_ptr<BaseCamera> > cameras;
 		std::vector< std::shared_ptr<BaseLight> > lights;
-		std::vector< std::shared_ptr<BaseMaterial> > materials;
+		std::vector< std::shared_ptr<Material> > materials;
 
 		//
 		// In addition to creating the components, the original parameters parsed
@@ -108,7 +108,7 @@ class SceneManager {
 		std::shared_ptr<BaseObject> make_object( std::string type );
 		std::shared_ptr<BaseLight> make_light( std::string type );
 		std::shared_ptr<BaseCamera> make_camera( std::string type );
-		std::shared_ptr<BaseMaterial> make_material( std::string type );
+		std::shared_ptr<Material> make_material( std::string type );
 
 		//
 		// Similar to the "make_<thing>" functions above, only returns derived types.
@@ -165,7 +165,7 @@ template<typename T> std::shared_ptr<T> SceneManager::make_light( std::string ty
 }
 
 template<typename T> std::shared_ptr<T> SceneManager::make_material( std::string type ){
-	std::shared_ptr<mcl::BaseMaterial> o = make_material(type);
+	std::shared_ptr<mcl::Material> o = make_material(type);
 	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( o );
 	if( !casted_ptr ){ return NULL; } return casted_ptr;
 }
