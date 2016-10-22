@@ -24,7 +24,8 @@
 
 using namespace mcl;
 
-TriangleMesh::TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm ) :
+/*
+TriangleMesh::TriangleMesh( trimesh::TriMesh *tm ) :
 	tris(tm), vertices(tm->vertices), normals(tm->normals), faces(tm->faces),
 	aabb(new AABB) {
 
@@ -36,12 +37,10 @@ TriangleMesh::TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm ) :
 		(*aabb) += vertices[ faces[f][2] ];
 	}
 
+	app.mesh = tris;
+
 } // end constructor
-
-
-TriangleMesh::TriangleMesh() : tris(new trimesh::TriMesh()),
-	vertices(tris->vertices), normals(tris->normals), faces(tris->faces),
-	aabb(new AABB) {} // end constructor
+*/
 
 
 bool TriangleMesh::load( std::string filename ){
@@ -53,10 +52,10 @@ bool TriangleMesh::load( std::string filename ){
 	tri_refs.clear();
 
 	// Load the new mesh and copy over data
-	std::shared_ptr<trimesh::TriMesh> newmesh( trimesh::TriMesh::read( filename.c_str() ) );
-	if( newmesh.get() == NULL ){ return false; }
+	trimesh::TriMesh *newmesh = trimesh::TriMesh::read( filename.c_str() );
+	if( newmesh == NULL ){ return false; }
 
-	trimesh::remove_unused_vertices( newmesh.get() );
+	trimesh::remove_unused_vertices( newmesh );
 	vertices = newmesh->vertices;
 	faces = newmesh->faces;
 	tris->need_normals();
@@ -69,6 +68,8 @@ bool TriangleMesh::load( std::string filename ){
 		(*aabb) += vertices[ faces[f][1] ];
 		(*aabb) += vertices[ faces[f][2] ];
 	}
+
+	delete newmesh;
 
 	return true;
 
@@ -114,7 +115,7 @@ void TriangleMesh::make_tri_refs(){
 		std::shared_ptr<BaseObject> tri(
 			new TriangleRef( &vertices[f[0]], &vertices[f[1]], &vertices[f[2]], &normals[f[0]], &normals[f[1]], &normals[f[2]] )
 		);
-		tri->set_material( material );
+		tri->app.material = app.material;
 		tri_refs.push_back( tri );
 	} // end loop faces
 

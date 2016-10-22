@@ -297,7 +297,7 @@ void TetMesh::make_tri_refs(){
 		std::shared_ptr<BaseObject> tri(
 			new TriangleRef( &vertices[f[0]], &vertices[f[1]], &vertices[f[2]], &normals[f[0]], &normals[f[1]], &normals[f[2]] )
 		);
-		tri->set_material( material );
+		tri->app.material = app.material;
 		tri_refs.push_back( tri );
 	} // end loop faces
 

@@ -29,7 +29,7 @@ int main(int argc, char *argv[]){
 			std::stringstream oss; oss << "\n";
 
 			// Run a BVH build and store results
-			int n_tris = scene.objects[0]->get_TriMesh()->faces.size();
+			int n_tris = scene.objects[0]->app.mesh->faces.size();
 			oss << n_tris << "\t";
 
 			// Time the rebuild
@@ -65,7 +65,7 @@ void clip_mesh( mcl::SceneManager &scene ){
 	if( scene.objects.size() != 1 ){ return; }
 
 	std::shared_ptr<BVHNode> bvh = scene.get_bvh(false);
-	trimesh::TriMesh *mesh = scene.objects[0]->get_TriMesh().get();
+	trimesh::TriMesh *mesh = scene.objects[0]->app.mesh;
 	trimesh::box b( bvh->aabb->min ); b+=bvh->aabb->max;
 	b.min[1] += ((b.max[1]-b.min[1])*0.05f); // increase the bmin and clip
 	trimesh::clip( mesh, b );

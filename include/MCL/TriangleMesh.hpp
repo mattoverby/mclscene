@@ -48,7 +48,7 @@ public:
 
 	bool ray_intersect( const intersect::Ray *ray, intersect::Payload *payload ) const {
 		bool hit = intersect::ray_triangle( ray, *p0, *p1, *p2, *n0, *n1, *n2, payload );
-		if( hit ){ payload->material = this->material; }
+		if( hit ){ payload->material = this->app.material; }
 		return hit;
 	}
 };
@@ -58,10 +58,12 @@ public:
 //	Just a convenient wrapper to plug into the system
 //
 class TriangleMesh : public BaseObject {
-private: std::shared_ptr<trimesh::TriMesh> tris; // tris is actually the data container
+private: std::unique_ptr<trimesh::TriMesh> tris; // tris is actually the data container
 public:
-	TriangleMesh( std::shared_ptr<trimesh::TriMesh> tm );
-	TriangleMesh();
+
+	TriangleMesh() : tris(new trimesh::TriMesh),
+		vertices(tris->vertices), normals(tris->normals), faces(tris->faces),
+		aabb(new AABB) { app.mesh = tris.get(); } // end constructor
 
 	// Returns true on success
 	bool load( std::string filename );
@@ -73,8 +75,6 @@ public:
 	std::vector<trimesh::vec> &normals;
 	std::vector<trimesh::TriMesh::Face> &faces;
 
-	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return tris; }
-
 	void apply_xform( const trimesh::xform &xf );
 
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
@@ -85,8 +85,6 @@ public:
 		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
 		prims.insert( prims.end(), tri_refs.begin(), tri_refs.end() );
 	}
-
-//	bool ray_intersect( const intersect::Ray &ray, intersect::Payload &payload ) const;
 
 private:
 	std::shared_ptr<AABB> aabb;

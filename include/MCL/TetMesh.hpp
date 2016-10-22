@@ -30,7 +30,7 @@ namespace mcl {
 //	Tetrahedral Mesh
 //
 class TetMesh : public BaseObject {
-private: std::shared_ptr<trimesh::TriMesh> tris; // tris is actually the data container
+private: std::unique_ptr<trimesh::TriMesh> tris; // tris is actually the data container
 public:
 	struct tet {
 		tet(){}
@@ -44,7 +44,7 @@ public:
 	std::vector< trimesh::TriMesh::Face > &faces; // surface triangles
 
 	TetMesh() : tris(new trimesh::TriMesh), vertices(tris->vertices), normals(tris->normals), faces(tris->faces),
-		aabb(new AABB) {}
+		aabb(new AABB) { app.mesh = tris.get(); }
 
 	// Filename is the first part of a tetmesh which must contain an .ele and .node file.
 	// If a ply file is supplied, tetgen will be used to tetrahedralize the mesh (however,
@@ -63,9 +63,6 @@ public:
 
 	// Transform the mesh by the given matrix
 	void apply_xform( const trimesh::xform &xf );
-
-	// Creates a new trimesh object from ALL vertices and stuff
-	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return tris; }
 
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 

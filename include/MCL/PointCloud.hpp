@@ -38,16 +38,15 @@ namespace mcl {
 //
 
 class PointCloud : public BaseObject {
-private: std::shared_ptr<trimesh::TriMesh> data;
+private: std::unique_ptr<trimesh::TriMesh> data;
 public:
-	PointCloud() : data(new trimesh::TriMesh), vertices(data->vertices), aabb(new AABB) {}
+	PointCloud() : data(new trimesh::TriMesh), vertices(data->vertices), aabb(new AABB) { app.mesh = data.get(); }
 
 	// Mesh data
 	std::vector<trimesh::point> &vertices;
 	std::vector<double> radii;
 
 	// General getters
-	const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return data; }
 	std::string get_xml( int mode=0 );
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
 	void update(){ aabb->valid=false; }

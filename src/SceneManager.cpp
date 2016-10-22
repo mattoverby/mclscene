@@ -170,7 +170,7 @@ bool SceneManager::load( std::string filename ){
 					if( mat_param_index >= 0 ){
 						std::string material_name = parse::to_lower( params[mat_param_index].as_string() );
 						if( material_map.count(material_name) > 0 ){
-							obj->set_material( material_map[material_name] );
+							obj->app.material = material_map[material_name];
 						} // is a named material
 						else {
 							std::shared_ptr<Material> mat = make_preset_material( material_name );
@@ -178,7 +178,7 @@ bool SceneManager::load( std::string filename ){
 								int idx = materials.size();
 								materials.push_back( mat );
 								material_params.push_back( std::vector<Param>() );
-								obj->set_material( idx );
+								obj->app.material = idx;
 							}
 						} // is a material preset
 					} // end check material

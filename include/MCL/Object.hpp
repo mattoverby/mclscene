@@ -27,9 +27,6 @@
 #include "TriMesh.h"
 #include "RayIntersect.hpp"
 
-///
-///	Object Primitives
-///
 namespace mcl {
 
 //
@@ -37,30 +34,19 @@ namespace mcl {
 //
 class BaseObject : public std::enable_shared_from_this<BaseObject> {
 public:
-	BaseObject() : material(-1) {}
 	virtual ~BaseObject(){}
 
+	// Return the bounding box of the object
 	virtual void bounds( trimesh::vec &bmin, trimesh::vec &bmax ) = 0;
 
 	// When an object's physical parameters are changed, it may need to
 	// update its bounding box, internal parameters, etc...
 	virtual void update(){}
 
-	// Only objects that implement get_TriMesh are rendered with the OpenGL renderer.
-	// If this function returns null in the derived class, it is ignored.
-	virtual const std::shared_ptr<trimesh::TriMesh> get_TriMesh(){ return NULL; }
-
-	// The way I've been doing it is immediately applying the transformation
-	// to the underlying mesh. A better approach is to store the xform, and pass it
-	// it to the glsl shaders (or applying it to the ray when ray tracing). This is what
-	// we need to do when instancing meshes.
+	// Apply a transformation matrix to the object. Most objects will
+	// just apply the transform directly. Others (instances) will
+	// store the xfrom in AppData.
 	virtual void apply_xform( const trimesh::xform &xf ){}
-
-	// Get/set the material name, as stored in SceneManager::materials_map.
-	// If an object doesn't have a material name, it is colored red (default).
-	// If "none" is used, the object is ignored by the OpenGL renderer.
-	virtual int get_material() const { return material; }
-	virtual void set_material( int mat ){ material = mat; }
 
 	// Used by BVHTraversal.
 	virtual bool ray_intersect( const intersect::Ray *ray, intersect::Payload *payload ) const { return false; }
@@ -72,8 +58,13 @@ public:
 	// This function expects you to append the prims vector, not overwrite the whole thing.
 	virtual void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){ prims.push_back( shared_from_this() ); }
 
-protected:
-	int material;
+	// The following data is used by mcl::Application
+	struct AppData {
+		AppData() : mesh(NULL), material(-1) {}
+		trimesh::TriMesh *mesh; // If null, the object is not rendered
+		int material; // material index into SceneManager::materials
+		trimesh::xform xf; // xform used for instancing, inits to identity
+	} app ;
 };
 
 

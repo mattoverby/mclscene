@@ -2,7 +2,7 @@
 <mclScene>
 
 	<Object name="bunny_562" type="tetmesh" >
-		<File value="../../meshdata/utils/bunny_562_ascii.1" />
+		<File value="bunny562faces.1" />
 		<Translate value="0 -.06  0" />
 		<Material value="gold" />
 	</Object>

@@ -76,13 +76,15 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	}
 	
 
+	// The new object to be created (xforms and material applied at end).
+	std::shared_ptr<BaseObject> new_obj = NULL;
+
+
 	//
 	//	Sphere
 	//
 	if( type == "sphere" ){
-
-		std::shared_ptr<TriMesh> tris( new TriMesh() );
-
+		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
 		double radius = 1.0;
 		vec center(0,0,0);
 		int tessellation = 1;
@@ -93,22 +95,15 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
 		}
 
-		make_sphere_polar( tris.get(), tessellation, tessellation );
+		make_sphere_polar( new_obj->app.mesh, tessellation, tessellation );
 
 		// Now scale it by the radius
 		xform s_xf = trimesh::xform::scale(radius,radius,radius);
-		apply_xform(tris.get(), s_xf);
+		apply_xform(new_obj->app.mesh, s_xf);
 
 		// Translate so center is correct
 		xform t_xf = trimesh::xform::trans(center[0],center[1],center[2]);
-		apply_xform(tris.get(), t_xf);
-
-		tris.get()->need_normals();
-		tris.get()->need_tstrips();
-		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
-		new_obj->apply_xform( x_form );
-		if( material >= 0 ){ new_obj->set_material( material ); }
-		return new_obj;
+		apply_xform(new_obj->app.mesh, t_xf);
 
 	} // end build sphere
 
@@ -117,29 +112,21 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//	Box
 	//
 	else if( type == "box" || type == "cube" ){
-
-
+		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
+/*
 		//
 		//	For some reason the make_cube function is broken???
 		//	Just use the make beam with 1 chunk for now.
 		//
-
-		std::shared_ptr<TriMesh> tris( new TriMesh() );
 
 		int tess = 3;
 		int chunks = 1;
 		for( int i=0; i<params.size(); ++i ){
 			if( parse::to_lower(params[i].tag)=="tess" ){ tess=params[i].as_int(); }
 		}
-		make_beam( tris.get(), tess, chunks );
+		make_beam( new_obj->app.mesh, tess, chunks );
 
-		tris.get()->need_normals();
-		tris.get()->need_tstrips();
-		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
-		new_obj->apply_xform( x_form );
-		if( material >= 0 ){ new_obj->set_material( material ); }
-		return new_obj;
-
+*/
 	} // end build box
 
 
@@ -147,8 +134,8 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//	Plane, 2 or more triangles
 	//
 	else if( type == "plane" ){
-
-		std::shared_ptr<TriMesh> tris( new TriMesh() );
+/*
+		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
 
 		int width = 10;
 		int length = 10;
@@ -160,16 +147,10 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 			else if( parse::to_lower(params[i].tag)=="noise" ){ noise=params[i].as_double(); }
 		}
 
-		make_sym_plane( tris.get(), width, length );
-		if( noise > 0.0 ){ trimesh::noisify( tris.get(), noise ); }
+		make_sym_plane( new_obj->app.mesh, width, length );
+		if( noise > 0.0 ){ trimesh::noisify( new_obj->app.mesh, noise ); }
 
-		tris.get()->need_normals();
-		tris.get()->need_tstrips();
-		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
-		new_obj->apply_xform( x_form );
-		if( material >= 0 ){ new_obj->set_material( material ); }
-		return new_obj;
-
+*/
 	} // end build plane
 
 
@@ -177,8 +158,8 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//	Beam
 	//
 	else if( type == "beam" ){
-
-		std::shared_ptr<TriMesh> tris( new TriMesh() );
+/*
+		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
 
 		int tess = 3;
 		int chunks = 5;
@@ -189,23 +170,17 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 		}
 
 
-		make_beam( tris.get(), tess, chunks );
+		make_beam( new_obj->app.mesh, tess, chunks );
 
-		tris.get()->need_normals();
-		tris.get()->need_tstrips();
-		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
-		new_obj->apply_xform( x_form );
-		if( material >= 0 ){ new_obj->set_material( material ); }
-		return new_obj;
-
+*/
 	} // end build beam
 
 	//
 	//	Cylinder
 	//
 	else if( type == "cylinder" ){
-
-		std::shared_ptr<TriMesh> tris( new TriMesh() );
+/*
+		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
 
 		float radius = 1.f;
 		int tess_l=10, tess_c=10;
@@ -216,14 +191,8 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 			else if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_float(); }
 		}
 
-		trimesh::make_ccyl( tris.get(), tess_l, tess_c, radius );
-		tris.get()->need_normals();
-		tris.get()->need_tstrips();
-		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
-		new_obj->apply_xform( x_form );
-		if( material >= 0 ){ new_obj->set_material( material ); }
-		return new_obj;
-
+		trimesh::make_ccyl( new_obj->app.mesh, tess_l, tess_c, radius );
+*/
 	} // end build cylinder
 
 
@@ -232,8 +201,8 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//	Torus
 	//
 	else if( type == "torus" ){
-
-		std::shared_ptr<TriMesh> tris( new TriMesh() );
+/*
+		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
 
 		int tess_th=50, tess_ph=20;
 		float inner_rad = 0.25f;
@@ -243,17 +212,10 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 			if( parse::to_lower(params[i].tag)=="tess_th" ){ tess_th=params[i].as_int(); }
 			else if( parse::to_lower(params[i].tag)=="tess_ph" ){ tess_ph=params[i].as_int(); }
 			else if( parse::to_lower(params[i].tag)=="inner_radius" ){ inner_rad=params[i].as_float(); }
-//			else if( parse::to_lower(params[i].tag)=="outer_radius" ){ outer_rad=params[i].as_float(); }
 		}
 
-		trimesh::make_torus( tris.get(), tess_th, tess_ph, inner_rad, outer_rad );
-		tris.get()->need_normals();
-		tris.get()->need_tstrips();
-		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
-		new_obj->apply_xform( x_form );
-		if( material >= 0 ){ new_obj->set_material( material ); }
-		return new_obj;
-
+		trimesh::make_torus( new_obj->app.mesh, tess_th, tess_ph, inner_rad, outer_rad );
+*/
 	}
 
 
@@ -262,8 +224,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//
 	else if( type == "trimesh" || type == "trianglemesh" ){
 
-		std::shared_ptr<TriMesh> tris( new TriMesh() );
-		tris->set_verbose(0);
+		std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
 
 		std::string filename = "";
 		for( int i=0; i<params.size(); ++i ){
@@ -272,14 +233,10 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 
 		// Try to load the trimesh
 		if( filename.size() ){
-			tris.reset( trimesh::TriMesh::read( filename.c_str() ) );
-			if( tris == NULL ){ printf("\n**TriangleMesh Error: failed to load file %s\n", filename.c_str()); }
+			if( !mesh->load( filename ) ){ printf("\n**TriMesh Error: failed to load file %s\n", filename.c_str()); }
 		}
 
-		std::shared_ptr<BaseObject> new_obj( new mcl::TriangleMesh(tris) );
-		new_obj->apply_xform( x_form );
-		if( material >= 0 ){ new_obj->set_material( material ); }
-		return new_obj;
+		new_obj = std::shared_ptr<BaseObject>( mesh );
 
 	} // end build trimesh
 
@@ -299,10 +256,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 			if( !mesh->load( filename ) ){ printf("\n**TetMesh Error: failed to load file %s\n", filename.c_str()); }
 		}
 
-		std::shared_ptr<BaseObject> new_obj( mesh );
-		new_obj->apply_xform( x_form );
-		if( material >= 0 ){ new_obj->set_material( material ); }
-		return new_obj;
+		new_obj = std::shared_ptr<BaseObject>( mesh );
 
 	} // end build tet mesh
 
@@ -324,10 +278,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 			if( !cloud->load( filename, fill ) ){ printf("\n**PointCloud Error: failed to load file %s\n", filename.c_str()); }
 		}
 
-		std::shared_ptr<BaseObject> new_obj( cloud );
-		new_obj->apply_xform( x_form );
-		if( material >= 0 ){ new_obj->set_material( material ); }
-		return new_obj;
+		new_obj = std::shared_ptr<BaseObject>( cloud );
 
 	} // end build particle cloud
 
@@ -337,6 +288,19 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//
 	else{
 		std::cerr << "**Error: I don't know how to create an object of type " << type << std::endl;
+	}
+
+
+	if( new_obj != NULL ){
+		// If the new object has a trimesh, update its
+		// required information.
+		if( new_obj->app.mesh != NULL ){
+			new_obj->app.mesh->need_normals();
+			new_obj->app.mesh->need_tstrips();
+		}
+		new_obj->apply_xform( x_form );
+		new_obj->app.material = material;
+		return new_obj;
 	}
 
 

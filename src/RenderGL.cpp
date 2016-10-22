@@ -90,16 +90,17 @@ void RenderGL::draw_objects(){
 
 	for( int i=0; i<scene->objects.size(); ++i ){
 
-		int mat = scene->objects[i]->get_material();
+		std::shared_ptr<BaseObject> obj = scene->objects[i];
 
-		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
-		if( themesh==NULL ){ continue; }
+		int mat = obj->app.material;
+
+		if( obj->app.mesh==NULL ){ continue; }
 
 		Material *appmat = NULL;
 		if( mat < scene->materials.size() && mat >= 0 ){ appmat = scene->materials[mat].get(); }
 		else { appmat = &defaultMat; }
 
-		draw_mesh( themesh, appmat );
+		draw_mesh( obj->app.mesh, appmat );
 	}
 
 } // end draw objects
@@ -109,16 +110,17 @@ void RenderGL::draw_objects_subdivided(){
 
 	for( int i=0; i<scene->objects.size(); ++i ){
 
-		int mat = scene->objects[i]->get_material();
+		std::shared_ptr<BaseObject> obj = scene->objects[i];
 
-		trimesh::TriMesh *themesh = scene->objects[i]->get_TriMesh().get();
-		if( themesh==NULL ){ continue; }
+		int mat = obj->app.material;
+
+		if( obj->app.mesh==NULL ){ continue; }
 
 		// Subdivide the mesh and draw that
-		trimesh::TriMesh mesh2( *themesh );
+		trimesh::TriMesh mesh2( *obj->app.mesh );
 
 		// Only subdivide if necessary
-		if( themesh->vertices.size() > 100 ){
+		if( obj->app.mesh->vertices.size() > 100 ){
 			trimesh::subdiv( &mesh2 );
 		}
 
