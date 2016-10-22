@@ -27,51 +27,40 @@
 
 namespace mcl {
 
-struct AppLight {
-	AppLight() : position(0,0,0), intensity(1,1,1), falloff(1,0.1f,0.01f), directional(false) {}
-	trimesh::vec position, intensity;
-	trimesh::vec falloff; // (constant, linear, quadratic)
-	bool directional; // if true, position is actually direction
-};
-
 
 //
-//	Base, pure virtual
+//	Default Light
 //
-class BaseLight {
+class Light {
 public:
-	virtual ~BaseLight(){}
-
-	// Get lighting information as used by mcl::Application
-	virtual void get_app( AppLight &light ){}
+	virtual ~Light(){}
 
 	// Returns a string containing xml code for saving to a scenefile.
-	virtual std::string get_xml( int mode ){ return ""; }
-};
-
-
-//
-//	Default light type (point/directional)
-//
-class DefaultLight : public BaseLight {
-public:
-	void get_app( AppLight &l ){ l=light; }
 	std::string get_xml( int mode ){
 		std::stringstream xml;
-		if( light.directional ){
+		if( app.directional ){
 			xml << "\t<Light type=\"directional\" >\n";
-			xml << "\t\t<Direction value=\"" << light.position.str() << "\" />\n";
+			xml << "\t\t<Direction value=\"" << app.position.str() << "\" />\n";
 		} else{
 			xml << "\t<Light type=\"point\" >\n";
-			xml << "\t\t<Position value=\"" << light.position.str() << "\" />\n";
+			xml << "\t\t<Position value=\"" << app.position.str() << "\" />\n";
 		}
-		xml << "\t\t<Intensity value=\"" << light.intensity.str() << "\" />\n";
-		xml << "\t\t<Falloff value=\"" << light.falloff.str() << "\" />\n";
+		xml << "\t\t<Intensity value=\"" << app.intensity.str() << "\" />\n";
+		xml << "\t\t<Falloff value=\"" << app.falloff.str() << "\" />\n";
 		xml << "\t</Light>";
 		return xml.str();
 	} // end get xml
-	AppLight light;
+
+	// Data used by mcl::Application
+	struct AppData {
+		AppData() : position(0,0,0), intensity(1,1,1), falloff(1,0.1f,0.01f), directional(false) {}
+		trimesh::vec position, intensity;
+		trimesh::vec falloff; // (constant, linear, quadratic)
+		bool directional; // if true, position is actually direction
+	} app ;
+
 };
+
 
 } // end namespace mcl
 

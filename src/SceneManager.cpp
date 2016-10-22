@@ -150,7 +150,7 @@ bool SceneManager::load( std::string filename ){
 
 			//	Build Light
 			else if( tag == "light" ){
-				std::shared_ptr<BaseLight> light = createLight( type, params );
+				std::shared_ptr<Light> light = createLight( type, params );
 				if( light != NULL ){
 					lights.push_back( light );
 					light_params.push_back( params );
@@ -299,10 +299,10 @@ std::shared_ptr<mcl::BaseObject> SceneManager::make_object( std::string type ){
 } // end make object
 
 
-std::shared_ptr<mcl::BaseLight> SceneManager::make_light( std::string type ){
+std::shared_ptr<mcl::Light> SceneManager::make_light( std::string type ){
 
 	std::vector<Param> params;
-	std::shared_ptr<BaseLight> newLight = createLight( type, params );
+	std::shared_ptr<Light> newLight = createLight( type, params );
 	if( newLight == NULL ){ return NULL; }
 
 	// Add it to the SceneManager and return it
@@ -347,30 +347,27 @@ void SceneManager::make_3pt_lighting( const trimesh::vec &center, float distance
 	light_params.clear();
 
 	// TODO use spotlight instead of point light
-	std::shared_ptr<BaseLight> l0 = make_light( "point" );
-	std::shared_ptr<BaseLight> l1 = make_light( "point" );
-	std::shared_ptr<BaseLight> l2 = make_light( "point" );
-	std::shared_ptr<DefaultLight> key = std::dynamic_pointer_cast<DefaultLight>( l0 );
-	std::shared_ptr<DefaultLight> fill = std::dynamic_pointer_cast<DefaultLight>( l1 );
-	std::shared_ptr<DefaultLight> back = std::dynamic_pointer_cast<DefaultLight>( l2 );
+	std::shared_ptr<Light> key = make_light( "point" );
+	std::shared_ptr<Light> fill = make_light( "point" );
+	std::shared_ptr<Light> back = make_light( "point" );
 
 	float half_d = distance/2.f;
 	float quart_d = distance/4.f;
 
 	// Set positions
-	key->light.position = center + trimesh::vec(-half_d,0.f,distance);
-	fill->light.position = center + trimesh::vec(half_d,0.f,distance);
-	back->light.position = center + trimesh::vec(0.f,quart_d,-distance);
+	key->app.position = center + trimesh::vec(-half_d,0.f,distance);
+	fill->app.position = center + trimesh::vec(half_d,0.f,distance);
+	back->app.position = center + trimesh::vec(0.f,quart_d,-distance);
 
 	// Set intensity
-	key->light.intensity = trimesh::vec(.8,.8,.8);
-	fill->light.intensity = trimesh::vec(.6,.6,.6);
-	back->light.intensity = trimesh::vec(.6,.6,.6);
+	key->app.intensity = trimesh::vec(.8,.8,.8);
+	fill->app.intensity = trimesh::vec(.6,.6,.6);
+	back->app.intensity = trimesh::vec(.6,.6,.6);
 
 	// Falloff (none)
-	key->light.falloff = trimesh::vec(1.f,0.f,0.f);
-	fill->light.falloff = trimesh::vec(1.f,0.f,0.f);
-	back->light.falloff = trimesh::vec(1.f,0.f,0.f);
+	key->app.falloff = trimesh::vec(1.f,0.f,0.f);
+	fill->app.falloff = trimesh::vec(1.f,0.f,0.f);
+	back->app.falloff = trimesh::vec(1.f,0.f,0.f);
 
 } // end make three point lighting
 

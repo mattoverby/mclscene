@@ -40,7 +40,7 @@ namespace mcl {
 //
 typedef std::function<std::shared_ptr<Camera> ( std::string type, std::vector<Param> &params )> BuildCamCallback;
 typedef std::function<std::shared_ptr<BaseObject> ( std::string type, std::vector<Param> &params )> BuildObjCallback;
-typedef std::function<std::shared_ptr<BaseLight> ( std::string type, std::vector<Param> &params )> BuildLightCallback;
+typedef std::function<std::shared_ptr<Light> ( std::string type, std::vector<Param> &params )> BuildLightCallback;
 typedef std::function<std::shared_ptr<Material> ( std::string type, std::vector<Param> &params )> BuildMatCallback;
 
 
@@ -401,7 +401,7 @@ static std::shared_ptr<Material> default_build_material( std::string type, std::
 //
 //	Default Light Builder
 //
-static std::shared_ptr<BaseLight> default_build_light( std::string type, std::vector<Param> &params ){
+static std::shared_ptr<Light> default_build_light( std::string type, std::vector<Param> &params ){
 
 	type = parse::to_lower(type);
 
@@ -410,42 +410,40 @@ static std::shared_ptr<BaseLight> default_build_light( std::string type, std::ve
 	//
 	if( type == "point" ){
 
-		std::shared_ptr<DefaultLight> light( new DefaultLight() );
+		std::shared_ptr<Light> light( new Light() );
 		for( int i=0; i<params.size(); ++i ){
 			std::string tag = parse::to_lower(params[i].tag);
 			if( tag=="intensity" || tag=="color" ){
 				params[i].fix_color();
-				light->light.intensity=params[i].as_vec3();
+				light->app.intensity=params[i].as_vec3();
 			}
 			else if( tag=="position" ){
-				light->light.position=params[i].as_vec3();
+				light->app.position=params[i].as_vec3();
 			}
 			else if( tag=="falloff" ){
-				light->light.falloff=params[i].as_vec3();
+				light->app.falloff=params[i].as_vec3();
 			}
 		}
-		std::shared_ptr<BaseLight> new_light( light );
-		return new_light;
+		return light;
 	}
 	else if( type == "directional" ){
 
-		std::shared_ptr<DefaultLight> light( new DefaultLight() );
-		light->light.directional = true;
+		std::shared_ptr<Light> light( new Light() );
+		light->app.directional = true;
 		for( int i=0; i<params.size(); ++i ){
 			std::string tag = parse::to_lower(params[i].tag);
 			if( tag=="intensity" || tag=="color" ){
 				params[i].fix_color();
-				light->light.intensity=params[i].as_vec3();
+				light->app.intensity=params[i].as_vec3();
 			}
 			else if( tag=="direction" ){
-				light->light.position=params[i].as_vec3();
+				light->app.position=params[i].as_vec3();
 			}
 			else if( tag=="falloff" ){
-				light->light.falloff=params[i].as_vec3();
+				light->app.falloff=params[i].as_vec3();
 			}
 		}
-		std::shared_ptr<BaseLight> new_light( light );
-		return new_light;
+		return light;
 	}
 	else{
 		std::cerr << "**Error: I don't know how to create a light of type " << type << std::endl;

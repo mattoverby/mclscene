@@ -50,9 +50,6 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	if( !scene->cameras.size() ){ camera = scene->make_camera( "default" ).get(); }
 	else{ camera = scene->cameras[active_camera_idx].get(); }
 
-	// Get lighting properties
-	reload_lights();
-
 	load_textures();
 
 	return true;
@@ -87,19 +84,6 @@ void RenderGL::load_textures(){
 	}	
 
 } // end reload materials
-
-
-void RenderGL::reload_lights(){
-
-	for( int l=0; l<scene->lights.size() && l < 8; ++l ){
-		if( l < lights.size() ){ scene->lights[l]->get_app( lights[l] ); }
-		else{
-			lights.push_back( AppLight() );
-			scene->lights[l]->get_app( lights[l] );
-		}
-	}
-
-} // end reload lights
 
 
 void RenderGL::draw_objects(){
@@ -208,16 +192,16 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, Material* mat ){
 	glUniform3f( blinnphong->uniform("CamPos"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
 
 	// Set lighting properties
-	glUniform1i( blinnphong->uniform("num_point_lights"), lights.size() );
-	for( int l=0; l<lights.size(); ++l ){
+	glUniform1i( blinnphong->uniform("num_point_lights"), scene->lights.size() );
+	for( int l=0; l<scene->lights.size(); ++l ){
 
-		AppLight *light = &lights[l];
+		std::shared_ptr<Light> light = scene->lights[l];
 		std::stringstream array_ss; array_ss << "pointLights[" << l << "].";
 		std::string array_str = array_ss.str();
 
-		glUniform3f( blinnphong->uniform(array_str+"position"), light->position[0], light->position[1], light->position[2] );
-		glUniform3f( blinnphong->uniform(array_str+"intensity"), light->intensity[0], light->intensity[1], light->intensity[2] );
-		glUniform3f( blinnphong->uniform(array_str+"falloff"), light->falloff[0], light->falloff[1], light->falloff[2] );
+		glUniform3f( blinnphong->uniform(array_str+"position"), light->app.position[0], light->app.position[1], light->app.position[2] );
+		glUniform3f( blinnphong->uniform(array_str+"intensity"), light->app.intensity[0], light->app.intensity[1], light->app.intensity[2] );
+		glUniform3f( blinnphong->uniform(array_str+"falloff"), light->app.falloff[0], light->app.falloff[1], light->app.falloff[2] );
 	}
 
 	// Set material properties

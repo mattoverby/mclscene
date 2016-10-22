@@ -55,9 +55,6 @@ public:
 	// (I.e., point lights as a sphere, spot lights as a cone).
 	void draw_lights();
 
-	// Update the interal lights vector if lighting in SceneManager has changed.
-	void reload_lights();
-
 private:
 	// Load textures from SceneManager materials.
 	void load_textures();
@@ -66,7 +63,6 @@ private:
 	Material defaultMat;
 	std::unordered_map< std::string, int > textures; // file->texture_id
 
-	std::vector<AppLight> lights;
 	int active_camera_idx;
 
 	mcl::SceneManager *scene;
