@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <mclScene>
-<!--
+
 	<Object name="obj1" type="box" >
 		<width value="20" />
 		<length value="20" />
@@ -13,10 +13,12 @@
 		<inner_radius value=".4" />
 		<Material value="emerald" />
 	</Object>
--->
+
+<!--
 	<Object  type="sphere" >
 		<tess value="24" />
 		<center value="0 0 0" />
 		<radius value="1" />
 	</Object>
+-->
 </mclScene>

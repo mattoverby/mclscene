@@ -113,7 +113,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//
 	else if( type == "box" || type == "cube" ){
 		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
-/*
+
 		//
 		//	For some reason the make_cube function is broken???
 		//	Just use the make beam with 1 chunk for now.
@@ -126,7 +126,6 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 		}
 		make_beam( new_obj->app.mesh, tess, chunks );
 
-*/
 	} // end build box
 
 
@@ -134,7 +133,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//	Plane, 2 or more triangles
 	//
 	else if( type == "plane" ){
-/*
+
 		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
 
 		int width = 10;
@@ -150,7 +149,6 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 		make_sym_plane( new_obj->app.mesh, width, length );
 		if( noise > 0.0 ){ trimesh::noisify( new_obj->app.mesh, noise ); }
 
-*/
 	} // end build plane
 
 
@@ -158,7 +156,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//	Beam
 	//
 	else if( type == "beam" ){
-/*
+
 		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
 
 		int tess = 3;
@@ -172,14 +170,13 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 
 		make_beam( new_obj->app.mesh, tess, chunks );
 
-*/
 	} // end build beam
 
 	//
 	//	Cylinder
 	//
 	else if( type == "cylinder" ){
-/*
+
 		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
 
 		float radius = 1.f;
@@ -192,7 +189,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 		}
 
 		trimesh::make_ccyl( new_obj->app.mesh, tess_l, tess_c, radius );
-*/
+
 	} // end build cylinder
 
 
@@ -201,7 +198,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//	Torus
 	//
 	else if( type == "torus" ){
-/*
+
 		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
 
 		int tess_th=50, tess_ph=20;
@@ -215,7 +212,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 		}
 
 		trimesh::make_torus( new_obj->app.mesh, tess_th, tess_ph, inner_rad, outer_rad );
-*/
+
 	}
 
 
