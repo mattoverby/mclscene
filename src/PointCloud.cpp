@@ -50,7 +50,6 @@ std::string PointCloud::get_xml( int mode ){
 		std::stringstream xml;
 		xml << "\t<Object type=\"PointCloud\" >\n";
 		xml << "\t\t<File type=\"string\" value=\"" << plyfile.str() << "\" />\n";
-//		xml << "\t\t<Material type=\"string\" value=\"" << material << "\" />\n";
 		xml << "\t</Object>";
 		return xml.str();
 	}

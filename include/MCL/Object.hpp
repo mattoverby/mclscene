@@ -58,7 +58,8 @@ public:
 	// This function expects you to append the prims vector, not overwrite the whole thing.
 	virtual void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){ prims.push_back( shared_from_this() ); }
 
-	// The following data is used by mcl::Application
+	// The following data is used by mcl::Application.
+	// Derived object is responsible for allocating/deallocating AppData::mesh.
 	struct AppData {
 		AppData() : mesh(NULL), material(-1) {}
 		trimesh::TriMesh *mesh; // If null, the object is not rendered

@@ -34,11 +34,10 @@ If you *don't* want a specific object to be rendered, use the material name "inv
 # todo
 
 - Cleanup headers and make it header-only
-- Cleanup object base class and hierarchy
 - Support for texture wrapping
-- Support for parsing custom scene components
 - Mesh instancing
 - Export to other renderers (e.g., mitsuba, blender)
+- Save materials on export
 
 # license
 

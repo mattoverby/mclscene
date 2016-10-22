@@ -83,8 +83,6 @@ class SceneManager {
 		//
 		// Scene components.
 		// The components are indexed in listed/added order.
-		// Note that BaseObject has a "get_material" function which returns an
-		// index into the materials vector (-1 if no material was set).
 		//
 		std::vector< std::shared_ptr<BaseObject> > objects;
 		std::vector< std::shared_ptr<Camera> > cameras;
@@ -112,7 +110,7 @@ class SceneManager {
 
 		//
 		// Similar to the "make_<thing>" functions above, only returns derived types.
-		// Uses dynamic_pointer_cast, and I haven't debugged them.
+		// Uses dynamic_pointer_cast, so use at your own risk.
 		//
 		template<typename T> std::shared_ptr<T> make_object( std::string type );
 		template<typename T> std::shared_ptr<T> make_light( std::string type );

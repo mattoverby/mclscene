@@ -382,7 +382,6 @@ std::string TetMesh::get_xml( int mode ){
 		std::stringstream xml;
 		xml << "\t<Object type=\"TetMesh\" >\n";
 		xml << "\t\t<File type=\"string\" value=\"" << nodeele.str() << "\" />\n";
-//		xml << "\t\t<Material type=\"string\" value=\"" << material << "\" />\n";
 		xml << "\t</Object>";
 		return xml.str();
 	}

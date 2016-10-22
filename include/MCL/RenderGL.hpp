@@ -40,11 +40,10 @@ public:
 	bool init( mcl::SceneManager *scene_ );
 
 	// Draws a triangle mesh object with a material. If material is NULL,
-	// a default one is used (lambertian red). The object must have get_TriMesh()
-	// function implemented, otherwise nothing is drawn.
+	// a default one is used (lambertian red). If the TriMesh is NULL, nothing is drawn.
 	void draw_mesh( trimesh::TriMesh *themesh, Material *mat );
 
-	// Draws all objects in the SceneManager
+	// Draws all objects in the SceneManager (that have AppData::mesh)
 	void draw_objects();
 
 	// Draws all the objects in the SceneManager, but subdivides
@@ -60,9 +59,9 @@ private:
 	void load_textures();
 
 	std::unique_ptr<Shader> blinnphong;
-	Material defaultMat;
 	std::unordered_map< std::string, int > textures; // file->texture_id
 
+	// Eventually I will add support for cycling through cameras.
 	int active_camera_idx;
 
 	mcl::SceneManager *scene;

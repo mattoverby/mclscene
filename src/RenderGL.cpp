@@ -87,6 +87,7 @@ void RenderGL::load_textures(){
 
 
 void RenderGL::draw_objects(){
+	Material defaultMat;
 
 	for( int i=0; i<scene->objects.size(); ++i ){
 
@@ -107,6 +108,7 @@ void RenderGL::draw_objects(){
 
 
 void RenderGL::draw_objects_subdivided(){
+	Material defaultMat;
 
 	for( int i=0; i<scene->objects.size(); ++i ){
 
@@ -246,6 +248,10 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, Material* mat ){
 
 
 void RenderGL::draw_lights(){
+
+	for( int i=0; i<scene->lights.size(); ++i ){
+		// TODO
+	}
 
 } // end draw lights
 

@@ -223,6 +223,11 @@ void SceneManager::save( std::string xmlfile, int mode ){
 		// Loop over objects
 		for( int i=0; i<objects.size(); ++i ){
 			xml << "\n" << objects[i]->get_xml( mode );
+			int mat = objects[i]->app.material;
+			if( mat >= 0 && mat < objects.size() ){
+				std::stringstream ss; ss << "mat" << mat;
+				// TODO export
+			}
 		}
 
 		// Loop over materials, let the name be the index
