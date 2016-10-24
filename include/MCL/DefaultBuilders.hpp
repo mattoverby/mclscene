@@ -56,27 +56,16 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//	First build the transform and other common params
 	//
 	xform x_form;
-	int material = -1;
+
 	for( int i=0; i<params.size(); ++i ){
-
 		std::string tag = parse::to_lower(params[i].tag);
+		if( tag=="translate" ){ x_form = params[i].as_xform() * x_form; }
+		else if( tag=="scale" ){ x_form = params[i].as_xform() * x_form; }
+		else if( tag=="rotate" ){ x_form = params[i].as_xform() * x_form; }
 
-		if( tag=="translate" ){
-			x_form = params[i].as_xform() * x_form;
-		}
-		else if( tag=="scale" ){
-			x_form = params[i].as_xform() * x_form;
-		}
-		else if( tag=="rotate" ){
-			x_form = params[i].as_xform() * x_form;
-		}
-		else if( tag=="material" ){
-			material = params[i].as_int();
-		}
 	}
 	
 
-	// The new object to be created (xforms and material applied at end).
 	std::shared_ptr<BaseObject> new_obj = NULL;
 
 
@@ -296,7 +285,6 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 			new_obj->app.mesh->need_tstrips();
 		}
 		new_obj->apply_xform( x_form );
-		new_obj->app.material = material;
 		return new_obj;
 	}
 
@@ -337,9 +325,7 @@ static std::shared_ptr<Material> default_build_material( std::string type, std::
 				params[i].fix_color();
 				mat->app.spec=params[i].as_vec3();
 			}
-			else if( tag=="texture" ){
-				mat->app.texture = params[i].as_string();
-			}
+			else if( tag=="texture" ){ mat->app.texture = params[i].as_string(); }
 			else if( tag=="shininess" || tag=="exponent" ){ mat->app.shini=params[i].as_int(); }
 			else if( tag=="mode" || tag=="mode" ){ mat->app.mode=(unsigned int)params[i].as_int(); }
 
@@ -365,55 +351,61 @@ static std::shared_ptr<Material> default_build_material( std::string type, std::
 static std::shared_ptr<Light> default_build_light( std::string type, std::vector<Param> &params ){
 
 	type = parse::to_lower(type);
+	std::shared_ptr<Light> light( new Light() );
 
 	//
 	//	OpenGL Light
 	//
 	if( type == "point" ){
-
-		std::shared_ptr<Light> light( new Light() );
+		light->app.type = 0;
 		for( int i=0; i<params.size(); ++i ){
 			std::string tag = parse::to_lower(params[i].tag);
 			if( tag=="intensity" || tag=="color" ){
 				params[i].fix_color();
 				light->app.intensity=params[i].as_vec3();
 			}
-			else if( tag=="position" ){
-				light->app.position=params[i].as_vec3();
-			}
-			else if( tag=="falloff" ){
-				light->app.falloff=params[i].as_vec3();
-			}
+			else if( tag=="position" ){ light->app.position=params[i].as_vec3(); }
+			else if( tag=="falloff" ){ light->app.falloff=params[i].as_vec3(); }
 		}
 		return light;
 	}
 	else if( type == "directional" ){
-
-		std::shared_ptr<Light> light( new Light() );
-		light->app.directional = true;
+		light->app.type = 1;
+		light->app.falloff = trimesh::vec(1,1,1); // no falloff on directional lights
 		for( int i=0; i<params.size(); ++i ){
 			std::string tag = parse::to_lower(params[i].tag);
 			if( tag=="intensity" || tag=="color" ){
 				params[i].fix_color();
 				light->app.intensity=params[i].as_vec3();
 			}
-			else if( tag=="direction" ){
-				light->app.position=params[i].as_vec3();
+			else if( tag=="direction" ){ light->app.direction=params[i].as_vec3(); }
+		}
+		return light;
+	}
+	else if( type == "spot" ){
+		light->app.type = 2;
+		for( int i=0; i<params.size(); ++i ){
+			std::string tag = parse::to_lower(params[i].tag);
+			if( tag=="intensity" || tag=="color" ){
+				params[i].fix_color();
+				light->app.intensity=params[i].as_vec3();
 			}
-			else if( tag=="falloff" ){
-				light->app.falloff=params[i].as_vec3();
-			}
+			else if( tag=="direction" ){ light->app.direction=params[i].as_vec3(); }
+			else if( tag=="position" ){ light->app.position=params[i].as_vec3(); }
+			else if( tag=="falloff" ){ light->app.falloff=params[i].as_vec3(); }
+			else if( tag=="angle" ){ light->app.angle=params[i].as_double(); }
 		}
 		return light;
 	}
 	else{
 		std::cerr << "**Error: I don't know how to create a light of type " << type << std::endl;
+		return NULL;
 	}
 
 	//
 	//	Unknown
 	//
-	return NULL;
+	return light;
 
 } // end build light
 

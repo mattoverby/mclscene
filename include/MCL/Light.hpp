@@ -38,12 +38,17 @@ public:
 	// Returns a string containing xml code for saving to a scenefile.
 	std::string get_xml( int mode ){
 		std::stringstream xml;
-		if( app.directional ){
-			xml << "\t<Light type=\"directional\" >\n";
-			xml << "\t\t<Direction value=\"" << app.position.str() << "\" />\n";
-		} else{
+		if( app.type==0 ){
 			xml << "\t<Light type=\"point\" >\n";
 			xml << "\t\t<Position value=\"" << app.position.str() << "\" />\n";
+		} else if( app.type==1 ){
+			xml << "\t<Light type=\"directional\" >\n";
+			xml << "\t\t<Direction value=\"" << app.direction.str() << "\" />\n";
+		} else {
+			xml << "\t<Light type=\"spot\" >\n";
+			xml << "\t\t<Position value=\"" << app.position.str() << "\" />\n";
+			xml << "\t\t<Direction value=\"" << app.direction.str() << "\" />\n";
+			xml << "\t\t<Angle value=\"" << app.angle << "\" />\n";
 		}
 		xml << "\t\t<Intensity value=\"" << app.intensity.str() << "\" />\n";
 		xml << "\t\t<Falloff value=\"" << app.falloff.str() << "\" />\n";
@@ -53,10 +58,11 @@ public:
 
 	// Data used by mcl::Application
 	struct AppData {
-		AppData() : position(0,0,0), intensity(1,1,1), falloff(1,0.1f,0.01f), directional(false) {}
-		trimesh::vec position, intensity;
+		AppData() : position(0,0,0), direction(0,-1,0), intensity(1,1,1), falloff(1,0.1f,0.01f), angle(35), type(0) {}
+		trimesh::vec position, direction, intensity;
 		trimesh::vec falloff; // (constant, linear, quadratic)
-		bool directional; // if true, position is actually direction
+		double angle; // spot light angle, degrees
+		int type; // 0 = point, 1 = directional, 2 = spot
 	} app ;
 
 };

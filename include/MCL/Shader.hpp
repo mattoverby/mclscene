@@ -46,7 +46,6 @@
 //		< Draw stuff >
 //		myshader.disable();
 //	}
-//	delete myshader;
 //
 
 namespace mcl {
