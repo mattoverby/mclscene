@@ -195,18 +195,7 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, Material* mat ){
 	trimesh::XForm<float> eyepos = trimesh::inv( (camera->app.projection) * (camera->app.view) * (camera->app.model) );
 	glUniform3f( blinnphong->uniform("CamPos"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
 
-	// Set lighting properties
-	glUniform1i( blinnphong->uniform("num_point_lights"), scene->lights.size() );
-	for( int l=0; l<scene->lights.size(); ++l ){
-
-		std::shared_ptr<Light> light = scene->lights[l];
-		std::stringstream array_ss; array_ss << "pointLights[" << l << "].";
-		std::string array_str = array_ss.str();
-
-		glUniform3f( blinnphong->uniform(array_str+"position"), light->app.position[0], light->app.position[1], light->app.position[2] );
-		glUniform3f( blinnphong->uniform(array_str+"intensity"), light->app.intensity[0], light->app.intensity[1], light->app.intensity[2] );
-		glUniform3f( blinnphong->uniform(array_str+"falloff"), light->app.falloff[0], light->app.falloff[1], light->app.falloff[2] );
-	}
+	setup_lights();
 
 	// Set material properties
 	glUniform3f( blinnphong->uniform("material.ambient"), ambient[0], ambient[1], ambient[2] );
@@ -254,6 +243,26 @@ void RenderGL::draw_lights(){
 	}
 
 } // end draw lights
+
+
+void RenderGL::setup_lights(){
+
+	glUniform1i( blinnphong->uniform("num_lights"), scene->lights.size() );
+
+	// Set lighting properties
+	for( int l=0; l<scene->lights.size(); ++l ){
+		Light::AppData *light = &scene->lights[l]->app;
+		std::stringstream array_ss; array_ss << "lights[" << l << "].";
+		std::string array_str = array_ss.str();
+		glUniform3f( blinnphong->uniform(array_str+"position"), light->position[0], light->position[1], light->position[2] );
+		glUniform3f( blinnphong->uniform(array_str+"direction"), light->direction[0], light->direction[1], light->direction[2] );
+		glUniform3f( blinnphong->uniform(array_str+"intensity"), light->intensity[0], light->intensity[1], light->intensity[2] );
+		glUniform3f( blinnphong->uniform(array_str+"falloff"), light->falloff[0], light->falloff[1], light->falloff[2] );
+		glUniform1f( blinnphong->uniform(array_str+"halfangle"), 0.5*(light->angle*M_PI/180.f) );
+		glUniform1i( blinnphong->uniform(array_str+"type"), light->type );
+	} // end loop lights
+
+} // end setup lights
 
 
 // Color blending, saved for reference:

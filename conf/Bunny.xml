@@ -3,8 +3,9 @@
 
 	<Object name="bunny_562" type="tetmesh" >
 		<File value="bunny562faces.1" />
-		<Translate value="0 -.06  0" />
+		<Scale value="10 10 10" />
 		<Material value="gold" />
 	</Object>
+
 
 </mclScene>

@@ -371,14 +371,17 @@ static std::shared_ptr<Light> default_build_light( std::string type, std::vector
 	}
 	else if( type == "directional" ){
 		light->app.type = 1;
-		light->app.falloff = trimesh::vec(1,1,1); // no falloff on directional lights
+		light->app.falloff = trimesh::vec(1,0,0); // no falloff on directional lights
 		for( int i=0; i<params.size(); ++i ){
 			std::string tag = parse::to_lower(params[i].tag);
 			if( tag=="intensity" || tag=="color" ){
 				params[i].fix_color();
 				light->app.intensity=params[i].as_vec3();
 			}
-			else if( tag=="direction" ){ light->app.direction=params[i].as_vec3(); }
+			else if( tag=="direction" ){
+				params[i].normalize();
+				light->app.direction=params[i].as_vec3();
+			}
 		}
 		return light;
 	}
@@ -390,7 +393,10 @@ static std::shared_ptr<Light> default_build_light( std::string type, std::vector
 				params[i].fix_color();
 				light->app.intensity=params[i].as_vec3();
 			}
-			else if( tag=="direction" ){ light->app.direction=params[i].as_vec3(); }
+			else if( tag=="direction" ){
+				params[i].normalize();
+				light->app.direction=params[i].as_vec3();
+			}
 			else if( tag=="position" ){ light->app.position=params[i].as_vec3(); }
 			else if( tag=="falloff" ){ light->app.falloff=params[i].as_vec3(); }
 			else if( tag=="angle" ){ light->app.angle=params[i].as_double(); }

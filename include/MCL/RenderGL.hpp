@@ -58,6 +58,9 @@ private:
 	// Load textures from SceneManager materials.
 	void load_textures();
 
+	// Set up lighting uniforms
+	void setup_lights();
+
 	std::unique_ptr<Shader> blinnphong;
 	std::unordered_map< std::string, int > textures; // file->texture_id
 

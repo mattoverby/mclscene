@@ -9,6 +9,13 @@
 	<Material name="uofmflag" type="blinnphong">
 		<Diffuse value=".5 .5 .5" />
 		<texture value="uofm.png" />
+		<ambient value=".5 .5 .5" />
 	</Material>
+
+	<light type="directional" >
+		<direction value="0 0 -1" />
+		<position value="0 0 1" />
+		<angle value="100" />
+	</light>
 
 </mclScene>
