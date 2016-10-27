@@ -289,72 +289,14 @@ std::shared_ptr<BVHNode> SceneManager::SceneManager::get_bvh( bool recompute, st
 }
 
 
-std::shared_ptr<mcl::BaseObject> SceneManager::make_object( std::string type ){
-
-	std::vector<Param> params;
-	std::shared_ptr<BaseObject> newObject = createObject( type, params );
-	if( newObject == NULL ){ return NULL; }
-
-	// Add it to the SceneManager and return it
-	objects.push_back( newObject );
-	object_params.push_back( params );
-
-	return newObject;
-
-} // end make object
-
-
-std::shared_ptr<mcl::Light> SceneManager::make_light( std::string type ){
-
-	std::vector<Param> params;
-	std::shared_ptr<Light> newLight = createLight( type, params );
-	if( newLight == NULL ){ return NULL; }
-
-	// Add it to the SceneManager and return it
-	lights.push_back( newLight );
-	light_params.push_back( params );
-	return newLight;
-
-} // end make light
-
-
-std::shared_ptr<mcl::Camera> SceneManager::make_camera( std::string type ){
-
-	std::vector<Param> params;
-	std::shared_ptr<Camera> newCam = createCamera( type, params );
-	if( newCam == NULL ){ return NULL; }
-
-	// Add it to the SceneManager and return it
-	cameras.push_back( newCam );
-	camera_params.push_back( params );
-	return newCam;
-
-} // end make light
-
-
-std::shared_ptr<mcl::Material> SceneManager::make_material( std::string type ){
-
-	std::vector<Param> params;
-	std::shared_ptr<Material> newMat = createMaterial( type, params );
-	if( newMat == NULL ){ return NULL; }
-
-	// Add it to the SceneManager and return it
-	materials.push_back( newMat );
-	material_params.push_back( params );
-	return newMat;
-
-} // end make light
-
-
 void SceneManager::make_3pt_lighting( const trimesh::vec &center, float distance ){
 
 	lights.clear();
 	light_params.clear();
 
-	// TODO use spotlight instead of point light
-	std::shared_ptr<Light> key = make_light( "point" );
-	std::shared_ptr<Light> fill = make_light( "point" );
-	std::shared_ptr<Light> back = make_light( "point" );
+	std::shared_ptr<Light> key = make_light<Light>( "point" );
+	std::shared_ptr<Light> fill = make_light<Light>( "point" );
+	std::shared_ptr<Light> back = make_light<Light>( "point" );
 
 	float half_d = distance/2.f;
 	float quart_d = distance/4.f;
@@ -394,5 +336,6 @@ void SceneManager::get_bsphere( trimesh::vec *center, float *radius, bool recomp
 	*center = last_center;
 	*radius = last_radius;
 }
+
 
 

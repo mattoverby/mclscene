@@ -99,27 +99,19 @@ class SceneManager {
 		std::vector< std::vector<Param> > material_params;
 
 		//
-		// Creator functions that build a scene component and adds it to the
-		// vectors above. Calls the builder callbacks.
-		// If you want to make a preset material, see Material.hpp for make_preset_material.
-		//
-		std::shared_ptr<BaseObject> make_object( std::string type );
-		std::shared_ptr<Light> make_light( std::string type );
-		std::shared_ptr<Camera> make_camera( std::string type );
-		std::shared_ptr<Material> make_material( std::string type );
-
-		//
-		// Similar to the "make_<thing>" functions above, only returns derived types.
+		// Functions that create a component and pushes it to the
+		// vectors (above). Calls the builder callbacks (below).
 		// Uses dynamic_pointer_cast, so use at your own risk.
 		//
-		template<typename T> std::shared_ptr<T> make_object( std::string type );
-		template<typename T> std::shared_ptr<T> make_light( std::string type );
-		template<typename T> std::shared_ptr<T> make_camera( std::string type );
-		template<typename T> std::shared_ptr<T> make_material( std::string type );
+		template<typename T=BaseObject> std::shared_ptr<T> make_object( std::string type );
+		template<typename T=Light> std::shared_ptr<T> make_light( std::string type );
+		template<typename T=Camera> std::shared_ptr<T> make_camera( std::string type );
+		template<typename T=Material> std::shared_ptr<T> make_material( std::string type );
 
 		//
 		// Creator Callbacks, invoked on a "load" or "make_<thing>" call.
-		// These can be changed to whatever. For more details, see include/MCL/DefaultBuilders.hpp
+		// These can be changed to a custom function.
+		// For more details, see include/MCL/DefaultBuilders.hpp
 		//
 		BuildObjCallback createObject;
 		BuildCamCallback createCamera;
@@ -140,33 +132,44 @@ class SceneManager {
 }; // end class SceneManager
 
 //
-//	Static functions
+//	Template functions
 //
 
 template<typename T> std::shared_ptr<T> SceneManager::make_object( std::string type ){
-	std::shared_ptr<mcl::BaseObject> o = make_object(type);
-	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( o );
+	std::vector<Param> params;
+	std::shared_ptr<BaseObject> newObject = createObject( type, params );
+	if( !newObject ){ return NULL; }
+	objects.push_back( newObject ); object_params.push_back( params );
+	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( newObject );
 	if( !casted_ptr ){ return NULL; } return casted_ptr;
-}
-
+} // end make object
 
 template<typename T> std::shared_ptr<T> SceneManager::make_camera( std::string type ){
-	std::shared_ptr<mcl::Camera> o = make_camera(type);
-	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( o );
+	std::vector<Param> params;
+	std::shared_ptr<Camera> newCam = createCamera( type, params );
+	if( !newCam ){ return NULL; }
+	cameras.push_back( newCam ); camera_params.push_back( params );
+	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( newCam );
 	if( !casted_ptr ){ return NULL; } return casted_ptr;
-}
+} // end make camera
 
 template<typename T> std::shared_ptr<T> SceneManager::make_light( std::string type ){
-	std::shared_ptr<mcl::Light> o = make_light(type);
-	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( o );
+	std::vector<Param> params;
+	std::shared_ptr<Light> newLight = createLight( type, params );
+	if( !newLight ){ return NULL; }
+	lights.push_back( newLight ); light_params.push_back( params );
+	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( newLight );
 	if( !casted_ptr ){ return NULL; } return casted_ptr;
-}
+} // end make light
 
 template<typename T> std::shared_ptr<T> SceneManager::make_material( std::string type ){
-	std::shared_ptr<mcl::Material> o = make_material(type);
-	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( o );
+	std::vector<Param> params;
+	std::shared_ptr<Material> newMat = createMaterial( type, params );
+	if( !newMat ){ return NULL; }
+	materials.push_back( newMat ); material_params.push_back( params );
+	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( newMat );
 	if( !casted_ptr ){ return NULL; } return casted_ptr;
-}
+} // end make material
 
 } // end namespace mcl
 

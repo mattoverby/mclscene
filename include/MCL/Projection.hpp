@@ -134,12 +134,9 @@ static trimesh::vec3d Projection::Triangle( trimesh::vec3d *tri, const trimesh::
 } // end project triangle
 
 static trimesh::vec3d Projection::Sphere( const trimesh::vec3d &center, const double &rad, const trimesh::vec3d &point ){
-
-	using namespace trimesh;
-	vec3d dir = point-center;
-	normalize(dir);
-	return vec3d( center + rad*dir );
-
+	trimesh::vec3d dir = point-center;
+	trimesh::normalize(dir);
+	return trimesh::vec3d( center + rad*dir );
 } // end project sphere
 
 } // end namespace mcl

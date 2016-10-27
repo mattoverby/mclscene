@@ -47,7 +47,7 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	blinnphong->init_from_files( bp_ss.str()+"vert", bp_ss.str()+"frag");
 
 	// Create a camera if one does not exist
-	if( !scene->cameras.size() ){ camera = scene->make_camera( "default" ).get(); }
+	if( !scene->cameras.size() ){ camera = scene->make_camera<Camera>( "default" ).get(); }
 	else{ camera = scene->cameras[active_camera_idx].get(); }
 
 	load_textures();

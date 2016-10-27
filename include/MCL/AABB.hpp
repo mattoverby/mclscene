@@ -29,7 +29,7 @@ namespace mcl {
 class AABB { // axis aligned bounding box
 public:
 	AABB() : valid(false) {}
-	AABB( trimesh::vec min_, trimesh::vec max_ ) : min(min_), max(max_), valid(false) {}
+	AABB( trimesh::vec min_, trimesh::vec max_ ) : min(min_), max(max_), valid(true) {}
 	trimesh::vec min, max;
 	bool valid;
 
