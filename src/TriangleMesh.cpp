@@ -24,24 +24,6 @@
 
 using namespace mcl;
 
-/*
-TriangleMesh::TriangleMesh( trimesh::TriMesh *tm ) :
-	tris(tm), vertices(tm->vertices), normals(tm->normals), faces(tm->faces),
-	aabb(new AABB) {
-
-	// Build triangle refs if they don't exist yet
-	make_tri_refs();
-	for( int f=0; f<faces.size(); ++f ){
-		(*aabb) += vertices[ faces[f][0] ];
-		(*aabb) += vertices[ faces[f][1] ];
-		(*aabb) += vertices[ faces[f][2] ];
-	}
-
-	app.mesh = tris;
-
-} // end constructor
-*/
-
 
 bool TriangleMesh::load( std::string filename ){
 

@@ -125,14 +125,17 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 
 		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
 
+		// Length and width are actually #tris along the horizontal and vertical
 		int width = 10;
 		int length = 10;
 		double noise = 0.0;
 
 		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="width" ){ width=params[i].as_int(); }
-			else if( parse::to_lower(params[i].tag)=="length" ){ length=params[i].as_int(); }
-			else if( parse::to_lower(params[i].tag)=="noise" ){ noise=params[i].as_double(); }
+			std::string tag = parse::to_lower(params[i].tag);
+			if( tag=="width" ){ width=params[i].as_int(); }
+			else if( tag=="length" ){ length=params[i].as_int(); }
+			else if( tag=="tess" ){ length=params[i].as_int(); width=length=params[i].as_int(); }
+			else if( tag=="noise" ){ noise=params[i].as_double(); }
 		}
 
 		make_sym_plane( new_obj->app.mesh, width, length );
@@ -327,7 +330,7 @@ static std::shared_ptr<Material> default_build_material( std::string type, std::
 			}
 			else if( tag=="texture" ){ mat->app.texture = params[i].as_string(); }
 			else if( tag=="shininess" || tag=="exponent" ){ mat->app.shini=params[i].as_int(); }
-			else if( tag=="mode" || tag=="mode" ){ mat->app.mode=(unsigned int)params[i].as_int(); }
+			else if( tag=="mode" ){ mat->app.mode=(unsigned int)params[i].as_int(); }
 
 		}
 		std::shared_ptr<Material> new_mat( mat );
@@ -354,53 +357,38 @@ static std::shared_ptr<Light> default_build_light( std::string type, std::vector
 	std::shared_ptr<Light> light( new Light() );
 
 	//
+	//	Common light parameters
+	//
+	for( int i=0; i<params.size(); ++i ){
+		std::string tag = parse::to_lower(params[i].tag);
+		if( tag=="intensity" || tag=="color" ){
+			params[i].fix_color();
+			light->app.intensity=params[i].as_vec3();
+		}
+		else if( tag=="direction" ){
+			params[i].normalize();
+			light->app.direction=params[i].as_vec3();
+		}
+		else if( tag=="position" ){ light->app.position=params[i].as_vec3(); }
+		else if( tag=="falloff" ){ light->app.falloff=params[i].as_vec3(); }
+		else if( tag=="angle" ){ light->app.angle=params[i].as_double(); }
+	}
+
+
+	//
 	//	OpenGL Light
 	//
 	if( type == "point" ){
 		light->app.type = 0;
-		for( int i=0; i<params.size(); ++i ){
-			std::string tag = parse::to_lower(params[i].tag);
-			if( tag=="intensity" || tag=="color" ){
-				params[i].fix_color();
-				light->app.intensity=params[i].as_vec3();
-			}
-			else if( tag=="position" ){ light->app.position=params[i].as_vec3(); }
-			else if( tag=="falloff" ){ light->app.falloff=params[i].as_vec3(); }
-		}
 		return light;
 	}
 	else if( type == "directional" ){
 		light->app.type = 1;
 		light->app.falloff = trimesh::vec(1,0,0); // no falloff on directional lights
-		for( int i=0; i<params.size(); ++i ){
-			std::string tag = parse::to_lower(params[i].tag);
-			if( tag=="intensity" || tag=="color" ){
-				params[i].fix_color();
-				light->app.intensity=params[i].as_vec3();
-			}
-			else if( tag=="direction" ){
-				params[i].normalize();
-				light->app.direction=params[i].as_vec3();
-			}
-		}
 		return light;
 	}
 	else if( type == "spot" ){
 		light->app.type = 2;
-		for( int i=0; i<params.size(); ++i ){
-			std::string tag = parse::to_lower(params[i].tag);
-			if( tag=="intensity" || tag=="color" ){
-				params[i].fix_color();
-				light->app.intensity=params[i].as_vec3();
-			}
-			else if( tag=="direction" ){
-				params[i].normalize();
-				light->app.direction=params[i].as_vec3();
-			}
-			else if( tag=="position" ){ light->app.position=params[i].as_vec3(); }
-			else if( tag=="falloff" ){ light->app.falloff=params[i].as_vec3(); }
-			else if( tag=="angle" ){ light->app.angle=params[i].as_double(); }
-		}
 		return light;
 	}
 	else{
@@ -454,6 +442,11 @@ static std::shared_ptr<Camera> default_build_camera( std::string type, std::vect
 static std::shared_ptr<Material> make_preset_material( std::string preset ){// MaterialPreset m ){
 	using namespace trimesh;
 
+	//
+	//	This used to be multiple functions and these types were global.
+	//	I decided to join them into one function, but instead of refactoring I just
+	//	kept the original if elses. That's why the logic is a bit odd in this function.
+	//
 	enum class MaterialPreset {
 		Emerald, Jade, Obsidian, Pearl, Ruby, Turquoise, // gems
 		Brass, Bronze, Chrome, Copper, Gold, Silver, // metals
