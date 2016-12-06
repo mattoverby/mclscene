@@ -80,6 +80,7 @@ protected:
 	// Runtime stuff:
 	float screen_dt;
 	double cursorX, cursorY;
+	int screen_w, screen_h;
 	float aspect_ratio;
 	float scene_radius; // recomputed on simulation step
 	trimesh::vec scene_center; // set once in constructor
