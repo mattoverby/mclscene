@@ -40,6 +40,7 @@ bool TriangleMesh::load( std::string filename ){
 	trimesh::remove_unused_vertices( newmesh );
 	vertices = newmesh->vertices;
 	faces = newmesh->faces;
+	tris->texcoords = newmesh->texcoords;
 	tris->need_normals();
 	tris->need_tstrips();
 
