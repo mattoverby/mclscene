@@ -69,7 +69,7 @@ public:
 	RenderGL renderer;
 
 	// You can set these to starting points
-	float alpha, beta; // for screen rotations (left click)
+	float alpha, beta, gamma; // for screen rotations (left click)
 	float panx, pany; // camera panning (right click)
 	float zoom; // zooming in and out (scroll wheel)
 

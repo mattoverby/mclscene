@@ -115,6 +115,11 @@ public:
 	// Ray-Scene traversal for any object, early exit (shadow rays)
 	// Remember to set your t_max in the payload!
 	static bool any_hit( const BVHNode *node, const intersect::Ray *ray, intersect::Payload *payload );
+
+	// Point-Scene traversal for closest object to a given point.
+	// Projection is the point on the object surface, obj is the pointer to the object.
+	// Returns false if a point was not in any AABB. A KD-Tree would be better for this.
+	static bool closest_object( const BVHNode *node, const trimesh::vec &point, trimesh::vec &projection, std::shared_ptr<BaseObject> *obj );
 };
 
 

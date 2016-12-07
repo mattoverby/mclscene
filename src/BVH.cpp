@@ -189,6 +189,12 @@ int BVHBuilder::make_tree_spatial( BVHNode *root, const std::vector< std::shared
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	start = std::chrono::system_clock::now();
 	if( root == NULL ){ root = new BVHNode(); }
+	else{
+		if( root->left_child != NULL ){ delete root->left_child; root->left_child = NULL; }
+		if( root->right_child != NULL){ delete root->right_child; root->right_child = NULL; }
+		root->m_objects.clear();
+		root->aabb->valid = false;
+	}
 
 	// Get all the primitives in the domain and start construction
 	std::vector< std::shared_ptr<BaseObject> > prims;
@@ -268,28 +274,17 @@ bool BVHTraversal::closest_hit( const BVHNode* node, const intersect::Ray *ray, 
 	if( !intersect::ray_aabb( ray, node->aabb->min, node->aabb->max, payload ) ){ return false; }
 
 	// See if there are children to intersect
-	if( node->left_child != NULL || node->right_child != NULL ){
+	bool left_hit=false, right_hit=false;
+	if( node->left_child != NULL ){ left_hit = BVHTraversal::closest_hit( node->left_child, ray, payload, obj ); }
+	if( node->right_child != NULL ){ right_hit = BVHTraversal::closest_hit( node->right_child, ray, payload, obj ); }
+	if( left_hit || right_hit ){ return true; }
 
-		bool left_hit=false, right_hit=false;
-		if( node->left_child != NULL ){ left_hit = BVHTraversal::closest_hit( node->left_child, ray, payload, obj ); }
-		if( node->right_child != NULL ){ right_hit = BVHTraversal::closest_hit( node->right_child, ray, payload, obj ); }
-		if( left_hit || right_hit ){ return true; }
-
-	} // end intersect children
-
-	// Otherwise it's a leaf node, check objects
-	else{
-
-		// Loop over objects stored on this bvh node
-		bool obj_hit = false;
-		for( int i=0; i<node->m_objects.size(); ++i ){
-			if( node->m_objects[i]->ray_intersect( ray, payload ) ){ obj=&(node->m_objects[i]); obj_hit=true; }
-		}
-		return obj_hit;
-
-	} // end intersect objects
-
-	return false;
+	// Loop over objects stored on this bvh node
+	bool obj_hit = false;
+	for( int i=0; i<node->m_objects.size(); ++i ){
+		if( node->m_objects[i]->ray_intersect( ray, payload ) ){ obj=&(node->m_objects[i]); obj_hit=true; }
+	}
+	return obj_hit;
 
 } // end ray intersect
 
@@ -304,18 +299,44 @@ bool BVHTraversal::any_hit( const BVHNode* node, const intersect::Ray *ray, inte
 	if( node->right_child != NULL ){ if( BVHTraversal::any_hit( node->right_child, ray, payload ) ){ return true; } }
 
 	// Otherwise it's a leaf node, check objects
-	else{
-
-		// Loop over objects stored on this bvh node
-		for( int i=0; i<node->m_objects.size(); ++i ){
-			if( node->m_objects[i]->ray_intersect( ray, payload ) ){ return true; }
-		}
-
-	} // end intersect objects
+	for( int i=0; i<node->m_objects.size(); ++i ){
+		if( node->m_objects[i]->ray_intersect( ray, payload ) ){ return true; }
+	}
 
 	return false;
 
 } // end ray intersect
+
+
+bool BVHTraversal::closest_object( const BVHNode *node, const trimesh::vec &point, trimesh::vec &projection, std::shared_ptr<BaseObject> *obj ){
+
+	double dist = trimesh::len2( projection - point );
+	if( intersect::point_aabb( point, node->aabb->min, node->aabb->max ) > dist ){ return false; }
+
+	// See if there are children to intersect
+	bool left_hit=false, right_hit=false;
+	if( node->left_child != NULL ){ left_hit = BVHTraversal::closest_object( node->left_child, point, projection, obj ); }
+	if( node->right_child != NULL ){ right_hit = BVHTraversal::closest_object( node->right_child, point, projection, obj ); }
+	if( left_hit || right_hit ){ return true; }
+
+	// Otherwise it's a leaf node, check objects
+	bool obj_hit = false;
+	for( int i=0; i<node->m_objects.size(); ++i ){
+		trimesh::vec p = node->m_objects[i]->projection( point );
+		trimesh::vec n = point - p;
+
+		// See if this projection is closer
+		double curr_dist = trimesh::len2( n );
+		if( curr_dist < dist ){
+			projection = p;
+			obj_hit = true;
+			obj=&(node->m_objects[i]);
+			dist = curr_dist;
+		}
+	}
+	return obj_hit;
+
+} // end closest object
 
 
 void BVHNode::get_edges( std::vector<trimesh::vec> &edges, bool add_children ){

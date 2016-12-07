@@ -302,8 +302,10 @@ void SceneManager::make_3pt_lighting( const trimesh::vec &center, float distance
 	float quart_d = distance/4.f;
 
 	// Set positions
-	key->app.position = center + trimesh::vec(-half_d,0.f,distance);
-	fill->app.position = center + trimesh::vec(half_d,0.f,distance);
+//	key->app.position = center + trimesh::vec(-half_d,0.f,distance);
+//	fill->app.position = center + trimesh::vec(half_d,0.f,distance);
+	key->app.position = center + trimesh::vec(0,half_d,0);
+	fill->app.position = center + trimesh::vec(-half_d,0.f,half_d);
 	back->app.position = center + trimesh::vec(0.f,quart_d,-distance);
 
 	// Set intensity

@@ -51,6 +51,10 @@ public:
 		if( hit ){ payload->material = this->app.material; }
 		return hit;
 	}
+
+	trimesh::vec projection( const trimesh::vec &point ) const {
+		return intersect::point_triangle( point, *p0, *p1, *p2 );
+	}
 };
 
 

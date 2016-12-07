@@ -51,6 +51,9 @@ public:
 	// Used by BVHTraversal.
 	virtual bool ray_intersect( const intersect::Ray *ray, intersect::Payload *payload ) const { return false; }
 
+	// Projection on to surface
+	virtual trimesh::vec projection( const trimesh::vec &point ) const { return point; }
+
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode=0 ){ return ""; }
 

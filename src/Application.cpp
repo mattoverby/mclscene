@@ -146,6 +146,7 @@ int Application::display(){
 
 			renderer.camera->app.model = trimesh::XForm<float>::rot( beta, trimesh::vec3(1.0f, 0.0f, 0.0f) ) *
 					trimesh::XForm<float>::rot( alpha, trimesh::vec3(0.f, 0.f, 1.f) ) *
+					trimesh::XForm<float>::rot( gamma, trimesh::vec3(0.f, 1.f, 0.f) ) *
 					trimesh::XForm<float>::trans( -scene_center );
 			renderer.camera->app.view = trimesh::XForm<float>::trans( panx, pany, -zoom );
 			renderer.camera->app.projection = trimesh::XForm<float>::persp( settings.fov_deg, aspect_ratio, settings.clipping[0], settings.clipping[1] );
@@ -339,7 +340,7 @@ static inline void save_png (const char *filename, int width, int height,
     fclose(file);
 }
 
-
+int frame_num = 0;
 void Application::save_screenshot(GLFWwindow* window){
 	std::string MY_DATE_FORMAT = "h%H_m%M_s%S";
 	const int MY_DATE_SIZE = 20;
@@ -347,7 +348,8 @@ void Application::save_screenshot(GLFWwindow* window){
 	time_t now = time(0);
 	strftime(name, sizeof(name), MY_DATE_FORMAT.c_str(), localtime(&now));
 	std::stringstream filename;
-	filename << MCLSCENE_BUILD_DIR << "/screenshot_" << name << ".png";
+//	filename << MCLSCENE_BUILD_DIR << "/screenshot_" << name << ".png";
+	filename << MCLSCENE_BUILD_DIR << "/"; filename << std::setfill('0') << std::setw(5) << frame_num << ".png";
 	int w=256, h=256;
 	glfwGetFramebufferSize(window, &w, &h);
 	unsigned char *pixels = new unsigned char[w*h*3];
@@ -356,6 +358,7 @@ void Application::save_screenshot(GLFWwindow* window){
 	flip_image(w,h, pixels);
 	save_png(filename.str().c_str(), w,h, pixels,false);
 	delete[] pixels;
+	frame_num++;
 }
 
 void Application::run_simulator_step(){

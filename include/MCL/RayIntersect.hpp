@@ -24,6 +24,7 @@
 
 #include <memory>
 #include <Vec.h>
+#include "MCL/Projection.hpp"
 
 namespace mcl {
 
@@ -59,6 +60,12 @@ namespace intersect {
 	// ray -> axis aligned bounding box
 	// Returns true/false only and does not set the payload.
 	static inline bool ray_aabb( const Ray *ray, const trimesh::vec &min, const trimesh::vec &max, const Payload *payload );
+
+	// Squared distance from point to aabb
+	static inline double point_aabb( const trimesh::vec &point, const trimesh::vec &min, const trimesh::vec &max );
+
+	// Point-on-triangle test: returns projection on to triangle surface
+	static inline trimesh::vec point_triangle( const trimesh::vec &point, const trimesh::vec &p0, const trimesh::vec &p1, const trimesh::vec &p2 );
 
 } // end namespace intersect
 
@@ -144,5 +151,28 @@ static inline bool mcl::intersect::ray_aabb( const Ray *ray, const trimesh::vec 
 	return true;
 
 } // end ray box intersection
+
+
+static inline double mcl::intersect::point_aabb( const trimesh::vec &point, const trimesh::vec &min, const trimesh::vec &max ){
+	float sqDist=0.f;
+	for( int i=0; i<3; ++i ){
+		if( point[i] < min[i] ){ sqDist += (min[i]-point[i])*(min[i]-point[i]); }
+		if( point[i] > max[i] ){ sqDist += (point[i]-max[i])*(point[i]-max[i]); }
+	}
+	return sqDist;
+}
+
+
+static inline trimesh::vec mcl::intersect::point_triangle( const trimesh::vec &point, const trimesh::vec &p0, const trimesh::vec &p1, const trimesh::vec &p2 ){
+	trimesh::vec3d tripoints[3] = {
+		trimesh::vec3d( p0[0], p0[1], p0[2] ),
+		trimesh::vec3d( p1[0], p1[1], p1[2] ),
+		trimesh::vec3d( p2[0], p2[1], p2[2] ),
+	};
+	trimesh::vec3d p( point[0], point[1], point[2] );
+	trimesh::vec3d proj = mcl::Projection::Triangle( tripoints, p );
+	return trimesh::vec( proj[0], proj[1], proj[2] );
+}
+
 
 #endif
