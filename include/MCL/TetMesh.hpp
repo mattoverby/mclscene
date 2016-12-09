@@ -73,6 +73,8 @@ public:
 		prims.insert( prims.end(), tri_refs.begin(), tri_refs.end() );
 	}
 
+	void get_surface_vertices( std::vector<int> *indices );
+
 private:
 	std::shared_ptr<AABB> aabb;
 

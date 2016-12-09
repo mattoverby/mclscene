@@ -22,6 +22,7 @@
 #include "MCL/TetMesh.hpp"
 #include "MCL/VertexSort.hpp"
 #include <chrono>
+#include <map>
 #ifdef MCLSCENE_ENABLE_TETGEN
 	#include "tetgen.h"
 #endif
@@ -280,6 +281,28 @@ bool TetMesh::need_surface(){
 	return true;
 
 } // end create boundary mesh
+
+
+void TetMesh::get_surface_vertices( std::vector<int> *indices ){
+
+	bool has_faces = faces.size() > 0;
+
+	// Use the compute faces function to get surface verts
+	if( !has_faces ){ need_surface(); }
+
+	std::map<int, bool> vertlist; // Sorted
+	for( int i=0; i<faces.size(); ++i ){
+		for( int j=0; j<3; ++j ){ vertlist[ faces[i][j] ] = true; }
+	}
+
+	// Now that we have a unique list of indices, add them to the buffer
+	std::map<int, bool>::iterator it = vertlist.begin();
+	for( ; it != vertlist.end(); ++it ){ indices->push_back( it->first ); }
+	
+	// Remove faces if it didn't already have them
+	if( !has_faces ){ faces.clear(); }
+
+} // end get surface verts
 
 
 void TetMesh::make_tri_refs(){
