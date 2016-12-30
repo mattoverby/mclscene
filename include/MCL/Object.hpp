@@ -67,10 +67,9 @@ public:
 		AppData() : mesh(NULL), material(-1) {}
 		trimesh::TriMesh *mesh; // If null, the object is not rendered
 		int material; // material index into SceneManager::materials
-		trimesh::xform xf; // xform used for instancing, inits to identity
+		trimesh::fxform xf; // xform used for instancing, inits to identity
 	} app ;
 };
-
 
 } // end namespace mcl
 

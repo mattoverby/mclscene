@@ -40,15 +40,12 @@ public:
 		bool save_frames; // saves every render frame to a timestamped png in your build directory
 		bool run_simulation; // run the simulator every frame
 		bool subdivide_meshes; // copy and subdivide the meshes before rendering
-		bool draw_lights;
-		float fov_deg; // field of view in degrees
 		bool gamma_correction;
 		trimesh::vec clear_color;
-		trimesh::Vec<2,float> clipping; // clipping plane for proj. matrix
 
 		Settings() : save_frames(false), run_simulation(false),
-			subdivide_meshes(false), draw_lights(false), fov_deg(30.f),
-			gamma_correction(true), clear_color(1,1,1), clipping(0.1, 1024.f) {}
+			subdivide_meshes(false), gamma_correction(true),
+			clear_color(1,1,1) {}
 	} settings;
 
 	// Initializes the the Input singleton so callbacks can be added
@@ -68,10 +65,9 @@ public:
 	// You can use the renderer to draw custom objects
 	RenderGL renderer;
 
-	// You can set these to starting points
-	float alpha, beta, gamma; // for screen rotations (left click)
-	float panx, pany; // camera panning (right click)
-	float zoom; // zooming in and out (scroll wheel)
+	// Camera
+	bool update_view;
+	Camera *current_cam;
 
 protected:
 	SceneManager *scene;
@@ -80,8 +76,7 @@ protected:
 	// Runtime stuff:
 	float screen_dt;
 	double cursorX, cursorY;
-	int screen_w, screen_h;
-	float aspect_ratio;
+
 	float scene_radius; // recomputed on simulation step
 	trimesh::vec scene_center; // set once in constructor
 	bool left_mouse_drag, right_mouse_drag;

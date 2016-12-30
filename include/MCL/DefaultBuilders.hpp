@@ -410,12 +410,28 @@ static std::shared_ptr<Light> default_build_light( std::string type, std::vector
 static std::shared_ptr<Camera> default_build_camera( std::string type, std::vector<Param> &params ){
 
 	type = parse::to_lower(type);
+	trimesh::vec eye(0,0,1), direction(0,0,-1), lookat(0,0,0);
+
+	//
+	//	Common camera parameters
+	//
+	for( int i=0; i<params.size(); ++i ){
+		std::string tag = parse::to_lower(params[i].tag);
+		if( tag=="eye" || tag=="position" ){ eye=params[i].as_vec3(); }
+		else if( tag=="direction" ){
+			params[i].normalize();
+			direction=params[i].as_vec3();
+		}
+		else if( tag=="lookat" ){ lookat=params[i].as_vec3(); }
+	}
+
 
 	//
 	//	Default (TODO: params)
 	//
-	if( type == "default" ){
-		std::shared_ptr<Camera> cam( new Camera() );
+	if( type == "trackball" ){
+		
+		std::shared_ptr<Camera> cam( new Trackball( eye, lookat ) );
 		return cam;
 	}
 

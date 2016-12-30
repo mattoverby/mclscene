@@ -52,6 +52,9 @@ else(MCL_ENABLE_TETGEN)
 set( TETGEN_SRCS "" )
 endif(MCL_ENABLE_TETGEN)
 
+# Eigen3
+find_package( Eigen3 REQUIRED )
+
 # Rendering libraries
 if(MCL_BUILD_RENDERING)
 
@@ -103,7 +106,7 @@ set( MCLSCENE_SRCS
 
 # Create the library
 set( MCLSCENE_LIBRARIES mclscene )
-set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${TRIMESH_INCLUDE} ${TETGEN_INCLUDE} )
+set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${TRIMESH_INCLUDE} ${TETGEN_INCLUDE} ${EIGEN3_INCLUDE_DIR} )
 
 # If we want to build with mclscene rendering support, add the window source files
 # and add the libraries/includes to the build variables.

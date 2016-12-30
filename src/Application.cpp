@@ -46,18 +46,20 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 
 	std::cout << "Scene Radius: " << scene_radius << std::endl;
 
-	aspect_ratio = 1.f;
-	// real aspect_ratio set by framebuffer_size_callback
+	if( scene->cameras.size()==0 ){
+		trimesh::vec eye = scene_center; eye[2]-=(scene_radius*3.f);
+		std::shared_ptr<Trackball> cam = scene->make_camera<Trackball>( "trackball" );
+		cam->eye = eye;
+		cam->lookat = scene_center;
+		cam->update_view();
+	}
+	current_cam = scene->cameras[0].get();
 
-	zoom = std::fmaxf( fabs( scene_radius / sinf( 30.f/2.f ) ), 1e-3f );
 	cursorX = 0.f;
 	cursorY = 0.f;
-	alpha = 0.f;
-	beta = 0.f;
-	panx = 0.f;
-	pany = 0.f;
 	left_mouse_drag = false;
 	right_mouse_drag = false;
+	update_view = false;
 
 	// Add callbacks to the input class
 	using namespace std::placeholders;    // adds visibility of _1, _2, _3,...
@@ -144,19 +146,13 @@ int Application::display(){
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			if( settings.gamma_correction ){ glEnable(GL_FRAMEBUFFER_SRGB); } // gamma correction
 
-			renderer.camera->app.model = trimesh::XForm<float>::rot( beta, trimesh::vec3(1.0f, 0.0f, 0.0f) ) *
-					trimesh::XForm<float>::rot( alpha, trimesh::vec3(0.f, 0.f, 1.f) ) *
-					trimesh::XForm<float>::rot( gamma, trimesh::vec3(0.f, 1.f, 0.f) ) *
-					trimesh::XForm<float>::trans( -scene_center );
-			renderer.camera->app.view = trimesh::XForm<float>::trans( panx, pany, -zoom );
-			renderer.camera->app.projection = trimesh::XForm<float>::persp( settings.fov_deg, aspect_ratio, settings.clipping[0], settings.clipping[1] );
+			if( update_view ){ current_cam->update_view(); update_view = false; }
 		}
 
 		{ // Render scene stuff
 			if( !settings.subdivide_meshes ){ renderer.draw_objects(); } // draws all objects
 			else{ renderer.draw_objects_subdivided(); }
-			if( settings.draw_lights ){ renderer.draw_lights(); }
-			for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, renderer.camera, screen_dt ); }
+			for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, current_cam, screen_dt ); }
 		}
 
 		{ // Finalize:
@@ -229,12 +225,12 @@ void Application::key_callback(GLFWwindow* window, int key, int scancode, int ac
 void Application::cursor_position_callback(GLFWwindow* window, double x, double y){
 
 	if( left_mouse_drag ){
-		alpha += (GLfloat) (x - cursorX) / 100.f;
-		beta += (GLfloat) (y - cursorY) / 100.f;
+		current_cam->rotate( (x-cursorX)/100.f, (y-cursorY)/100.f );
+		update_view = true;
 	}
 	else if( right_mouse_drag ){
-		panx += float(x - cursorX) / 800.f;
-		pany -= float(y - cursorY) / 800.f;
+		current_cam->pan( float(x-cursorX)/100.f, float(y-cursorY)/100.f );
+		update_view = true;
 	}
 	cursorX = x;
 	cursorY = y;
@@ -242,21 +238,18 @@ void Application::cursor_position_callback(GLFWwindow* window, double x, double 
 
 
 void Application::scroll_callback(GLFWwindow* window, double x, double y){
-	zoom -= float(y) * (scene_radius);
-	if( zoom < 0.f ){ zoom=0.f; }
+	current_cam->zoom( float(y)*scene_radius );
+	update_view = true;
 }
 
 
 void Application::framebuffer_size_callback(GLFWwindow* window, int width, int height){
 
 	float scene_d = std::fmaxf( scene_radius*2.f, 0.2f );
-	aspect_ratio = 1.f;
+	float aspect_ratio = 1.f;
 	if( height > 0 ){ aspect_ratio = std::fmaxf( (float) width / (float) height, 1e-6f ); }
 	glViewport(0, 0, width, height);
-
-	renderer.camera->app.projection = trimesh::XForm<float>::persp( settings.fov_deg, aspect_ratio, 0.1f, scene_d*16.f );
-	screen_w = width;
-	screen_h = height;
+	current_cam->update_proj( aspect_ratio );
 }
 
 

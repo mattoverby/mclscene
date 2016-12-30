@@ -18,6 +18,7 @@ Supports the following operations:
 	xf=xform::ortho(l,r,b,t,n,f);   // Like GLortho
 	xf=xform::frustum(l,r,b,t,n,f);	// Like GLfrustum
 	xf=xform::persp(fovy,ar,n,f);	// Like GLperspective
+	xf=xform::lookat(eye,point,up); // Like GLlookat
 	glMultMatrixd(xf);		// Conversion to column-major array
 	bool ok = xf.read("file.xf");	// Read xform from file
 	xf.write("file.xf");		// Write xform to file

@@ -87,7 +87,7 @@ void render_callback(GLFWwindow* window, Camera *cam, float screen_dt){
 		bvh->get_edges( edges );
 	}
 */
-	trimesh::XForm<float> xf = cam->app.projection * cam->app.view * cam->app.model;
+	trimesh::XForm<float> xf = cam->app.projection * cam->app.view;
 
 	std::vector<trimesh::vec> colors;
 	colors.push_back( trimesh::vec(1,0,0) );

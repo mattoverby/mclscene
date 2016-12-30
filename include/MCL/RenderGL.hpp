@@ -32,16 +32,13 @@ class RenderGL  {
 public:
 	~RenderGL();
 
-	// The current active camera
-	Camera *camera;
-
 	// Initialize shaders. Must be called after
 	// OpenGL context has been created.
 	bool init( mcl::SceneManager *scene_ );
 
 	// Draws a triangle mesh object with a material. If material is NULL,
 	// a default one is used (lambertian red). If the TriMesh is NULL, nothing is drawn.
-	void draw_mesh( trimesh::TriMesh *themesh, Material *mat );
+	void draw_mesh( BaseObject *obj, Camera *camera );
 
 	// Draws all objects in the SceneManager (that have AppData::mesh)
 	void draw_objects();
@@ -50,10 +47,6 @@ public:
 	// the meshes before rendering for visual quality.
 	void draw_objects_subdivided();
 
-	// Draws all lights in the SceneManager that have a shape
-	// (I.e., point lights as a sphere, spot lights as a cone).
-	void draw_lights();
-
 private:
 	// Load textures from SceneManager materials.
 	void load_textures();
@@ -61,11 +54,9 @@ private:
 	// Set up lighting uniforms
 	void setup_lights();
 
+	Material defaultMat;
 	std::unique_ptr<Shader> blinnphong;
 	std::unordered_map< std::string, int > textures; // file->texture_id
-
-	// Eventually I will add support for cycling through cameras.
-	int active_camera_idx;
 
 	mcl::SceneManager *scene;
 

@@ -23,13 +23,9 @@
 
 #ifndef MCLSCENE_SHADER_HPP
 #define MCLSCENE_SHADER_HPP 1
-
-// Include glew if we haven't already. Eventually I will change
-// this dependency as glew has its own set of problems.
-#ifndef __glew_h__
-#include <GL/glew.h>
-#endif
-
+//
+// Assumes extensions header already included!
+//
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
@@ -139,12 +135,6 @@ void Shader::init(std::string vertex_source, std::string frag_source){
 	GLint programLinkSuccess = GL_FALSE;
 	glGetProgramiv(program_id, GL_LINK_STATUS, &programLinkSuccess);
 	if( programLinkSuccess != GL_TRUE ){ throw std::runtime_error("\n**Shader Error: Problem with link"); }
-
-	// Check the validation status and throw a runtime_error if program validation failed
-	glValidateProgram(program_id);
-	GLint programValidatationStatus;
-	glGetProgramiv(program_id, GL_VALIDATE_STATUS, &programValidatationStatus);
-	if( programValidatationStatus != GL_TRUE ){ throw std::runtime_error("\n**Shader Error: Problem with validation"); }
 
 	glUseProgram(0);
 }

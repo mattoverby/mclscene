@@ -37,7 +37,6 @@ RenderGL::~RenderGL(){
 bool RenderGL::init( mcl::SceneManager *scene_ ) {
 
 	scene = scene_;
-	active_camera_idx = 0;
 
 	std::stringstream bp_ss;
 	bp_ss << MCLSCENE_SRC_DIR << "/src/blinnphong.";
@@ -45,10 +44,6 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	// Create shaders
 	blinnphong = std::unique_ptr<Shader>( new Shader() );
 	blinnphong->init_from_files( bp_ss.str()+"vert", bp_ss.str()+"frag");
-
-	// Create a camera if one does not exist
-	if( !scene->cameras.size() ){ camera = scene->make_camera<Camera>( "default" ).get(); }
-	else{ camera = scene->cameras[active_camera_idx].get(); }
 
 	load_textures();
 
@@ -87,35 +82,24 @@ void RenderGL::load_textures(){
 
 
 void RenderGL::draw_objects(){
-	Material defaultMat;
+
+	Camera *camera = scene->cameras[0].get();
 
 	for( int i=0; i<scene->objects.size(); ++i ){
-
 		std::shared_ptr<BaseObject> obj = scene->objects[i];
-
-		int mat = obj->app.material;
-
-		if( obj->app.mesh==NULL ){ continue; }
-
-		Material *appmat = NULL;
-		if( mat < scene->materials.size() && mat >= 0 ){ appmat = scene->materials[mat].get(); }
-		else { appmat = &defaultMat; }
-
-		draw_mesh( obj->app.mesh, appmat );
+		draw_mesh( obj.get(), camera );
 	}
 
 } // end draw objects
 
 
 void RenderGL::draw_objects_subdivided(){
-	Material defaultMat;
+
+	Camera *camera = scene->cameras[0].get();
 
 	for( int i=0; i<scene->objects.size(); ++i ){
 
 		std::shared_ptr<BaseObject> obj = scene->objects[i];
-
-		int mat = obj->app.material;
-
 		if( obj->app.mesh==NULL ){ continue; }
 
 		// Subdivide the mesh and draw that
@@ -129,19 +113,27 @@ void RenderGL::draw_objects_subdivided(){
 		mesh2.need_normals(true);
 		mesh2.need_tstrips();
 
-		Material *appmat = NULL;
-		if( mat < scene->materials.size() && mat >= 0 ){ appmat = scene->materials[mat].get(); }
-		else { appmat = &defaultMat; }
-
-		draw_mesh( &mesh2, appmat );
+		trimesh::TriMesh *oldmesh = obj->app.mesh;
+		obj->app.mesh = &mesh2;
+		draw_mesh( obj.get(), camera );
+		obj->app.mesh = oldmesh;
 	}
 
 } // end draw objects
 
 
-void RenderGL::draw_mesh( trimesh::TriMesh *themesh, Material* mat ){
+//void RenderGL::draw_mesh( trimesh::TriMesh *themesh, Material* mat, Camera *camera, trimesh::fxform xf ){
+void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 
-	if( themesh==NULL || mat==NULL ){ return; }
+	// Get the mesh
+	trimesh::TriMesh *themesh = obj->app.mesh;
+	if( themesh==NULL ){ return; }
+
+	// Get the material
+	int mat_idx = obj->app.material;
+	Material *mat = NULL;
+	if( mat_idx < scene->materials.size() && mat_idx >= 0 ){ mat = scene->materials[mat_idx].get(); }
+	else { mat = &defaultMat; }
 	if( mat->app.mode == 2 ){ return; } // invisible
 
 	// Vertices
@@ -189,11 +181,11 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, Material* mat ){
 	glUniform1i( blinnphong->uniform("hastex"), int(texture_id) );
 
 	// Set the matrices
-	glUniformMatrix4fv( blinnphong->uniform("model"), 1, GL_FALSE, camera->app.model );
+	glUniformMatrix4fv( blinnphong->uniform("model"), 1, GL_FALSE, obj->app.xf );
 	glUniformMatrix4fv( blinnphong->uniform("view"), 1, GL_FALSE, camera->app.view );
 	glUniformMatrix4fv( blinnphong->uniform("projection"), 1, GL_FALSE, camera->app.projection );
-	trimesh::XForm<float> eyepos = trimesh::inv( (camera->app.projection) * (camera->app.view) * (camera->app.model) );
-	glUniform3f( blinnphong->uniform("CamPos"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
+	trimesh::vec eyepos = camera->get_position();
+	glUniform3f( blinnphong->uniform("CamPos"), eyepos[0], eyepos[1], eyepos[2] );
 
 	setup_lights();
 
@@ -210,9 +202,6 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, Material* mat ){
 	if( mat->app.mode==0 ){
 
 		if( themesh->tstrips.size()==0 ){ themesh->need_tstrips(); }
-
-		// This doesn't work:
-//		glDrawElements(GL_TRIANGLE_STRIP, (themesh->tstrips.size()/3), GL_UNSIGNED_INT, &themesh->tstrips[0]);
 
 		// But this does:
 		int *t = &themesh->tstrips[0];
@@ -235,14 +224,6 @@ void RenderGL::draw_mesh( trimesh::TriMesh *themesh, Material* mat ){
 
 } // end draw
 
-
-void RenderGL::draw_lights(){
-
-	for( int i=0; i<scene->lights.size(); ++i ){
-		// TODO
-	}
-
-} // end draw lights
 
 
 void RenderGL::setup_lights(){

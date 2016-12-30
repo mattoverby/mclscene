@@ -22,10 +22,25 @@
 #ifndef MCLSCENE_CAMERA_H
 #define MCLSCENE_CAMERA_H 1
 
+#include <Vec.h>
 #include <XForm.h>
 #include <string>
 
 namespace mcl {
+
+	static trimesh::fxform make_view(trimesh::vec eye, trimesh::vec u, trimesh::vec v, trimesh::vec w){
+		trimesh::fxform r;
+		for(size_t i=0; i<3; ++i){
+			r[4*i] = u[i];
+			r[4*i+1] = v[i];
+			r[4*i+2] = w[i];
+		}
+		r[12] = -eye.dot(u);
+		r[13] = -eye.dot(v);
+		r[14] = -eye.dot(w);
+		return r;
+	}
+
 
 //
 //	Camera base class
@@ -34,16 +49,103 @@ class Camera {
 public:
 	virtual ~Camera(){}
 
+	// Return eye world location
+	virtual trimesh::vec get_position() = 0;
+
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode ){ return ""; }
+
+	// Zoom (move forward/backward)
+	virtual void zoom( float dz ){}
+
+	// Rotate (input is left-drag x and y amount from screen)
+	virtual void rotate( float dx, float dy ){}
+
+	// Pan (input is right-drag x and y amount from screen)
+	virtual void pan( float dx, float dy ){}
+
+	// Update the view matrix
+	virtual void update_view(){}
+
+	// Update the projection matrix
+	virtual void update_proj( float aspect_ratio ){}
 
 	// Used by mcl::Application
 	// This data is used by the mclscene OpenGL renderer
 	struct AppData {
-		trimesh::XForm<float> model, view, projection;
+		trimesh::fxform view, projection;
 	} app ;
 };
 
+
+class Trackball : public Camera {
+public:
+	trimesh::vec lookat, eye, u, v, w;
+	float rotx, roty, panx, pany;
+	float fov_deg;
+	trimesh::Vec<2,float> clipping; // clipping plane for proj. matrix
+
+	Trackball( trimesh::vec eye_, trimesh::vec lookat_ ) : eye(eye_), lookat(lookat_),
+		rotx(0.f), roty(0.f),
+		panx(0.f), pany(0.f),
+		fov_deg(30.f),
+		clipping(0.1f,1000.f) {
+		update_basis();
+	}
+
+	trimesh::vec get_position(){ return eye; }
+
+	void update_basis(){
+		using namespace trimesh;
+		vec up(0,1,0);
+		vec dir = lookat - eye;
+		normalize(dir);
+		w = dir*-1.f;
+		u = up.cross(w);
+		v = w.cross(u);
+		update_view();
+	}
+
+	void zoom( float dz ){
+		eye -= w*dz;
+	}
+
+	void rotate( float dx, float dy ){
+		rotx -= dx;
+		roty -= dy;
+	}
+
+	void pan( float dx, float dy ){
+		panx += dx;
+		pany += dy;
+	}
+
+	void update_view(){
+		using namespace trimesh;
+
+		// Update rotation
+		fxform xf = fxform::rot(rotx,v) * fxform::rot(roty,u);
+		rotx = 0.f;
+		roty = 0.f;
+		u = xf * u;
+		v = xf * v;
+		w = xf * w;
+
+		lookat += v*pany;
+		lookat -= u*panx;
+		pany = 0.f;
+		panx = 0.f;
+
+		float rad = len(lookat-eye);
+		eye = w*rad + lookat;
+
+		this->app.view = make_view( eye, u, v, w );
+	}
+
+	void update_proj( float aspect ){
+		this->app.projection = trimesh::fxform::persp( fov_deg, aspect, clipping[0], clipping[1] );
+	}
+};
 
 } // end namespace mcl
 
