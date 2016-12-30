@@ -99,15 +99,6 @@ private:
 };
 
 
-//
-//	New mesh type
-//
-class Mesh : public BaseObject {
-public:
-	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
-};
-
-
 } // end namespace mcl
 
 #endif

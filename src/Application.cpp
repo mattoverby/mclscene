@@ -114,9 +114,9 @@ int Application::display(){
 	framebuffer_size_callback(window, width, height); // sets the projection matrix
 
 	// Initialize OpenGL
-	glShadeModel(GL_SMOOTH);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_MULTISAMPLE);
+	glClearColor(settings.clear_color[0],settings.clear_color[1],settings.clear_color[2],1.f);
 
 	// Game loop
 	float t_old = glfwGetTime();
@@ -142,7 +142,6 @@ int Application::display(){
 		//
 
 		{ // Clear screen
-			glClearColor(settings.clear_color[0],settings.clear_color[1],settings.clear_color[2],1.f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			if( settings.gamma_correction ){ glEnable(GL_FRAMEBUFFER_SRGB); } // gamma correction
 
