@@ -25,6 +25,7 @@
 #include "Object.hpp"
 #include "AABB.hpp"
 #include "TriMesh_algo.h"
+#include <Eigen/Core>
 
 namespace mcl {
 
@@ -41,7 +42,7 @@ public:
 
 	trimesh::vec *p0, *p1, *p2, *n0, *n1, *n2;
 
-	void bounds( trimesh::vec &bmin, trimesh::vec &bmax ){
+	void bounds( Eigen::Vector3d &bmin, Eigen::Vector3d &bmax ){
 		AABB aabb; aabb += *p0; aabb += *p1; aabb += *p2;
 		bmin = aabb.min; bmax = aabb.max;
 	}
@@ -64,6 +65,7 @@ public:
 class TriangleMesh : public BaseObject {
 private: std::unique_ptr<trimesh::TriMesh> tris; // tris is actually the data container
 public:
+//	typedef Eigen::Vector3d vec3;
 
 	TriangleMesh() : tris(new trimesh::TriMesh),
 		vertices(tris->vertices), normals(tris->normals), faces(tris->faces),
@@ -81,7 +83,7 @@ public:
 
 	void apply_xform( const trimesh::xform &xf );
 
-	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
+	void bounds( Eigen::Vector3d &bmin, Eigen::Vector3d &bmax );
 
 	void update(){ aabb->valid=false; }
 
@@ -97,6 +99,34 @@ private:
 	void make_tri_refs();
 	std::vector< std::shared_ptr<BaseObject> > tri_refs;
 };
+
+
+/*
+//
+//	Mesh whose vertices reside elsewhere in memory.
+//	Eventually this will replace the mesh above.
+//
+class RefMesh : public BaseObject {
+public:
+	typedef Eigen::Vector3d vec3;
+
+	void bounds( trimesh::vec &bmin, trimesh::vec &bmax ){}
+
+	void update(){ aabb->valid=false; }
+
+	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
+		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
+		prims.insert( prims.end(), tri_refs.begin(), tri_refs.end() );
+	}
+
+private:
+	std::shared_ptr<AABB> aabb;
+
+	// Triangle refs are used for BVH hook-in.
+	void make_tri_refs();
+	std::vector< std::shared_ptr<BaseObject> > tri_refs;
+};
+*/
 
 
 } // end namespace mcl

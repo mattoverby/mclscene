@@ -39,7 +39,7 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	scene = scene_;
 
 	std::stringstream bp_ss;
-	bp_ss << MCLSCENE_SRC_DIR << "/src/blinnphong.";
+	bp_ss << MCLSCENE_SRC_DIR << "/src/shader.";
 
 	// Create shaders
 	blinnphong = std::unique_ptr<Shader>( new Shader() );
@@ -121,9 +121,77 @@ void RenderGL::draw_objects_subdivided(){
 
 } // end draw objects
 
+void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 
+	// TEMPORARY:
+	obj->app.update( obj->app.mesh );
+	if( obj->app.mesh==NULL ){ return; }
+
+	// Get the material
+	Material *mat = NULL;
+	if( obj->app.material < scene->materials.size() && obj->app.material >= 0 ){ mat = scene->materials[obj->app.material].get(); }
+	else { mat = &defaultMat; }
+	if( mat->app.mode == 2 ){ return; } // invisible
+
+
+	// Get material properties
+	trimesh::vec ambient = mat->app.amb;
+	trimesh::vec diffuse = mat->app.diff;
+	trimesh::vec specular = mat->app.spec;
+	float shininess = mat->app.shini;
+
+
+	//
+	//	Set up lighting and materials
+	//
+	blinnphong->enable();
+
+	// Set the matrices
+	glUniformMatrix4fv( blinnphong->uniform("model"), 1, GL_FALSE, obj->app.xf );
+	glUniformMatrix4fv( blinnphong->uniform("view"), 1, GL_FALSE, camera->app.view );
+	glUniformMatrix4fv( blinnphong->uniform("projection"), 1, GL_FALSE, camera->app.projection );
+	trimesh::vec eyepos = camera->get_position();
+	glUniform3f( blinnphong->uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
+
+	setup_lights();
+
+	// Set material properties
+	glUniform3f( blinnphong->uniform("material.ambient"), ambient[0], ambient[1], ambient[2] );
+	glUniform3f( blinnphong->uniform("material.diffuse"), diffuse[0], diffuse[1], diffuse[2] );
+	glUniform3f( blinnphong->uniform("material.specular"), specular[0], specular[1], specular[2] );
+	glUniform1f( blinnphong->uniform("material.shininess"), shininess );
+
+	// Bind buffers
+	glBindVertexArray(obj->app.tris_vao);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->app.faces_ibo);
+
+	//
+	//	Draw a solid mesh
+	//
+	if( mat->app.mode==0 ){
+
+		glDrawElements(GL_TRIANGLES, obj->app.num_faces*3, GL_UNSIGNED_INT, 0);
+
+	} // end draw as triangle mesh
+
+//	else if( mat->app.mode==1 ) { glDrawArrays(GL_POINTS, 0, themesh->vertices.size()); }
+
+	// Unbind
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	blinnphong->disable();	
+}
+
+/*
 //void RenderGL::draw_mesh( trimesh::TriMesh *themesh, Material* mat, Camera *camera, trimesh::fxform xf ){
 void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
+
+	obj->app.update( obj->app.mesh );
+
+
+
+
+
 
 	// Get the mesh
 	trimesh::TriMesh *themesh = obj->app.mesh;
@@ -138,12 +206,14 @@ void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 
 	// Vertices
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer( 3, GL_FLOAT, sizeof(themesh->vertices[0]), &themesh->vertices[0][0] );
+//	glVertexPointer( 3, GL_FLOAT, sizeof(themesh->vertices[0]), &themesh->vertices[0][0] );
+	glVertexPointer( 3, GL_FLOAT, obj->app.stride(), obj->app.vertices );
 
 	// Normals
 	if( themesh->normals.size() == 0 ){ themesh->need_normals(true); }
 	glEnableClientState(GL_NORMAL_ARRAY);
-	glNormalPointer( GL_FLOAT, sizeof(themesh->normals[0]), &themesh->normals[0][0] );
+//	glNormalPointer( GL_FLOAT, sizeof(themesh->normals[0]), &themesh->normals[0][0] );
+	glVertexPointer( 3, GL_FLOAT, obj->app.stride(), obj->app.normals );
 
 	// Texture coordinates
 	GLuint texture_id = 0;
@@ -223,7 +293,7 @@ void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 } // end draw
-
+*/
 
 
 void RenderGL::setup_lights(){

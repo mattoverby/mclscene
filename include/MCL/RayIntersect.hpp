@@ -24,6 +24,7 @@
 
 #include <memory>
 #include <Vec.h>
+#include <Eigen/Core>
 #include "MCL/Projection.hpp"
 
 namespace mcl {
@@ -59,10 +60,10 @@ namespace intersect {
 
 	// ray -> axis aligned bounding box
 	// Returns true/false only and does not set the payload.
-	static inline bool ray_aabb( const Ray *ray, const trimesh::vec &min, const trimesh::vec &max, const Payload *payload );
+	static inline bool ray_aabb( const Ray *ray, const Eigen::Vector3d &min, const Eigen::Vector3d &max, const Payload *payload );
 
 	// Squared distance from point to aabb
-	static inline double point_aabb( const trimesh::vec &point, const trimesh::vec &min, const trimesh::vec &max );
+	static inline double point_aabb( const trimesh::vec &point, const Eigen::Vector3d &min, const Eigen::Vector3d &max );
 
 	// Point-on-triangle test: returns projection on to triangle surface
 	static inline trimesh::vec point_triangle( const trimesh::vec &point, const trimesh::vec &p0, const trimesh::vec &p1, const trimesh::vec &p2 );
@@ -106,7 +107,7 @@ static inline bool mcl::intersect::ray_triangle( const Ray *ray, const trimesh::
 } // end  ray -> triangle
 
 // ray -> axis aligned bounding box
-static inline bool mcl::intersect::ray_aabb( const Ray *ray, const trimesh::vec &min, const trimesh::vec &max, const Payload *payload ){
+static inline bool mcl::intersect::ray_aabb( const Ray *ray, const Eigen::Vector3d &min, const Eigen::Vector3d &max, const Payload *payload ){
 
 	float txmin=0.f, txmax=0.f;
 	float dirX = 1.f / ray->direction[0];
@@ -153,7 +154,7 @@ static inline bool mcl::intersect::ray_aabb( const Ray *ray, const trimesh::vec 
 } // end ray box intersection
 
 
-static inline double mcl::intersect::point_aabb( const trimesh::vec &point, const trimesh::vec &min, const trimesh::vec &max ){
+static inline double mcl::intersect::point_aabb( const trimesh::vec &point, const Eigen::Vector3d &min, const Eigen::Vector3d &max ){
 	float sqDist=0.f;
 	for( int i=0; i<3; ++i ){
 		if( point[i] < min[i] ){ sqDist += (min[i]-point[i])*(min[i]-point[i]); }

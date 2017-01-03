@@ -48,7 +48,7 @@ public:
 
 	// General getters
 	std::string get_xml( int mode=0 );
-	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
+	void bounds( Eigen::Vector3d &bmin, Eigen::Vector3d &bmax );
 	void update(){ aabb->valid=false; }
 
 	void apply_xform( const trimesh::xform &xf );

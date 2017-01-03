@@ -26,6 +26,7 @@
 #include "XForm.h"
 #include "TriMesh.h"
 #include "RayIntersect.hpp"
+#include <Eigen/Core>
 
 namespace mcl {
 
@@ -37,7 +38,7 @@ public:
 	virtual ~BaseObject(){}
 
 	// Return the bounding box of the object
-	virtual void bounds( trimesh::vec &bmin, trimesh::vec &bmax ) = 0;
+	virtual void bounds( Eigen::Vector3d &bmin, Eigen::Vector3d &bmax ) = 0;
 
 	// When an object's physical parameters are changed, it may need to
 	// update its bounding box, internal parameters, etc...
@@ -64,10 +65,55 @@ public:
 	// The following data is used by mcl::Application.
 	// Derived object is responsible for allocating/deallocating AppData::mesh.
 	struct AppData {
-		AppData() : mesh(NULL), material(-1) {}
+		AppData() : mesh(NULL), material(-1), faces(0), is_dynamic(true),
+		num_vertices(0), num_normals(0), num_colors(0), num_faces(0),
+		verts_vbo(0), colors_vbo(0), normals_vbo(0), faces_ibo(0), tris_vao(0) {}
+
+		~AppData(){ if( faces ){ delete faces; } }
+
 		trimesh::TriMesh *mesh; // If null, the object is not rendered
 		int material; // material index into SceneManager::materials
 		trimesh::fxform xf; // xform used for instancing, inits to identity
+
+		size_t stride(){ return 3*sizeof(float); }
+
+		// Temporary function for debugging:
+		void update( trimesh::TriMesh *themesh ){
+
+			if(themesh==NULL){ return; }
+			themesh->need_normals();
+			themesh->need_faces();
+			if( themesh->vertices.size() ){ vertices = &themesh->vertices[0][0]; }
+			if( themesh->normals.size() ){ normals = &themesh->normals[0][0]; }
+			if( themesh->colors.size() ){ colors = &themesh->colors[0][0]; }
+			if( num_faces<themesh->faces.size() ){ faces = new int[themesh->faces.size()*3]; }
+			for( int i=0; i<themesh->faces.size(); ++i ){
+				faces[i*3+0] = themesh->faces[i][0];
+				faces[i*3+1] = themesh->faces[i][1];
+				faces[i*3+2] = themesh->faces[i][2];
+			}
+
+			num_vertices = themesh->vertices.size();
+			num_normals = themesh->normals.size();
+			num_colors = themesh->colors.size();
+			num_faces = themesh->faces.size();
+
+		}
+
+		// New stuff:
+		// Assumes 3D vertices/normals/colors/faces
+		bool is_dynamic;
+		float* vertices;
+		int num_vertices;
+		float* normals;
+		int num_normals;
+		float* colors;
+		int num_colors;
+		int* faces;
+		int num_faces;
+
+		unsigned int verts_vbo, colors_vbo, normals_vbo, faces_ibo, tris_vao;
+
 	} app ;
 };
 

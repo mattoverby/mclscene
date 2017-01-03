@@ -59,7 +59,7 @@ bool TriangleMesh::load( std::string filename ){
 } // end load file
 
 
-void TriangleMesh::bounds( trimesh::vec &bmin, trimesh::vec &bmax ){
+void TriangleMesh::bounds( Eigen::Vector3d &bmin, Eigen::Vector3d &bmax ){
 	if( !aabb->valid ){
 		for( int f=0; f<faces.size(); ++f ){
 			(*aabb) += vertices[ faces[f][0] ];

@@ -19,60 +19,17 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_AABB_H
-#define MCLSCENE_AABB_H 1
+#ifndef MCLSCENE_VEC3_H
+#define MCLSCENE_VEC3_H 1
 
-#include "MCL/Vec3.hpp"
+#include <Eigen/Core>
+#include "Vec.h" // temporary
 
 namespace mcl {
 
-class AABB { // axis aligned bounding box
-public:
-	AABB() : valid(false) {}
-//	AABB( trimesh::vec min_, trimesh::vec max_ ) : min(min_), max(max_), valid(true) {}
-//	trimesh::vec min, max;
-	AABB( Eigen::Vector3d min_, Eigen::Vector3d max_ ) : min(min_), max(max_), valid(true) {}
-	Eigen::Vector3d min, max;
-	bool valid;
-
-//	trimesh::vec center(){ return (min+max)*0.5f; }
-	Eigen::Vector3d center(){ return (min+max)*0.5; }
-
-//	float radius(){ return trimesh::len(max-min)*0.5f; }
-	double radius(){ return (max-min).norm()*0.5f; }
-
-	AABB& operator+=(const AABB& aabb){
-		if( valid ){ minp( min, aabb.min ); maxp( max, aabb.max ); }
-		else{ min = aabb.min; max = aabb.max; valid = true; }
-		return *this;
-	}
-
-	AABB& operator+=(const Eigen::Vector3d& p){
-		if( valid ){ minp( min, p ); maxp( max, p ); }
-		else{ min = p; max = p; valid = true; }
-		return *this;
-	}
-
-	AABB& operator+=(const trimesh::vec& tmp){
-		Eigen::Vector3d p(tmp[0],tmp[1],tmp[2]);
-		if( valid ){ minp( min, p ); maxp( max, p ); }
-		else{ min = p; max = p; valid = true; }
-		return *this;
-	}
-
-	static inline void minp( Eigen::Vector3d &m, const Eigen::Vector3d &b ){
-		for( int i=0; i<3; ++i ){ m[i] = m[i] < b[i] ? m[i] : b[i]; }
-	}
-
-	static inline void maxp( Eigen::Vector3d &m, const Eigen::Vector3d &b ){
-		for( int i=0; i<3; ++i ){ m[i] = m[i] > b[i] ? m[i] : b[i]; }
-	}
-
-};
-
+typedef Eigen::Vector3d Vec3d;
+typedef Eigen::Vector3f Vec3f;
 
 } // end namespace mcl
-
-
 
 #endif

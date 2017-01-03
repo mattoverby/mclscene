@@ -64,7 +64,7 @@ public:
 	// Transform the mesh by the given matrix
 	void apply_xform( const trimesh::xform &xf );
 
-	void bounds( trimesh::vec &bmin, trimesh::vec &bmax );
+	void bounds( Eigen::Vector3d &bmin, Eigen::Vector3d &bmax );
 
 	void update(){ aabb->valid=false; }
 

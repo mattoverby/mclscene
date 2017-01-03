@@ -74,18 +74,18 @@ int BVHBuilder::make_tree_lbvh( BVHNode *root, const std::vector< std::shared_pt
 	if( prims.size()==0 ){ return 1; }
 
 	// Compute centroids
-	std::vector< vec > centroids( prims.size() );
+	std::vector< Eigen::Vector3d > centroids( prims.size() );
 	AABB world_aabb;
 	for( int i=0; i<prims.size(); ++i ){
-		vec bmin, bmax; prims[i]->bounds( bmin, bmax );
+		Eigen::Vector3d bmin, bmax; prims[i]->bounds( bmin, bmax );
 		world_aabb += bmin; world_aabb += bmax;
 		centroids[i]=( (bmin+bmax)*0.5f );
 	}
 
-	float max_scaled = 1024.f;
-	vec world_min( world_aabb.min );
-	vec world_max( world_aabb.max );
-	vec world_len = max_scaled / (world_max-world_min);
+	double max_scaled = 1024.f;
+	Eigen::Vector3d world_min( world_aabb.min );
+	Eigen::Vector3d world_max( world_aabb.max );
+	Eigen::Vector3d world_len = (world_max-world_min) * (1.0/max_scaled);
 
 	// Assign morton codes
 	std::vector< std::pair< morton_type, int > > morton_codes( prims.size() );
@@ -93,8 +93,8 @@ int BVHBuilder::make_tree_lbvh( BVHNode *root, const std::vector< std::shared_pt
 	for( int i=0; i<prims.size(); ++i ){
 
 		// Scale the centroid to a value between 0 and max_scaled and convert to integer.
-		vec cent = centroids[i];
-		cent = ( cent - world_min ) * world_len;
+		Eigen::Vector3d cent = centroids[i];
+		cent = ( cent - world_min ).cwiseProduct( world_len );
 		morton_encode_type ix = morton_encode_type( cent[0] );
 		morton_encode_type iy = morton_encode_type( cent[1] );
 		morton_encode_type iz = morton_encode_type( cent[2] );
@@ -173,7 +173,7 @@ void BVHBuilder::lbvh_split( BVHNode *node,
 
 	// Now that the tree is constructed, create the aabb
 	for( int i=0; i<node->m_objects.size(); ++i ){
-		trimesh::vec bmin, bmax;
+		Eigen::Vector3d bmin, bmax;
 		node->m_objects[i]->bounds( bmin, bmax );
 		*(node->aabb) += bmin; *(node->aabb) += bmax;
 	}
@@ -225,13 +225,13 @@ void BVHBuilder::spatial_split( BVHNode *node, const std::vector< std::shared_pt
 	using namespace trimesh;
 
 	// Create the aabb
-	std::vector< point > obj_centers( queue.size() ); // store the centers for later lookup
+	std::vector< Eigen::Vector3d > obj_centers( queue.size() ); // store the centers for later lookup
 	for( int i=0; i<queue.size(); ++i ){
-		vec bmin, bmax; prims[ queue[i] ]->bounds( bmin, bmax );
+		Eigen::Vector3d bmin, bmax; prims[ queue[i] ]->bounds( bmin, bmax );
 		*(node->aabb) += bmin; *(node->aabb) += bmax;
-		obj_centers[i] = point( (bmin+bmax)*0.5f );
+		obj_centers[i] = Eigen::Vector3d( (bmin+bmax)*0.5 );
 	}
-	point center = node->aabb->center();
+	Eigen::Vector3d center = node->aabb->center();
 
 	// If num faces == 1, we're done
 	if( queue.size()==0 ){ return; }
@@ -339,23 +339,23 @@ bool BVHTraversal::closest_object( const BVHNode *node, const trimesh::vec &poin
 } // end closest object
 
 
-void BVHNode::get_edges( std::vector<trimesh::vec> &edges, bool add_children ){
+void BVHNode::get_edges( std::vector<Eigen::Vector3d> &edges, bool add_children ){
 
 	using namespace trimesh;
 	{
-		vec min = aabb->min;
-		vec max = aabb->max;
+		Eigen::Vector3d min = aabb->min;
+		Eigen::Vector3d max = aabb->max;
 
 		// Bottom quad
-		point a = min;
-		point b( max[0], min[1], min[2] );
-		point c( max[0], min[1], max[2] );
-		point d( min[0], min[1], max[2] );
+		Eigen::Vector3d a = min;
+		Eigen::Vector3d b( max[0], min[1], min[2] );
+		Eigen::Vector3d c( max[0], min[1], max[2] );
+		Eigen::Vector3d d( min[0], min[1], max[2] );
 		// Top quad
-		point e( min[0], max[1], min[2] );
-		point f( max[0], max[1], min[2] );
-		point g = max;
-		point h( min[0], max[1], max[2] );
+		Eigen::Vector3d e( min[0], max[1], min[2] );
+		Eigen::Vector3d f( max[0], max[1], min[2] );
+		Eigen::Vector3d g = max;
+		Eigen::Vector3d h( min[0], max[1], max[2] );
 
 		// make edges
 		// bottom

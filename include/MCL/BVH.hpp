@@ -69,8 +69,8 @@ public:
 	mutable std::vector< std::shared_ptr<BaseObject> > m_objects; // empty unless a leaf node
 
 	bool is_leaf() const { return m_objects.size()>0; }
-	void get_edges( std::vector<trimesh::vec> &edges, bool add_children=true ); // for visual debugging
-	void bounds( trimesh::vec &bmin, trimesh::vec &bmax ) const { bmin=aabb->min; bmax=aabb->max; }
+	void get_edges( std::vector<Eigen::Vector3d> &edges, bool add_children=true ); // for visual debugging
+	void bounds( Eigen::Vector3d &bmin, Eigen::Vector3d &bmax ) const { bmin=aabb->min; bmax=aabb->max; }
 };
 
 //

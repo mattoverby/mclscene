@@ -83,6 +83,8 @@ protected:
 
 	void run_simulator_step();
 
+	void update_mesh_buffers();
+
 	// Utility functions:
 	void save_screenshot(GLFWwindow* window);
 

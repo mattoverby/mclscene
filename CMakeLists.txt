@@ -90,6 +90,7 @@ set( MCLSCENE_SRCS
 	include/MCL/TriangleMesh.hpp	src/TriangleMesh.cpp
 	include/MCL/PointCloud.hpp	src/PointCloud.cpp
 	include/MCL/BVH.hpp		src/BVH.cpp
+	include/MCL/Vec3.hpp
 	include/MCL/Param.hpp
 	include/MCL/Object.hpp
 	include/MCL/VertexSort.hpp
@@ -141,8 +142,8 @@ if(MCL_BUILD_SAMPLES)
 	add_executable( load_test samples/LoadTest.cpp )
 	target_link_libraries( load_test ${MCLSCENE_LIBRARIES} )
 
-	add_executable( testbvh samples/BVHTest.cpp )
-	target_link_libraries( testbvh ${MCLSCENE_LIBRARIES} )
+#	add_executable( testbvh samples/BVHTest.cpp )
+#	target_link_libraries( testbvh ${MCLSCENE_LIBRARIES} )
 
 	# viewer samples
 	if(MCL_BUILD_RENDERING)
@@ -152,8 +153,8 @@ if(MCL_BUILD_SAMPLES)
 		add_executable( mesh_viewer samples/MeshViewer.cpp )
 		target_link_libraries( mesh_viewer mclscene ${MCLSCENE_LIBRARIES} )
 
-		add_executable( bvh_viewer samples/BVHViewer.cpp )
-		target_link_libraries( bvh_viewer ${MCLSCENE_LIBRARIES} )
+#		add_executable( bvh_viewer samples/BVHViewer.cpp )
+#		target_link_libraries( bvh_viewer ${MCLSCENE_LIBRARIES} )
 
 		add_executable( eigentest samples/EigenTest.cpp )
 		target_link_libraries( eigentest ${MCLSCENE_LIBRARIES} )

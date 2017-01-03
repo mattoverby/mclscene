@@ -84,6 +84,12 @@ int Application::display(){
 	glfwWindowHint(GLFW_SAMPLES, 4); // anti aliasing
 	glfwWindowHint(GLFW_SRGB_CAPABLE, true); // gamma correction
 
+	// Ask for OpenGL 3.2
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
 	// Get the monitor max window size
 	const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	int max_width = mode->width;
@@ -106,8 +112,12 @@ int Application::display(){
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1);
 
+	glewExperimental = GL_TRUE;
 	glewInit();
 	if( !renderer.init( scene ) ){ return EXIT_FAILURE; } // creates shaders
+
+	// Set up mesh buffers
+	update_mesh_buffers();
 
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
@@ -246,7 +256,7 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
 
 	float scene_d = std::fmaxf( scene_radius*2.f, 0.2f );
 	float aspect_ratio = 1.f;
-	if( height > 0 ){ aspect_ratio = std::fmaxf( (float) width / (float) height, 1e-6f ); }
+	if( height > 0 ){ aspect_ratio = std::fmaxf( (float)width / (float)height, 1e-6f ); }
 	glViewport(0, 0, width, height);
 	current_cam->update_proj( aspect_ratio );
 }
@@ -254,7 +264,67 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
 
 
 
+void Application::update_mesh_buffers(){
 
+	for( int i=0; i<scene->objects.size(); ++i ){
+		std::shared_ptr<BaseObject> obj = scene->objects[i];
+		if( !obj->app.is_dynamic ){ continue; }
+		size_t stride = obj->app.stride();
+
+		obj->app.update( obj->app.mesh ); // THIS IS TEMPORARY
+
+		// Create the buffer for vertices
+		if( !obj->app.verts_vbo ){ glGenBuffers(1, &obj->app.verts_vbo); }
+		glBindBuffer(GL_ARRAY_BUFFER, obj->app.verts_vbo);
+		glBufferData(GL_ARRAY_BUFFER, obj->app.num_vertices*stride, obj->app.vertices, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		// Create the buffer for colors
+		if( !obj->app.colors_vbo ){ glGenBuffers(1, &obj->app.colors_vbo); }
+		glBindBuffer(GL_ARRAY_BUFFER, obj->app.colors_vbo);
+		glBufferData(GL_ARRAY_BUFFER, obj->app.num_colors*stride, obj->app.colors, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		// Create the buffer for normals
+		if( !obj->app.normals_vbo ){ glGenBuffers(1, &obj->app.normals_vbo); }
+		glBindBuffer(GL_ARRAY_BUFFER, obj->app.normals_vbo);
+		glBufferData(GL_ARRAY_BUFFER, obj->app.num_normals*stride, obj->app.normals, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		// Create the buffer for indices
+		if( !obj->app.faces_ibo ){ glGenBuffers(1, &obj->app.faces_ibo); }
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->app.faces_ibo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, obj->app.num_faces*sizeof(int)*3, obj->app.faces, GL_STATIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+		// Create the VAO
+		if( !obj->app.tris_vao ){
+
+			glGenVertexArrays(1, &obj->app.tris_vao);
+			glBindVertexArray(obj->app.tris_vao);
+
+			// location=0 is the vertex
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, obj->app.verts_vbo);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, 0);
+
+			// location=1 is the color
+			glEnableVertexAttribArray(1);
+			glBindBuffer(GL_ARRAY_BUFFER, obj->app.colors_vbo);
+			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, 0);
+
+			// location=2 is the normal
+			glEnableVertexAttribArray(2);
+			glBindBuffer(GL_ARRAY_BUFFER, obj->app.normals_vbo);
+			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, 0);
+
+			// Done setting data for the vao
+			glBindVertexArray(0);
+		}
+
+	}
+
+}
 
 
 
@@ -361,5 +431,8 @@ void Application::run_simulator_step(){
 	// Update the scene radius
 	trimesh::vec unused;
 	scene->get_bsphere(&unused,&scene_radius,true);
+
+	// Update geometry on device
+	update_mesh_buffers();
 }
 
