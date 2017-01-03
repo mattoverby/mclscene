@@ -25,6 +25,12 @@
 #include "Object.hpp"
 #include "AABB.hpp"
 
+//
+//	TODO
+//
+
+
+/*
 namespace mcl {
 
 //
@@ -76,5 +82,5 @@ private:
 
 
 } // end namespace mcl
-
+*/
 #endif

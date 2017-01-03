@@ -30,21 +30,13 @@ namespace mcl {
 //	Tetrahedral Mesh
 //
 class TetMesh : public BaseObject {
-private: std::unique_ptr<trimesh::TriMesh> tris; // tris is actually the data container
 public:
-	struct tet {
-		tet(){}
-		tet( int a, int b, int c, int d ){ v[0]=a; v[1]=b; v[2]=c; v[3]=d; }
-		int v[4];
-	};
-
-	std::vector< tet > tets; // all elements
-	std::vector< trimesh::point > &vertices; // all vertices in the tet mesh
-	std::vector< trimesh::vec > &normals; // zero length for all non-surface normals
-	std::vector< trimesh::TriMesh::Face > &faces; // surface triangles
-
-	TetMesh() : tris(new trimesh::TriMesh), vertices(tris->vertices), normals(tris->normals), faces(tris->faces),
-		aabb(new AABB) { app.mesh = tris.get(); }
+	std::vector< Vec4i > tets; // all elements
+	std::vector< Vec3d > vertices; // all vertices in the tet mesh
+	std::vector< Vec3d > normals; // zero length for all non-surface normals
+	std::vector< Vec3d > colors; // per vertex colors
+	std::vector< Vec3i > faces; // surface triangles
+	std::vector< Vec2d > texcoords; // per vertex uv coords
 
 	// Filename is the first part of a tetmesh which must contain an .ele and .node file.
 	// If a ply file is supplied, tetgen will be used to tetrahedralize the mesh (however,
@@ -66,7 +58,7 @@ public:
 
 	void bounds( Vec3d &bmin, Vec3d &bmax );
 
-	void update(){ aabb->valid=false; }
+	void update_appdata();
 
 	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
 		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
@@ -76,7 +68,7 @@ public:
 	void get_surface_vertices( std::vector<int> *indices );
 
 private:
-	std::shared_ptr<AABB> aabb;
+	AABB aabb;
 
 	bool load_node( std::string filename );
 

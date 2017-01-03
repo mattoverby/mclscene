@@ -24,7 +24,6 @@
 
 #include "Object.hpp"
 #include "AABB.hpp"
-#include "TriMesh_algo.h"
 
 namespace mcl {
 
@@ -35,11 +34,11 @@ namespace mcl {
 //
 class TriangleRef : public BaseObject {
 public:
-	TriangleRef( trimesh::vec *p0_, trimesh::vec *p1_, trimesh::vec *p2_,
-		trimesh::vec *n0_, trimesh::vec *n1_, trimesh::vec *n2_ ) :
+	TriangleRef( Vec3d *p0_, Vec3d *p1_, Vec3d *p2_,
+		Vec3d *n0_, Vec3d *n1_, Vec3d *n2_ ) :
 		p0(p0_), p1(p1_), p2(p2_), n0(n0_), n1(n1_), n2(n2_) {}
 
-	trimesh::vec *p0, *p1, *p2, *n0, *n1, *n2;
+	Vec3d *p0, *p1, *p2, *n0, *n1, *n2;
 
 	void bounds( Vec3d &bmin, Vec3d &bmax ){
 		AABB aabb; aabb += *p0; aabb += *p1; aabb += *p2;
@@ -47,13 +46,13 @@ public:
 	}
 
 	bool ray_intersect( const intersect::Ray *ray, intersect::Payload *payload ) const {
-		bool hit = intersect::ray_triangle( ray, to_Vec3d(*p0), to_Vec3d(*p1), to_Vec3d(*p2), to_Vec3d(*n0), to_Vec3d(*n1), to_Vec3d(*n2), payload );
+		bool hit = intersect::ray_triangle( ray, *p0, *p1, *p2, *n0, *n1, *n2, payload );
 		if( hit ){ payload->material = this->app.material; }
 		return hit;
 	}
 
 	Vec3d projection( const Vec3d &point ) const {
-		return intersect::point_triangle( point, to_Vec3d(*p0), to_Vec3d(*p1), to_Vec3d(*p2) );
+		return intersect::point_triangle( point, *p0, *p1, *p2 );
 	}
 };
 
@@ -62,27 +61,28 @@ public:
 //	Just a convenient wrapper to plug into the system
 //
 class TriangleMesh : public BaseObject {
-private: std::unique_ptr<trimesh::TriMesh> tris; // tris is actually the data container
 public:
-	TriangleMesh() : tris(new trimesh::TriMesh),
-		vertices(tris->vertices), normals(tris->normals), faces(tris->faces),
-		aabb(new AABB) { app.mesh = tris.get(); } // end constructor
+	std::vector< Vec3d > vertices; // all vertices in the tet mesh
+	std::vector< Vec3d > normals; // zero length for all non-surface normals
+	std::vector< Vec3d > colors; // per vertex colors
+	std::vector< Vec3i > faces; // surface triangles
+	std::vector< Vec2d > texcoords; // per vertex uv coords
 
 	// Returns true on success
 	bool load( std::string filename );
 
-	std::string get_xml( int mode=0 );
+	// Saves the triangle mesh to a file (obj)
+	void save( std::string filename );
 
-	// Mesh data
-	std::vector<trimesh::point> &vertices;
-	std::vector<trimesh::vec> &normals;
-	std::vector<trimesh::TriMesh::Face> &faces;
+	std::string get_xml( int mode=0 );
 
 	void apply_xform( const trimesh::xform &xf );
 
 	void bounds( Vec3d &bmin, Vec3d &bmax );
 
-	void update(){ aabb->valid=false; }
+	void need_normals( bool recompute=false );
+
+	void update_appdata();
 
 	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
 		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
@@ -90,40 +90,12 @@ public:
 	}
 
 private:
-	std::shared_ptr<AABB> aabb;
+	AABB aabb;
 
 	// Triangle refs are used for BVH hook-in.
 	void make_tri_refs();
 	std::vector< std::shared_ptr<BaseObject> > tri_refs;
 };
-
-
-/*
-//
-//	Mesh whose vertices reside elsewhere in memory.
-//	Eventually this will replace the mesh above.
-//
-class RefMesh : public BaseObject {
-public:
-	typedef Vec3d vec3;
-
-	void bounds( trimesh::vec &bmin, trimesh::vec &bmax ){}
-
-	void update(){ aabb->valid=false; }
-
-	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
-		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
-		prims.insert( prims.end(), tri_refs.begin(), tri_refs.end() );
-	}
-
-private:
-	std::shared_ptr<AABB> aabb;
-
-	// Triangle refs are used for BVH hook-in.
-	void make_tri_refs();
-	std::vector< std::shared_ptr<BaseObject> > tri_refs;
-};
-*/
 
 
 } // end namespace mcl

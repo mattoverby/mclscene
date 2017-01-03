@@ -45,6 +45,15 @@ namespace Projection {
 	//
 	static Vec3d Sphere( const Vec3d &center, const double &rad, const Vec3d &point );
 
+	//
+	//	Helper functions
+	//
+	static double myclamp( double val, double min, double max ){
+		double v = val < min ? min : val;
+		v = val > max ? max : val;
+		return v;
+	}
+
 }; // end namespace Projection
 
 //
@@ -53,7 +62,6 @@ namespace Projection {
 
 static Vec3d Projection::Triangle( Vec3d *tri, const Vec3d &point ){
 
-	using namespace trimesh;
 	Vec3d edge0 = tri[1] - tri[0];
 	Vec3d edge1 = tri[2] - tri[0];
 	Vec3d v0 = tri[0] - point;
@@ -71,21 +79,21 @@ static Vec3d Projection::Triangle( Vec3d *tri, const Vec3d &point ){
 		if ( s < 0.0 ) {
 		    if ( t < 0.0 ) {
 			if ( d < 0.0 ) {
-			    s = clamp( -d/a, 0.0, 1.0 );
+			    s = myclamp( -d/a, 0.0, 1.0 );
 			    t = 0.0;
 			}
 			else {
 			    s = 0.0;
-			    t = clamp( -e/c, 0.0, 1.0 );
+			    t = myclamp( -e/c, 0.0, 1.0 );
 			}
 		    }
 		    else {
 			s = 0.0;
-			t = clamp( -e/c, 0.0, 1.0 );
+			t = myclamp( -e/c, 0.0, 1.0 );
 		    }
 		}
 		else if ( t < 0.0 ) {
-		    s = clamp( -d/a, 0.0, 1.0 );
+		    s = myclamp( -d/a, 0.0, 1.0 );
 		    t = 0.0;
 		}
 		else {
@@ -101,11 +109,11 @@ static Vec3d Projection::Triangle( Vec3d *tri, const Vec3d &point ){
 		    if ( tmp1 > tmp0 ) {
 			double numer = tmp1 - tmp0;
 			double denom = a-2.0*b+c;
-			s = clamp( numer/denom, 0.0, 1.0 );
+			s = myclamp( numer/denom, 0.0, 1.0 );
 			t = 1.0-s;
 		    }
 		    else {
-			t = clamp( -e/c, 0.0, 1.0 );
+			t = myclamp( -e/c, 0.0, 1.0 );
 			s = 0.0;
 		    }
 		}
@@ -113,18 +121,18 @@ static Vec3d Projection::Triangle( Vec3d *tri, const Vec3d &point ){
 		    if ( a+d > b+e ) {
 			double numer = c+e-b-d;
 			double denom = a-2.0*b+c;
-			s = clamp( numer/denom, 0.0, 1.0 );
+			s = myclamp( numer/denom, 0.0, 1.0 );
 			t = 1.0-s;
 		    }
 		    else {
-			s = clamp( -e/c, 0.0, 1.0 );
+			s = myclamp( -e/c, 0.0, 1.0 );
 			t = 0.0;
 		    }
 		}
 		else {
 		    double numer = c+e-b-d;
 		    double denom = a-2.0*b+c;
-		    s = clamp( numer/denom, 0.0, 1.0 );
+		    s = myclamp( numer/denom, 0.0, 1.0 );
 		    t = 1.0 - s;
 		}
 	}

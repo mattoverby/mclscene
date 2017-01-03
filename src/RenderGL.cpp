@@ -94,6 +94,9 @@ void RenderGL::draw_objects(){
 
 
 void RenderGL::draw_objects_subdivided(){
+	draw_objects();
+/*
+	// TODO
 
 	Camera *camera = scene->cameras[0].get();
 
@@ -118,13 +121,12 @@ void RenderGL::draw_objects_subdivided(){
 		draw_mesh( obj.get(), camera );
 		obj->app.mesh = oldmesh;
 	}
-
+*/
 } // end draw objects
 
 void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 
-	// TEMPORARY:
-	if( obj->app.mesh==NULL ){ return; }
+	if( !obj->app.tris_vao ){ return; }
 
 	// Get the material
 	Material *mat = NULL;
@@ -146,7 +148,8 @@ void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 	blinnphong->enable();
 
 	// Set the matrices
-	glUniformMatrix4fv( blinnphong->uniform("model"), 1, GL_FALSE, obj->app.xf );
+	trimesh::fxform model;
+	glUniformMatrix4fv( blinnphong->uniform("model"), 1, GL_FALSE, model );
 	glUniformMatrix4fv( blinnphong->uniform("view"), 1, GL_FALSE, camera->app.view );
 	glUniformMatrix4fv( blinnphong->uniform("projection"), 1, GL_FALSE, camera->app.projection );
 	trimesh::vec eyepos = camera->get_position();
@@ -168,12 +171,8 @@ void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 	//	Draw a solid mesh
 	//
 	if( mat->app.mode==0 ){
-
 		glDrawElements(GL_TRIANGLES, obj->app.num_faces*3, GL_UNSIGNED_INT, 0);
-
 	} // end draw as triangle mesh
-
-//	else if( mat->app.mode==1 ) { glDrawArrays(GL_POINTS, 0, themesh->vertices.size()); }
 
 	// Unbind
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

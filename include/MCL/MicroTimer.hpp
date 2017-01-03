@@ -41,10 +41,10 @@
 //	double elapsed_milliseconds = timer.elapsed_ms();
 //	double elapsed_seconds = timer.elapsed_s();
 //
-//	// Note: Each elapsed_* value above includes the calls before
-//	// it. If you require precision in multiple units it's more
-//	// accurate to only call MicroTimer::elapsed_us() and convert
-//	// the result to whatever units you need.
+//	   Note: Each elapsed_* value above includes the calls before
+//	   it. If you require precision in multiple units it's more
+//	   accurate to only call MicroTimer::elapsed_us() and convert
+//	   the result to whatever units you need.
 //
 
 

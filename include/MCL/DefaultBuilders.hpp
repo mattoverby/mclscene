@@ -56,19 +56,17 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//	First build the transform and other common params
 	//
 	xform x_form;
-
 	for( int i=0; i<params.size(); ++i ){
 		std::string tag = parse::to_lower(params[i].tag);
 		if( tag=="translate" ){ x_form = params[i].as_xform() * x_form; }
 		else if( tag=="scale" ){ x_form = params[i].as_xform() * x_form; }
 		else if( tag=="rotate" ){ x_form = params[i].as_xform() * x_form; }
-
 	}
 	
 
 	std::shared_ptr<BaseObject> new_obj = NULL;
 
-
+/*
 	//
 	//	Sphere
 	//
@@ -206,12 +204,12 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 		trimesh::make_torus( new_obj->app.mesh, tess_th, tess_ph, inner_rad, outer_rad );
 
 	}
-
+*/
 
 	//
 	//	Triangle Mesh, 2 or more triangles
 	//
-	else if( type == "trimesh" || type == "trianglemesh" ){
+	if( type == "trimesh" || type == "trianglemesh" ){
 
 		std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
 
@@ -249,7 +247,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 
 	} // end build tet mesh
 
-
+/*
 	//
 	//	Point Cloud
 	//
@@ -270,7 +268,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 		new_obj = std::shared_ptr<BaseObject>( cloud );
 
 	} // end build particle cloud
-
+*/
 
 	//
 	//	Unknown
@@ -281,12 +279,6 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 
 
 	if( new_obj != NULL ){
-		// If the new object has a trimesh, update its
-		// required information.
-		if( new_obj->app.mesh != NULL ){
-			new_obj->app.mesh->need_normals();
-			new_obj->app.mesh->need_tstrips();
-		}
 		new_obj->apply_xform( x_form );
 		return new_obj;
 	}

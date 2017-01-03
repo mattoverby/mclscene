@@ -6,7 +6,7 @@ uniform vec3 eye;
 in vec3 vposition;
 in vec3 vcolor;
 in vec3 vnormal;
-
+in vec2 vtexcoord;
 
 float length2( vec3 v ){ return dot(v,v); }
 

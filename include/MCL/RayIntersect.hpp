@@ -38,7 +38,7 @@ namespace intersect {
 			origin += direction*eps;
 		}
 		Vec3d origin, direction;
-		float eps;
+		double eps;
 	};
 
 	class Payload {
@@ -86,11 +86,11 @@ static inline bool mcl::intersect::ray_triangle( const Ray *ray, const Vec3d &p0
 	const Vec3d e2 = ( 1.0f / n.dot( ray->direction ) ) * ( p0 - ray->origin );
 	const Vec3d i  = ray->direction.cross( e2 );
 
-	float beta  = i.dot( e1 );
-	float gamma = i.dot( e0 );
-	float alpha = 1.f - beta - gamma;
+	double beta  = i.dot( e1 );
+	double gamma = i.dot( e0 );
+	double alpha = 1.f - beta - gamma;
 
-	float t = n.dot( e2 );
+	double t = n.dot( e2 );
 	bool hit = ( (t<payload->t_max) & (t>payload->t_min) & (beta>=-ray->eps*0.5f) & (gamma>=-ray->eps*0.5f) & (beta+gamma<=1.f) );
 
 	if( hit ){
@@ -107,8 +107,8 @@ static inline bool mcl::intersect::ray_triangle( const Ray *ray, const Vec3d &p0
 // ray -> axis aligned bounding box
 static inline bool mcl::intersect::ray_aabb( const Ray *ray, const Vec3d &min, const Vec3d &max, const Payload *payload ){
 
-	float txmin=0.f, txmax=0.f;
-	float dirX = 1.f / ray->direction[0];
+	double txmin=0.f, txmax=0.f;
+	double dirX = 1.f / ray->direction[0];
 	if( dirX >= 0.0 ){
 		txmin = dirX * ( min[0] - ray->origin[0] );
 		txmax = dirX * ( max[0] - ray->origin[0] );
@@ -118,8 +118,8 @@ static inline bool mcl::intersect::ray_aabb( const Ray *ray, const Vec3d &min, c
 		txmin = dirX * ( max[0] - ray->origin[0] );
 	}
 
-	float tymin=0.f, tymax=0.f;
-	float dirY = 1.f / ray->direction[1];
+	double tymin=0.f, tymax=0.f;
+	double dirY = 1.f / ray->direction[1];
 	if( ray->direction[1] >= 0.0 ){
 		tymin = dirY * ( min[1] - ray->origin[1] );
 		tymax = dirY * ( max[1] - ray->origin[1] );
@@ -132,8 +132,8 @@ static inline bool mcl::intersect::ray_aabb( const Ray *ray, const Vec3d &min, c
 	// First check: x/y axis
 	if( txmin > tymax || tymin > txmax ){ return false; }
 
-	float tzmin=0.f, tzmax=0.f;
-	float dirZ = 1.f / ray->direction[2];
+	double tzmin=0.f, tzmax=0.f;
+	double dirZ = 1.f / ray->direction[2];
 	if( ray->direction[2] >= 0.0 ){
 		tzmin = dirZ * ( min[2] - ray->origin[2] );
 		tzmax = dirZ * ( max[2] - ray->origin[2] );
@@ -153,7 +153,7 @@ static inline bool mcl::intersect::ray_aabb( const Ray *ray, const Vec3d &min, c
 
 
 static inline double mcl::intersect::point_aabb( const Vec3d &point, const Vec3d &min, const Vec3d &max ){
-	float sqDist=0.f;
+	double sqDist=0.f;
 	for( int i=0; i<3; ++i ){
 		if( point[i] < min[i] ){ sqDist += (min[i]-point[i])*(min[i]-point[i]); }
 		if( point[i] > max[i] ){ sqDist += (point[i]-max[i])*(point[i]-max[i]); }

@@ -85,8 +85,8 @@ bool TetMesh::load( std::string filename ){
 		if( !need_surface() ){ return false; }
 	}
 
-	need_normals();
-	tris->need_tstrips();
+	need_normals(true);
+	update_appdata();
 
 	return true;
 }
@@ -107,39 +107,58 @@ void TetMesh::need_normals( bool recompute ){
 	int nf = faces.size();
 #pragma omp parallel for
 	for( int i = 0; i < nf; ++i ){
-		const trimesh::point &p0 = vertices[faces[i][0]];
-		const trimesh::point &p1 = vertices[faces[i][1]];
-		const trimesh::point &p2 = vertices[faces[i][2]];
-		trimesh::vec a = p0-p1, b = p1-p2, c = p2-p0;
-		float l2a = trimesh::len2(a), l2b = trimesh::len2(b), l2c = trimesh::len2(c);
+		const Vec3d &p0 = vertices[faces[i][0]];
+		const Vec3d &p1 = vertices[faces[i][1]];
+		const Vec3d &p2 = vertices[faces[i][2]];
+		Vec3d a = p0-p1, b = p1-p2, c = p2-p0;
+		float l2a = a.squaredNorm(), l2b = b.squaredNorm(), l2c = c.squaredNorm();
 		if (!l2a || !l2b || !l2c)
 			continue;
-		trimesh::vec facenormal = a.cross( b );
+		Vec3d facenormal = a.cross( b );
 		normals[faces[i][0]] += facenormal * (1.0f / (l2a * l2c));
 		normals[faces[i][1]] += facenormal * (1.0f / (l2b * l2a));
 		normals[faces[i][2]] += facenormal * (1.0f / (l2c * l2b));
 	}
 
 #pragma omp parallel for
-	for (int i = 0; i < nv; i++){ trimesh::normalize(normals[i]); }
+	for (int i = 0; i < nv; i++){ normals[i].normalize(); }
 
 } // end compute normals
 
 
 // Transform the mesh by the given matrix
 void TetMesh::apply_xform( const trimesh::xform &xf ){
+
 	int nv = vertices.size();
 #pragma omp parallel for
 	for (int i = 0; i < nv; i++){ vertices[i] = xf * vertices[i]; }
 
-	if( !normals.empty() ){
-		trimesh::xform nxf = trimesh::norm_xf(xf);
-#pragma omp parallel for
-		for (int i = 0; i < nv; i++) {
-			normals[i] = nxf * normals[i];
-			trimesh::normalize(normals[i]);
-		}
+	need_normals(true);
+
+	aabb.valid = false;
+	for( int f=0; f<faces.size(); ++f ){
+		aabb += vertices[ faces[f][0] ];
+		aabb += vertices[ faces[f][1] ];
+		aabb += vertices[ faces[f][2] ];
 	}
+}
+
+
+void TetMesh::update_appdata(){
+
+	// Update app data
+	this->app.num_vertices = vertices.size();
+	this->app.num_normals = normals.size();
+	this->app.num_faces = faces.size();
+	this->app.num_colors = colors.size();
+	this->app.num_texcoords = texcoords.size();
+
+	this->app.vertices = &vertices[0][0];
+	this->app.normals = &normals[0][0];
+	this->app.faces = &faces[0][0];
+	this->app.colors = &colors[0][0];
+	this->app.texcoords = &texcoords[0][0];
+
 }
 
 
@@ -177,7 +196,7 @@ bool TetMesh::load_node( std::string filename ){
 			std::cerr << "\n**TetMesh Error: Your indices are bad for file " << node_file.str() << std::endl; return false;
 		}
 
-		vertices[idx] = trimesh::point( x, y, z );
+		vertices[idx] = Vec3d( x, y, z );
 		vertex_set[idx] = 1;
 	}
 	filestream.close();
@@ -227,7 +246,7 @@ bool TetMesh::load_ele( std::string filename ){
 			std::cerr << "\n**TetMesh Error: Your indices are bad for file " << ele_file.str() << std::endl; return false;
 		}
 
-		tets[idx] = tet( node_ids[0], node_ids[1], node_ids[2], node_ids[3] );
+		tets[idx] = Vec4i( node_ids[0], node_ids[1], node_ids[2], node_ids[3] );
 		tet_set[idx] = 1;
 	}
 	filestream.close();
@@ -250,10 +269,10 @@ bool TetMesh::need_surface(){
 	for( int t=0; t<tets.size(); ++t ){
 
 		// Indices that make up the tetrahedra
-		int p0 = tets[t].v[0];
-		int p1 = tets[t].v[1];
-		int p2 = tets[t].v[2];
-		int p3 = tets[t].v[3];
+		int p0 = tets[t][0];
+		int p1 = tets[t][1];
+		int p2 = tets[t][2];
+		int p3 = tets[t][3];
 
 		// Faces of each tetrahedra
 		int3 curr_faces[4];
@@ -274,7 +293,7 @@ bool TetMesh::need_surface(){
 	for( ; faceIt != face_ids.end(); ++faceIt ){
 		if( faceIt->second == 1 ){
 			int3 f = faceIt->first;
-			faces.push_back( trimesh::TriMesh::Face( f.orig_v[0], f.orig_v[1], f.orig_v[2] ) );
+			faces.push_back( Vec3i( f.orig_v[0], f.orig_v[1], f.orig_v[2] ) );
 		}
 	}
 
@@ -307,16 +326,11 @@ void TetMesh::get_surface_vertices( std::vector<int> *indices ){
 
 void TetMesh::make_tri_refs(){
 
-	using namespace trimesh;
-
 	tri_refs.clear();
-
-	// Create the triangle reference objects
-	tris->need_faces();
-	tris->need_normals();
+	need_normals();
 
 	for( int i=0; i<faces.size(); ++i ){
-		TriMesh::Face f = faces[i];
+		Vec3i f = faces[i];
 		std::shared_ptr<BaseObject> tri(
 			new TriangleRef( &vertices[f[0]], &vertices[f[1]], &vertices[f[2]], &normals[f[0]], &normals[f[1]], &normals[f[2]] )
 		);
@@ -328,14 +342,14 @@ void TetMesh::make_tri_refs(){
 
 
 void TetMesh::bounds( Vec3d &bmin, Vec3d &bmax ){
-	if( !aabb->valid ){
+	if( !aabb.valid ){
 		for( int f=0; f<faces.size(); ++f ){
-			(*aabb) += vertices[ faces[f][0] ];
-			(*aabb) += vertices[ faces[f][1] ];
-			(*aabb) += vertices[ faces[f][2] ];
+			aabb += vertices[ faces[f][0] ];
+			aabb += vertices[ faces[f][1] ];
+			aabb += vertices[ faces[f][2] ];
 		}
 	}
-	bmin = aabb->min; bmax = aabb->max;
+	bmin = aabb.min; bmax = aabb.max;
 }
 
 
@@ -356,7 +370,7 @@ void TetMesh::save( std::string filename ){
 		filestream.open( elefn.str().c_str() );
 		filestream << tets.size() << " 4 0\n";
 		for( int i=0; i<tets.size(); ++i ){
-			filestream << "\t" << i << ' ' << tets[i].v[0] << ' ' << tets[i].v[1] << ' ' << tets[i].v[2] << ' ' << tets[i].v[3] << "\n";
+			filestream << "\t" << i << ' ' << tets[i][0] << ' ' << tets[i][1] << ' ' << tets[i][2] << ' ' << tets[i][3] << "\n";
 		}
 		filestream << "# Generated by mclscene (www.mattoverby.net)";
 		filestream.close();
@@ -378,7 +392,7 @@ void TetMesh::save( std::string filename ){
 		filestream.open( nodefn.str().c_str() );
 		filestream << vertices.size() << " 3 0 0\n";
 		for( int i=0; i<vertices.size(); ++i ){
-			filestream << "\t" << i << ' ' << vertices[i].str() << "\n";
+			filestream << "\t" << i << ' ' << to_str(vertices[i]) << "\n";
 		}
 		filestream << "# Generated by mclscene (www.mattoverby.net)";
 		filestream.close();		
