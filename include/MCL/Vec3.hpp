@@ -22,13 +22,14 @@
 #ifndef MCLSCENE_VEC3_H
 #define MCLSCENE_VEC3_H 1
 
-#include <Eigen/Core>
+#include <Eigen/Geometry> // needed for cross product
 #include "Vec.h" // temporary
 
 namespace mcl {
 
-typedef Eigen::Vector3d Vec3d;
-typedef Eigen::Vector3f Vec3f;
+	typedef Eigen::Vector3d Vec3d;
+
+	static inline Vec3d to_Vec3d(trimesh::vec p){ return Vec3d(p[0],p[1],p[2]); } 
 
 } // end namespace mcl
 

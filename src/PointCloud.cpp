@@ -143,7 +143,7 @@ bool PointCloud::load( std::string file, bool fill ){
 } // end load ply
 
 
-void PointCloud::bounds( Eigen::Vector3d &bmin, Eigen::Vector3d &bmax ){
+void PointCloud::bounds( Vec3d &bmin, Vec3d &bmax ){
 	if( !aabb->valid ){
 		for( int v=0; v<vertices.size(); ++v ){
 			(*aabb) += vertices[v];

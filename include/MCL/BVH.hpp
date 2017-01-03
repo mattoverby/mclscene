@@ -69,8 +69,8 @@ public:
 	mutable std::vector< std::shared_ptr<BaseObject> > m_objects; // empty unless a leaf node
 
 	bool is_leaf() const { return m_objects.size()>0; }
-	void get_edges( std::vector<Eigen::Vector3d> &edges, bool add_children=true ); // for visual debugging
-	void bounds( Eigen::Vector3d &bmin, Eigen::Vector3d &bmax ) const { bmin=aabb->min; bmax=aabb->max; }
+	void get_edges( std::vector<Vec3d> &edges, bool add_children=true ); // for visual debugging
+	void bounds( Vec3d &bmin, Vec3d &bmax ) const { bmin=aabb->min; bmax=aabb->max; }
 };
 
 //
@@ -119,7 +119,7 @@ public:
 	// Point-Scene traversal for closest object to a given point.
 	// Projection is the point on the object surface, obj is the pointer to the object.
 	// Returns false if a point was not in any AABB. A KD-Tree would be better for this.
-	static bool closest_object( const BVHNode *node, const trimesh::vec &point, trimesh::vec &projection, std::shared_ptr<BaseObject> *obj );
+	static bool closest_object( const BVHNode *node, const Vec3d &point, Vec3d &projection, std::shared_ptr<BaseObject> *obj );
 };
 
 

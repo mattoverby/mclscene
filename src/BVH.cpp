@@ -60,8 +60,6 @@ int BVHBuilder::make_tree_lbvh( BVHNode *root, const std::vector< std::shared_pt
 	start = std::chrono::system_clock::now();
 	if( root == NULL ){ root = new BVHNode(); }
 
-	using namespace trimesh;
-
 	// Get all the primitives in the domain
 	std::vector< std::shared_ptr<BaseObject> > prims;
 	prims.reserve( n_nodes ); // only helpful if we're recreating
@@ -74,18 +72,18 @@ int BVHBuilder::make_tree_lbvh( BVHNode *root, const std::vector< std::shared_pt
 	if( prims.size()==0 ){ return 1; }
 
 	// Compute centroids
-	std::vector< Eigen::Vector3d > centroids( prims.size() );
+	std::vector< Vec3d > centroids( prims.size() );
 	AABB world_aabb;
 	for( int i=0; i<prims.size(); ++i ){
-		Eigen::Vector3d bmin, bmax; prims[i]->bounds( bmin, bmax );
+		Vec3d bmin, bmax; prims[i]->bounds( bmin, bmax );
 		world_aabb += bmin; world_aabb += bmax;
 		centroids[i]=( (bmin+bmax)*0.5f );
 	}
 
 	double max_scaled = 1024.f;
-	Eigen::Vector3d world_min( world_aabb.min );
-	Eigen::Vector3d world_max( world_aabb.max );
-	Eigen::Vector3d world_len = (world_max-world_min) * (1.0/max_scaled);
+	Vec3d world_min( world_aabb.min );
+	Vec3d world_max( world_aabb.max );
+	Vec3d world_len = (world_max-world_min) * (1.0/max_scaled);
 
 	// Assign morton codes
 	std::vector< std::pair< morton_type, int > > morton_codes( prims.size() );
@@ -93,7 +91,7 @@ int BVHBuilder::make_tree_lbvh( BVHNode *root, const std::vector< std::shared_pt
 	for( int i=0; i<prims.size(); ++i ){
 
 		// Scale the centroid to a value between 0 and max_scaled and convert to integer.
-		Eigen::Vector3d cent = centroids[i];
+		Vec3d cent = centroids[i];
 		cent = ( cent - world_min ).cwiseProduct( world_len );
 		morton_encode_type ix = morton_encode_type( cent[0] );
 		morton_encode_type iy = morton_encode_type( cent[1] );
@@ -173,7 +171,7 @@ void BVHBuilder::lbvh_split( BVHNode *node,
 
 	// Now that the tree is constructed, create the aabb
 	for( int i=0; i<node->m_objects.size(); ++i ){
-		Eigen::Vector3d bmin, bmax;
+		Vec3d bmin, bmax;
 		node->m_objects[i]->bounds( bmin, bmax );
 		*(node->aabb) += bmin; *(node->aabb) += bmax;
 	}
@@ -222,16 +220,15 @@ int BVHBuilder::make_tree_spatial( BVHNode *root, const std::vector< std::shared
 
 void BVHBuilder::spatial_split( BVHNode *node, const std::vector< std::shared_ptr<BaseObject> > &prims,
 	const std::vector< int > &queue, const int split_axis, const int max_depth ) {
-	using namespace trimesh;
 
 	// Create the aabb
-	std::vector< Eigen::Vector3d > obj_centers( queue.size() ); // store the centers for later lookup
+	std::vector< Vec3d > obj_centers( queue.size() ); // store the centers for later lookup
 	for( int i=0; i<queue.size(); ++i ){
-		Eigen::Vector3d bmin, bmax; prims[ queue[i] ]->bounds( bmin, bmax );
+		Vec3d bmin, bmax; prims[ queue[i] ]->bounds( bmin, bmax );
 		*(node->aabb) += bmin; *(node->aabb) += bmax;
-		obj_centers[i] = Eigen::Vector3d( (bmin+bmax)*0.5 );
+		obj_centers[i] = Vec3d( (bmin+bmax)*0.5 );
 	}
-	Eigen::Vector3d center = node->aabb->center();
+	Vec3d center = node->aabb->center();
 
 	// If num faces == 1, we're done
 	if( queue.size()==0 ){ return; }
@@ -308,9 +305,9 @@ bool BVHTraversal::any_hit( const BVHNode* node, const intersect::Ray *ray, inte
 } // end ray intersect
 
 
-bool BVHTraversal::closest_object( const BVHNode *node, const trimesh::vec &point, trimesh::vec &projection, std::shared_ptr<BaseObject> *obj ){
+bool BVHTraversal::closest_object( const BVHNode *node, const Vec3d &point, Vec3d &projection, std::shared_ptr<BaseObject> *obj ){
 
-	double dist = trimesh::len2( projection - point );
+	double dist = (projection - point).squaredNorm();
 	if( intersect::point_aabb( point, node->aabb->min, node->aabb->max ) > dist ){ return false; }
 
 	// See if there are children to intersect
@@ -322,11 +319,11 @@ bool BVHTraversal::closest_object( const BVHNode *node, const trimesh::vec &poin
 	// Otherwise it's a leaf node, check objects
 	bool obj_hit = false;
 	for( int i=0; i<node->m_objects.size(); ++i ){
-		trimesh::vec p = node->m_objects[i]->projection( point );
-		trimesh::vec n = point - p;
+		Vec3d p = node->m_objects[i]->projection( point );
+		Vec3d n = point - p;
 
 		// See if this projection is closer
-		double curr_dist = trimesh::len2( n );
+		double curr_dist = n.squaredNorm();
 		if( curr_dist < dist ){
 			projection = p;
 			obj_hit = true;
@@ -339,23 +336,22 @@ bool BVHTraversal::closest_object( const BVHNode *node, const trimesh::vec &poin
 } // end closest object
 
 
-void BVHNode::get_edges( std::vector<Eigen::Vector3d> &edges, bool add_children ){
+void BVHNode::get_edges( std::vector<Vec3d> &edges, bool add_children ){
 
-	using namespace trimesh;
 	{
-		Eigen::Vector3d min = aabb->min;
-		Eigen::Vector3d max = aabb->max;
+		Vec3d min = aabb->min;
+		Vec3d max = aabb->max;
 
 		// Bottom quad
-		Eigen::Vector3d a = min;
-		Eigen::Vector3d b( max[0], min[1], min[2] );
-		Eigen::Vector3d c( max[0], min[1], max[2] );
-		Eigen::Vector3d d( min[0], min[1], max[2] );
+		Vec3d a = min;
+		Vec3d b( max[0], min[1], min[2] );
+		Vec3d c( max[0], min[1], max[2] );
+		Vec3d d( min[0], min[1], max[2] );
 		// Top quad
-		Eigen::Vector3d e( min[0], max[1], min[2] );
-		Eigen::Vector3d f( max[0], max[1], min[2] );
-		Eigen::Vector3d g = max;
-		Eigen::Vector3d h( min[0], max[1], max[2] );
+		Vec3d e( min[0], max[1], min[2] );
+		Vec3d f( max[0], max[1], min[2] );
+		Vec3d g = max;
+		Vec3d h( min[0], max[1], max[2] );
 
 		// make edges
 		// bottom

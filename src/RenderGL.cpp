@@ -124,7 +124,6 @@ void RenderGL::draw_objects_subdivided(){
 void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 
 	// TEMPORARY:
-	obj->app.update( obj->app.mesh );
 	if( obj->app.mesh==NULL ){ return; }
 
 	// Get the material

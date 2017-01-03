@@ -24,7 +24,7 @@
 #define MCLSCENE_PROJECTION_H 1
 
 #include <math.h>
-#include <Vec.h> // trimesh
+#include "MCL/Vec3.hpp"
 
 namespace mcl {
 
@@ -38,12 +38,12 @@ namespace Projection {
 	//	Projection on Triangle
 	//	triangle should be array of 3
 	//
-	static trimesh::vec3d Triangle( trimesh::vec3d *triangle, const trimesh::vec3d &point );
+	static Vec3d Triangle( Vec3d *triangle, const Vec3d &point );
 
 	//
 	//	Projection on Sphere
 	//
-	static trimesh::vec3d Sphere( const trimesh::vec3d &center, const double &rad, const trimesh::vec3d &point );
+	static Vec3d Sphere( const Vec3d &center, const double &rad, const Vec3d &point );
 
 }; // end namespace Projection
 
@@ -51,12 +51,12 @@ namespace Projection {
 //	Implementation
 //
 
-static trimesh::vec3d Projection::Triangle( trimesh::vec3d *tri, const trimesh::vec3d &point ){
+static Vec3d Projection::Triangle( Vec3d *tri, const Vec3d &point ){
 
 	using namespace trimesh;
-	vec3d edge0 = tri[1] - tri[0];
-	vec3d edge1 = tri[2] - tri[0];
-	vec3d v0 = tri[0] - point;
+	Vec3d edge0 = tri[1] - tri[0];
+	Vec3d edge1 = tri[2] - tri[0];
+	Vec3d v0 = tri[0] - point;
 
 	double a = edge0.dot( edge0 );
 	double b = edge0.dot( edge1 );
@@ -129,14 +129,14 @@ static trimesh::vec3d Projection::Triangle( trimesh::vec3d *tri, const trimesh::
 		}
 	}
 
-	return vec3d( tri[0] + s*edge0 + t*edge1 );
+	return Vec3d( tri[0] + s*edge0 + t*edge1 );
 
 } // end project triangle
 
-static trimesh::vec3d Projection::Sphere( const trimesh::vec3d &center, const double &rad, const trimesh::vec3d &point ){
-	trimesh::vec3d dir = point-center;
-	trimesh::normalize(dir);
-	return trimesh::vec3d( center + rad*dir );
+static Vec3d Projection::Sphere( const Vec3d &center, const double &rad, const Vec3d &point ){
+	Vec3d dir = point-center;
+	dir.normalize();
+	return Vec3d( center + rad*dir );
 } // end project sphere
 
 } // end namespace mcl

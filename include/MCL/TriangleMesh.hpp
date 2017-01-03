@@ -25,7 +25,6 @@
 #include "Object.hpp"
 #include "AABB.hpp"
 #include "TriMesh_algo.h"
-#include <Eigen/Core>
 
 namespace mcl {
 
@@ -42,19 +41,19 @@ public:
 
 	trimesh::vec *p0, *p1, *p2, *n0, *n1, *n2;
 
-	void bounds( Eigen::Vector3d &bmin, Eigen::Vector3d &bmax ){
+	void bounds( Vec3d &bmin, Vec3d &bmax ){
 		AABB aabb; aabb += *p0; aabb += *p1; aabb += *p2;
 		bmin = aabb.min; bmax = aabb.max;
 	}
 
 	bool ray_intersect( const intersect::Ray *ray, intersect::Payload *payload ) const {
-		bool hit = intersect::ray_triangle( ray, *p0, *p1, *p2, *n0, *n1, *n2, payload );
+		bool hit = intersect::ray_triangle( ray, to_Vec3d(*p0), to_Vec3d(*p1), to_Vec3d(*p2), to_Vec3d(*n0), to_Vec3d(*n1), to_Vec3d(*n2), payload );
 		if( hit ){ payload->material = this->app.material; }
 		return hit;
 	}
 
-	trimesh::vec projection( const trimesh::vec &point ) const {
-		return intersect::point_triangle( point, *p0, *p1, *p2 );
+	Vec3d projection( const Vec3d &point ) const {
+		return intersect::point_triangle( point, to_Vec3d(*p0), to_Vec3d(*p1), to_Vec3d(*p2) );
 	}
 };
 
@@ -65,8 +64,6 @@ public:
 class TriangleMesh : public BaseObject {
 private: std::unique_ptr<trimesh::TriMesh> tris; // tris is actually the data container
 public:
-//	typedef Eigen::Vector3d vec3;
-
 	TriangleMesh() : tris(new trimesh::TriMesh),
 		vertices(tris->vertices), normals(tris->normals), faces(tris->faces),
 		aabb(new AABB) { app.mesh = tris.get(); } // end constructor
@@ -83,7 +80,7 @@ public:
 
 	void apply_xform( const trimesh::xform &xf );
 
-	void bounds( Eigen::Vector3d &bmin, Eigen::Vector3d &bmax );
+	void bounds( Vec3d &bmin, Vec3d &bmax );
 
 	void update(){ aabb->valid=false; }
 
@@ -108,7 +105,7 @@ private:
 //
 class RefMesh : public BaseObject {
 public:
-	typedef Eigen::Vector3d vec3;
+	typedef Vec3d vec3;
 
 	void bounds( trimesh::vec &bmin, trimesh::vec &bmax ){}
 

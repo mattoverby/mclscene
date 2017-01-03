@@ -38,7 +38,7 @@ public:
 	virtual ~BaseObject(){}
 
 	// Return the bounding box of the object
-	virtual void bounds( Eigen::Vector3d &bmin, Eigen::Vector3d &bmax ) = 0;
+	virtual void bounds( Vec3d &bmin, Vec3d &bmax ) = 0;
 
 	// When an object's physical parameters are changed, it may need to
 	// update its bounding box, internal parameters, etc...
@@ -53,7 +53,7 @@ public:
 	virtual bool ray_intersect( const intersect::Ray *ray, intersect::Payload *payload ) const { return false; }
 
 	// Projection on to surface
-	virtual trimesh::vec projection( const trimesh::vec &point ) const { return point; }
+	virtual Vec3d projection( const Vec3d &point ) const { return point; }
 
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode=0 ){ return ""; }
