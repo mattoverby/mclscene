@@ -44,6 +44,14 @@ typedef std::function<std::shared_ptr<Light> ( std::string type, std::vector<Par
 typedef std::function<std::shared_ptr<Material> ( std::string type, std::vector<Param> &params )> BuildMatCallback;
 
 
+static void trimesh_copy( std::shared_ptr<mcl::TriangleMesh> to_mesh, trimesh::TriMesh *from_mesh ){
+	for( int i=0; i<from_mesh->vertices.size(); ++i ){ to_mesh->vertices.push_back( mcl::Vec3d( from_mesh->vertices[i][0], from_mesh->vertices[i][1], from_mesh->vertices[i][2] ) ); }
+	for( int i=0; i<from_mesh->colors.size(); ++i ){ to_mesh->colors.push_back( mcl::Vec3d( from_mesh->colors[i][0], from_mesh->colors[i][1], from_mesh->colors[i][2] ) ); }
+	for( int i=0; i<from_mesh->faces.size(); ++i ){ to_mesh->faces.push_back( mcl::Vec3i( from_mesh->faces[i][0], from_mesh->faces[i][1], from_mesh->faces[i][2] ) ); }
+	for( int i=0; i<from_mesh->texcoords.size(); ++i ){ to_mesh->texcoords.push_back( mcl::Vec2d( from_mesh->texcoords[i][0], from_mesh->texcoords[i][1] ) ); }
+	to_mesh->update();
+}
+
 //
 //	Default Object Builder: Everything is a trimesh or tetmesh.
 //
@@ -66,7 +74,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 
 	std::shared_ptr<BaseObject> new_obj = NULL;
 
-/*
+
 	//
 	//	Sphere
 	//
@@ -82,15 +90,18 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
 		}
 
-		make_sphere_polar( new_obj->app.mesh, tessellation, tessellation );
+		trimesh::TriMesh tempmesh;
+		make_sphere_polar( &tempmesh, tessellation, tessellation );
 
 		// Now scale it by the radius
 		xform s_xf = trimesh::xform::scale(radius,radius,radius);
-		apply_xform(new_obj->app.mesh, s_xf);
+		apply_xform(&tempmesh, s_xf);
 
 		// Translate so center is correct
 		xform t_xf = trimesh::xform::trans(center[0],center[1],center[2]);
-		apply_xform(new_obj->app.mesh, t_xf);
+		apply_xform(&tempmesh, t_xf);
+
+		trimesh_copy( std::dynamic_pointer_cast<mcl::TriangleMesh>(new_obj), &tempmesh );
 
 	} // end build sphere
 
@@ -110,8 +121,11 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 		int chunks = 1;
 		for( int i=0; i<params.size(); ++i ){
 			if( parse::to_lower(params[i].tag)=="tess" ){ tess=params[i].as_int(); }
+
 		}
-		make_beam( new_obj->app.mesh, tess, chunks );
+		trimesh::TriMesh tempmesh;
+		make_beam( &tempmesh, tess, chunks );
+		trimesh_copy( std::dynamic_pointer_cast<mcl::TriangleMesh>(new_obj), &tempmesh );
 
 	} // end build box
 
@@ -136,8 +150,10 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 			else if( tag=="noise" ){ noise=params[i].as_double(); }
 		}
 
-		make_sym_plane( new_obj->app.mesh, width, length );
-		if( noise > 0.0 ){ trimesh::noisify( new_obj->app.mesh, noise ); }
+		trimesh::TriMesh tempmesh;
+		make_sym_plane( &tempmesh, width, length );
+		if( noise > 0.0 ){ trimesh::noisify( &tempmesh, noise ); }
+		trimesh_copy( std::dynamic_pointer_cast<mcl::TriangleMesh>(new_obj), &tempmesh );
 
 	} // end build plane
 
@@ -157,8 +173,9 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 			else if( parse::to_lower(params[i].tag)=="chunks" ){ chunks=params[i].as_int(); }
 		}
 
-
-		make_beam( new_obj->app.mesh, tess, chunks );
+		trimesh::TriMesh tempmesh;
+		make_beam( &tempmesh, tess, chunks );
+		trimesh_copy( std::dynamic_pointer_cast<mcl::TriangleMesh>(new_obj), &tempmesh );
 
 	} // end build beam
 
@@ -178,7 +195,9 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 			else if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_float(); }
 		}
 
-		trimesh::make_ccyl( new_obj->app.mesh, tess_l, tess_c, radius );
+		trimesh::TriMesh tempmesh;
+		trimesh::make_ccyl( &tempmesh, tess_l, tess_c, radius );
+		trimesh_copy( std::dynamic_pointer_cast<mcl::TriangleMesh>(new_obj), &tempmesh );
 
 	} // end build cylinder
 
@@ -201,15 +220,17 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 			else if( parse::to_lower(params[i].tag)=="inner_radius" ){ inner_rad=params[i].as_float(); }
 		}
 
-		trimesh::make_torus( new_obj->app.mesh, tess_th, tess_ph, inner_rad, outer_rad );
+		trimesh::TriMesh tempmesh;
+		trimesh::make_torus( &tempmesh, tess_th, tess_ph, inner_rad, outer_rad );
+		trimesh_copy( std::dynamic_pointer_cast<mcl::TriangleMesh>(new_obj), &tempmesh );
 
 	}
-*/
+
 
 	//
 	//	Triangle Mesh, 2 or more triangles
 	//
-	if( type == "trimesh" || type == "trianglemesh" ){
+	else if( type == "trimesh" || type == "trianglemesh" ){
 
 		std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
 

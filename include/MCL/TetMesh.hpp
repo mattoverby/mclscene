@@ -56,9 +56,9 @@ public:
 	// Transform the mesh by the given matrix
 	void apply_xform( const trimesh::xform &xf );
 
-	void bounds( Vec3d &bmin, Vec3d &bmax );
+	void update();
 
-	void update_appdata();
+	void bounds( Vec3d &bmin, Vec3d &bmax );
 
 	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
 		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }

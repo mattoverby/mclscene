@@ -38,6 +38,10 @@ public:
 	// Return the bounding box of the object
 	virtual void bounds( Vec3d &bmin, Vec3d &bmax ) = 0;
 
+	// Called externally when the object has been modified, sometimes
+	// needed to update bounding, recalculate normals, etc...
+	virtual void update(){}
+
 	// Apply a transformation matrix to the object. Most objects will
 	// just apply the transform directly. Others (instances) will just store the xform.
 	virtual void apply_xform( const trimesh::xform &xf ){}
@@ -57,7 +61,6 @@ public:
 
 	// The following data is used by mcl::Application.
 	// Derived object is responsible for managing these pointers.
-	virtual void update_appdata(){}
 	struct AppData {
 		AppData() : material(-1),
 		vertices(NULL), normals(NULL), colors(NULL), texcoords(NULL), faces(NULL),

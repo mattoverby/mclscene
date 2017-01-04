@@ -85,8 +85,7 @@ bool TetMesh::load( std::string filename ){
 		if( !need_surface() ){ return false; }
 	}
 
-	need_normals(true);
-	update_appdata();
+	update();
 
 	return true;
 }
@@ -125,6 +124,23 @@ void TetMesh::need_normals( bool recompute ){
 
 } // end compute normals
 
+void TetMesh::update(){
+
+	need_normals(true); aabb.valid=false;
+
+	// Update app data
+	this->app.num_vertices = vertices.size();
+	this->app.num_normals = normals.size();
+	this->app.num_faces = faces.size();
+	this->app.num_colors = colors.size();
+	this->app.num_texcoords = texcoords.size();
+
+	this->app.vertices = &vertices[0][0];
+	this->app.normals = &normals[0][0];
+	this->app.faces = &faces[0][0];
+	this->app.colors = &colors[0][0];
+	this->app.texcoords = &texcoords[0][0];
+}
 
 // Transform the mesh by the given matrix
 void TetMesh::apply_xform( const trimesh::xform &xf ){
@@ -141,24 +157,6 @@ void TetMesh::apply_xform( const trimesh::xform &xf ){
 		aabb += vertices[ faces[f][1] ];
 		aabb += vertices[ faces[f][2] ];
 	}
-}
-
-
-void TetMesh::update_appdata(){
-
-	// Update app data
-	this->app.num_vertices = vertices.size();
-	this->app.num_normals = normals.size();
-	this->app.num_faces = faces.size();
-	this->app.num_colors = colors.size();
-	this->app.num_texcoords = texcoords.size();
-
-	this->app.vertices = &vertices[0][0];
-	this->app.normals = &normals[0][0];
-	this->app.faces = &faces[0][0];
-	this->app.colors = &colors[0][0];
-	this->app.texcoords = &texcoords[0][0];
-
 }
 
 

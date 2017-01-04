@@ -80,9 +80,9 @@ public:
 
 	void bounds( Vec3d &bmin, Vec3d &bmax );
 
-	void need_normals( bool recompute=false );
+	void update();
 
-	void update_appdata();
+	void need_normals( bool recompute=false );
 
 	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
 		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }

@@ -72,6 +72,24 @@ void TriangleMesh::need_normals( bool recompute ){
 } // end compute normals
 
 
+void TriangleMesh::update(){
+
+	need_normals(true); aabb.valid=false;
+
+	// Update app data
+	this->app.num_vertices = vertices.size();
+	this->app.num_normals = normals.size();
+	this->app.num_faces = faces.size();
+	this->app.num_colors = colors.size();
+	this->app.num_texcoords = texcoords.size();
+
+	this->app.vertices = &vertices[0][0];
+	this->app.normals = &normals[0][0];
+	this->app.faces = &faces[0][0];
+	this->app.colors = &colors[0][0];
+	this->app.texcoords = &texcoords[0][0];
+}
+
 
 // Transform the mesh by the given matrix
 void TriangleMesh::apply_xform( const trimesh::xform &xf ){
@@ -80,7 +98,7 @@ void TriangleMesh::apply_xform( const trimesh::xform &xf ){
 #pragma omp parallel for
 	for (int i = 0; i < nv; i++){ vertices[i] = xf * vertices[i]; }
 
-	need_normals(true);
+	update();
 
 	aabb.valid = false;
 	for( int f=0; f<faces.size(); ++f ){
@@ -147,29 +165,12 @@ bool TriangleMesh::load( std::string filename ){
 		aabb += vertices[ faces[f][2] ];
 	}
 
-	need_normals(true);
-	update_appdata();
+	update();
 
 	return true;
 
 } // end load file
 
-void TriangleMesh::update_appdata(){
-
-	// Update app data
-	this->app.num_vertices = vertices.size();
-	this->app.num_normals = normals.size();
-	this->app.num_faces = faces.size();
-	this->app.num_colors = colors.size();
-	this->app.num_texcoords = texcoords.size();
-
-	this->app.vertices = &vertices[0][0];
-	this->app.normals = &normals[0][0];
-	this->app.faces = &faces[0][0];
-	this->app.colors = &colors[0][0];
-	this->app.texcoords = &texcoords[0][0];
-
-}
 
 static std::string get_timestamp_meshname(){
 	std::string MY_DATE_FORMAT = "h%Hm%M";
