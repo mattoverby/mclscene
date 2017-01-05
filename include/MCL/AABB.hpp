@@ -31,12 +31,12 @@ public:
 	AABB() : valid(false) {}
 //	AABB( trimesh::vec min_, trimesh::vec max_ ) : min(min_), max(max_), valid(true) {}
 //	trimesh::vec min, max;
-	AABB( Vec3d min_, Vec3d max_ ) : min(min_), max(max_), valid(true) {}
-	Vec3d min, max;
+	AABB( Vec3f min_, Vec3f max_ ) : min(min_), max(max_), valid(true) {}
+	Vec3f min, max;
 	bool valid;
 
 //	trimesh::vec center(){ return (min+max)*0.5f; }
-	Vec3d center(){ return (min+max)*0.5; }
+	Vec3f center(){ return (min+max)*0.5; }
 
 //	float radius(){ return trimesh::len(max-min)*0.5f; }
 	double radius(){ return (max-min).norm()*0.5f; }
@@ -47,24 +47,24 @@ public:
 		return *this;
 	}
 
-	AABB& operator+=(const Vec3d& p){
+	AABB& operator+=(const Vec3f& p){
 		if( valid ){ minp( min, p ); maxp( max, p ); }
 		else{ min = p; max = p; valid = true; }
 		return *this;
 	}
 
 	AABB& operator+=(const trimesh::vec& tmp){
-		Vec3d p(tmp[0],tmp[1],tmp[2]);
+		Vec3f p(tmp[0],tmp[1],tmp[2]);
 		if( valid ){ minp( min, p ); maxp( max, p ); }
 		else{ min = p; max = p; valid = true; }
 		return *this;
 	}
 
-	static inline void minp( Vec3d &m, const Vec3d &b ){
+	static inline void minp( Vec3f &m, const Vec3f &b ){
 		for( int i=0; i<3; ++i ){ m[i] = m[i] < b[i] ? m[i] : b[i]; }
 	}
 
-	static inline void maxp( Vec3d &m, const Vec3d &b ){
+	static inline void maxp( Vec3f &m, const Vec3f &b ){
 		for( int i=0; i<3; ++i ){ m[i] = m[i] > b[i] ? m[i] : b[i]; }
 	}
 

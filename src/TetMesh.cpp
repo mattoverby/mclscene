@@ -104,16 +104,16 @@ void TetMesh::need_normals( bool recompute ){
 	}
 
 	int nf = faces.size();
-#pragma omp parallel for
+//#pragma omp parallel for
 	for( int i = 0; i < nf; ++i ){
-		const Vec3d &p0 = vertices[faces[i][0]];
-		const Vec3d &p1 = vertices[faces[i][1]];
-		const Vec3d &p2 = vertices[faces[i][2]];
-		Vec3d a = p0-p1, b = p1-p2, c = p2-p0;
+		const Vec3f &p0 = vertices[faces[i][0]];
+		const Vec3f &p1 = vertices[faces[i][1]];
+		const Vec3f &p2 = vertices[faces[i][2]];
+		Vec3f a = p0-p1, b = p1-p2, c = p2-p0;
 		float l2a = a.squaredNorm(), l2b = b.squaredNorm(), l2c = c.squaredNorm();
 		if (!l2a || !l2b || !l2c)
 			continue;
-		Vec3d facenormal = a.cross( b );
+		Vec3f facenormal = a.cross( b );
 		normals[faces[i][0]] += facenormal * (1.0f / (l2a * l2c));
 		normals[faces[i][1]] += facenormal * (1.0f / (l2b * l2a));
 		normals[faces[i][2]] += facenormal * (1.0f / (l2c * l2b));
@@ -194,7 +194,7 @@ bool TetMesh::load_node( std::string filename ){
 			std::cerr << "\n**TetMesh Error: Your indices are bad for file " << node_file.str() << std::endl; return false;
 		}
 
-		vertices[idx] = Vec3d( x, y, z );
+		vertices[idx] = Vec3f( x, y, z );
 		vertex_set[idx] = 1;
 	}
 	filestream.close();
@@ -339,7 +339,7 @@ void TetMesh::make_tri_refs(){
 } // end make triangle references
 
 
-void TetMesh::bounds( Vec3d &bmin, Vec3d &bmax ){
+void TetMesh::bounds( Vec3f &bmin, Vec3f &bmax ){
 	if( !aabb.valid ){
 		for( int f=0; f<faces.size(); ++f ){
 			aabb += vertices[ faces[f][0] ];

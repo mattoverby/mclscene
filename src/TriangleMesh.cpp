@@ -24,9 +24,11 @@
 #include "TriMesh_algo.h"
 
 using namespace mcl;
+namespace trimesh_helper {
+	static std::string to_lower( std::string s ){ std::transform( s.begin(), s.end(), s.begin(), ::tolower ); return s; }
+}
 
-
-void TriangleMesh::bounds( Vec3d &bmin, Vec3d &bmax ){
+void TriangleMesh::bounds( Vec3f &bmin, Vec3f &bmax ){
 	if( !aabb.valid ){
 		for( int f=0; f<faces.size(); ++f ){
 			aabb += vertices[ faces[f][0] ];
@@ -51,16 +53,16 @@ void TriangleMesh::need_normals( bool recompute ){
 	}
 
 	int nf = faces.size();
-#pragma omp parallel for
+//#pragma omp parallel for
 	for( int i = 0; i < nf; ++i ){
-		const Vec3d &p0 = vertices[faces[i][0]];
-		const Vec3d &p1 = vertices[faces[i][1]];
-		const Vec3d &p2 = vertices[faces[i][2]];
-		Vec3d a = p0-p1, b = p1-p2, c = p2-p0;
+		const Vec3f &p0 = vertices[faces[i][0]];
+		const Vec3f &p1 = vertices[faces[i][1]];
+		const Vec3f &p2 = vertices[faces[i][2]];
+		Vec3f a = p0-p1, b = p1-p2, c = p2-p0;
 		float l2a = a.squaredNorm(), l2b = b.squaredNorm(), l2c = c.squaredNorm();
 		if (!l2a || !l2b || !l2c)
 			continue;
-		Vec3d facenormal = a.cross( b );
+		Vec3f facenormal = a.cross( b );
 		normals[faces[i][0]] += facenormal * (1.0f / (l2a * l2c));
 		normals[faces[i][1]] += facenormal * (1.0f / (l2b * l2a));
 		normals[faces[i][2]] += facenormal * (1.0f / (l2c * l2b));
@@ -134,27 +136,34 @@ bool TriangleMesh::load( std::string filename ){
 	faces.clear();
 	tri_refs.clear();
 
-	// Load the file with trimesh2, it has a bunch of nice i/o
-	trimesh::TriMesh *newmesh = trimesh::TriMesh::read( filename.c_str() );
-	if( newmesh == NULL ){ return false; }
-	trimesh::remove_unused_vertices( newmesh );
+	// If it's an obj file, load it with my own function:	
+	if( trimesh_helper::to_lower(filename.substr(filename.size()-3)) == "obj"){
+		if( !load_obj( filename ) ){ return false; }
+	} else{
 
-	// Copy over data
-	vertices.resize( newmesh->vertices.size() );
-	colors.resize( newmesh->colors.size() );
-	texcoords.resize( newmesh->texcoords.size() );
-	faces.resize( newmesh->faces.size() );
+		// Load the file with trimesh2, it has a bunch of nice i/o
+		trimesh::TriMesh *newmesh = trimesh::TriMesh::read( filename.c_str() );
+		if( newmesh == NULL ){ return false; }
+		trimesh::remove_unused_vertices( newmesh );
 
-#pragma omp parallel for
-	for( int i=0; i<vertices.size(); ++i ){ vertices[i] = Vec3d( newmesh->vertices[i][0], newmesh->vertices[i][1], newmesh->vertices[i][2] ); }
-#pragma omp parallel for
-	for( int i=0; i<colors.size(); ++i ){ colors[i] = Vec3d( newmesh->colors[i][0], newmesh->colors[i][1], newmesh->colors[i][2] ); }
-#pragma omp parallel for
-	for( int i=0; i<texcoords.size(); ++i ){ texcoords[i] = Vec2d( newmesh->texcoords[i][0], newmesh->texcoords[i][1] ); }
-#pragma omp parallel for
-	for( int i=0; i<faces.size(); ++i ){ faces[i] = Vec3i( newmesh->faces[i][0], newmesh->faces[i][1], newmesh->faces[i][2] ); }
+		// Copy over data
+		vertices.resize( newmesh->vertices.size() );
+		colors.resize( newmesh->colors.size() );
+		texcoords.resize( newmesh->texcoords.size() );
+		faces.resize( newmesh->faces.size() );
 
-	delete newmesh;
+		#pragma omp parallel for
+		for( int i=0; i<vertices.size(); ++i ){ vertices[i] = Vec3f( newmesh->vertices[i][0], newmesh->vertices[i][1], newmesh->vertices[i][2] ); }
+		#pragma omp parallel for
+		for( int i=0; i<colors.size(); ++i ){ colors[i] = Vec3f( newmesh->colors[i][0], newmesh->colors[i][1], newmesh->colors[i][2] ); }
+		#pragma omp parallel for
+		for( int i=0; i<texcoords.size(); ++i ){ texcoords[i] = Vec2f( newmesh->texcoords[i][0], newmesh->texcoords[i][1] ); }
+		#pragma omp parallel for
+		for( int i=0; i<faces.size(); ++i ){ faces[i] = Vec3i( newmesh->faces[i][0], newmesh->faces[i][1], newmesh->faces[i][2] ); }
+
+		delete newmesh;
+
+	}
 
 	// Remake the triangle refs and aabb
 	make_tri_refs();
@@ -226,5 +235,78 @@ std::string TriangleMesh::get_xml( int mode ){
 
 	return "";
 }
+
+
+bool TriangleMesh::load_obj( std::string file ){
+
+	//
+	//	We have to make some assumptions about the obj file:
+	//	1) A unique location/texcoord for every vertex.
+	//	2) Ignore normals, compute them instead
+	//
+
+	std::ifstream infile( file.c_str() );
+	if( infile.is_open() ){
+
+		std::string line;
+		while( std::getline( infile, line ) ){
+
+			std::stringstream ss(line);
+			std::string tok; ss >> tok;
+			tok = trimesh_helper::to_lower(tok);
+
+			if( tok == "v" ){ // Vertex
+				float x, y, z; ss >> x >> y >> z; // vertices
+				vertices.push_back( Vec3f(x,y,z) );
+				float cx, cy, cz; // colors
+				if( ss >> cx >> cy >> cz ){ colors.push_back( Vec3f(cx,cy,cz) ); }
+			}
+
+			else if( tok == "vt" ){
+				float u, v; ss >> u >> v;
+				texcoords.push_back( Vec2f(u,v) );
+			}
+
+			else if( tok == "f" ){ // face
+
+				Vec3i face;
+				// Get the three vertices
+				for( size_t i=0; i<3; ++i ){
+
+					std::vector<int> f_vals;
+					{ // Split the string with the / delim
+						std::string f_str; ss >> f_str;
+						std::stringstream ss2(f_str); std::string s2;
+						while( std::getline(ss2, s2, '/') ){
+							f_vals.push_back( std::stoi(s2)-1 );
+						}
+					}
+
+					assert(f_vals.size()>0);
+					face[i] = f_vals[0];
+				}
+				faces.push_back(face);
+
+			} // end parse face
+
+		} // end loop lines
+
+	} // end load obj
+	else { std::cerr << "\n**TriangleMesh::load_obj Error: Could not open file " << file << std::endl; return false; }
+
+	// Double check our file
+	if( texcoords.size() ){
+		if( texcoords.size() != vertices.size() ){
+			std::cerr << "\n**TriangleMesh::load_obj Error: Failed to load texture coordinates." << std::endl;
+			texcoords.clear();
+		}
+	}
+
+	// Compute normals instead of read them
+	need_normals(true);
+
+	return true;
+
+} // end load obj
 
 

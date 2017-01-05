@@ -32,11 +32,11 @@ namespace mcl {
 class TetMesh : public BaseObject {
 public:
 	std::vector< Vec4i > tets; // all elements
-	std::vector< Vec3d > vertices; // all vertices in the tet mesh
-	std::vector< Vec3d > normals; // zero length for all non-surface normals
-	std::vector< Vec3d > colors; // per vertex colors
+	std::vector< Vec3f > vertices; // all vertices in the tet mesh
+	std::vector< Vec3f > normals; // zero length for all non-surface normals
+	std::vector< Vec3f > colors; // per vertex colors
 	std::vector< Vec3i > faces; // surface triangles
-	std::vector< Vec2d > texcoords; // per vertex uv coords
+	std::vector< Vec2f > texcoords; // per vertex uv coords
 
 	// Filename is the first part of a tetmesh which must contain an .ele and .node file.
 	// If a ply file is supplied, tetgen will be used to tetrahedralize the mesh (however,
@@ -58,7 +58,7 @@ public:
 
 	void update();
 
-	void bounds( Vec3d &bmin, Vec3d &bmax );
+	void bounds( Vec3f &bmin, Vec3f &bmax );
 
 	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
 		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }

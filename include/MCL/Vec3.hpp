@@ -28,15 +28,18 @@
 
 namespace mcl {
 
-	typedef Eigen::Vector3d Vec3d;
-	typedef Eigen::Vector2d Vec2d;
+//	typedef Eigen::Vector3d Vec3f;
+//	typedef Eigen::Vector2d Vec2d;
+	typedef Eigen::Vector4f Vec4f;
+	typedef Eigen::Vector3f Vec3f;
+	typedef Eigen::Vector2f Vec2f;
 	typedef Eigen::Vector3i Vec3i;
 	typedef Eigen::Vector4i Vec4i;
 
 	// Temporary quick fix:
-	static inline Vec3d to_Vec3d(trimesh::vec p){ return Vec3d(p[0],p[1],p[2]); } 
+	static inline Vec3f to_Vec3f(trimesh::vec p){ return Vec3f(p[0],p[1],p[2]); } 
 
-	static inline std::string to_str(const Vec3d &v){
+	static inline std::string to_str(const Vec3f &v){
 		std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2];
 		return ss.str();
 	}
@@ -46,14 +49,21 @@ namespace mcl {
 
 namespace trimesh {
 
-	static inline Eigen::Vector3d operator*(const trimesh::xform &m, const Eigen::Vector3d &v){
-		Eigen::Vector4d tmp(v[0],v[1],v[2],1.0);
-		Eigen::Vector4d r;
-		r[0] = m[0]*tmp[0]+m[4]*tmp[1]+m[8]*tmp[2]+m[12]*tmp[3];
-		r[1] = m[1]*tmp[0]+m[5]*tmp[1]+m[9]*tmp[2]+m[13]*tmp[3];
-		r[2] = m[2]*tmp[0]+m[6]*tmp[1]+m[10]*tmp[2]+m[14]*tmp[3];
-		r[3] = m[3]*tmp[0]+m[7]*tmp[1]+m[11]*tmp[2]+m[15]*tmp[3];
-		return Eigen::Vector3d(r[0],r[1],r[2]);
+	static inline Eigen::Vector4f operator*(const trimesh::xform &m, const Eigen::Vector4f &v){
+		Eigen::Vector4f r;
+		r[0] = m[0]*v[0]+m[4]*v[1]+m[8]*v[2]+m[12]*v[3];
+		r[1] = m[1]*v[0]+m[5]*v[1]+m[9]*v[2]+m[13]*v[3];
+		r[2] = m[2]*v[0]+m[6]*v[1]+m[10]*v[2]+m[14]*v[3];
+		r[3] = m[3]*v[0]+m[7]*v[1]+m[11]*v[2]+m[15]*v[3];
+		return r;
+	}
+
+	static inline Eigen::Vector3f operator*(const trimesh::xform &m, const Eigen::Vector3f &v){
+		Eigen::Vector3f r;
+		r[0] = m[0]*v[0]+m[4]*v[1]+m[8]*v[2]+m[12];
+		r[1] = m[1]*v[0]+m[5]*v[1]+m[9]*v[2]+m[13];
+		r[2] = m[2]*v[0]+m[6]*v[1]+m[10]*v[2]+m[14];
+		return r;
 	}
 
 } // end namespace trimesh

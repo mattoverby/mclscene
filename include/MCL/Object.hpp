@@ -36,7 +36,7 @@ public:
 	virtual ~BaseObject(){}
 
 	// Return the bounding box of the object
-	virtual void bounds( Vec3d &bmin, Vec3d &bmax ) = 0;
+	virtual void bounds( Vec3f &bmin, Vec3f &bmax ) = 0;
 
 	// Called externally when the object has been modified, sometimes
 	// needed to update bounding, recalculate normals, etc...
@@ -50,7 +50,7 @@ public:
 	virtual bool ray_intersect( const intersect::Ray *ray, intersect::Payload *payload ) const { return false; }
 
 	// Projection on to surface
-	virtual Vec3d projection( const Vec3d &point ) const { return point; }
+	virtual Vec3f projection( const Vec3f &point ) const { return point; }
 
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode=0 ){ return ""; }
@@ -69,10 +69,10 @@ public:
 
 		int material; // material index into SceneManager::materials
 
-		double* vertices; // XYZ
-		double* normals; // XYZ, normalized
-		double* colors; // RGB, 0-1
-		double* texcoords; // uv tex coords
+		float* vertices; // XYZ
+		float* normals; // XYZ, normalized
+		float* colors; // RGB, 0-1
+		float* texcoords; // uv tex coords
 		int* faces;
 		int num_vertices, num_normals, num_colors, num_texcoords, num_faces;
 		unsigned int verts_vbo, colors_vbo, normals_vbo, texcoords_vbo, faces_ibo, tris_vao;

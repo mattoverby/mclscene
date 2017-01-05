@@ -326,7 +326,7 @@ void SceneManager::get_bsphere( trimesh::vec *center, float *radius, bool recomp
 	if( last_radius <= 0.f || recompute ){
 		trimesh::Miniball<3,float> mb;
 		for( int i=0; i<objects.size(); ++i ){
-			Vec3d min, max;
+			Vec3f min, max;
 			objects[i]->bounds( min, max );
 			mb.check_in( trimesh::vec(min[0],min[1],min[2]) ); mb.check_in( trimesh::vec(max[0],max[1],max[2]) );
 		}

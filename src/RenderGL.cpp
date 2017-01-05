@@ -95,14 +95,14 @@ void RenderGL::draw_objects(){
 
 void RenderGL::draw_objects_subdivided(){
 	draw_objects();
+//	Camera *camera = scene->cameras[0].get();
 /*
-	// TODO
-
-	Camera *camera = scene->cameras[0].get();
-
 	for( int i=0; i<scene->objects.size(); ++i ){
 
 		std::shared_ptr<BaseObject> obj = scene->objects[i];
+		trimesh::TriMesh tempmesh;
+
+
 		if( obj->app.mesh==NULL ){ continue; }
 
 		// Subdivide the mesh and draw that
@@ -120,6 +120,7 @@ void RenderGL::draw_objects_subdivided(){
 		obj->app.mesh = &mesh2;
 		draw_mesh( obj.get(), camera );
 		obj->app.mesh = oldmesh;
+
 	}
 */
 } // end draw objects

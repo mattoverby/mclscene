@@ -38,12 +38,12 @@ namespace Projection {
 	//	Projection on Triangle
 	//	triangle should be array of 3
 	//
-	static Vec3d Triangle( Vec3d *triangle, const Vec3d &point );
+	static Eigen::Vector3d Triangle( Eigen::Vector3d *triangle, const Eigen::Vector3d &point );
 
 	//
 	//	Projection on Sphere
 	//
-	static Vec3d Sphere( const Vec3d &center, const double &rad, const Vec3d &point );
+	static Eigen::Vector3d Sphere( const Eigen::Vector3d &center, const double &rad, const Eigen::Vector3d &point );
 
 	//
 	//	Helper functions
@@ -60,11 +60,11 @@ namespace Projection {
 //	Implementation
 //
 
-static Vec3d Projection::Triangle( Vec3d *tri, const Vec3d &point ){
+static Eigen::Vector3d Projection::Triangle( Eigen::Vector3d *tri, const Eigen::Vector3d &point ){
 
-	Vec3d edge0 = tri[1] - tri[0];
-	Vec3d edge1 = tri[2] - tri[0];
-	Vec3d v0 = tri[0] - point;
+	Eigen::Vector3d edge0 = tri[1] - tri[0];
+	Eigen::Vector3d edge1 = tri[2] - tri[0];
+	Eigen::Vector3d v0 = tri[0] - point;
 
 	double a = edge0.dot( edge0 );
 	double b = edge0.dot( edge1 );
@@ -137,14 +137,14 @@ static Vec3d Projection::Triangle( Vec3d *tri, const Vec3d &point ){
 		}
 	}
 
-	return Vec3d( tri[0] + s*edge0 + t*edge1 );
+	return Eigen::Vector3d( tri[0] + s*edge0 + t*edge1 );
 
 } // end project triangle
 
-static Vec3d Projection::Sphere( const Vec3d &center, const double &rad, const Vec3d &point ){
-	Vec3d dir = point-center;
+static Eigen::Vector3d Projection::Sphere( const Eigen::Vector3d &center, const double &rad, const Eigen::Vector3d &point ){
+	Eigen::Vector3d dir = point-center;
 	dir.normalize();
-	return Vec3d( center + rad*dir );
+	return Eigen::Vector3d( center + rad*dir );
 } // end project sphere
 
 } // end namespace mcl

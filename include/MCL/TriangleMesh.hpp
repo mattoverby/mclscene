@@ -34,13 +34,13 @@ namespace mcl {
 //
 class TriangleRef : public BaseObject {
 public:
-	TriangleRef( Vec3d *p0_, Vec3d *p1_, Vec3d *p2_,
-		Vec3d *n0_, Vec3d *n1_, Vec3d *n2_ ) :
+	TriangleRef( Vec3f *p0_, Vec3f *p1_, Vec3f *p2_,
+		Vec3f *n0_, Vec3f *n1_, Vec3f *n2_ ) :
 		p0(p0_), p1(p1_), p2(p2_), n0(n0_), n1(n1_), n2(n2_) {}
 
-	Vec3d *p0, *p1, *p2, *n0, *n1, *n2;
+	Vec3f *p0, *p1, *p2, *n0, *n1, *n2;
 
-	void bounds( Vec3d &bmin, Vec3d &bmax ){
+	void bounds( Vec3f &bmin, Vec3f &bmax ){
 		AABB aabb; aabb += *p0; aabb += *p1; aabb += *p2;
 		bmin = aabb.min; bmax = aabb.max;
 	}
@@ -51,7 +51,7 @@ public:
 		return hit;
 	}
 
-	Vec3d projection( const Vec3d &point ) const {
+	Vec3f projection( const Vec3f &point ) const {
 		return intersect::point_triangle( point, *p0, *p1, *p2 );
 	}
 };
@@ -62,11 +62,11 @@ public:
 //
 class TriangleMesh : public BaseObject {
 public:
-	std::vector< Vec3d > vertices; // all vertices in the tet mesh
-	std::vector< Vec3d > normals; // zero length for all non-surface normals
-	std::vector< Vec3d > colors; // per vertex colors
+	std::vector< Vec3f > vertices; // all vertices in the tet mesh
+	std::vector< Vec3f > normals; // zero length for all non-surface normals
+	std::vector< Vec3f > colors; // per vertex colors
 	std::vector< Vec3i > faces; // surface triangles
-	std::vector< Vec2d > texcoords; // per vertex uv coords
+	std::vector< Vec2f > texcoords; // per vertex uv coords
 
 	// Returns true on success
 	bool load( std::string filename );
@@ -78,7 +78,7 @@ public:
 
 	void apply_xform( const trimesh::xform &xf );
 
-	void bounds( Vec3d &bmin, Vec3d &bmax );
+	void bounds( Vec3f &bmin, Vec3f &bmax );
 
 	void update();
 
@@ -95,6 +95,8 @@ private:
 	// Triangle refs are used for BVH hook-in.
 	void make_tri_refs();
 	std::vector< std::shared_ptr<BaseObject> > tri_refs;
+
+	bool load_obj( std::string filename );
 };
 
 

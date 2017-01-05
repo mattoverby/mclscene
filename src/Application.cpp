@@ -268,7 +268,7 @@ void Application::update_mesh_buffers(){
 
 	for( int i=0; i<scene->objects.size(); ++i ){
 		std::shared_ptr<BaseObject> obj = scene->objects[i];
-		size_t stride = 3*sizeof(double);
+		size_t stride = 3*sizeof(float);
 
 		// Create the buffer for vertices
 		if( !obj->app.verts_vbo ){ glGenBuffers(1, &obj->app.verts_vbo); }
@@ -291,7 +291,7 @@ void Application::update_mesh_buffers(){
 		// Create the buffer for tex coords
 		if( !obj->app.texcoords_vbo ){ glGenBuffers(1, &obj->app.texcoords_vbo); }
 		glBindBuffer(GL_ARRAY_BUFFER, obj->app.texcoords_vbo);
-		glBufferData(GL_ARRAY_BUFFER, obj->app.num_texcoords*2*sizeof(double), obj->app.texcoords, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, obj->app.num_texcoords*2*sizeof(float), obj->app.texcoords, GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		// Create the buffer for indices
@@ -309,22 +309,22 @@ void Application::update_mesh_buffers(){
 			// location=0 is the vertex
 			glEnableVertexAttribArray(0);
 			glBindBuffer(GL_ARRAY_BUFFER, obj->app.verts_vbo);
-			glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, stride, 0);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, 0);
 
 			// location=1 is the color
 			glEnableVertexAttribArray(1);
 			glBindBuffer(GL_ARRAY_BUFFER, obj->app.colors_vbo);
-			glVertexAttribPointer(1, 3, GL_DOUBLE, GL_FALSE, stride, 0);
+			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, 0);
 
 			// location=2 is the normal
 			glEnableVertexAttribArray(2);
 			glBindBuffer(GL_ARRAY_BUFFER, obj->app.normals_vbo);
-			glVertexAttribPointer(2, 3, GL_DOUBLE, GL_FALSE, stride, 0);
+			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, 0);
 
 			// location=3 is the tex coord
 			glEnableVertexAttribArray(3);
 			glBindBuffer(GL_ARRAY_BUFFER, obj->app.texcoords_vbo);
-			glVertexAttribPointer(3, 2, GL_DOUBLE, GL_FALSE, 2*sizeof(double), 0);
+			glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), 0);
 
 			// Done setting data for the vao
 			glBindVertexArray(0);
