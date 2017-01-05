@@ -269,38 +269,55 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
 
 void Application::update_mesh_buffers(){
 
+	// Dynamic: vertices, colors, normals
+	// Static: tex coords, face indices, array object
+
 	for( int i=0; i<scene->objects.size(); ++i ){
 		std::shared_ptr<BaseObject> obj = scene->objects[i];
 		size_t stride = 3*sizeof(float);
 
-		// Create the buffer for vertices
-		if( !obj->app.verts_vbo ){ glGenBuffers(1, &obj->app.verts_vbo); }
-		glBindBuffer(GL_ARRAY_BUFFER, obj->app.verts_vbo);
-		glBufferData(GL_ARRAY_BUFFER, obj->app.num_vertices*stride, obj->app.vertices, GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		if( !obj->app.verts_vbo ){ // Create the buffer for vertices
+			glGenBuffers(1, &obj->app.verts_vbo);
+			glBindBuffer(GL_ARRAY_BUFFER, obj->app.verts_vbo);
+			glBufferData(GL_ARRAY_BUFFER, obj->app.num_vertices*stride, obj->app.vertices, GL_DYNAMIC_DRAW);
+		} else { // Otherwise update
+			glBindBuffer(GL_ARRAY_BUFFER, obj->app.verts_vbo);
+			glBufferSubData( GL_ARRAY_BUFFER, 0, obj->app.num_vertices*stride, obj->app.vertices );
+		}
 
-		// Create the buffer for colors
-		if( !obj->app.colors_vbo ){ glGenBuffers(1, &obj->app.colors_vbo); }
-		glBindBuffer(GL_ARRAY_BUFFER, obj->app.colors_vbo);
-		glBufferData(GL_ARRAY_BUFFER, obj->app.num_colors*stride, obj->app.colors, GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		if( !obj->app.colors_vbo ){ // Create the buffer for colors
+			glGenBuffers(1, &obj->app.colors_vbo);
+			glBindBuffer(GL_ARRAY_BUFFER, obj->app.colors_vbo);
+			glBufferData(GL_ARRAY_BUFFER, obj->app.num_colors*stride, obj->app.colors, GL_DYNAMIC_DRAW);
+		} else { // Otherwise update
+			glBindBuffer(GL_ARRAY_BUFFER, obj->app.colors_vbo);
+			glBufferSubData( GL_ARRAY_BUFFER, 0, obj->app.num_colors*stride, obj->app.colors );
+		}
 
-		// Create the buffer for normals
-		if( !obj->app.normals_vbo ){ glGenBuffers(1, &obj->app.normals_vbo); }
-		glBindBuffer(GL_ARRAY_BUFFER, obj->app.normals_vbo);
-		glBufferData(GL_ARRAY_BUFFER, obj->app.num_normals*stride, obj->app.normals, GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		if( !obj->app.normals_vbo ){ // Create the buffer for normals
+			glGenBuffers(1, &obj->app.normals_vbo);
+			glBindBuffer(GL_ARRAY_BUFFER, obj->app.normals_vbo);
+			glBufferData(GL_ARRAY_BUFFER, obj->app.num_normals*stride, obj->app.normals, GL_DYNAMIC_DRAW);
+		} else { // Otherwise update
+			glBindBuffer(GL_ARRAY_BUFFER, obj->app.normals_vbo);
+			glBufferSubData( GL_ARRAY_BUFFER, 0, obj->app.num_normals*stride, obj->app.normals );
+		}
 
-		// Create the buffer for tex coords
-		if( !obj->app.texcoords_vbo ){ glGenBuffers(1, &obj->app.texcoords_vbo); }
-		glBindBuffer(GL_ARRAY_BUFFER, obj->app.texcoords_vbo);
-		glBufferData(GL_ARRAY_BUFFER, obj->app.num_texcoords*2*sizeof(float), obj->app.texcoords, GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		 // Create the buffer for tex coords, these won't change
+		if( !obj->app.texcoords_vbo ){
+			glGenBuffers(1, &obj->app.texcoords_vbo);
+			glBindBuffer(GL_ARRAY_BUFFER, obj->app.texcoords_vbo);
+			glBufferData(GL_ARRAY_BUFFER, obj->app.num_texcoords*2*sizeof(float), obj->app.texcoords, GL_STATIC_DRAW);
+		}
 
-		// Create the buffer for indices
-		if( !obj->app.faces_ibo ){ glGenBuffers(1, &obj->app.faces_ibo); }
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->app.faces_ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, obj->app.num_faces*sizeof(int)*3, obj->app.faces, GL_STATIC_DRAW);
+		// Create the buffer for indices, these won't change
+		if( !obj->app.faces_ibo ){
+			glGenBuffers(1, &obj->app.faces_ibo);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->app.faces_ibo);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, obj->app.num_faces*sizeof(int)*3, obj->app.faces, GL_STATIC_DRAW);
+		}
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 		// Create the VAO
@@ -333,7 +350,7 @@ void Application::update_mesh_buffers(){
 			glBindVertexArray(0);
 		}
 
-	}
+	} // end loop objects
 
 }
 
