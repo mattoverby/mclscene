@@ -42,12 +42,11 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 	Input &input = Input::getInstance(); // initialize the singleton
 
 	scene->get_bsphere(&scene_center,&scene_radius,true);
-	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( scene_center, scene_radius*6.f ); }
-
 	std::cout << "Scene Radius: " << scene_radius << std::endl;
 
+	// Make camera if one was not loaded
 	if( scene->cameras.size()==0 ){
-		trimesh::vec eye = scene_center; eye[2]-=(scene_radius*3.f);
+		Vec3f eye = scene_center; eye[2]-=(scene_radius*3.f);
 		std::shared_ptr<Trackball> cam = scene->make_camera<Trackball>( "trackball" );
 		cam->eye = eye;
 		cam->lookat = scene_center;
@@ -55,6 +54,10 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 	}
 	current_cam = scene->cameras[0].get();
 
+	// Add lights if not described in scene
+	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( current_cam->get_position(), scene_center, scene_radius*6.f ); }
+
+	// Runtime variables
 	cursorX = 0.f;
 	cursorY = 0.f;
 	left_mouse_drag = false;
@@ -437,7 +440,7 @@ void Application::run_simulator_step(){
 	if( !sim->update( scene ) ){ std::cerr << "\n**Application::display Error: Problem in mesh update" << std::endl; }
 
 	// Update the scene radius
-	trimesh::vec unused;
+	Vec3f unused;
 	scene->get_bsphere(&unused,&scene_radius,true);
 
 	// Update geometry on device

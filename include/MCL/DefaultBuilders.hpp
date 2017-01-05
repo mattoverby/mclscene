@@ -81,7 +81,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	if( type == "sphere" ){
 		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
 		double radius = 1.0;
-		vec center(0,0,0);
+		Vec3f center(0,0,0);
 		int tessellation = 1;
 
 		for( int i=0; i<params.size(); ++i ){
@@ -397,7 +397,7 @@ static std::shared_ptr<Light> default_build_light( std::string type, std::vector
 	}
 	else if( type == "directional" ){
 		light->app.type = 1;
-		light->app.falloff = trimesh::vec(1,0,0); // no falloff on directional lights
+		light->app.falloff = Vec3f(1,0,0); // no falloff on directional lights
 		return light;
 	}
 	else if( type == "spot" ){
@@ -423,7 +423,7 @@ static std::shared_ptr<Light> default_build_light( std::string type, std::vector
 static std::shared_ptr<Camera> default_build_camera( std::string type, std::vector<Param> &params ){
 
 	type = parse::to_lower(type);
-	trimesh::vec eye(0,0,1), direction(0,0,-1), lookat(0,0,0);
+	Vec3f eye(0,0,1), direction(0,0,-1), lookat(0,0,0);
 
 	//
 	//	Common camera parameters
@@ -531,59 +531,59 @@ static std::shared_ptr<Material> make_preset_material( std::string preset ){// M
 
 	// Gemstones
 	case MaterialPreset::Emerald:
-		r= std::shared_ptr<Material>( new Material( vec(0.0215, 0.1745, 0.0215), vec(0.07568, 0.61424, 0.07568), vec(0.633, 0.727811, 0.633), 0.6 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.0215, 0.1745, 0.0215), Vec3f(0.07568, 0.61424, 0.07568), Vec3f(0.633, 0.727811, 0.633), 0.6 ) ); break;
 	case MaterialPreset::Jade:
-		r= std::shared_ptr<Material>( new Material( vec(0.135, 0.2225, 0.1575), vec(0.54, 0.89, 0.63), vec(0.316228, 0.316228, 0.316228), 0.1 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.135, 0.2225, 0.1575), Vec3f(0.54, 0.89, 0.63), Vec3f(0.316228, 0.316228, 0.316228), 0.1 ) ); break;
 	case MaterialPreset::Obsidian:
-		r= std::shared_ptr<Material>( new Material( vec(0.05375, 0.05, 0.06625), vec(0.18275, 0.17, 0.22525), vec(0.332741, 0.328634, 0.346435), 0.3 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.05375, 0.05, 0.06625), Vec3f(0.18275, 0.17, 0.22525), Vec3f(0.332741, 0.328634, 0.346435), 0.3 ) ); break;
 	case MaterialPreset::Pearl:
-		r= std::shared_ptr<Material>( new Material( vec(0.25, 0.20725, 0.20725), vec(1.0, 0.829, 0.829), vec(0.296648, 0.296648, 0.296648), 0.088 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.25, 0.20725, 0.20725), Vec3f(1.0, 0.829, 0.829), Vec3f(0.296648, 0.296648, 0.296648), 0.088 ) ); break;
 	case MaterialPreset::Ruby:
-		r= std::shared_ptr<Material>( new Material( vec(0.1745, 0.01175, 0.01175), vec(0.61424, 0.04136, 0.04136), vec(0.727811, 0.626959, 0.626959), 0.6 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.1745, 0.01175, 0.01175), Vec3f(0.61424, 0.04136, 0.04136), Vec3f(0.727811, 0.626959, 0.626959), 0.6 ) ); break;
 	case MaterialPreset::Turquoise:
-		r= std::shared_ptr<Material>( new Material( vec(0.1, 0.18725, 0.1745), vec(0.396, 0.74151, 0.69102), vec(0.297254, 0.30829, 0.306678), 0.1 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.1, 0.18725, 0.1745), Vec3f(0.396, 0.74151, 0.69102), Vec3f(0.297254, 0.30829, 0.306678), 0.1 ) ); break;
 
 	// Metals
 	case MaterialPreset::Brass:
-		r= std::shared_ptr<Material>( new Material( vec(0.329412, 0.223529, 0.027451), vec(0.780392, 0.568627, 0.113725), vec(0.992157, 0.941176, 0.807843), 0.21794872 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.329412, 0.223529, 0.027451), Vec3f(0.780392, 0.568627, 0.113725), Vec3f(0.992157, 0.941176, 0.807843), 0.21794872 ) ); break;
 	case MaterialPreset::Bronze:
-		r= std::shared_ptr<Material>( new Material( vec(0.2125, 0.1275, 0.054), vec(0.714, 0.4284, 0.18144), vec(0.393548, 0.271906, 0.166721), 0.2 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.2125, 0.1275, 0.054), Vec3f(0.714, 0.4284, 0.18144), Vec3f(0.393548, 0.271906, 0.166721), 0.2 ) ); break;
 	case MaterialPreset::Chrome:
-		r= std::shared_ptr<Material>( new Material( vec(0.25, 0.25, 0.25), vec(0.4, 0.4, 0.4), vec(0.774597, 0.774597, 0.774597), 0.6 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.25, 0.25, 0.25), Vec3f(0.4, 0.4, 0.4), Vec3f(0.774597, 0.774597, 0.774597), 0.6 ) ); break;
 	case MaterialPreset::Copper:
-		r= std::shared_ptr<Material>( new Material( vec(0.19125, 0.0735, 0.0225), vec(0.7038, 0.27048, 0.0828), vec(0.256777, 0.137622, 0.086014), 0.6 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.19125, 0.0735, 0.0225), Vec3f(0.7038, 0.27048, 0.0828), Vec3f(0.256777, 0.137622, 0.086014), 0.6 ) ); break;
 	case MaterialPreset::Gold:
-		r= std::shared_ptr<Material>( new Material( vec(0.24725, 0.1995, 0.0745), vec(0.75164, 0.60648, 0.22648), vec(0.628281, 0.555802, 0.366065), 0.4 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.24725, 0.1995, 0.0745), Vec3f(0.75164, 0.60648, 0.22648), Vec3f(0.628281, 0.555802, 0.366065), 0.4 ) ); break;
 	case MaterialPreset::Silver:
-		r= std::shared_ptr<Material>( new Material( vec(0.19225, 0.19225, 0.19225), vec(0.50754, 0.50754, 0.50754), vec(0.508273, 0.508273, 0.508273), 0.4 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.19225, 0.19225, 0.19225), Vec3f(0.50754, 0.50754, 0.50754), Vec3f(0.508273, 0.508273, 0.508273), 0.4 ) ); break;
 
 	// Plastics
 	case MaterialPreset::BlackPlastic:
-		r= std::shared_ptr<Material>( new Material( vec(0.0, 0.0, 0.0), vec(0.01, 0.01, 0.01), vec(0.50, 0.50, 0.50), 0.25 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.0, 0.0, 0.0), Vec3f(0.01, 0.01, 0.01), Vec3f(0.50, 0.50, 0.50), 0.25 ) ); break;
 	case MaterialPreset::CyanPlastic:
-		r= std::shared_ptr<Material>( new Material( vec(0.0, 0.1, 0.06), vec(0.0, 0.50980392, 0.50980392), vec(0.50196078, 0.50196078, 0.50196078), 0.25 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.0, 0.1, 0.06), Vec3f(0.0, 0.50980392, 0.50980392), Vec3f(0.50196078, 0.50196078, 0.50196078), 0.25 ) ); break;
 	case MaterialPreset::GreenPlastic:
-		r= std::shared_ptr<Material>( new Material( vec(0.0, 0.0, 0.0), vec(0.1, 0.35, 0.1), vec(0.45, 0.55, 0.45), 0.25 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.0, 0.0, 0.0), Vec3f(0.1, 0.35, 0.1), Vec3f(0.45, 0.55, 0.45), 0.25 ) ); break;
 	case MaterialPreset::RedPlastic:
-		r= std::shared_ptr<Material>( new Material( vec(0.0, 0.0, 0.0), vec(0.5, 0.0, 0.0), vec(0.7, 0.6, 0.6), 0.25 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.0, 0.0, 0.0), Vec3f(0.5, 0.0, 0.0), Vec3f(0.7, 0.6, 0.6), 0.25 ) ); break;
 	case MaterialPreset::WhitePlastic:
-		r= std::shared_ptr<Material>( new Material( vec(0.0, 0.0, 0.0), vec(0.55, 0.55, 0.55), vec(0.70, 0.70, 0.70), 0.25 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.0, 0.0, 0.0), Vec3f(0.55, 0.55, 0.55), Vec3f(0.70, 0.70, 0.70), 0.25 ) ); break;
 	case MaterialPreset::YellowPlastic:
-		r= std::shared_ptr<Material>( new Material( vec(0.0, 0.0, 0.0), vec(0.5, 0.5, 0.0), vec(0.60, 0.60, 0.50), 0.25 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.0, 0.0, 0.0), Vec3f(0.5, 0.5, 0.0), Vec3f(0.60, 0.60, 0.50), 0.25 ) ); break;
 
 	// Rubbers
 	case MaterialPreset::BlackRubber:
-		r= std::shared_ptr<Material>( new Material( vec(0.02, 0.02, 0.02), vec(0.01, 0.01, 0.01), vec(0.4, 0.4, 0.4), 0.078125 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.02, 0.02, 0.02), Vec3f(0.01, 0.01, 0.01), Vec3f(0.4, 0.4, 0.4), 0.078125 ) ); break;
 	case MaterialPreset::CyanRubber:
-		r= std::shared_ptr<Material>( new Material( vec(0.0, 0.05, 0.05), vec(0.4, 0.5, 0.5), vec(0.04, 0.7, 0.7), 0.078125 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.0, 0.05, 0.05), Vec3f(0.4, 0.5, 0.5), Vec3f(0.04, 0.7, 0.7), 0.078125 ) ); break;
 	case MaterialPreset::GreenRubber:
-		r= std::shared_ptr<Material>( new Material( vec(0.0, 0.05, 0.0), vec(0.4, 0.5, 0.4), vec(0.04, 0.7, 0.04), 0.078125 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.0, 0.05, 0.0), Vec3f(0.4, 0.5, 0.4), Vec3f(0.04, 0.7, 0.04), 0.078125 ) ); break;
 	case MaterialPreset::RedRubber:
-		r= std::shared_ptr<Material>( new Material( vec(0.05, 0.0, 0.0), vec(0.5, 0.4, 0.4), vec(0.7, 0.04, 0.04), 0.078125 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.05, 0.0, 0.0), Vec3f(0.5, 0.4, 0.4), Vec3f(0.7, 0.04, 0.04), 0.078125 ) ); break;
 	case MaterialPreset::WhiteRubber:
-		r= std::shared_ptr<Material>( new Material( vec(0.05, 0.05, 0.05), vec(0.5, 0.5, 0.5), vec(0.7, 0.7, 0.7), 0.078125 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.05, 0.05, 0.05), Vec3f(0.5, 0.5, 0.5), Vec3f(0.7, 0.7, 0.7), 0.078125 ) ); break;
 	case MaterialPreset::YellowRubber:
-		r= std::shared_ptr<Material>( new Material( vec(0.05, 0.05, 0.0), vec(0.5, 0.5, 0.4), vec(0.7, 0.7, 0.04), 0.078125 ) ); break;
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.05, 0.05, 0.0), Vec3f(0.5, 0.5, 0.4), Vec3f(0.7, 0.7, 0.04), 0.078125 ) ); break;
 
 	// Special
 	case MaterialPreset::Invisible:

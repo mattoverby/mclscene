@@ -28,7 +28,7 @@
 
 namespace mcl {
 
-	static trimesh::fxform make_view(trimesh::vec eye, trimesh::vec u, trimesh::vec v, trimesh::vec w){
+	static trimesh::fxform make_view(Vec3f eye, Vec3f u, Vec3f v, Vec3f w){
 		trimesh::fxform r;
 		for(size_t i=0; i<3; ++i){
 			r[4*i] = u[i];
@@ -50,7 +50,7 @@ public:
 	virtual ~Camera(){}
 
 	// Return eye world location
-	virtual trimesh::vec get_position() = 0;
+	virtual Vec3f get_position() = 0;
 
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode ){ return ""; }
@@ -80,12 +80,12 @@ public:
 
 class Trackball : public Camera {
 public:
-	trimesh::vec lookat, eye, u, v, w;
+	Vec3f lookat, eye, u, v, w;
 	float rotx, roty, panx, pany;
 	float fov_deg;
-	trimesh::Vec<2,float> clipping; // clipping plane for proj. matrix
+	Vec2f clipping; // clipping plane for proj. matrix
 
-	Trackball( trimesh::vec eye_, trimesh::vec lookat_ ) : eye(eye_), lookat(lookat_),
+	Trackball( Vec3f eye_, Vec3f lookat_ ) : eye(eye_), lookat(lookat_),
 		rotx(0.f), roty(0.f),
 		panx(0.f), pany(0.f),
 		fov_deg(30.f),
@@ -93,13 +93,12 @@ public:
 		update_basis();
 	}
 
-	trimesh::vec get_position(){ return eye; }
+	Vec3f get_position(){ return eye; }
 
 	void update_basis(){
-		using namespace trimesh;
-		vec up(0,1,0);
-		vec dir = lookat - eye;
-		normalize(dir);
+		Vec3f up(0,1,0);
+		Vec3f dir = lookat - eye;
+		dir.normalize();
 		w = dir*-1.f;
 		u = up.cross(w);
 		v = w.cross(u);
@@ -136,7 +135,7 @@ public:
 		pany = 0.f;
 		panx = 0.f;
 
-		float rad = len(lookat-eye);
+		float rad = (lookat-eye).norm();
 		eye = w*rad + lookat;
 
 		this->app.view = make_view( eye, u, v, w );

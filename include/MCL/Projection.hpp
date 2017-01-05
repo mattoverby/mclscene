@@ -38,7 +38,7 @@ namespace Projection {
 	//	Projection on Triangle
 	//	triangle should be array of 3
 	//
-	static Eigen::Vector3d Triangle( Eigen::Vector3d *triangle, const Eigen::Vector3d &point );
+	static Eigen::Vector3d Triangle( Eigen::Vector3d *triangle, Eigen::Vector3d point );
 
 	//
 	//	Projection on Sphere
@@ -49,8 +49,9 @@ namespace Projection {
 	//	Helper functions
 	//
 	static double myclamp( double val, double min, double max ){
-		double v = val < min ? min : val;
-		v = val > max ? max : val;
+		double v = val;
+		if( v < min ){ v = min; }
+		if( v > max ){ v = max; }
 		return v;
 	}
 
@@ -60,7 +61,7 @@ namespace Projection {
 //	Implementation
 //
 
-static Eigen::Vector3d Projection::Triangle( Eigen::Vector3d *tri, const Eigen::Vector3d &point ){
+static Eigen::Vector3d Projection::Triangle( Eigen::Vector3d *tri, Eigen::Vector3d point ){
 
 	Eigen::Vector3d edge0 = tri[1] - tri[0];
 	Eigen::Vector3d edge1 = tri[2] - tri[0];

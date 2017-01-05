@@ -41,7 +41,7 @@ public:
 		bool run_simulation; // run the simulator every frame
 		bool subdivide_meshes; // copy and subdivide the meshes before rendering
 		bool gamma_correction;
-		trimesh::vec clear_color;
+		Vec3f clear_color;
 
 		Settings() : save_frames(false), run_simulation(false),
 			subdivide_meshes(false), gamma_correction(true),
@@ -78,7 +78,7 @@ protected:
 	double cursorX, cursorY;
 
 	float scene_radius; // recomputed on simulation step
-	trimesh::vec scene_center; // set once in constructor
+	Vec3f scene_center; // set once in constructor
 	bool left_mouse_drag, right_mouse_drag;
 
 	void run_simulator_step();

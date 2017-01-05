@@ -137,9 +137,9 @@ void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 
 
 	// Get material properties
-	trimesh::vec ambient = mat->app.amb;
-	trimesh::vec diffuse = mat->app.diff;
-	trimesh::vec specular = mat->app.spec;
+	Vec3f ambient = mat->app.amb;
+	Vec3f diffuse = mat->app.diff;
+	Vec3f specular = mat->app.spec;
 	float shininess = mat->app.shini;
 
 
@@ -153,7 +153,7 @@ void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 	glUniformMatrix4fv( blinnphong->uniform("model"), 1, GL_FALSE, model );
 	glUniformMatrix4fv( blinnphong->uniform("view"), 1, GL_FALSE, camera->app.view );
 	glUniformMatrix4fv( blinnphong->uniform("projection"), 1, GL_FALSE, camera->app.projection );
-	trimesh::vec eyepos = camera->get_position();
+	Vec3f eyepos = camera->get_position();
 	glUniform3f( blinnphong->uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
 
 	setup_lights();
@@ -234,9 +234,9 @@ void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
 	// Get material properties
-	trimesh::vec ambient = mat->app.amb;
-	trimesh::vec diffuse = mat->app.diff;
-	trimesh::vec specular = mat->app.spec;
+	Vec3f ambient = mat->app.amb;
+	Vec3f diffuse = mat->app.diff;
+	Vec3f specular = mat->app.spec;
 	float shininess = mat->app.shini;
 
 
@@ -253,7 +253,7 @@ void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 	glUniformMatrix4fv( blinnphong->uniform("model"), 1, GL_FALSE, obj->app.xf );
 	glUniformMatrix4fv( blinnphong->uniform("view"), 1, GL_FALSE, camera->app.view );
 	glUniformMatrix4fv( blinnphong->uniform("projection"), 1, GL_FALSE, camera->app.projection );
-	trimesh::vec eyepos = camera->get_position();
+	Vec3f eyepos = camera->get_position();
 	glUniform3f( blinnphong->uniform("CamPos"), eyepos[0], eyepos[1], eyepos[2] );
 
 	setup_lights();

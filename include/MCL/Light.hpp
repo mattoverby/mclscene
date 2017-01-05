@@ -23,7 +23,7 @@
 #define MCLSCENE_LIGHT_H 1
 
 #include <memory>
-#include "Vec.h"
+#include "Vec3.hpp"
 
 namespace mcl {
 
@@ -37,6 +37,7 @@ public:
 
 	// Returns a string containing xml code for saving to a scenefile.
 	std::string get_xml( int mode ){
+/*
 		std::stringstream xml;
 		if( app.type==0 ){
 			xml << "\t<Light type=\"point\" >\n";
@@ -54,13 +55,16 @@ public:
 		xml << "\t\t<Falloff value=\"" << app.falloff.str() << "\" />\n";
 		xml << "\t</Light>";
 		return xml.str();
+*/
+		std::cout << "TODO: Light::get_xml" << std::endl;
+		return "";
 	} // end get xml
 
 	// Data used by mcl::Application
 	struct AppData {
 		AppData() : position(0,0,0), direction(0,-1,0), intensity(1,1,1), falloff(1,0.1f,0.01f), angle(35), type(0) {}
-		trimesh::vec position, direction, intensity;
-		trimesh::vec falloff; // (constant, linear, quadratic)
+		Vec3f position, direction, intensity;
+		Vec3f falloff; // (constant, linear, quadratic)
 		double angle; // spot light angle, degrees
 		int type; // 0 = point, 1 = directional, 2 = spot
 	} app ;

@@ -32,7 +32,7 @@ SceneManager::SceneManager() {
 	createLight = default_build_light;
 	createMaterial = default_build_material;
 	last_radius=-1.f;
-	last_center = trimesh::vec(0,0,0);
+	last_center = Vec3f(0,0,0);
 }
 
 
@@ -289,7 +289,9 @@ std::shared_ptr<BVHNode> SceneManager::SceneManager::get_bvh( bool recompute, st
 }
 
 
-void SceneManager::make_3pt_lighting( const trimesh::vec &center, float distance ){
+void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center, float distance ){
+
+	// TODO improve this function with better 3pt lighting
 
 	lights.clear();
 	light_params.clear();
@@ -302,26 +304,24 @@ void SceneManager::make_3pt_lighting( const trimesh::vec &center, float distance
 	float quart_d = distance/4.f;
 
 	// Set positions
-//	key->app.position = center + trimesh::vec(-half_d,0.f,distance);
-//	fill->app.position = center + trimesh::vec(half_d,0.f,distance);
-	key->app.position = center + trimesh::vec(0,half_d,0);
-	fill->app.position = center + trimesh::vec(-half_d,0.f,half_d);
-	back->app.position = center + trimesh::vec(0.f,quart_d,-distance);
+	key->app.position = center + Vec3f(-half_d,0.f,distance);
+	fill->app.position = center + Vec3f(half_d,0.f,distance);
+	back->app.position = center + Vec3f(0.f,quart_d,-distance);
 
 	// Set intensity
-	key->app.intensity = trimesh::vec(.8,.8,.8);
-	fill->app.intensity = trimesh::vec(.6,.6,.6);
-	back->app.intensity = trimesh::vec(.6,.6,.6);
+	key->app.intensity = Vec3f(.8,.8,.8);
+	fill->app.intensity = Vec3f(.6,.6,.6);
+	back->app.intensity = Vec3f(.6,.6,.6);
 
 	// Falloff (none)
-	key->app.falloff = trimesh::vec(1.f,0.f,0.f);
-	fill->app.falloff = trimesh::vec(1.f,0.f,0.f);
-	back->app.falloff = trimesh::vec(1.f,0.f,0.f);
+	key->app.falloff = Vec3f(1.f,0.f,0.f);
+	fill->app.falloff = Vec3f(1.f,0.f,0.f);
+	back->app.falloff = Vec3f(1.f,0.f,0.f);
 
 } // end make three point lighting
 
 
-void SceneManager::get_bsphere( trimesh::vec *center, float *radius, bool recompute ){
+void SceneManager::get_bsphere( Vec3f *center, float *radius, bool recompute ){
 
 	if( last_radius <= 0.f || recompute ){
 		trimesh::Miniball<3,float> mb;
@@ -332,7 +332,8 @@ void SceneManager::get_bsphere( trimesh::vec *center, float *radius, bool recomp
 		}
 		mb.build();
 		last_radius = sqrt(mb.squared_radius());
-		last_center = mb.center();
+		trimesh::vec curr_center = mb.center();
+		last_center = Vec3f( curr_center[0], curr_center[1], curr_center[2] );
 	}
 
 	*center = last_center;

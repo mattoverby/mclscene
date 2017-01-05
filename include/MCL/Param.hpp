@@ -24,8 +24,7 @@
 
 #include <string>
 #include <sstream>
-#include "Vec.h"
-#include "XForm.h"
+#include "Vec3.hpp"
 #include <unordered_map>
 #include "../../deps/pugixml/pugixml.hpp"
 
@@ -86,9 +85,9 @@ public:
 	inline long as_long() const { std::stringstream ss(value); long v; ss>>v; return v; }
 	inline bool as_bool() const { std::stringstream ss(value); bool v; ss>>v; return v; }
 	inline float as_float() const { std::stringstream ss(value); float v; ss>>v; return v; }
-	inline trimesh::vec4 as_vec4() const;
-	inline trimesh::vec as_vec3() const;
-	inline trimesh::vec2 as_vec2() const;
+	inline Vec4f as_vec4() const;
+	inline Vec3f as_vec3() const;
+	inline Vec2f as_vec2() const;
 	inline trimesh::xform as_xform() const;
 
 	// Stores the parsed data
@@ -166,23 +165,23 @@ static void load_params( std::vector<Param> &params, const pugi::xml_node &curr_
 //
 
 
-trimesh::vec Param::as_vec3() const {
+Vec3f Param::as_vec3() const {
 	std::stringstream ss(value);
-	trimesh::vec v;
+	Vec3f v;
 	for( int i=0; i<3; ++i ){ ss>>v[i]; }
 	return v;
 }
 
-trimesh::vec2 Param::as_vec2() const {
+Vec2f Param::as_vec2() const {
 	std::stringstream ss(value);
-	trimesh::vec2 v;
+	Vec2f v;
 	for( int i=0; i<2; ++i ){ ss>>v[i]; }
 	return v;
 }
 
-trimesh::vec4 Param::as_vec4() const {
+Vec4f Param::as_vec4() const {
 	std::stringstream ss(value);
-	trimesh::vec4 v;
+	Vec4f v;
 	for( int i=0; i<4; ++i ){ ss>>v[i]; }
 	return v;
 }
@@ -202,20 +201,20 @@ void Param::normalize(){
 	while( sscheck.good() ){ float buff; sscheck >> buff; num_elem++; }
 
 	if(num_elem==3){
-		trimesh::vec v = as_vec3();
-		trimesh::normalize( v );
+		Vec3f v = as_vec3();
+		v.normalize();
 		std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2];
 		value = ss.str();
 	}
 	else if(num_elem==2){
-		trimesh::vec2 v = as_vec2();
-		trimesh::normalize( v );
+		Vec2f v = as_vec2();
+		v.normalize();
 		std::stringstream ss; ss << v[0] << ' ' << v[1];
 		value = ss.str();
 	}
 	else if(num_elem==4){
-		trimesh::vec4 v = as_vec4();
-		trimesh::normalize( v );
+		Vec4f v = as_vec4();
+		v.normalize();
 		std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2] << ' ' << v[3];
 		value = ss.str();
 	}
@@ -230,7 +229,7 @@ void Param::fix_color(){
 	while( sscheck.good() ){ float buff; sscheck >> buff; num_elem++; }
 
 	if(num_elem==3){
-		trimesh::vec c = as_vec3();
+		Vec3f c = as_vec3();
 
 		for( int ci=0; ci<3; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
 		if( c[0] > 1.0 || c[1] > 1.0 || c[2] > 1.0 ){ for( int ci=0; ci<3; ++ci ){ c[ci]/=255.f; } } // from 0-255 to 0-1
@@ -239,7 +238,7 @@ void Param::fix_color(){
 		value = ss.str();
 	}
 	else if(num_elem==2){
-		trimesh::vec2 c = as_vec2();
+		Vec2f c = as_vec2();
 
 		for( int ci=0; ci<2; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
 		if( c[0] > 1.0 || c[1] > 1.0 ){ for( int ci=0; ci<2; ++ci ){ c[ci]/=255.f; } } // from 0-255 to 0-1
@@ -248,7 +247,7 @@ void Param::fix_color(){
 		value = ss.str();
 	}
 	else if(num_elem==4){
-		trimesh::vec4 c = as_vec4();
+		Vec4f c = as_vec4();
 
 		for( int ci=0; ci<4; ++ci ){ if( c[ci]<0.f ){ c[ci]=0.f; } } // min zero
 		if( c[0] > 1.0 || c[1] > 1.0 || c[2] > 1.0 || c[3] > 1.0 ){ for( int ci=0; ci<4; ++ci ){ c[ci]/=255.f; } } // from 0-255 to 0-1

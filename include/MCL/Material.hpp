@@ -37,13 +37,14 @@ namespace mcl {
 class Material {
 public:
 	Material(){}
-	Material( trimesh::vec amb, trimesh::vec diff, trimesh::vec spec, float shini ) {
+	Material( Vec3f amb, Vec3f diff, Vec3f spec, float shini ) {
 		app.amb = amb; app.diff = diff; app.spec = spec; app.shini = shini; }
 
 	virtual ~Material(){}
 
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode ){
+/*
 		std::stringstream xml;
 		xml << "\t<Material type=\"blinnphong\" >\n";
 		xml << "\t\t<Ambient value=\"" << app.amb.str() << "\" />\n";
@@ -53,13 +54,16 @@ public:
 		if( app.texture.size() ){ xml << "\t\t<texture value=\"" << app.texture << "\" />\n"; }
 		xml << "\t</Material>";
 		return xml.str();
+*/
+		std::cout << "TODO: Material::get_xml" << std::endl;
+		return "";
 	}
 
 	// Used by mcl::Application
 	// This data is used by the mclscene OpenGL renderer
 	struct AppData {
 		AppData() : amb(0,0,0), diff(1,0,0), spec(0,0,0), shini(1), texture(""), mode(0) {}
-		trimesh::vec3 amb, diff, spec;
+		Vec3f amb, diff, spec;
 		float shini;
 		std::string texture;
 		int mode; // 0=surface, 1=point cloud, 2=invisible

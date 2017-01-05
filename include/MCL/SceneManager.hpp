@@ -70,15 +70,14 @@ class SceneManager {
 		// Computes a naive bounding sphere, excluding cameras and lights.
 		// Calls each object's bounds function, so may be costly for dynamic scenes.
 		//
-		void get_bsphere( trimesh::vec *center, float *radius, bool recompute=false );
+		void get_bsphere( Vec3f *center, float *radius, bool recompute=false );
 
 		//
-		// For a given camera distance from scene center, add lights to make
-		// a three-point lighting rig. Assumes +y is up and camera is facing -z.
-		// Any previous lights are removed.
+		// For a given radius from scene center, add lights to make
+		// a three-point lighting rig. Assumes +y is up and looking at center.
 		// This is called by the Gui if no lighting has been added to the scene.
 		//
-		void make_3pt_lighting( const trimesh::vec &center, float distance );
+		void make_3pt_lighting( const Vec3f &eye, const Vec3f &center, float distance );
 
 		//
 		// Scene components.
@@ -127,7 +126,7 @@ class SceneManager {
 
 		// Cached bounding sphere stats:
 		float last_radius;
-		trimesh::vec last_center;
+		Vec3f last_center;
 
 }; // end class SceneManager
 
