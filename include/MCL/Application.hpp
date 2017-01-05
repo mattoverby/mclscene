@@ -44,7 +44,7 @@ public:
 		Vec3f clear_color;
 
 		Settings() : save_frames(false), run_simulation(false),
-			subdivide_meshes(false), gamma_correction(true),
+			subdivide_meshes(false), gamma_correction(false),
 			clear_color(1,1,1) {}
 	} settings;
 

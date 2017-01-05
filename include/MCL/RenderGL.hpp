@@ -30,6 +30,7 @@ namespace mcl {
 
 class RenderGL  {
 public:
+	RenderGL();
 	~RenderGL();
 
 	// Initialize shaders. Must be called after
@@ -47,6 +48,9 @@ public:
 	// the meshes before rendering for visual quality.
 	void draw_objects_subdivided();
 
+	// Legacy render code for old test cases
+	void draw_mesh_legacy( float *vertices, float *normals, int *faces, int num_faces, Material* mat, Camera *camera );
+
 private:
 	// Load textures from SceneManager materials.
 	void load_textures();
@@ -56,6 +60,7 @@ private:
 
 	Material defaultMat;
 	std::unique_ptr<Shader> blinnphong;
+	Shader* legacyshader;
 	std::unordered_map< std::string, int > textures; // file->texture_id
 
 	mcl::SceneManager *scene;

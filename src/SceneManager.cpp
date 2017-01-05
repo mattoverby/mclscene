@@ -318,24 +318,35 @@ void SceneManager::get_vertex_pool( VertexPool &pool, bool dynamic_only, bool re
 } // end get vertex pool
 
 
-void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center, float distance ){
+void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 
-	// TODO improve this function with better 3pt lighting
+	Vec3f up(0,1,0);
+	Vec3f w = eye-center;
+	// Since we're setting no falloff, lights can be far away
+	float distance = w.norm()*6.f;
+	w.normalize();
+	Vec3f u = up.cross(w);
+	Vec3f v = w.cross(u);
 
 	lights.clear();
 	light_params.clear();
 
-	std::shared_ptr<Light> key = make_light<Light>( "point" );
-	std::shared_ptr<Light> fill = make_light<Light>( "point" );
-	std::shared_ptr<Light> back = make_light<Light>( "point" );
+	std::shared_ptr<Light> key = make_light<Light>( "spot" );
+	std::shared_ptr<Light> fill = make_light<Light>( "spot" );
+	std::shared_ptr<Light> back = make_light<Light>( "spot" );
 
 	float half_d = distance/2.f;
 	float quart_d = distance/4.f;
 
 	// Set positions
-	key->app.position = center + Vec3f(-half_d,0.f,distance);
-	fill->app.position = center + Vec3f(half_d,0.f,distance);
-	back->app.position = center + Vec3f(0.f,quart_d,-distance);
+	key->app.position = center + w*distance + v*half_d - u*distance;
+	fill->app.position = center + w*distance + u*distance;
+	back->app.position = center - w*distance + v*distance;
+
+	// Directions (not used for point lights though)
+	key->app.direction = center-key->app.position;
+	fill->app.direction = center-fill->app.position;
+	back->app.direction = center-back->app.position;
 
 	// Set intensity
 	key->app.intensity = Vec3f(.8,.8,.8);

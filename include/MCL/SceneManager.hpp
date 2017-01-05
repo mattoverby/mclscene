@@ -81,11 +81,11 @@ class SceneManager {
 		void get_vertex_pool( VertexPool &pool, bool dynamic_only, bool recompute=false );
 
 		//
-		// For a given radius from scene center, add lights to make
-		// a three-point lighting rig. Assumes +y is up and looking at center.
-		// This is called by the Gui if no lighting has been added to the scene.
+		// For an initial eye position and scene center, creates a 3pt lighting rig.
+		// Camera is assumed to be pointed at center (basically a lookat).
+		// The distance between eye and center is used to determined the light locations.
 		//
-		void make_3pt_lighting( const Vec3f &eye, const Vec3f &center, float distance );
+		void make_3pt_lighting( const Vec3f &eye, const Vec3f &center );
 
 		//
 		// Scene components.

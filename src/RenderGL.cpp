@@ -21,9 +21,11 @@
 
 #include "MCL/RenderGL.hpp"
 #include "SOIL2.h"
+#include "MCL/MicroTimer.hpp"
 
 using namespace mcl;
 
+RenderGL::RenderGL() : legacyshader(0) {}
 
 RenderGL::~RenderGL(){
 	// Release texture memory
@@ -32,6 +34,8 @@ RenderGL::~RenderGL(){
 		GLuint texid = it->second;
 		glDeleteTextures(1, &texid);
 	}
+
+	if( legacyshader ){ delete legacyshader; }
 }
 
 bool RenderGL::init( mcl::SceneManager *scene_ ) {
@@ -84,7 +88,6 @@ void RenderGL::load_textures(){
 void RenderGL::draw_objects(){
 
 	Camera *camera = scene->cameras[0].get();
-
 	for( int i=0; i<scene->objects.size(); ++i ){
 		std::shared_ptr<BaseObject> obj = scene->objects[i];
 		draw_mesh( obj.get(), camera );
@@ -94,36 +97,40 @@ void RenderGL::draw_objects(){
 
 
 void RenderGL::draw_objects_subdivided(){
-	draw_objects();
-//	Camera *camera = scene->cameras[0].get();
-/*
+
+	Camera *camera = scene->cameras[0].get();
+
+	// Making a copy of the mesh with TriMesh, then
+	// do subdivision on that (since I don't want to implement it myself).
+	// This is not efficient, but oh well. 
+
 	for( int i=0; i<scene->objects.size(); ++i ){
 
 		std::shared_ptr<BaseObject> obj = scene->objects[i];
-		trimesh::TriMesh tempmesh;
 
-
-		if( obj->app.mesh==NULL ){ continue; }
-
-		// Subdivide the mesh and draw that
-		trimesh::TriMesh mesh2( *obj->app.mesh );
-
-		// Only subdivide if necessary
-		if( obj->app.mesh->vertices.size() > 100 ){
-			trimesh::subdiv( &mesh2 );
+		// Only subdivide if it has enough vertices
+		if( obj->app.num_vertices < 100 ){
+			draw_mesh( obj.get(), camera );
+			continue;
 		}
 
-		mesh2.need_normals(true);
-		mesh2.need_tstrips();
+		// Get the material
+		Material *mat = NULL;
+		if( obj->app.material < scene->materials.size() && obj->app.material >= 0 ){ mat = scene->materials[obj->app.material].get(); }
+		else { mat = &defaultMat; }
+		if( mat->app.mode == 2 ){ return; } // invisible
 
-		trimesh::TriMesh *oldmesh = obj->app.mesh;
-		obj->app.mesh = &mesh2;
-		draw_mesh( obj.get(), camera );
-		obj->app.mesh = oldmesh;
+		// Do subdivision with trimesh
+		trimesh::TriMesh tempmesh;
+		trimesh_copy( &tempmesh, &obj->app );
+		trimesh::subdiv( &tempmesh );
+		tempmesh.need_normals(true);
 
+		draw_mesh_legacy( &tempmesh.vertices[0][0], &tempmesh.normals[0][0], &tempmesh.faces[0][0], tempmesh.faces.size(), mat, camera );
 	}
-*/
+
 } // end draw objects
+
 
 void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 
@@ -181,57 +188,26 @@ void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 	blinnphong->disable();	
 }
 
-/*
-//void RenderGL::draw_mesh( trimesh::TriMesh *themesh, Material* mat, Camera *camera, trimesh::fxform xf ){
-void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 
-	obj->app.update( obj->app.mesh );
+void RenderGL::draw_mesh_legacy( float *vertices, float *normals, int *faces, int num_faces, Material* mat, Camera *camera ){
 
+	if( !legacyshader ){
+		std::stringstream bp_ss;
+		bp_ss << MCLSCENE_SRC_DIR << "/src/blinnphong.";
+		legacyshader = new Shader();
+		legacyshader->init_from_files( bp_ss.str()+"vert", bp_ss.str()+"frag");
+	}
 
-
-
-
-
-	// Get the mesh
-	trimesh::TriMesh *themesh = obj->app.mesh;
-	if( themesh==NULL ){ return; }
-
-	// Get the material
-	int mat_idx = obj->app.material;
-	Material *mat = NULL;
-	if( mat_idx < scene->materials.size() && mat_idx >= 0 ){ mat = scene->materials[mat_idx].get(); }
-	else { mat = &defaultMat; }
+	if( mat==NULL ){ return; }
 	if( mat->app.mode == 2 ){ return; } // invisible
 
 	// Vertices
 	glEnableClientState(GL_VERTEX_ARRAY);
-//	glVertexPointer( 3, GL_FLOAT, sizeof(themesh->vertices[0]), &themesh->vertices[0][0] );
-	glVertexPointer( 3, GL_FLOAT, obj->app.stride(), obj->app.vertices );
+	glVertexPointer( 3, GL_FLOAT, sizeof(float)*3, vertices );
 
 	// Normals
-	if( themesh->normals.size() == 0 ){ themesh->need_normals(true); }
 	glEnableClientState(GL_NORMAL_ARRAY);
-//	glNormalPointer( GL_FLOAT, sizeof(themesh->normals[0]), &themesh->normals[0][0] );
-	glVertexPointer( 3, GL_FLOAT, obj->app.stride(), obj->app.normals );
-
-	// Texture coordinates
-	GLuint texture_id = 0;
-	if( !themesh->texcoords.empty() ){
-		if( textures.count(mat->app.texture)>0 ){
-			texture_id = textures[ mat->app.texture ];
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			glTexCoordPointer(2, GL_FLOAT, sizeof(themesh->texcoords[0]), &themesh->texcoords[0][0]);
-		} else { glDisableClientState(GL_TEXTURE_COORD_ARRAY); }
-	} else { glDisableClientState(GL_TEXTURE_COORD_ARRAY); }
-
-	// Color array -> todo
-//	if( !themesh->colors.empty() ){
-//		glEnableClientState(GL_COLOR_ARRAY);
-//		glColorPointer(3, GL_FLOAT, sizeof(themesh->colors[0]), &themesh->colors[0][0]);
-//	} else { glDisableClientState(GL_COLOR_ARRAY); }
-
-	// For setting gl_PointSize
-	glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+	glNormalPointer( GL_FLOAT, sizeof(float)*3, normals );
 
 	// Get material properties
 	Vec3f ambient = mat->app.amb;
@@ -239,60 +215,49 @@ void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 	Vec3f specular = mat->app.spec;
 	float shininess = mat->app.shini;
 
-
 	//
 	//	Set up lighting and materials
 	//
-	glBindTexture(GL_TEXTURE_2D, texture_id);
-	blinnphong->enable();
+	legacyshader->enable();
 
 	// Texture stuff
-	glUniform1i( blinnphong->uniform("hastex"), int(texture_id) );
+	glUniform1i( legacyshader->uniform("hastex"), 0 );
 
 	// Set the matrices
-	glUniformMatrix4fv( blinnphong->uniform("model"), 1, GL_FALSE, obj->app.xf );
-	glUniformMatrix4fv( blinnphong->uniform("view"), 1, GL_FALSE, camera->app.view );
-	glUniformMatrix4fv( blinnphong->uniform("projection"), 1, GL_FALSE, camera->app.projection );
+	trimesh::fxform model;
+	glUniformMatrix4fv( legacyshader->uniform("model"), 1, GL_FALSE, model );
+	glUniformMatrix4fv( legacyshader->uniform("view"), 1, GL_FALSE, camera->app.view );
+	glUniformMatrix4fv( legacyshader->uniform("projection"), 1, GL_FALSE, camera->app.projection );
 	Vec3f eyepos = camera->get_position();
-	glUniform3f( blinnphong->uniform("CamPos"), eyepos[0], eyepos[1], eyepos[2] );
+	glUniform3f( legacyshader->uniform("CamPos"), eyepos[0], eyepos[1], eyepos[2] );
 
-	setup_lights();
+	glUniform1i( legacyshader->uniform("num_lights"), scene->lights.size() );
+
+	// Set lighting properties
+	for( int l=0; l<scene->lights.size(); ++l ){
+		Light::AppData *light = &scene->lights[l]->app;
+		std::stringstream array_ss; array_ss << "lights[" << l << "].";
+		std::string array_str = array_ss.str();
+		glUniform3f( legacyshader->uniform(array_str+"position"), light->position[0], light->position[1], light->position[2] );
+		glUniform3f( legacyshader->uniform(array_str+"direction"), light->direction[0], light->direction[1], light->direction[2] );
+		glUniform3f( legacyshader->uniform(array_str+"intensity"), light->intensity[0], light->intensity[1], light->intensity[2] );
+		glUniform3f( legacyshader->uniform(array_str+"falloff"), light->falloff[0], light->falloff[1], light->falloff[2] );
+		glUniform1f( legacyshader->uniform(array_str+"halfangle"), 0.5*(light->angle*M_PI/180.f) );
+		glUniform1i( legacyshader->uniform(array_str+"type"), light->type );
+	} // end loop lights
+
 
 	// Set material properties
-	glUniform3f( blinnphong->uniform("material.ambient"), ambient[0], ambient[1], ambient[2] );
-	glUniform3f( blinnphong->uniform("material.diffuse"), diffuse[0], diffuse[1], diffuse[2] );
-	glUniform3f( blinnphong->uniform("material.specular"), specular[0], specular[1], specular[2] );
-	glUniform1f( blinnphong->uniform("material.shininess"), shininess );
+	glUniform3f( legacyshader->uniform("material.ambient"), ambient[0], ambient[1], ambient[2] );
+	glUniform3f( legacyshader->uniform("material.diffuse"), diffuse[0], diffuse[1], diffuse[2] );
+	glUniform3f( legacyshader->uniform("material.specular"), specular[0], specular[1], specular[2] );
+	glUniform1f( legacyshader->uniform("material.shininess"), shininess );
 
-	//
-	//	Draw a solid mesh
-	//	TODO array buffers for tstrips
-	//
-	if( mat->app.mode==0 ){
+	glDrawElements(GL_TRIANGLES, num_faces*3, GL_UNSIGNED_INT, faces);
 
-		if( themesh->tstrips.size()==0 ){ themesh->need_tstrips(); }
+	legacyshader->disable();
 
-		// But this does:
-		int *t = &themesh->tstrips[0];
-		const int *end = t + themesh->tstrips.size();
-		while( t < end ){
-			int striplen = *t++;
-			glDrawElements(GL_TRIANGLE_STRIP, striplen, GL_UNSIGNED_INT, t);
-			t += striplen;
-		}
-
-	} // end draw as triangle mesh
-
-	//
-	//	Draw a point cloud with gl points for now
-	//
-	else if( mat->app.mode==1 ) { glDrawArrays(GL_POINTS, 0, themesh->vertices.size()); }
-
-	blinnphong->disable();
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-} // end draw
-*/
+}
 
 
 void RenderGL::setup_lights(){

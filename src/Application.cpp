@@ -46,7 +46,7 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 
 	// Make camera if one was not loaded
 	if( scene->cameras.size()==0 ){
-		Vec3f eye = scene_center; eye[2]-=(scene_radius*3.f);
+		Vec3f eye = scene_center; eye[2]-=(scene_radius*4.f);
 		std::shared_ptr<Trackball> cam = scene->make_camera<Trackball>( "trackball" );
 		cam->eye = eye;
 		cam->lookat = scene_center;
@@ -55,7 +55,7 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 	current_cam = scene->cameras[0].get();
 
 	// Add lights if not described in scene
-	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( current_cam->get_position(), scene_center, scene_radius*6.f ); }
+	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( current_cam->get_position(), scene_center ); }
 
 	// Runtime variables
 	cursorX = 0.f;
@@ -81,6 +81,7 @@ int Application::display(){
 
 	GLFWwindow* window;
 	glfwSetErrorCallback(&Input::error_callback);
+	const bool subdivide_meshes = settings.subdivide_meshes; // cannot change
 
 	// Initialize the window
 	if (!glfwInit()){ return EXIT_FAILURE; }
@@ -88,10 +89,12 @@ int Application::display(){
 	glfwWindowHint(GLFW_SRGB_CAPABLE, true); // gamma correction
 
 	// Ask for OpenGL 3.2
+	if( !subdivide_meshes ){ // subdivide_meshes uses legacy rendering
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	}
 
 	// Get the monitor max window size
 	const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -129,6 +132,7 @@ int Application::display(){
 	// Initialize OpenGL
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_MULTISAMPLE);
+	if( settings.gamma_correction ){ glEnable(GL_FRAMEBUFFER_SRGB); } // gamma correction
 	glClearColor(settings.clear_color[0],settings.clear_color[1],settings.clear_color[2],1.f);
 
 	// Game loop
@@ -156,13 +160,11 @@ int Application::display(){
 
 		{ // Clear screen
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			if( settings.gamma_correction ){ glEnable(GL_FRAMEBUFFER_SRGB); } // gamma correction
-
 			if( update_view ){ current_cam->update_view(); update_view = false; }
 		}
 
 		{ // Render scene stuff
-			if( !settings.subdivide_meshes ){ renderer.draw_objects(); } // draws all objects
+			if( !subdivide_meshes ){ renderer.draw_objects(); } // draws all objects
 			else{ renderer.draw_objects_subdivided(); }
 			for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, current_cam, screen_dt ); }
 		}
@@ -183,19 +185,16 @@ int Application::display(){
 void Application::mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
 
 	if( action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_LEFT ){
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		glfwGetCursorPos(window, &cursorX, &cursorY);
 		left_mouse_drag = true;
 		right_mouse_drag = false;
 	}
 	else if(  action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_RIGHT ){
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		glfwGetCursorPos(window, &cursorX, &cursorY);
 		right_mouse_drag = true;
 		left_mouse_drag = false;
 	}
 	else{
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		left_mouse_drag = false;
 		right_mouse_drag = false;
 	}
@@ -269,8 +268,13 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
 
 void Application::update_mesh_buffers(){
 
+	if( settings.subdivide_meshes ){ return; } // uses legacy ogl
+
 	// Dynamic: vertices, colors, normals
 	// Static: tex coords, face indices, array object
+
+	// EVENTUALLY I will make use of the BaseObject::DYNAMIC flag,
+	// and only update vertices marked as dynamic. For now, I'll do all of them.
 
 	for( int i=0; i<scene->objects.size(); ++i ){
 		std::shared_ptr<BaseObject> obj = scene->objects[i];
@@ -351,7 +355,6 @@ void Application::update_mesh_buffers(){
 		}
 
 	} // end loop objects
-
 }
 
 
