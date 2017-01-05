@@ -33,6 +33,11 @@ namespace mcl {
 //
 class BaseObject : public std::enable_shared_from_this<BaseObject> {
 public:
+	int flags;
+	enum OBJECT_FLAGS {
+		DYNAMIC = 1<<0,
+	};
+
 	virtual ~BaseObject(){}
 
 	// Return the bounding box of the object

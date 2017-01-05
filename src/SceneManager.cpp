@@ -289,6 +289,35 @@ std::shared_ptr<BVHNode> SceneManager::SceneManager::get_bvh( bool recompute, st
 }
 
 
+void SceneManager::get_vertex_pool( VertexPool &pool, bool dynamic_only, bool recompute ){
+
+	if( !recompute && vertex_pool.valid ){ pool = vertex_pool; return; }
+	vertex_pool.clear();
+
+	// Make a new vertex pool
+	for( int i=0; i<objects.size(); ++i ){
+		if( dynamic_only && !(objects[i]->flags & BaseObject::DYNAMIC) ){ continue; }
+		BaseObject::AppData *app = &objects[i]->app;
+
+		vertex_pool.vertices.push_back( app->vertices );
+		vertex_pool.num_vertices.push_back( app->num_vertices );
+		vertex_pool.normals.push_back( app->normals );
+		vertex_pool.num_normals.push_back( app->num_normals );
+		vertex_pool.colors.push_back( app->colors );
+		vertex_pool.num_colors.push_back( app->num_colors );
+		vertex_pool.texcoords.push_back( app->texcoords );
+		vertex_pool.num_texcoords.push_back( app->num_texcoords );
+		vertex_pool.faces.push_back( app->faces );
+		vertex_pool.num_faces.push_back( app->num_faces );
+		vertex_pool.index.push_back( i );
+
+	} // end loop objects
+
+	pool = vertex_pool;
+
+} // end get vertex pool
+
+
 void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center, float distance ){
 
 	// TODO improve this function with better 3pt lighting

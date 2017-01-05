@@ -67,10 +67,18 @@ class SceneManager {
 		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="spatial" );
 
 		//
-		// Computes a naive bounding sphere, excluding cameras and lights.
+		// Computes an exact bounding sphere, excluding cameras and lights.
 		// Calls each object's bounds function, so may be costly for dynamic scenes.
 		//
 		void get_bsphere( Vec3f *center, float *radius, bool recompute=false );
+
+		//
+		// Generates a Vertex Pool (pointers to mesh data) and caches the result,
+		// subsequent calls will return this cached pool.
+		// If dynamic_only is true, only objects marked with the "DYNAMIC" flag
+		// will be added to the pool.
+		//
+		void get_vertex_pool( VertexPool &pool, bool dynamic_only, bool recompute=false );
 
 		//
 		// For a given radius from scene center, add lights to make
@@ -127,6 +135,9 @@ class SceneManager {
 		// Cached bounding sphere stats:
 		float last_radius;
 		Vec3f last_center;
+
+		// Cached VertexPool
+		VertexPool vertex_pool;
 
 }; // end class SceneManager
 
