@@ -50,7 +50,7 @@ public:
 	virtual ~Camera(){}
 
 	// Return eye world location
-	virtual Vec3f get_position() = 0;
+	virtual Vec3f get_eye() = 0;
 
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode ){ return ""; }
@@ -93,7 +93,7 @@ public:
 		update_basis();
 	}
 
-	Vec3f get_position(){ return eye; }
+	Vec3f get_eye(){ return eye; }
 
 	void update_basis(){
 		Vec3f up(0,1,0);

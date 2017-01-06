@@ -43,11 +43,14 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	scene = scene_;
 
 	std::stringstream bp_ss;
-	bp_ss << MCLSCENE_SRC_DIR << "/src/shader.";
+	bp_ss << MCLSCENE_SRC_DIR << "/src/shader";
 
 	// Create shaders
 	blinnphong = std::unique_ptr<Shader>( new Shader() );
-	blinnphong->init_from_files( bp_ss.str()+"vert", bp_ss.str()+"frag");
+	blinnphong->init_from_files( bp_ss.str()+".vert", bp_ss.str()+".frag");
+
+	blinnphong_textured = std::unique_ptr<Shader>( new Shader() );
+	blinnphong_textured->init_from_files( bp_ss.str()+"_textured.vert", bp_ss.str()+"_textured.frag");
 
 	load_textures();
 
@@ -142,34 +145,38 @@ void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 	else { mat = &defaultMat; }
 	if( mat->app.mode == 2 ){ return; } // invisible
 
-
 	// Get material properties
 	Vec3f ambient = mat->app.amb;
 	Vec3f diffuse = mat->app.diff;
 	Vec3f specular = mat->app.spec;
 	float shininess = mat->app.shini;
+	GLuint texture_id = 0;
+	if( textures.count(mat->app.texture)>0 ){ texture_id = textures[ mat->app.texture ]; }
 
+	Shader *curr_shader = blinnphong.get();
+	if( texture_id > 0 ){ curr_shader = blinnphong_textured.get(); }
+	glBindTexture( GL_TEXTURE_2D, texture_id );
 
 	//
 	//	Set up lighting and materials
 	//
-	blinnphong->enable();
-
-	// Set the matrices
-	trimesh::fxform model;
-	glUniformMatrix4fv( blinnphong->uniform("model"), 1, GL_FALSE, model );
-	glUniformMatrix4fv( blinnphong->uniform("view"), 1, GL_FALSE, camera->app.view );
-	glUniformMatrix4fv( blinnphong->uniform("projection"), 1, GL_FALSE, camera->app.projection );
-	Vec3f eyepos = camera->get_position();
-	glUniform3f( blinnphong->uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
+	curr_shader->enable();
 
 	setup_lights();
 
+	// Set the matrices
+	trimesh::fxform model;
+	glUniformMatrix4fv( curr_shader->uniform("model"), 1, GL_FALSE, model );
+	glUniformMatrix4fv( curr_shader->uniform("view"), 1, GL_FALSE, camera->app.view );
+	glUniformMatrix4fv( curr_shader->uniform("projection"), 1, GL_FALSE, camera->app.projection );
+	Vec3f eyepos = camera->get_eye();
+	glUniform3f( curr_shader->uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
+
 	// Set material properties
-	glUniform3f( blinnphong->uniform("material.ambient"), ambient[0], ambient[1], ambient[2] );
-	glUniform3f( blinnphong->uniform("material.diffuse"), diffuse[0], diffuse[1], diffuse[2] );
-	glUniform3f( blinnphong->uniform("material.specular"), specular[0], specular[1], specular[2] );
-	glUniform1f( blinnphong->uniform("material.shininess"), shininess );
+	glUniform3f( curr_shader->uniform("material.ambient"), ambient[0], ambient[1], ambient[2] );
+	glUniform3f( curr_shader->uniform("material.diffuse"), diffuse[0], diffuse[1], diffuse[2] );
+	glUniform3f( curr_shader->uniform("material.specular"), specular[0], specular[1], specular[2] );
+	glUniform1f( curr_shader->uniform("material.shininess"), shininess );
 
 	// Bind buffers
 	glBindVertexArray(obj->app.tris_vao);
@@ -183,9 +190,10 @@ void RenderGL::draw_mesh( BaseObject *obj, Camera *camera ){
 	} // end draw as triangle mesh
 
 	// Unbind
+	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
-	blinnphong->disable();	
+	curr_shader->disable();	
 }
 
 
@@ -228,7 +236,7 @@ void RenderGL::draw_mesh_legacy( float *vertices, float *normals, int *faces, in
 	glUniformMatrix4fv( legacyshader->uniform("model"), 1, GL_FALSE, model );
 	glUniformMatrix4fv( legacyshader->uniform("view"), 1, GL_FALSE, camera->app.view );
 	glUniformMatrix4fv( legacyshader->uniform("projection"), 1, GL_FALSE, camera->app.projection );
-	Vec3f eyepos = camera->get_position();
+	Vec3f eyepos = camera->get_eye();
 	glUniform3f( legacyshader->uniform("CamPos"), eyepos[0], eyepos[1], eyepos[2] );
 
 	glUniform1i( legacyshader->uniform("num_lights"), scene->lights.size() );

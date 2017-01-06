@@ -55,7 +55,7 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 	current_cam = scene->cameras[0].get();
 
 	// Add lights if not described in scene
-	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( current_cam->get_position(), scene_center ); }
+	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( current_cam->get_eye(), scene_center ); }
 
 	// Runtime variables
 	cursorX = 0.f;

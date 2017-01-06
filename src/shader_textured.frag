@@ -6,6 +6,8 @@ uniform vec3 eye;
 in vec3 vposition;
 in vec3 vcolor;
 in vec3 vnormal;
+in vec2 vtexcoord;
+uniform sampler2D texSampler;
 
 float length2( vec3 v ){ return dot(v,v); }
 
@@ -78,8 +80,9 @@ void main(){
 	vec3 result = vec3(0,0,0);
 	vec3 N = normalize(vnormal);
 	vec3 V = normalize(eye - vposition);
+	vec4 texcolor = texture( texSampler, vtexcoord );
 	for(int i = 0; i < num_lights; i++){ result += BlinnPhong( lights[i], N, vposition, V ); }
-	out_fragcolor = vec4( result, 1.0 );
+	out_fragcolor = texcolor * vec4( result, 1.0 );
 } 
 
 

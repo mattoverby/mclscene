@@ -60,6 +60,7 @@ private:
 
 	Material defaultMat;
 	std::unique_ptr<Shader> blinnphong;
+	std::unique_ptr<Shader> blinnphong_textured;
 	Shader* legacyshader;
 	std::unordered_map< std::string, int > textures; // file->texture_id
 
