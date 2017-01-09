@@ -38,7 +38,7 @@ std::vector< std::function<void ( GLFWwindow* window, int width, int height )> >
 // Application
 //
 
-Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_) {
+Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_), update_mesh_buffers(true) {
 	Input &input = Input::getInstance(); // initialize the singleton
 
 	scene->get_bsphere(&scene_center,&scene_radius,true);
@@ -122,9 +122,6 @@ int Application::display(){
 	glewInit();
 	if( !renderer.init( scene ) ){ return EXIT_FAILURE; } // creates shaders
 
-	// Set up mesh buffers
-	update_mesh_buffers();
-
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
 	framebuffer_size_callback(window, width, height); // sets the projection matrix
@@ -164,9 +161,10 @@ int Application::display(){
 		}
 
 		{ // Render scene stuff
-			if( !subdivide_meshes ){ renderer.draw_objects(); } // draws all objects
-			else{ renderer.draw_objects_subdivided(); }
+			if( !subdivide_meshes ){ renderer.draw_objects( update_mesh_buffers ); } // draws all objects
+			else{ renderer.draw_objects_subdivided( update_mesh_buffers ); }
 			for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, current_cam, screen_dt ); }
+			update_mesh_buffers = false;
 		}
 
 		{ // Finalize:
@@ -262,108 +260,6 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
 	glViewport(0, 0, width, height);
 	current_cam->update_proj( aspect_ratio );
 }
-
-
-
-
-void Application::update_mesh_buffers(){
-
-	if( settings.subdivide_meshes ){ return; } // uses legacy ogl
-
-	// Dynamic: vertices, colors, normals
-	// Static: tex coords, face indices, array object
-
-	// EVENTUALLY I will make use of the BaseObject::DYNAMIC flag,
-	// and only update vertices marked as dynamic. For now, I'll do all of them.
-
-	for( int i=0; i<scene->objects.size(); ++i ){
-		std::shared_ptr<BaseObject> obj = scene->objects[i];
-		size_t stride = 3*sizeof(float);
-
-		if( !obj->app.verts_vbo ){ // Create the buffer for vertices
-			glGenBuffers(1, &obj->app.verts_vbo);
-			glBindBuffer(GL_ARRAY_BUFFER, obj->app.verts_vbo);
-			glBufferData(GL_ARRAY_BUFFER, obj->app.num_vertices*stride, obj->app.vertices, GL_DYNAMIC_DRAW);
-		} else { // Otherwise update
-			glBindBuffer(GL_ARRAY_BUFFER, obj->app.verts_vbo);
-			glBufferSubData( GL_ARRAY_BUFFER, 0, obj->app.num_vertices*stride, obj->app.vertices );
-		}
-
-		if( !obj->app.colors_vbo ){ // Create the buffer for colors
-			glGenBuffers(1, &obj->app.colors_vbo);
-			glBindBuffer(GL_ARRAY_BUFFER, obj->app.colors_vbo);
-			glBufferData(GL_ARRAY_BUFFER, obj->app.num_colors*stride, obj->app.colors, GL_DYNAMIC_DRAW);
-		} else { // Otherwise update
-			glBindBuffer(GL_ARRAY_BUFFER, obj->app.colors_vbo);
-			glBufferSubData( GL_ARRAY_BUFFER, 0, obj->app.num_colors*stride, obj->app.colors );
-		}
-
-		if( !obj->app.normals_vbo ){ // Create the buffer for normals
-			glGenBuffers(1, &obj->app.normals_vbo);
-			glBindBuffer(GL_ARRAY_BUFFER, obj->app.normals_vbo);
-			glBufferData(GL_ARRAY_BUFFER, obj->app.num_normals*stride, obj->app.normals, GL_DYNAMIC_DRAW);
-		} else { // Otherwise update
-			glBindBuffer(GL_ARRAY_BUFFER, obj->app.normals_vbo);
-			glBufferSubData( GL_ARRAY_BUFFER, 0, obj->app.num_normals*stride, obj->app.normals );
-		}
-
-		 // Create the buffer for tex coords, these won't change
-		if( !obj->app.texcoords_vbo ){
-			glGenBuffers(1, &obj->app.texcoords_vbo);
-			glBindBuffer(GL_ARRAY_BUFFER, obj->app.texcoords_vbo);
-			glBufferData(GL_ARRAY_BUFFER, obj->app.num_texcoords*2*sizeof(float), obj->app.texcoords, GL_STATIC_DRAW);
-		}
-
-		// Create the buffer for indices, these won't change
-		if( !obj->app.faces_ibo ){
-			glGenBuffers(1, &obj->app.faces_ibo);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, obj->app.faces_ibo);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, obj->app.num_faces*sizeof(int)*3, obj->app.faces, GL_STATIC_DRAW);
-		}
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-		// Create the VAO
-		if( !obj->app.tris_vao ){
-
-			glGenVertexArrays(1, &obj->app.tris_vao);
-			glBindVertexArray(obj->app.tris_vao);
-
-			// location=0 is the vertex
-			glEnableVertexAttribArray(0);
-			glBindBuffer(GL_ARRAY_BUFFER, obj->app.verts_vbo);
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, 0);
-
-			// location=1 is the color
-			glEnableVertexAttribArray(1);
-			glBindBuffer(GL_ARRAY_BUFFER, obj->app.colors_vbo);
-			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, 0);
-
-			// location=2 is the normal
-			glEnableVertexAttribArray(2);
-			glBindBuffer(GL_ARRAY_BUFFER, obj->app.normals_vbo);
-			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, 0);
-
-			// location=3 is the tex coord
-			glEnableVertexAttribArray(3);
-			glBindBuffer(GL_ARRAY_BUFFER, obj->app.texcoords_vbo);
-			glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 2*sizeof(float), 0);
-
-			// Done setting data for the vao
-			glBindVertexArray(0);
-		}
-
-	} // end loop objects
-}
-
-
-
-
-
-
-
-
 
 
 
@@ -464,6 +360,6 @@ void Application::run_simulator_step(){
 	scene->get_bsphere(&unused,&scene_radius,true);
 
 	// Update geometry on device
-	update_mesh_buffers();
+	update_mesh_buffers = true;
 }
 

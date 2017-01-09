@@ -296,7 +296,7 @@ void SceneManager::get_vertex_pool( VertexPool &pool, bool dynamic_only, bool re
 
 	// Make a new vertex pool
 	for( int i=0; i<objects.size(); ++i ){
-		if( dynamic_only && !(objects[i]->flags & BaseObject::DYNAMIC) ){ continue; }
+		if( dynamic_only && !(objects[i]->app.dynamic) ){ continue; }
 		BaseObject::AppData *app = &objects[i]->app;
 
 		vertex_pool.vertices.push_back( app->vertices );

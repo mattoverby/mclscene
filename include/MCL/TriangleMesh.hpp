@@ -47,7 +47,7 @@ public:
 
 	bool ray_intersect( const intersect::Ray *ray, intersect::Payload *payload ) const {
 		bool hit = intersect::ray_triangle( ray, *p0, *p1, *p2, *n0, *n1, *n2, payload );
-		if( hit ){ payload->material = this->app.material; }
+		if( hit ){ payload->material = this->get_material(); }
 		return hit;
 	}
 

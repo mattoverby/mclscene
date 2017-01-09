@@ -81,9 +81,8 @@ protected:
 	Vec3f scene_center; // set once in constructor
 	bool left_mouse_drag, right_mouse_drag;
 
+	bool update_mesh_buffers; // set to true on run_simulator_step
 	void run_simulator_step();
-
-	void update_mesh_buffers();
 
 	// Utility functions:
 	void save_screenshot(GLFWwindow* window);

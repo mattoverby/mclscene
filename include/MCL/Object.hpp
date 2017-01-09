@@ -28,16 +28,13 @@
 
 namespace mcl {
 
+class RenderMesh; // forward declare
+
 //
 //	Base, pure virtual
 //
 class BaseObject : public std::enable_shared_from_this<BaseObject> {
 public:
-	int flags;
-	enum OBJECT_FLAGS {
-		DYNAMIC = 1<<0,
-	};
-
 	virtual ~BaseObject(){}
 
 	// Return the bounding box of the object
@@ -60,6 +57,9 @@ public:
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode=0 ){ return ""; }
 
+	// Returns the material index in SceneManager::materials
+	virtual int get_material() const { return app.material; }
+
 	// If an object is made up of other (smaller) objects, they are needed for BVH construction.
 	// This function expects you to append the prims vector, not overwrite the whole thing.
 	virtual void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){ prims.push_back( shared_from_this() ); }
@@ -67,12 +67,21 @@ public:
 	// The following data is used by mcl::Application.
 	// Derived object is responsible for managing these pointers.
 	struct AppData {
-		AppData() : material(-1),
-		vertices(NULL), normals(NULL), colors(NULL), texcoords(NULL), faces(NULL),
+		AppData() : material(-1), dynamic(false),
+		vertices(0), normals(0), colors(0), texcoords(0), faces(0),
 		num_vertices(0), num_normals(0), num_colors(0), num_texcoords(0), num_faces(0),
 		verts_vbo(0), colors_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), tris_vao(0) {}
 
-		int material; // material index into SceneManager::materials
+		// If the vertices are often changing (e.g. a deforming mesh) set this to true.
+		bool dynamic;
+
+		// Index into SceneManager::materials
+		int material;
+
+		// Vertex stride used for vertices, normals, and colors
+		virtual size_t vertex_stride(){ return sizeof(float)*3; }
+		virtual size_t texcoord_stride(){ return sizeof(float)*2; }
+		virtual size_t face_stride(){ return sizeof(int)*3; }
 
 		float* vertices; // XYZ
 		float* normals; // XYZ, normalized
@@ -83,6 +92,7 @@ public:
 		unsigned int verts_vbo, colors_vbo, normals_vbo, texcoords_vbo, faces_ibo, tris_vao;
 	} app ;
 };
+
 
 } // end namespace mcl
 

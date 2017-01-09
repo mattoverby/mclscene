@@ -30,30 +30,31 @@ namespace mcl {
 
 class RenderGL  {
 public:
-	RenderGL();
 	~RenderGL();
 
 	// Initialize shaders. Must be called after
 	// OpenGL context has been created.
 	bool init( mcl::SceneManager *scene_ );
 
-	// Draws a triangle mesh object with a material. If material is NULL,
-	// a default one is used (lambertian red). If the TriMesh is NULL, nothing is drawn.
-	void draw_mesh( BaseObject *obj, Camera *camera );
+	// If VBOs have not been generated for the AppData mesh, they will be generated.
+	// If the VBOs need to be updated (e.g. a deforming mesh) set update_vbo to true.
+	// Texture coordinates and face ibo are NOT updated.
+	void draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *camera, bool update_vbo=false );
 
 	// Draws all objects in the SceneManager (that have AppData::mesh)
-	void draw_objects();
+	void draw_objects( bool update_vbo=false );
 
 	// Draws all the objects in the SceneManager, but subdivides
 	// the meshes before rendering for visual quality.
-	void draw_objects_subdivided();
-
-	// Legacy render code for old test cases
-	void draw_mesh_legacy( float *vertices, float *normals, int *faces, int num_faces, Material* mat, Camera *camera );
+	void draw_objects_subdivided( bool update_vbo=false );
 
 private:
 	// Load textures from SceneManager materials.
 	void load_textures();
+
+	// Texture coordinates and face ibo are NOT updated.
+	// If the IBOs have already been generated, they are instead overwritten.
+	void load_mesh_buffers( BaseObject::AppData *mesh );
 
 	// Set up lighting uniforms
 	void setup_lights();
@@ -61,7 +62,6 @@ private:
 	Material defaultMat;
 	std::unique_ptr<Shader> blinnphong;
 	std::unique_ptr<Shader> blinnphong_textured;
-	Shader* legacyshader;
 	std::unordered_map< std::string, int > textures; // file->texture_id
 
 	mcl::SceneManager *scene;
