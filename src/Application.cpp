@@ -89,12 +89,10 @@ int Application::display(){
 	glfwWindowHint(GLFW_SRGB_CAPABLE, true); // gamma correction
 
 	// Ask for OpenGL 3.2
-	if( !subdivide_meshes ){ // subdivide_meshes uses legacy rendering
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	}
 
 	// Get the monitor max window size
 	const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
