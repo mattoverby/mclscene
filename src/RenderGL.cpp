@@ -211,8 +211,10 @@ void RenderGL::draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *came
 	glUniformMatrix4fv( curr_shader->uniform("model"), 1, GL_FALSE, model );
 	glUniformMatrix4fv( curr_shader->uniform("view"), 1, GL_FALSE, camera->app.view );
 	glUniformMatrix4fv( curr_shader->uniform("projection"), 1, GL_FALSE, camera->app.projection );
-	Vec3f eyepos = camera->get_eye();
-	glUniform3f( curr_shader->uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
+//	Vec3f eyepos = camera->get_eye();
+//	glUniform3f( curr_shader->uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
+	trimesh::XForm<float> eyepos = trimesh::inv( (camera->app.projection) * (camera->app.view) * (model) );
+	glUniform3f( curr_shader->uniform("eye"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
 
 	// Set material properties
 	glUniform3f( curr_shader->uniform("material.ambient"), ambient[0], ambient[1], ambient[2] );

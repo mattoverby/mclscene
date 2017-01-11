@@ -323,7 +323,7 @@ void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 	Vec3f up(0,1,0);
 	Vec3f w = eye-center;
 	// Since we're setting no falloff, lights can be far away
-	float distance = w.norm()*6.f;
+	float distance = w.norm()*100.f;
 	w.normalize();
 	Vec3f u = up.cross(w);
 	Vec3f v = w.cross(u);
@@ -331,9 +331,9 @@ void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 	lights.clear();
 	light_params.clear();
 
-	std::shared_ptr<Light> key = make_light<Light>( "spot" );
-	std::shared_ptr<Light> fill = make_light<Light>( "spot" );
-	std::shared_ptr<Light> back = make_light<Light>( "spot" );
+	std::shared_ptr<Light> key = make_light<Light>( "directional" );
+	std::shared_ptr<Light> fill = make_light<Light>( "directional" );
+	std::shared_ptr<Light> back = make_light<Light>( "directional" );
 
 	float half_d = distance/2.f;
 	float quart_d = distance/4.f;
@@ -347,11 +347,14 @@ void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 	key->app.direction = center-key->app.position;
 	fill->app.direction = center-fill->app.position;
 	back->app.direction = center-back->app.position;
+	key->app.direction.normalize();
+	fill->app.direction.normalize();
+	back->app.direction.normalize();
 
 	// Set intensity
-	key->app.intensity = Vec3f(.8,.8,.8);
-	fill->app.intensity = Vec3f(.6,.6,.6);
-	back->app.intensity = Vec3f(.6,.6,.6);
+	key->app.intensity = Vec3f(.7,.7,.7);
+	fill->app.intensity = Vec3f(.5,.5,.5);
+	back->app.intensity = Vec3f(.5,.5,.5);
 
 	// Falloff (none)
 	key->app.falloff = Vec3f(1.f,0.f,0.f);

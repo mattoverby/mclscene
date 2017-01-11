@@ -51,7 +51,7 @@ vec3 BlinnPhong(Light light, vec3 N, vec3 fragPos, vec3 V){
 	}
 
 	// Ambient
-	float amb = 0.2f;
+	float amb = 1.f;
 	vec3 ambient = amb * material.ambient * light.intensity;
 
 	// Diffuse 
