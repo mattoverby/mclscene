@@ -9,7 +9,7 @@ in vec3 vnormal;
 in vec2 vtexcoord;
 uniform sampler2D texSampler;
 
-float length2( vec3 v ){ return dot(v,v); }
+float mydot( vec3 a, vec3 b ){ return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
 
 //
 //	Materials
@@ -53,7 +53,7 @@ vec3 BlinnPhong(Light light, vec3 N, vec3 fragPos, vec3 V){
 	}
 
 	// Ambient
-	float amb = 0.2f;
+	float amb = 1.f;
 	vec3 ambient = amb * material.ambient * light.intensity;
 
 	// Diffuse 
@@ -62,16 +62,21 @@ vec3 BlinnPhong(Light light, vec3 N, vec3 fragPos, vec3 V){
 
 	// Specular
 	vec3 H = normalize(L + V);
-	float spec = pow( max( dot(N, H), 1e-6f ), material.shininess );
-	if( length2(L)<=0.f ){ spec = 0.f; }
+	float shini = max( 1.f, material.shininess ); // glsl pow function needs exp>=1
+	float spec = pow( max( mydot(N, H), 0.f), shini );
 	vec3 specular = spec * material.specular * light.intensity;
 
 	// Attenuation (falloff)
 	float dist = length( light.position - fragPos )*0.25f;
 	float atten = 1.f / (light.falloff[0] + light.falloff[1]*dist + light.falloff[2]*dist*dist);
 
+	// Adjust min/max
+	vec3 result = ( ambient + diffuse + specular )*atten;
+//	vec3 result = min( ( ambient + diffuse + specular )*atten, vec3(1,1,1) );
+//	result = max( result, vec3(0,0,0) );
+
 	// Final color
-	return ( ambient + diffuse + specular )*atten;
+	return result;
 }
 
 
@@ -80,8 +85,8 @@ void main(){
 	vec3 result = vec3(0,0,0);
 	vec3 N = normalize(vnormal);
 	vec3 V = normalize(eye - vposition);
-	vec4 texcolor = texture( texSampler, vtexcoord );
 	for(int i = 0; i < num_lights; i++){ result += BlinnPhong( lights[i], N, vposition, V ); }
+	vec4 texcolor = texture( texSampler, vtexcoord );
 	out_fragcolor = texcolor * vec4( result, 1.0 );
 } 
 

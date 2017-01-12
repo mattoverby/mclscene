@@ -158,21 +158,21 @@ void RenderGL::draw_objects_subdivided( bool update_vbo ){
 } // end draw objects
 
 
-void RenderGL::setup_lights(){
+void RenderGL::setup_lights( Shader *curr_shader ){
 
-	glUniform1i( blinnphong->uniform("num_lights"), scene->lights.size() );
+	glUniform1i( curr_shader->uniform("num_lights"), scene->lights.size() );
 
 	// Set lighting properties
 	for( int l=0; l<scene->lights.size(); ++l ){
 		Light::AppData *light = &scene->lights[l]->app;
 		std::stringstream array_ss; array_ss << "lights[" << l << "].";
 		std::string array_str = array_ss.str();
-		glUniform3f( blinnphong->uniform(array_str+"position"), light->position[0], light->position[1], light->position[2] );
-		glUniform3f( blinnphong->uniform(array_str+"direction"), light->direction[0], light->direction[1], light->direction[2] );
-		glUniform3f( blinnphong->uniform(array_str+"intensity"), light->intensity[0], light->intensity[1], light->intensity[2] );
-		glUniform3f( blinnphong->uniform(array_str+"falloff"), light->falloff[0], light->falloff[1], light->falloff[2] );
-		glUniform1f( blinnphong->uniform(array_str+"halfangle"), 0.5*(light->angle*M_PI/180.f) );
-		glUniform1i( blinnphong->uniform(array_str+"type"), light->type );
+		glUniform3f( curr_shader->uniform(array_str+"position"), light->position[0], light->position[1], light->position[2] );
+		glUniform3f( curr_shader->uniform(array_str+"direction"), light->direction[0], light->direction[1], light->direction[2] );
+		glUniform3f( curr_shader->uniform(array_str+"intensity"), light->intensity[0], light->intensity[1], light->intensity[2] );
+		glUniform3f( curr_shader->uniform(array_str+"falloff"), light->falloff[0], light->falloff[1], light->falloff[2] );
+		glUniform1f( curr_shader->uniform(array_str+"halfangle"), 0.5*(light->angle*M_PI/180.f) );
+		glUniform1i( curr_shader->uniform(array_str+"type"), light->type );
 	} // end loop lights
 
 } // end setup lights
@@ -187,7 +187,9 @@ void RenderGL::draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *came
 	if( mesh->num_vertices <= 0 || mesh->num_faces <= 0 ){ return; }
 
 	// Otherwise check if we need to do an update
-	if( mesh->faces_ibo <= 0 || mesh->tris_vao <=0 || update_vbo ){ load_mesh_buffers( mesh ); }
+	if( mesh->faces_ibo <= 0 || mesh->tris_vao <=0 || update_vbo ){
+		if( !load_mesh_buffers( mesh ) ){ return; }
+	}
 
 	// Get material properties
 	Vec3f ambient = mat->app.amb;
@@ -200,21 +202,23 @@ void RenderGL::draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *came
 	// Start shader
 	Shader *curr_shader = blinnphong.get();
 	if( texture_id > 0 ){ curr_shader = blinnphong_textured.get(); }
-	glBindTexture( GL_TEXTURE_2D, texture_id );
 	curr_shader->enable();
 
+	// Bind shader
+	glBindTexture( GL_TEXTURE_2D, texture_id );
+
 	// Pass lighting to shader
-	setup_lights();
+	setup_lights( curr_shader );
 
 	// Set the camera matrices
 	trimesh::fxform model;
 	glUniformMatrix4fv( curr_shader->uniform("model"), 1, GL_FALSE, model );
 	glUniformMatrix4fv( curr_shader->uniform("view"), 1, GL_FALSE, camera->app.view );
 	glUniformMatrix4fv( curr_shader->uniform("projection"), 1, GL_FALSE, camera->app.projection );
-//	Vec3f eyepos = camera->get_eye();
-//	glUniform3f( curr_shader->uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
-	trimesh::XForm<float> eyepos = trimesh::inv( (camera->app.projection) * (camera->app.view) * (model) );
-	glUniform3f( curr_shader->uniform("eye"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
+	Vec3f eyepos = camera->get_eye();
+	glUniform3f( curr_shader->uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
+//	trimesh::XForm<float> eyepos = trimesh::inv( (camera->app.projection) * (camera->app.view) * (model) );
+//	glUniform3f( curr_shader->uniform("eye"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
 
 	// Set material properties
 	glUniform3f( curr_shader->uniform("material.ambient"), ambient[0], ambient[1], ambient[2] );
@@ -259,7 +263,10 @@ void RenderGL::draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *came
 */
 
 
-void RenderGL::load_mesh_buffers( BaseObject::AppData *mesh ){
+bool RenderGL::load_mesh_buffers( BaseObject::AppData *mesh ){
+
+	// Check
+	if( mesh->num_vertices<=0 || mesh->num_normals<=0 || mesh->num_faces<=0 ){ return false; }
 
 	GLenum draw_mode = GL_STATIC_DRAW;
 	if( mesh->dynamic ){ draw_mode = GL_DYNAMIC_DRAW; }
@@ -339,5 +346,7 @@ void RenderGL::load_mesh_buffers( BaseObject::AppData *mesh ){
 		// Done setting data for the vao
 		glBindVertexArray(0);
 	}
+
+	return true;
 
 }

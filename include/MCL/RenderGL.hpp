@@ -54,10 +54,11 @@ private:
 
 	// Texture coordinates and face ibo are NOT updated.
 	// If the IBOs have already been generated, they are instead overwritten.
-	void load_mesh_buffers( BaseObject::AppData *mesh );
+	// Returns true on success
+	bool load_mesh_buffers( BaseObject::AppData *mesh );
 
 	// Set up lighting uniforms
-	void setup_lights();
+	void setup_lights( Shader *curr_shader );
 
 	Material defaultMat;
 	std::unique_ptr<Shader> blinnphong;
