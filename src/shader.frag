@@ -2,9 +2,9 @@
 
 layout(location=0) out vec4 out_fragcolor;
 
+uniform int num_colors;
 uniform vec3 eye;
 in vec3 vposition;
-in vec3 vcolor;
 in vec3 vnormal;
 
 float length2( vec3 v ){ return dot(v,v); }

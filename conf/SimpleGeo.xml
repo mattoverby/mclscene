@@ -4,7 +4,7 @@
 	<Object name="obj1" type="box" >
 		<width value="20" />
 		<length value="20" />
-		<Material value="invisible" />
+		<Material value="ruby" />
 	</Object>
 
 	<Object name="obj2" type="torus" >

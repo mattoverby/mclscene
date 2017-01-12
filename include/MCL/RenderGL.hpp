@@ -41,6 +41,8 @@ public:
 	// Texture coordinates and face ibo are NOT updated.
 	void draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *camera, bool update_vbo=false );
 
+	void draw_mesh_new( BaseObject::AppData *mesh, Material *mat, Camera *cam, bool update_vbo=false );
+
 	// Draws all objects in the SceneManager (that have AppData::mesh)
 	void draw_objects( bool update_vbo=false );
 
@@ -48,7 +50,12 @@ public:
 	// the meshes before rendering for visual quality.
 	void draw_objects_subdivided( bool update_vbo=false );
 
+	// Updates the screen space buffers
+	void update_window_size( int win_width, int win_height );
+
 private:
+	friend class Application;
+
 	// Load textures from SceneManager materials.
 	void load_textures();
 
@@ -64,6 +71,22 @@ private:
 	std::unique_ptr<Shader> blinnphong;
 	std::unique_ptr<Shader> blinnphong_textured;
 	std::unordered_map< std::string, int > textures; // file->texture_id
+
+	Shader shaderGeometryPass;
+	Shader shaderLightingPass;
+	Shader shaderSSAO;
+	Shader shaderSSAOBlur;
+
+	std::vector<Vec3f> ssaoKernel;
+	void RenderQuad();
+
+	GLuint quadVAO, quadVBO; // for deferred shading
+	GLuint gBuffer; // G-Buffer
+	GLuint gPosition, gNormal, gAlbedo; // render buffs
+	GLuint rboDepth; // depth buffer
+	GLuint ssaoFBO, ssaoBlurFBO; // ambient occlusion
+	GLuint ssaoColorBuffer, ssaoColorBufferBlur;
+	GLuint noiseTexture; // occlusion noise
 
 	mcl::SceneManager *scene;
 

@@ -88,7 +88,7 @@ int Application::display(){
 	glfwWindowHint(GLFW_SAMPLES, 4); // anti aliasing
 	glfwWindowHint(GLFW_SRGB_CAPABLE, true); // gamma correction
 
-	// Ask for OpenGL 3.2
+	// Ask for OpenGL 3.3
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -96,10 +96,12 @@ int Application::display(){
 
 	// Get the monitor max window size
 	const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-	int max_width = mode->width;
-	int max_height = mode->height;
-	if( max_width >= 1920 ){ max_width=1920; max_height=1080; } // just use 1080 if they have it
-	else{ max_width=1366; max_height=768; } // any lower than this... why?
+	int max_width = 1024;
+	int max_height = 768;
+//	int max_width = mode->width;
+//	int max_height = mode->height;
+//	if( max_width >= 1920 ){ max_width=1920; max_height=1080; } // just use 1080 if they have it
+//	else{ max_width=1366; max_height=768; }
 
 	// Create the glfw window
 	window = glfwCreateWindow(max_width, max_height, "Viewer", NULL, NULL);
@@ -152,7 +154,6 @@ int Application::display(){
 		//
 		//	Render
 		//
-
 		{ // Clear screen
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			if( update_view ){ current_cam->update_view(); update_view = false; }
@@ -257,6 +258,7 @@ void Application::framebuffer_size_callback(GLFWwindow* window, int width, int h
 	if( height > 0 ){ aspect_ratio = std::fmaxf( (float)width / (float)height, 1e-6f ); }
 	glViewport(0, 0, width, height);
 	current_cam->update_proj( aspect_ratio );
+	renderer.update_window_size( width, height );
 }
 
 

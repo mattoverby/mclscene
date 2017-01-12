@@ -25,6 +25,13 @@
 
 using namespace mcl;
 
+static inline std::string fullpath( std::string file ){
+	std::stringstream ss; ss << MCLSCENE_SRC_DIR << "/" << file;
+	return ss.str();
+}
+
+static inline float lerp(float a, float b, float f){ return a + f * (b - a); }
+
 RenderGL::~RenderGL(){
 	// Release texture memory
 	std::unordered_map< std::string, int >::iterator it = textures.begin();
@@ -34,9 +41,51 @@ RenderGL::~RenderGL(){
 	}
 }
 
+// RenderQuad() Renders a 1x1 quad in NDC, best used for framebuffer color targets
+void RenderGL::RenderQuad(){
+    if (quadVAO == 0){
+        GLfloat quadVertices[] = {
+            // Positions        // Texture Coords
+            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+        // Setup plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+}
+
+
+
 bool RenderGL::init( mcl::SceneManager *scene_ ) {
 
 	scene = scene_;
+	quadVAO = 0;
+	quadVAO = 0;
+	quadVBO = 0;
+	gBuffer = 0;
+	gPosition = 0;
+	gNormal = 0;
+	gAlbedo = 0;
+	rboDepth = 0;
+	ssaoFBO = 0;
+	ssaoBlurFBO = 0;
+	ssaoColorBuffer = 0;
+	ssaoColorBufferBlur = 0;
+	noiseTexture = 0;
+
 
 	std::stringstream bp_ss;
 	bp_ss << MCLSCENE_SRC_DIR << "/src/shader";
@@ -48,11 +97,135 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	blinnphong_textured = std::unique_ptr<Shader>( new Shader() );
 	blinnphong_textured->init_from_files( bp_ss.str()+"_textured.vert", bp_ss.str()+"_textured.frag");
 
+	shaderGeometryPass.init_from_files(fullpath("src/ssao_geometry.vs"), fullpath("src/ssao_geometry.frag"));
+	shaderLightingPass.init_from_files(fullpath("src/ssao.vs"), fullpath("src/ssao_lighting.frag"));
+	shaderSSAO.init_from_files(fullpath("src/ssao.vs"), fullpath("src/ssao.frag"));
+	shaderSSAOBlur.init_from_files(fullpath("src/ssao.vs"), fullpath("src/ssao_blur.frag"));
+
+	// Set samplers
+	shaderLightingPass.enable();
+	glUniform1i(shaderLightingPass.uniform("gPosition"), 0);
+	glUniform1i(shaderLightingPass.uniform("gNormal"), 1);
+	glUniform1i(shaderLightingPass.uniform("gAlbedo"), 2); 
+	glUniform1i(shaderLightingPass.uniform("ssao"), 3); 
+	shaderSSAO.enable();
+	glUniform1i(shaderSSAO.uniform("gPosition"), 0);
+	glUniform1i(shaderSSAO.uniform("gNormal"), 1);
+	glUniform1i(shaderSSAO.uniform("texNoise"), 2);
+
+	update_window_size( 1024, 768 );
+
+	// Sample kernel
+	std::uniform_real_distribution<float> randomFloats(0.f,1.f);
+	std::default_random_engine generator;
+	for(int i = 0; i < 64; ++i){
+		Vec3f sample(randomFloats(generator)*2.f-1.f, randomFloats(generator)*2.f-1.f, randomFloats(generator));
+		sample.normalize();
+		sample *= randomFloats(generator);
+		float scale = float(i) / 64.0;
+
+		// Scale samples s.t. they're more aligned to center of kernel
+		scale = lerp(0.1f, 1.0f, scale*scale);
+		sample *= scale;
+		ssaoKernel.push_back(sample);
+	}
+
+	// Noise texture
+	std::vector<Vec3f> ssaoNoise;
+	for(int i=0; i<16; i++){
+		Vec3f noise(randomFloats(generator)*2.f-1.f, randomFloats(generator)*2.f-1.f, 0.f); // rotate around z-axis (in tangent space)
+		ssaoNoise.push_back(noise);
+	}
+	glGenTextures(1, &noiseTexture);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	// Load model textures
 	load_textures();
 
 	return true;
 
 } // end init shaders
+
+
+void RenderGL::update_window_size( int win_width, int win_height ){
+
+	// Set up G-Buffer
+	//
+	// 3 textures:
+	// 1. Positions (RGB)
+	// 2. Color (RGB) 
+	// 3. Normals (RGB) 
+	if( !gBuffer ){ glGenFramebuffers(1, &gBuffer); }
+	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+	// - Position buffer
+	if( !gPosition ){ glGenTextures(1, &gPosition); }
+	glBindTexture(GL_TEXTURE_2D, gPosition);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, win_width, win_height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
+	// - Normal color buffer
+	if( !gNormal ){ glGenTextures(1, &gNormal); }
+	glBindTexture(GL_TEXTURE_2D, gNormal);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, win_width, win_height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
+	// - Albedo color buffer
+	if( !gAlbedo ){ glGenTextures(1, &gAlbedo); }
+	glBindTexture(GL_TEXTURE_2D, gAlbedo);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, win_width, win_height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);
+	// - Tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
+	const GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+	glDrawBuffers(3, attachments);
+
+	// - Create and attach depth buffer (renderbuffer)
+	if( !rboDepth ){ glGenRenderbuffers(1, &rboDepth); }
+	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, win_width, win_height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+	// - Finally check if framebuffer is complete
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+		std::cout << "GBuffer Framebuffer not complete!" << std::endl;
+	}
+
+	// Also create framebuffer to hold SSAO processing stage 
+	if( !ssaoFBO ){ glGenFramebuffers(1, &ssaoFBO); }
+	if( !ssaoBlurFBO ){ glGenFramebuffers(1, &ssaoBlurFBO); }
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+
+	// - SSAO color buffer
+	if( !ssaoColorBuffer ){ glGenTextures(1, &ssaoColorBuffer); }
+	glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, win_width, win_height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+	std::cout << "SSAO Framebuffer not complete!" << std::endl; }
+	// - and blur stage
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
+	if( !ssaoColorBufferBlur ){ glGenTextures(1, &ssaoColorBufferBlur); }
+	glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, win_width, win_height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBufferBlur, 0);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+	std::cout << "SSAO Blur Framebuffer not complete!" << std::endl; }
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+}
 
 
 void RenderGL::load_textures(){
@@ -180,6 +353,8 @@ void RenderGL::setup_lights( Shader *curr_shader ){
 
 void RenderGL::draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *camera, bool update_vbo ){
 
+//	draw_mesh_new( mesh, mat, camera, update_vbo ); return;
+
 	// Check if mesh has the "invisible" material and we can just ignore it.
 	if( mat->app.mode == 2 ){ return; }
 
@@ -233,15 +408,104 @@ void RenderGL::draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *came
 	//
 	//	Draw a solid mesh
 	//
-	if( mat->app.mode==0 ){
-		glDrawElements(GL_TRIANGLES, mesh->num_faces*3, GL_UNSIGNED_INT, 0);
-	} // end draw as triangle mesh
+	glDrawElements(GL_TRIANGLES, mesh->num_faces*3, GL_UNSIGNED_INT, 0);
 
 	// Unbind
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 	curr_shader->disable();	
+
+}
+
+
+void RenderGL::draw_mesh_new( BaseObject::AppData *mesh, Material *mat, Camera *cam, bool update_vbo ){
+
+	if( mat->app.mode == 2 ){ return; } // Check if mesh has the "invisible" material and we can just ignore it.
+	if( mesh->num_vertices <= 0 || mesh->num_faces <= 0 ){ return; } // Check for valid mesh data
+	if( mesh->faces_ibo <= 0 || mesh->tris_vao <=0 || update_vbo ){ // Otherwise check if we need to do an update
+		if( !load_mesh_buffers( mesh ) ){ return; }
+	}
+
+	// Lights
+	Vec3f lightPos(2.0, 4.0, -2.0);
+	Vec3f lightColor(0.2, 0.2, 0.7);
+
+	// Camera transforms
+	trimesh::fxform model;
+	trimesh::fxform &view = cam->app.view;
+	trimesh::fxform &projection = cam->app.projection;
+
+        // 1. Geometry Pass: render scene's geometry/color data into gbuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	shaderGeometryPass.enable();
+	glUniformMatrix4fv(shaderGeometryPass.uniform("projection"), 1, GL_FALSE, projection);
+	glUniformMatrix4fv(shaderGeometryPass.uniform("view"), 1, GL_FALSE, view);
+	glUniformMatrix4fv(shaderGeometryPass.uniform("model"), 1, GL_FALSE, model);
+	{ // Draw mesh triangles
+		glBindVertexArray(mesh->tris_vao);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->faces_ibo);
+		glDrawElements(GL_TRIANGLES, mesh->num_faces*3, GL_UNSIGNED_INT, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+	}
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // 2. Create SSAO texture
+        glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+	glClear(GL_COLOR_BUFFER_BIT);
+	shaderSSAO.enable();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, gPosition);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, gNormal);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+	// Send kernel + rotation 
+	for (GLuint i = 0; i < 64; ++i){
+		glUniform3fv(shaderSSAO.uniform(("samples[" + std::to_string(i) + "]").c_str()), 1, &ssaoKernel[i][0]);
+	}
+	glUniformMatrix4fv(shaderSSAO.uniform("projection"), 1, GL_FALSE, projection);
+	RenderQuad();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+        // 3. Blur SSAO texture to remove noise
+        glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
+            glClear(GL_COLOR_BUFFER_BIT);
+            shaderSSAOBlur.enable();
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+	RenderQuad();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+        // 4. Lighting Pass: traditional deferred Blinn-Phong lighting now with added screen-space ambient occlusion
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        shaderLightingPass.enable();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, gPosition);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, gNormal);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, gAlbedo);
+        glActiveTexture(GL_TEXTURE3); // Add extra SSAO texture to lighting pass
+        glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
+        // Also send light relevant uniforms
+        Vec3f lightPosView = view*lightPos;
+        glUniform3fv(shaderLightingPass.uniform("light.Position"), 1, &lightPosView[0]);
+        glUniform3fv(shaderLightingPass.uniform("light.Color"), 1, &lightColor[0]);
+        // Update attenuation parameters
+        const GLfloat constant = 1.0; // Note that we don't send this to the shader, we assume it is always 1.0 (in our case)
+        const GLfloat linear = 0.09;
+        const GLfloat quadratic = 0.032;
+        glUniform1f(shaderLightingPass.uniform("light.Linear"), linear);
+        glUniform1f(shaderLightingPass.uniform("light.Quadratic"), quadratic);
+        glUniform1i(shaderLightingPass.uniform("draw_mode"), 1);
+	RenderQuad();
+
+
 
 }
 
@@ -282,15 +546,6 @@ bool RenderGL::load_mesh_buffers( BaseObject::AppData *mesh ){
 		glBufferSubData( GL_ARRAY_BUFFER, 0, mesh->num_vertices*stride, mesh->vertices );
 	}
 
-	if( !mesh->colors_vbo ){ // Create the buffer for colors
-		glGenBuffers(1, &mesh->colors_vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->colors_vbo);
-		glBufferData(GL_ARRAY_BUFFER, mesh->num_colors*stride, mesh->colors, draw_mode);
-	} else { // Otherwise update
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->colors_vbo);
-		glBufferSubData( GL_ARRAY_BUFFER, 0, mesh->num_colors*stride, mesh->colors );
-	}
-
 	if( !mesh->normals_vbo ){ // Create the buffer for normals
 		glGenBuffers(1, &mesh->normals_vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->normals_vbo);
@@ -328,20 +583,15 @@ bool RenderGL::load_mesh_buffers( BaseObject::AppData *mesh ){
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->verts_vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, 0);
 
-		// location=1 is the color
+		// location=1 is the normal
 		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->colors_vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, mesh->normals_vbo);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, 0);
 
-		// location=2 is the normal
+		// location=2 is the tex coord
 		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->normals_vbo);
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, 0);
-
-		// location=3 is the tex coord
-		glEnableVertexAttribArray(3);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->texcoords_vbo);
-		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, mesh->texcoord_stride(), 0);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, mesh->texcoord_stride(), 0);
 
 		// Done setting data for the vao
 		glBindVertexArray(0);

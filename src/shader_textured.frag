@@ -4,7 +4,6 @@ layout(location=0) out vec4 out_fragcolor;
 
 uniform vec3 eye;
 in vec3 vposition;
-in vec3 vcolor;
 in vec3 vnormal;
 in vec2 vtexcoord;
 uniform sampler2D texSampler;
@@ -53,8 +52,7 @@ vec3 BlinnPhong(Light light, vec3 N, vec3 fragPos, vec3 V){
 	}
 
 	// Ambient
-	float amb = 1.f;
-	vec3 ambient = amb * material.ambient * light.intensity;
+	vec3 ambient = material.ambient * light.intensity;
 
 	// Diffuse 
 	float diff = max( dot(N, L), 0.f );
