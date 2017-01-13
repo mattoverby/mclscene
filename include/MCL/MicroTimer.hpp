@@ -23,10 +23,8 @@
 #ifndef MCLSCENE_MICROTIMER_H
 #define MCLSCENE_MICROTIMER_H 1
 
-#include <sys/time.h>
+#include <chrono>
 
-// MCLSCENE MicroTimer is a simple timer for getting runtime speeds in seconds, milliseconds, and microseconds.
-//
 // -Timer starts upon construction and doesn't stop until destruction.
 // -It can be reset back to zero with reset().
 // -It returns elapsed time in double precision.
@@ -47,37 +45,43 @@
 //	   the result to whatever units you need.
 //
 
-
 namespace mcl {
 
-
 class MicroTimer {
-
+	typedef std::chrono::steady_clock C; // clock type
 	public:
-		MicroTimer() : start_tick( getTick() ) {}
 
-		// Return time elapsed in microseconds
-		const double elapsed_us() const { return ( getTick()-start_tick ); }
-
-		// Return time elapsed in milliseconds
-		const double elapsed_ms() const { return ( ( getTick()-start_tick )*0.001 ); }
-
-		// Return time elapsed in seconds
-		const double elapsed_s() const { return ( ( getTick()-start_tick )*0.000001 ); }
+		MicroTimer() : start_time( C::now() ){}
 
 		// Resets the timer
-		const void reset() { start_tick = getTick(); }
+		void reset() { start_time = C::now(); }
+
+		// Return time elapsed in seconds
+		double elapsed_s() const {
+			curr_time = C::now();
+			std::chrono::duration<double> durr = curr_time-start_time;
+			return durr.count();
+		}
+
+		// Return time elapsed in milliseconds
+		double elapsed_ms() const {
+			curr_time = C::now();
+			std::chrono::duration<double, std::milli> durr = curr_time-start_time;
+			return durr.count();
+		}
+
+		// Return time elapsed in microseconds
+		double elapsed_us() const {
+			curr_time = C::now();
+			std::chrono::duration<double, std::micro> durr = curr_time-start_time;
+			return durr.count();
+		}
 
 	private:
-		unsigned long start_tick;
+		std::chrono::time_point<std::chrono::steady_clock> start_time;
+		mutable std::chrono::time_point<std::chrono::steady_clock> curr_time;
 
-		const unsigned long getTick() const {
-			struct timeval tv;
-			gettimeofday(&tv, 0);
-			return (unsigned long)( (tv.tv_sec*1000000.0) + (tv.tv_usec) );
-		} // end get tick count
-
-	}; // end class MicroTimer
+}; // end class MicroTimer
 
 
 } // end namespace mcl
