@@ -33,13 +33,25 @@ static inline std::string fullpath( std::string file ){
 static inline float lerp(float a, float b, float f){ return a + f * (b - a); }
 
 RenderGL::~RenderGL(){
+	// Apparently in modern GL, textures are released when OpenGL context is
+	// destroyed. Unless I missunderstood something...
+
 	// Release texture memory
-	std::unordered_map< std::string, int >::iterator it = textures.begin();
-	for( ; it != textures.end(); ++it ){
-		GLuint texid = it->second;
-		glDeleteTextures(1, &texid);
-	}
-	// TODO release new texture mem from ssao
+//	std::unordered_map< std::string, int >::iterator it = textures.begin();
+//	for( ; it != textures.end(); ++it ){
+//		GLuint texid = it->second;
+//		glDeleteTextures(1, &texid);
+//	}
+
+	// Release ssao buffers
+//	glDeleteTextures(1, &gPosition);
+//	glDeleteTextures(1, &gNormal);
+//	glDeleteTextures(1, &gDiffuse);
+//	glDeleteTextures(1, &gSpec);
+//	glDeleteTextures(1, &noiseTexture);
+//	glDeleteTextures(1, &ssaoColorBuffer);
+//	glDeleteTextures(1, &ssaoColorBufferBlur);
+
 }
 
 // RenderQuad() Renders a 1x1 quad in NDC, best used for framebuffer color targets
@@ -164,6 +176,7 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	// 3. Normals (RGB) 
 	if( !gBuffer ){ glGenFramebuffers(1, &gBuffer); }
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+
 	// - Position buffer
 	if( !gPosition ){ glGenTextures(1, &gPosition); }
 	glBindTexture(GL_TEXTURE_2D, gPosition);
@@ -173,6 +186,7 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
+
 	// - Normal color buffer
 	if( !gNormal ){ glGenTextures(1, &gNormal); }
 	glBindTexture(GL_TEXTURE_2D, gNormal);
@@ -180,6 +194,7 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
+
 	// - Diffuse color buffer
 	if( !gDiffuse ){ glGenTextures(1, &gDiffuse); }
 	glBindTexture(GL_TEXTURE_2D, gDiffuse);
@@ -187,6 +202,7 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gDiffuse, 0);
+
 	// - Specular color buffer
 	if( !gSpec ){ glGenTextures(1, &gSpec); }
 	glBindTexture(GL_TEXTURE_2D, gSpec);
@@ -278,8 +294,7 @@ void RenderGL::draw_objects( bool update_vbo ){
 	for( int i=0; i<scene->objects.size(); ++i ){
 		BaseObject::AppData *mesh = &scene->objects[i]->app;
 		if( mesh->faces_ibo <= 0 || mesh->tris_vao <=0 || update_vbo ){
-			// Otherwise check if we need to do an update
-			if( !load_mesh_buffers( mesh ) ){ continue; } // TODO throw
+			if( !load_mesh_buffers( mesh ) ){ continue; } // TODO throw error on failure
 		}
 	}
 
@@ -305,10 +320,8 @@ void RenderGL::geometry_pass( Camera *camera ){
 
 	// Camera transforms
 	trimesh::fxform model;
-	trimesh::fxform &view = camera->app.view;
-	trimesh::fxform &projection = camera->app.projection;
-	glUniformMatrix4fv(shaderGeometryPass.uniform("projection"), 1, GL_FALSE, projection);
-	glUniformMatrix4fv(shaderGeometryPass.uniform("view"), 1, GL_FALSE, view);
+	glUniformMatrix4fv(shaderGeometryPass.uniform("projection"), 1, GL_FALSE, camera->app.projection);
+	glUniformMatrix4fv(shaderGeometryPass.uniform("view"), 1, GL_FALSE, camera->app.view);
 	glUniformMatrix4fv(shaderGeometryPass.uniform("model"), 1, GL_FALSE, model);
 
 	//
@@ -317,18 +330,22 @@ void RenderGL::geometry_pass( Camera *camera ){
 	for( int i=0; i<scene->objects.size(); ++i ){
 
 		// Get the mesh
-		std::shared_ptr<BaseObject> obj = scene->objects[i];
-		BaseObject::AppData *mesh = &obj->app;
+		BaseObject::AppData *mesh = &scene->objects[i]->app;
 		if( mesh->num_vertices <= 0 || mesh->num_faces <= 0 ){ continue; }
 
 		// Get the material
-		Material *mat = NULL;
-		int mat_id = obj->get_material();
+		Material *mat = 0;
+		int mat_id = scene->objects[i]->get_material();
 		if( mat_id < scene->materials.size() && mat_id >= 0 ){ mat = scene->materials[mat_id].get(); }
 		else { mat = &defaultMat; }
 
+		// Textures
+		GLuint texture_id = 0;
+		if( textures.count(mat->app.texture)>0 ){ texture_id = textures[ mat->app.texture ]; }
+
 		// Set material diffuse color
-		glUniform4f( shaderGeometryPass.uniform("color"), mat->app.diff[0], mat->app.diff[1], mat->app.diff[2], mat->app.shini );
+		glUniform3f( shaderGeometryPass.uniform("diff_color"), mat->app.diff[0], mat->app.diff[1], mat->app.diff[2] );
+		glUniform4f( shaderGeometryPass.uniform("spec_color"), mat->app.spec[0], mat->app.spec[1], mat->app.spec[2], mat->app.shini );
 
 		{ // Draw mesh triangles
 			glBindVertexArray(mesh->tris_vao);
@@ -349,142 +366,56 @@ void RenderGL::draw_objects_subdivided( bool update_vbo ){
 
 	Camera *camera = scene->cameras[0].get();
 
+	//
+	//	Update VBOs
+	//
+	//
 	// Making a copy of the mesh with TriMesh, then
 	// do subdivision on that (since I don't want to implement it myself).
 	// This is pretty dirty and not efficient, but oh well.
 	//
 	for( int i=0; i<scene->objects.size(); ++i ){
+		BaseObject::AppData *mesh = &scene->objects[i]->app;
 
-		std::shared_ptr<BaseObject> obj = scene->objects[i];
-
-		// Get the material
-		Material *mat = NULL;
-		int mat_id = obj->get_material();
-		if( mat_id < scene->materials.size() && mat_id >= 0 ){ mat = scene->materials[mat_id].get(); }
-		else { mat = &defaultMat; }
-
-		// Only subdivide if it has enough vertices
-		if( obj->app.num_vertices < 100 ){
-			draw_mesh( &obj->app, mat, camera );
-			continue;
-		}
-
-		// We will use the app data stored with that object.
-		BaseObject::AppData *appdata = &obj->app;
-		trimesh::TriMesh tempmesh;
-
-		// I can think of a million ways to break this
-		if( update_vbo ){
+		// I can think of a hundred ways this could break
+		if( mesh->faces_ibo <= 0 || mesh->tris_vao <=0 || update_vbo ){
 
 			// Do subdivision with trimesh
-			trimesh_copy( &tempmesh, &obj->app );
+			trimesh::TriMesh tempmesh;
+			trimesh_copy( &tempmesh, mesh );
 			trimesh::subdiv( &tempmesh ); // creates faces
 			tempmesh.need_normals(true);
 
-			appdata->vertices = &tempmesh.vertices[0][0];
-			appdata->normals = &tempmesh.normals[0][0];
-			appdata->faces = &tempmesh.faces[0][0];
-			appdata->texcoords = &tempmesh.texcoords[0][0];
-			appdata->colors = &tempmesh.colors[0][0];
-			appdata->num_vertices = tempmesh.vertices.size();
-			appdata->num_normals = tempmesh.normals.size();
-			appdata->num_faces = tempmesh.faces.size();
-			appdata->num_texcoords = tempmesh.texcoords.size();
-			appdata->num_colors = tempmesh.colors.size();
+			// We will use the app data stored with that object.
+			mesh->vertices = &tempmesh.vertices[0][0];
+			mesh->normals = &tempmesh.normals[0][0];
+			mesh->faces = &tempmesh.faces[0][0];
+			mesh->texcoords = &tempmesh.texcoords[0][0];
+			mesh->colors = &tempmesh.colors[0][0];
+			mesh->num_vertices = tempmesh.vertices.size();
+			mesh->num_normals = tempmesh.normals.size();
+			mesh->num_faces = tempmesh.faces.size();
+			mesh->num_texcoords = tempmesh.texcoords.size();
+			mesh->num_colors = tempmesh.colors.size();
+			load_mesh_buffers( mesh );
 		}
 
-		draw_mesh( appdata, mat, camera, update_vbo );
-	}
+	} // end loop objects
+
+	//
+	//	Geometry Pass
+	//
+	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	geometry_pass( camera );
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	//
+	//	Lighting Pass
+	//
+	lighting_pass( camera );
 
 } // end draw objects
-
-
-void RenderGL::setup_lights( Shader *curr_shader ){
-
-	glUniform1i( curr_shader->uniform("num_lights"), scene->lights.size() );
-
-	// Set lighting properties
-	for( int l=0; l<scene->lights.size(); ++l ){
-		Light::AppData *light = &scene->lights[l]->app;
-		std::stringstream array_ss; array_ss << "lights[" << l << "].";
-		std::string array_str = array_ss.str();
-		glUniform3f( curr_shader->uniform(array_str+"position"), light->position[0], light->position[1], light->position[2] );
-		glUniform3f( curr_shader->uniform(array_str+"direction"), light->direction[0], light->direction[1], light->direction[2] );
-		glUniform3f( curr_shader->uniform(array_str+"intensity"), light->intensity[0], light->intensity[1], light->intensity[2] );
-		glUniform3f( curr_shader->uniform(array_str+"falloff"), light->falloff[0], light->falloff[1], light->falloff[2] );
-		glUniform1f( curr_shader->uniform(array_str+"halfangle"), 0.5*(light->angle*M_PI/180.f) );
-		glUniform1i( curr_shader->uniform(array_str+"type"), light->type );
-	} // end loop lights
-
-} // end setup lights
-
-
-void RenderGL::draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *camera, bool update_vbo ){
-
-//	draw_mesh_new( mesh, mat, camera, update_vbo ); return;
-
-	// Check if mesh has the "invisible" material and we can just ignore it.
-	if( mat->app.mode == 2 ){ return; }
-
-	// Check for valid mesh data
-	if( mesh->num_vertices <= 0 || mesh->num_faces <= 0 ){ return; }
-
-	// Otherwise check if we need to do an update
-	if( mesh->faces_ibo <= 0 || mesh->tris_vao <=0 || update_vbo ){
-		if( !load_mesh_buffers( mesh ) ){ return; }
-	}
-
-	// Get material properties
-	Vec3f ambient = mat->app.amb;
-	Vec3f diffuse = mat->app.diff;
-	Vec3f specular = mat->app.spec;
-	float shininess = mat->app.shini;
-	GLuint texture_id = 0;
-	if( textures.count(mat->app.texture)>0 ){ texture_id = textures[ mat->app.texture ]; }
-
-	// Start shader
-	Shader *curr_shader = blinnphong.get();
-	if( texture_id > 0 ){ curr_shader = blinnphong_textured.get(); }
-	curr_shader->enable();
-
-	// Bind shader
-	glBindTexture( GL_TEXTURE_2D, texture_id );
-
-	// Pass lighting to shader
-	setup_lights( curr_shader );
-
-	// Set the camera matrices
-	trimesh::fxform model;
-	glUniformMatrix4fv( curr_shader->uniform("model"), 1, GL_FALSE, model );
-	glUniformMatrix4fv( curr_shader->uniform("view"), 1, GL_FALSE, camera->app.view );
-	glUniformMatrix4fv( curr_shader->uniform("projection"), 1, GL_FALSE, camera->app.projection );
-	Vec3f eyepos = camera->get_eye();
-	glUniform3f( curr_shader->uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
-//	trimesh::XForm<float> eyepos = trimesh::inv( (camera->app.projection) * (camera->app.view) * (model) );
-//	glUniform3f( curr_shader->uniform("eye"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
-
-	// Set material properties
-	glUniform3f( curr_shader->uniform("material.ambient"), ambient[0], ambient[1], ambient[2] );
-	glUniform3f( curr_shader->uniform("material.diffuse"), diffuse[0], diffuse[1], diffuse[2] );
-	glUniform3f( curr_shader->uniform("material.specular"), specular[0], specular[1], specular[2] );
-	glUniform1f( curr_shader->uniform("material.shininess"), shininess );
-
-	// Bind buffers
-	glBindVertexArray(mesh->tris_vao);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->faces_ibo);
-
-	//
-	//	Draw a solid mesh
-	//
-	glDrawElements(GL_TRIANGLES, mesh->num_faces*3, GL_UNSIGNED_INT, 0);
-
-	// Unbind
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	curr_shader->disable();	
-
-}
 
 
 void RenderGL::lighting_pass( Camera *cam ){
@@ -557,23 +488,6 @@ void RenderGL::lighting_pass( Camera *cam ){
 	// Render to screen space
 	RenderQuad();
 }
-
-
-// Color blending, saved for reference:
-/*
-	// From: https://stackoverflow.com/questions/1700211/to-dynamically-increment-from-blue-to-red-using-c
-	static inline float blend(float a, float b, float alpha){ return (1.f - alpha) * a + alpha * b; }
-
-	// gradient should be 0-1. blended needs to be a 3-element array
-	// From https://stackoverflow.com/questions/1700211/to-dynamically-increment-from-blue-to-red-using-c
-	static inline void colorBlend( float *blended, float a[3], float b[3], float gradient ){
-		if( gradient > 1.f ){ gradient = 1.f; }
-		if( gradient < 0.f ){ gradient = 0.f; }
-		blended[0] = blend( a[0], b[0], gradient );
-		blended[1] = blend( a[1], b[1], gradient );
-		blended[2] = blend( a[2], b[2], gradient );
-	}
-*/
 
 
 bool RenderGL::load_mesh_buffers( BaseObject::AppData *mesh ){
@@ -649,3 +563,99 @@ bool RenderGL::load_mesh_buffers( BaseObject::AppData *mesh ){
 	return true;
 
 }
+
+
+
+
+
+
+
+
+
+
+
+// Color blending, saved for reference:
+/*
+	// From: https://stackoverflow.com/questions/1700211/to-dynamically-increment-from-blue-to-red-using-c
+	static inline float blend(float a, float b, float alpha){ return (1.f - alpha) * a + alpha * b; }
+
+	// gradient should be 0-1. blended needs to be a 3-element array
+	// From https://stackoverflow.com/questions/1700211/to-dynamically-increment-from-blue-to-red-using-c
+	static inline void colorBlend( float *blended, float a[3], float b[3], float gradient ){
+		if( gradient > 1.f ){ gradient = 1.f; }
+		if( gradient < 0.f ){ gradient = 0.f; }
+		blended[0] = blend( a[0], b[0], gradient );
+		blended[1] = blend( a[1], b[1], gradient );
+		blended[2] = blend( a[2], b[2], gradient );
+	}
+*/
+
+/*
+// Old draw mesh function, saved for reference
+void RenderGL::draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *camera, bool update_vbo ){
+
+//	draw_mesh_new( mesh, mat, camera, update_vbo ); return;
+
+	// Check if mesh has the "invisible" material and we can just ignore it.
+	if( mat->app.mode == 2 ){ return; }
+
+	// Check for valid mesh data
+	if( mesh->num_vertices <= 0 || mesh->num_faces <= 0 ){ return; }
+
+	// Otherwise check if we need to do an update
+	if( mesh->faces_ibo <= 0 || mesh->tris_vao <=0 || update_vbo ){
+		if( !load_mesh_buffers( mesh ) ){ return; }
+	}
+
+	// Get material properties
+	Vec3f ambient = mat->app.amb;
+	Vec3f diffuse = mat->app.diff;
+	Vec3f specular = mat->app.spec;
+	float shininess = mat->app.shini;
+	GLuint texture_id = 0;
+	if( textures.count(mat->app.texture)>0 ){ texture_id = textures[ mat->app.texture ]; }
+
+	// Start shader
+	Shader *curr_shader = blinnphong.get();
+	if( texture_id > 0 ){ curr_shader = blinnphong_textured.get(); }
+	curr_shader->enable();
+
+	// Bind shader
+	glBindTexture( GL_TEXTURE_2D, texture_id );
+
+	// Pass lighting to shader
+	setup_lights( curr_shader );
+
+	// Set the camera matrices
+	trimesh::fxform model;
+	glUniformMatrix4fv( curr_shader->uniform("model"), 1, GL_FALSE, model );
+	glUniformMatrix4fv( curr_shader->uniform("view"), 1, GL_FALSE, camera->app.view );
+	glUniformMatrix4fv( curr_shader->uniform("projection"), 1, GL_FALSE, camera->app.projection );
+	Vec3f eyepos = camera->get_eye();
+	glUniform3f( curr_shader->uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
+//	trimesh::XForm<float> eyepos = trimesh::inv( (camera->app.projection) * (camera->app.view) * (model) );
+//	glUniform3f( curr_shader->uniform("eye"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
+
+	// Set material properties
+	glUniform3f( curr_shader->uniform("material.ambient"), ambient[0], ambient[1], ambient[2] );
+	glUniform3f( curr_shader->uniform("material.diffuse"), diffuse[0], diffuse[1], diffuse[2] );
+	glUniform3f( curr_shader->uniform("material.specular"), specular[0], specular[1], specular[2] );
+	glUniform1f( curr_shader->uniform("material.shininess"), shininess );
+
+	// Bind buffers
+	glBindVertexArray(mesh->tris_vao);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->faces_ibo);
+
+	//
+	//	Draw a solid mesh
+	//
+	glDrawElements(GL_TRIANGLES, mesh->num_faces*3, GL_UNSIGNED_INT, 0);
+
+	// Unbind
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	curr_shader->disable();	
+}
+*/
+

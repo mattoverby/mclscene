@@ -41,7 +41,7 @@ vec3 BlinnPhong(Light light, vec3 N, vec3 fragPos, vec3 V, vec3 diff_albedo, vec
 	}
 
 	// Ambient
-	float amb = 0.01f;
+	float amb = 0.05f;
 	vec3 ambient = amb * mat_ambocc * diff_albedo;
 
 	// Diffuse 
@@ -64,15 +64,13 @@ vec3 BlinnPhong(Light light, vec3 N, vec3 fragPos, vec3 V, vec3 diff_albedo, vec
 }
 
 
-
-
-
-
 void main(){
 
 	// Retrieve data from gbuffer
-	vec3 vposition = texture(gPosition, TexCoords).rgb;
 	vec3 N = texture(gNormal, TexCoords).rgb;
+	if(N == vec3(1.0, 1.0, 1.0)){ discard; } // Skip if no normal (e.g. background)
+
+	vec3 vposition = texture(gPosition, TexCoords).rgb;
 	vec3 diffuse = texture(gDiffuse, TexCoords).rgb;
 	vec4 specular = texture(gSpec, TexCoords);
 	float mat_ambocc = texture(ssao, TexCoords).r;

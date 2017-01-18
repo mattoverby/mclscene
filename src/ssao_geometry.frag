@@ -7,7 +7,8 @@ layout (location = 3) out vec4 gSpec;
 in vec2 TexCoords;
 in vec3 FragPos;
 in vec3 Normal;
-uniform vec4 color; // diffuse + shininess
+uniform vec3 diff_color;
+uniform vec4 spec_color; // color + shininess
 
 void main()
 {    
@@ -16,7 +17,7 @@ void main()
     // Also store the per-fragment normals into the gbuffer
     gNormal = normalize(Normal);
     // And the diffuse per-fragment color
-    gDiffuse = color;
+    gDiffuse = vec4(diff_color,1.f);
     // The specular per-frag color
-    gSpec = vec4(1,1,1,1);
+    gSpec = spec_color;
 }

@@ -36,14 +36,13 @@ public:
 	// OpenGL context has been created.
 	bool init( mcl::SceneManager *scene_ );
 
+//	void draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *camera, bool update_vbo=false );
+//	void draw_mesh_new( BaseObject::AppData *mesh, Material *mat, Camera *cam, bool update_vbo=false );
+
+	// Draws all objects in the SceneManager (that have AppData::mesh)
 	// If VBOs have not been generated for the AppData mesh, they will be generated.
 	// If the VBOs need to be updated (e.g. a deforming mesh) set update_vbo to true.
 	// Texture coordinates and face ibo are NOT updated.
-	void draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *camera, bool update_vbo=false );
-
-	void draw_mesh_new( BaseObject::AppData *mesh, Material *mat, Camera *cam, bool update_vbo=false );
-
-	// Draws all objects in the SceneManager (that have AppData::mesh)
 	void draw_objects( bool update_vbo=false );
 
 	// Draws all the objects in the SceneManager, but subdivides
@@ -71,7 +70,7 @@ private:
 	bool load_mesh_buffers( BaseObject::AppData *mesh );
 
 	// Set up lighting uniforms
-	void setup_lights( Shader *curr_shader );
+//	void setup_lights( Shader *curr_shader );
 
 	Material defaultMat;
 	std::unique_ptr<Shader> blinnphong;

@@ -129,6 +129,7 @@ int Application::display(){
 	// Initialize OpenGL
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_MULTISAMPLE);
+	glDisable(GL_BLEND);
 	if( settings.gamma_correction ){ glEnable(GL_FRAMEBUFFER_SRGB); } // gamma correction
 	glClearColor(settings.clear_color[0],settings.clear_color[1],settings.clear_color[2],1.f);
 
