@@ -32,27 +32,6 @@ static inline std::string fullpath( std::string file ){
 
 static inline float lerp(float a, float b, float f){ return a + f * (b - a); }
 
-RenderGL::~RenderGL(){
-	// Apparently in modern GL, textures are released when OpenGL context is
-	// destroyed. Unless I missunderstood something...
-
-	// Release texture memory
-//	std::unordered_map< std::string, int >::iterator it = textures.begin();
-//	for( ; it != textures.end(); ++it ){
-//		GLuint texid = it->second;
-//		glDeleteTextures(1, &texid);
-//	}
-
-	// Release ssao buffers
-//	glDeleteTextures(1, &gPosition);
-//	glDeleteTextures(1, &gNormal);
-//	glDeleteTextures(1, &gDiffuse);
-//	glDeleteTextures(1, &gSpec);
-//	glDeleteTextures(1, &noiseTexture);
-//	glDeleteTextures(1, &ssaoColorBuffer);
-//	glDeleteTextures(1, &ssaoColorBufferBlur);
-
-}
 
 // RenderQuad() Renders a 1x1 quad in NDC, best used for framebuffer color targets
 void RenderGL::RenderQuad(){
@@ -96,6 +75,7 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	rboDepth = 0;
 	ssaoFBO = 0;
 	ssaoBlurFBO = 0;
+	lightingFBO = 0;
 	ssaoColorBuffer = 0;
 	ssaoColorBufferBlur = 0;
 	noiseTexture = 0;
@@ -103,17 +83,11 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	std::stringstream bp_ss;
 	bp_ss << MCLSCENE_SRC_DIR << "/src/shader";
 
-	// Create shaders
-	blinnphong = std::unique_ptr<Shader>( new Shader() );
-	blinnphong->init_from_files( bp_ss.str()+".vert", bp_ss.str()+".frag");
-
-	blinnphong_textured = std::unique_ptr<Shader>( new Shader() );
-	blinnphong_textured->init_from_files( bp_ss.str()+"_textured.vert", bp_ss.str()+"_textured.frag");
-
 	shaderGeometryPass.init_from_files(fullpath("src/ssao_geometry.vs"), fullpath("src/ssao_geometry.frag"));
 	shaderLightingPass.init_from_files(fullpath("src/ssao.vs"), fullpath("src/ssao_lighting.frag"));
 	shaderSSAO.init_from_files(fullpath("src/ssao.vs"), fullpath("src/ssao.frag"));
 	shaderSSAOBlur.init_from_files(fullpath("src/ssao.vs"), fullpath("src/ssao_blur.frag"));
+//	shaderFXAA.init_from_files(fullpath("src/ssao.vs"), fullpath("src/ssao_fxaa.frag"));
 
 	// Set samplers
 	shaderLightingPass.enable();
@@ -132,7 +106,7 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	// Sample kernel
 	std::uniform_real_distribution<float> randomFloats(0.f,1.f);
 	std::default_random_engine generator;
-	for(int i = 0; i < 64; ++i){
+	for(int i = 0; i < 32; ++i){
 		Vec3f sample(randomFloats(generator)*2.f-1.f, randomFloats(generator)*2.f-1.f, randomFloats(generator));
 		sample.normalize();
 		sample *= randomFloats(generator);
@@ -167,6 +141,8 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 
 
 void RenderGL::update_window_size( int win_width, int win_height ){
+
+	int multisample = 4;
 
 	// Set up G-Buffer
 	//
@@ -220,6 +196,7 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, win_width, win_height);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+
 	// - Finally check if framebuffer is complete
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
 		std::cout << "GBuffer Framebuffer not complete!" << std::endl;
@@ -250,8 +227,20 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBufferBlur, 0);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
 	std::cout << "SSAO Blur Framebuffer not complete!" << std::endl; }
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+/*
+	// Render stage
+	glBindFramebuffer(GL_FRAMEBUFFER, lightingFBO);
+	if( !lightingFBO ){ glGenTextures(1, &lightingFBO); }
+	glBindTexture(GL_TEXTURE_2D, lightingFBO);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, win_width, win_height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lightingFBO, 0);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+	std::cout << "Lighting Framebuffer not complete!" << std::endl; }
+*/
 
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 
@@ -292,11 +281,34 @@ void RenderGL::draw_objects( bool update_vbo ){
 	//	Update VBOs
 	//
 	for( int i=0; i<scene->objects.size(); ++i ){
+
 		BaseObject::AppData *mesh = &scene->objects[i]->app;
-		if( mesh->faces_ibo <= 0 || mesh->tris_vao <=0 || update_vbo ){
-			if( !load_mesh_buffers( mesh ) ){ continue; } // TODO throw error on failure
-		}
-	}
+		if( mesh->faces_ibo > 0 && mesh->tris_vao > 0 && !update_vbo ){ continue; }
+
+		if( mesh->subdivide_mesh ){
+
+			// Do subdivision with trimesh
+			trimesh::TriMesh tempmesh;
+			trimesh_copy( &tempmesh, mesh );
+			trimesh::subdiv( &tempmesh ); // creates faces
+			tempmesh.need_normals(true);
+
+			// We will use the app data stored with that object.
+			mesh->vertices = &tempmesh.vertices[0][0];
+			mesh->normals = &tempmesh.normals[0][0];
+			mesh->faces = &tempmesh.faces[0][0];
+			mesh->texcoords = &tempmesh.texcoords[0][0];
+			mesh->colors = &tempmesh.colors[0][0];
+			mesh->num_vertices = tempmesh.vertices.size();
+			mesh->num_normals = tempmesh.normals.size();
+			mesh->num_faces = tempmesh.faces.size();
+			mesh->num_texcoords = tempmesh.texcoords.size();
+			mesh->num_colors = tempmesh.colors.size();
+			load_mesh_buffers( mesh );
+
+		} else { load_mesh_buffers( mesh ); }
+
+	} // end update vbos
 
 	//
 	//	Geometry Pass
@@ -338,6 +350,7 @@ void RenderGL::geometry_pass( Camera *camera ){
 		int mat_id = scene->objects[i]->get_material();
 		if( mat_id < scene->materials.size() && mat_id >= 0 ){ mat = scene->materials[mat_id].get(); }
 		else { mat = &defaultMat; }
+		if( mat->app.mode == 2 ){ continue; } // invisible
 
 		// Textures
 		GLuint texture_id = 0;
@@ -362,61 +375,6 @@ void RenderGL::geometry_pass( Camera *camera ){
 } // end geometry pass
 
 
-void RenderGL::draw_objects_subdivided( bool update_vbo ){
-
-	Camera *camera = scene->cameras[0].get();
-
-	//
-	//	Update VBOs
-	//
-	//
-	// Making a copy of the mesh with TriMesh, then
-	// do subdivision on that (since I don't want to implement it myself).
-	// This is pretty dirty and not efficient, but oh well.
-	//
-	for( int i=0; i<scene->objects.size(); ++i ){
-		BaseObject::AppData *mesh = &scene->objects[i]->app;
-
-		// I can think of a hundred ways this could break
-		if( mesh->faces_ibo <= 0 || mesh->tris_vao <=0 || update_vbo ){
-
-			// Do subdivision with trimesh
-			trimesh::TriMesh tempmesh;
-			trimesh_copy( &tempmesh, mesh );
-			trimesh::subdiv( &tempmesh ); // creates faces
-			tempmesh.need_normals(true);
-
-			// We will use the app data stored with that object.
-			mesh->vertices = &tempmesh.vertices[0][0];
-			mesh->normals = &tempmesh.normals[0][0];
-			mesh->faces = &tempmesh.faces[0][0];
-			mesh->texcoords = &tempmesh.texcoords[0][0];
-			mesh->colors = &tempmesh.colors[0][0];
-			mesh->num_vertices = tempmesh.vertices.size();
-			mesh->num_normals = tempmesh.normals.size();
-			mesh->num_faces = tempmesh.faces.size();
-			mesh->num_texcoords = tempmesh.texcoords.size();
-			mesh->num_colors = tempmesh.colors.size();
-			load_mesh_buffers( mesh );
-		}
-
-	} // end loop objects
-
-	//
-	//	Geometry Pass
-	//
-	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	geometry_pass( camera );
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	//
-	//	Lighting Pass
-	//
-	lighting_pass( camera );
-
-} // end draw objects
-
 
 void RenderGL::lighting_pass( Camera *cam ){
 
@@ -437,7 +395,7 @@ void RenderGL::lighting_pass( Camera *cam ){
 	glBindTexture(GL_TEXTURE_2D, noiseTexture);
 
 	// Send kernel + rotation 
-	for (GLuint i = 0; i < 64; ++i){
+	for (GLuint i = 0; i < (size_t)ssaoKernel.size(); ++i){
 		glUniform3fv(shaderSSAO.uniform(("samples[" + std::to_string(i) + "]").c_str()), 1, &ssaoKernel[i][0]);
 	}
 	glUniformMatrix4fv(shaderSSAO.uniform("projection"), 1, GL_FALSE, projection);
@@ -451,9 +409,9 @@ void RenderGL::lighting_pass( Camera *cam ){
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
 	RenderQuad();
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // 4. Lighting Pass: traditional deferred Blinn-Phong lighting now with added screen-space ambient occlusion
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shaderLightingPass.enable();
         glActiveTexture(GL_TEXTURE0);
@@ -484,6 +442,14 @@ void RenderGL::lighting_pass( Camera *cam ){
 	// Set up camera
 	Vec3f eyepos = cam->get_eye();
 	glUniform3f( shaderLightingPass.uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
+
+
+	// 5. Anti-Aliasing (FXAA)
+//        glBindFramebuffer(GL_FRAMEBUFFER, 0); // Render to screen
+//        glActiveTexture(GL_TEXTURE0);
+//        glBindTexture(GL_TEXTURE_2D, lightingFBO);
+//        shaderFXAA.enable();
+
 
 	// Render to screen space
 	RenderQuad();
@@ -571,6 +537,28 @@ bool RenderGL::load_mesh_buffers( BaseObject::AppData *mesh ){
 
 
 
+
+
+//RenderGL::~RenderGL(){
+	// Apparently in modern GL, textures are released when OpenGL context is
+	// destroyed. Unless I missunderstood something...
+
+	// Release texture memory
+//	std::unordered_map< std::string, int >::iterator it = textures.begin();
+//	for( ; it != textures.end(); ++it ){
+//		GLuint texid = it->second;
+//		glDeleteTextures(1, &texid);
+//	}
+
+	// Release ssao buffers
+//	glDeleteTextures(1, &gPosition);
+//	glDeleteTextures(1, &gNormal);
+//	glDeleteTextures(1, &gDiffuse);
+//	glDeleteTextures(1, &gSpec);
+//	glDeleteTextures(1, &noiseTexture);
+//	glDeleteTextures(1, &ssaoColorBuffer);
+//	glDeleteTextures(1, &ssaoColorBufferBlur);
+//}
 
 
 

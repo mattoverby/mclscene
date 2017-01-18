@@ -81,12 +81,10 @@ int Application::display(){
 
 	GLFWwindow* window;
 	glfwSetErrorCallback(&Input::error_callback);
-	const bool subdivide_meshes = settings.subdivide_meshes; // cannot change
 
 	// Initialize the window
 	if (!glfwInit()){ return EXIT_FAILURE; }
-	glfwWindowHint(GLFW_SAMPLES, 4); // anti aliasing
-	glfwWindowHint(GLFW_SRGB_CAPABLE, true); // gamma correction
+	glfwWindowHint(GLFW_SRGB_CAPABLE, settings.gamma_correction); // gamma correction
 
 	// Ask for OpenGL 3.3
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -128,8 +126,6 @@ int Application::display(){
 
 	// Initialize OpenGL
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_MULTISAMPLE);
-	glDisable(GL_BLEND);
 	if( settings.gamma_correction ){ glEnable(GL_FRAMEBUFFER_SRGB); } // gamma correction
 	glClearColor(settings.clear_color[0],settings.clear_color[1],settings.clear_color[2],1.f);
 
@@ -161,8 +157,7 @@ int Application::display(){
 		}
 
 		{ // Render scene stuff
-			if( !subdivide_meshes ){ renderer.draw_objects( update_mesh_buffers ); } // draws all objects
-			else{ renderer.draw_objects_subdivided( update_mesh_buffers ); }
+			renderer.draw_objects( update_mesh_buffers );
 			for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, current_cam, screen_dt ); }
 			update_mesh_buffers = false;
 		}

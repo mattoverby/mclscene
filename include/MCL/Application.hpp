@@ -39,12 +39,10 @@ public:
 	struct Settings {
 		bool save_frames; // saves every render frame to a timestamped png in your build directory
 		bool run_simulation; // run the simulator every frame
-		bool subdivide_meshes; // copy and subdivide the meshes before rendering
 		bool gamma_correction;
 		Vec3f clear_color;
-
 		Settings() : save_frames(false), run_simulation(false),
-			subdivide_meshes(false), gamma_correction(false),
+			gamma_correction(false),
 			clear_color(1,1,1) {}
 	} settings;
 

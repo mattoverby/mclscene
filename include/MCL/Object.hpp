@@ -67,13 +67,14 @@ public:
 	// The following data is used by mcl::Application.
 	// Derived object is responsible for managing these pointers.
 	struct AppData {
-		AppData() : material(-1), dynamic(false),
+		AppData() : material(-1), dynamic(false), subdivide_mesh(false),
 		vertices(0), normals(0), colors(0), texcoords(0), faces(0),
 		num_vertices(0), num_normals(0), num_colors(0), num_texcoords(0), num_faces(0),
 		verts_vbo(0), colors_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), tris_vao(0) {}
 
 		// If the vertices are often changing (e.g. a deforming mesh) set this to true.
 		bool dynamic;
+		bool subdivide_mesh; // subdivide the mesh before rendering for better visuals
 
 		// Index into SceneManager::materials
 		int material;

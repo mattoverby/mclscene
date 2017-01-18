@@ -30,14 +30,9 @@ namespace mcl {
 
 class RenderGL  {
 public:
-	~RenderGL();
-
 	// Initialize shaders. Must be called after
 	// OpenGL context has been created.
 	bool init( mcl::SceneManager *scene_ );
-
-//	void draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *camera, bool update_vbo=false );
-//	void draw_mesh_new( BaseObject::AppData *mesh, Material *mat, Camera *cam, bool update_vbo=false );
 
 	// Draws all objects in the SceneManager (that have AppData::mesh)
 	// If VBOs have not been generated for the AppData mesh, they will be generated.
@@ -45,16 +40,10 @@ public:
 	// Texture coordinates and face ibo are NOT updated.
 	void draw_objects( bool update_vbo=false );
 
-	// Draws all the objects in the SceneManager, but subdivides
-	// the meshes before rendering for visual quality.
-	void draw_objects_subdivided( bool update_vbo=false );
-
 	// Updates the screen space buffers
 	void update_window_size( int win_width, int win_height );
 
 private:
-	friend class Application;
-
 	// For SSAO, do a geometry pass to set up g-buffers
 	void geometry_pass( Camera *camera );
 
@@ -69,18 +58,14 @@ private:
 	// Returns true on success
 	bool load_mesh_buffers( BaseObject::AppData *mesh );
 
-	// Set up lighting uniforms
-//	void setup_lights( Shader *curr_shader );
-
 	Material defaultMat;
-	std::unique_ptr<Shader> blinnphong;
-	std::unique_ptr<Shader> blinnphong_textured;
 	std::unordered_map< std::string, int > textures; // file->texture_id
 
 	Shader shaderGeometryPass;
 	Shader shaderLightingPass;
 	Shader shaderSSAO;
 	Shader shaderSSAOBlur;
+	Shader shaderFXAA;
 
 	std::vector<Vec3f> ssaoKernel;
 	void RenderQuad();
@@ -90,6 +75,7 @@ private:
 	GLuint gPosition, gNormal, gDiffuse, gSpec; // render buffs
 	GLuint rboDepth; // depth buffer
 	GLuint ssaoFBO, ssaoBlurFBO; // ambient occlusion
+	GLuint lightingFBO; // post lighting stage
 	GLuint ssaoColorBuffer, ssaoColorBufferBlur;
 	GLuint noiseTexture; // occlusion noise
 
