@@ -56,6 +56,12 @@ public:
 private:
 	friend class Application;
 
+	// For SSAO, do a geometry pass to set up g-buffers
+	void geometry_pass( Camera *camera );
+
+	// For SSAO, do the lighting pass using g-buffers
+	void lighting_pass( Camera *camera );
+
 	// Load textures from SceneManager materials.
 	void load_textures();
 
@@ -82,7 +88,7 @@ private:
 
 	GLuint quadVAO, quadVBO; // for deferred shading
 	GLuint gBuffer; // G-Buffer
-	GLuint gPosition, gNormal, gAlbedo; // render buffs
+	GLuint gPosition, gNormal, gDiffuse, gSpec; // render buffs
 	GLuint rboDepth; // depth buffer
 	GLuint ssaoFBO, ssaoBlurFBO; // ambient occlusion
 	GLuint ssaoColorBuffer, ssaoColorBufferBlur;

@@ -38,7 +38,7 @@ public:
 	virtual ~BaseObject(){}
 
 	// Return the bounding box of the object
-	virtual void bounds( Vec3f &bmin, Vec3f &bmax ) = 0;
+	virtual void get_bounds( Vec3f &bmin, Vec3f &bmax ) = 0;
 
 	// Called externally when the object has been modified, sometimes
 	// needed to update bounding, recalculate normals, etc...

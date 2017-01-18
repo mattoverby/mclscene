@@ -104,7 +104,21 @@ GLuint Shader::compile( std::string source, GLenum type ){
 	// Check the compilation status and throw a runtime_error if shader compilation failed
 	GLint shaderStatus;
 	glGetShaderiv(shaderId, GL_COMPILE_STATUS, &shaderStatus);
-	if( shaderStatus == GL_FALSE ){ throw std::runtime_error("\n**glCompileShader Error"); }
+	if( shaderStatus == GL_FALSE ){
+
+		// Print compile error
+		GLint logSize = 0;
+		glGetShaderiv(shaderId, GL_INFO_LOG_LENGTH, &logSize);
+
+		// The logSize includes the NULL character
+		GLchar errorLog[logSize];
+		glGetShaderInfoLog(shaderId, logSize, &logSize, errorLog);
+		printf("\nError compiling shader: %s", errorLog);
+
+		// Exit with failure.
+		glDeleteShader(shaderId); // Don't leak the shader.
+		throw std::runtime_error("\n**glCompileShader Error");
+	}
 
 	return shaderId;
 }

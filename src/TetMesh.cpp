@@ -339,7 +339,7 @@ void TetMesh::make_tri_refs(){
 } // end make triangle references
 
 
-void TetMesh::bounds( Vec3f &bmin, Vec3f &bmax ){
+void TetMesh::get_bounds( Vec3f &bmin, Vec3f &bmax ){
 	if( !aabb.valid ){
 		for( int f=0; f<faces.size(); ++f ){
 			aabb += vertices[ faces[f][0] ];

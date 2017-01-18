@@ -28,7 +28,7 @@ namespace trimesh_helper {
 	static std::string to_lower( std::string s ){ std::transform( s.begin(), s.end(), s.begin(), ::tolower ); return s; }
 }
 
-void TriangleMesh::bounds( Vec3f &bmin, Vec3f &bmax ){
+void TriangleMesh::get_bounds( Vec3f &bmin, Vec3f &bmax ){
 	if( !aabb.valid ){
 		for( int f=0; f<faces.size(); ++f ){
 			aabb += vertices[ faces[f][0] ];

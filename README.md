@@ -8,7 +8,7 @@ Included are distributions of:
 trimesh2 (Szymon Rusinkiewicz, gfx.cs.princeton.edu/proj/trimesh2),
 tetgen (Hang Si, wias-berlin.de/software/tetgen),
 pugixml (Arseny Kapoulkine, pugixml.org), and
-soil (Jonathan Dummer, lonesock.net/soil.html).
+soil (Jonathan Dummer, lonesock.net/soil.html). Additionally, much of the render code comes from Joey de Vries (learnopengl.com).
 
 There is a viewer which can render the scene using OpenGL, GLEW, and GLFW3.
 

@@ -61,6 +61,8 @@ public:
 
 	// Used by mcl::Application
 	// This data is used by the mclscene OpenGL renderer
+	// Colors should be between 0 and 1.
+	// Shininess should be between 0 and 1 (and multiplied by 128 later)
 	struct AppData {
 		AppData() : amb(0,0,0), diff(1,0,0), spec(0,0,0), shini(1), texture(""), mode(0) {}
 		Vec3f amb, diff, spec;

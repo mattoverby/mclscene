@@ -604,8 +604,7 @@ static std::shared_ptr<Material> make_preset_material( std::string preset ){// M
 
 	} // end switch preset
 
-	if( r != NULL ){ r->app.shini *= 128.f; }
-	else{ std::cerr << "**make_preset_material Error: Unknown material preset" << std::endl; }
+	if( r == NULL ){ std::cerr << "**make_preset_material Error: Unknown material preset" << std::endl; }
 	return r;
 
 } // end material preset

@@ -58,7 +58,7 @@ public:
 
 	void update();
 
-	void bounds( Vec3f &bmin, Vec3f &bmax );
+	void get_bounds( Vec3f &bmin, Vec3f &bmax );
 
 	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
 		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }

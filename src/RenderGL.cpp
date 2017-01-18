@@ -39,32 +39,33 @@ RenderGL::~RenderGL(){
 		GLuint texid = it->second;
 		glDeleteTextures(1, &texid);
 	}
+	// TODO release new texture mem from ssao
 }
 
 // RenderQuad() Renders a 1x1 quad in NDC, best used for framebuffer color targets
 void RenderGL::RenderQuad(){
-    if (quadVAO == 0){
-        GLfloat quadVertices[] = {
-            // Positions        // Texture Coords
-            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-        };
-        // Setup plane VAO
-        glGenVertexArrays(1, &quadVAO);
-        glGenBuffers(1, &quadVBO);
-        glBindVertexArray(quadVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-    }
-    glBindVertexArray(quadVAO);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindVertexArray(0);
+	if (quadVAO == 0){
+		GLfloat quadVertices[] = {
+		// Positions        // Texture Coords
+		-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+		1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+		};
+		// Setup plane VAO
+		glGenVertexArrays(1, &quadVAO);
+		glGenBuffers(1, &quadVBO);
+		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)0);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+	}
+	glBindVertexArray(quadVAO);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBindVertexArray(0);
 }
 
 
@@ -78,14 +79,14 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	gBuffer = 0;
 	gPosition = 0;
 	gNormal = 0;
-	gAlbedo = 0;
+	gDiffuse = 0;
+	gSpec = 0;
 	rboDepth = 0;
 	ssaoFBO = 0;
 	ssaoBlurFBO = 0;
 	ssaoColorBuffer = 0;
 	ssaoColorBufferBlur = 0;
 	noiseTexture = 0;
-
 
 	std::stringstream bp_ss;
 	bp_ss << MCLSCENE_SRC_DIR << "/src/shader";
@@ -106,8 +107,9 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	shaderLightingPass.enable();
 	glUniform1i(shaderLightingPass.uniform("gPosition"), 0);
 	glUniform1i(shaderLightingPass.uniform("gNormal"), 1);
-	glUniform1i(shaderLightingPass.uniform("gAlbedo"), 2); 
-	glUniform1i(shaderLightingPass.uniform("ssao"), 3); 
+	glUniform1i(shaderLightingPass.uniform("gDiffuse"), 2);
+	glUniform1i(shaderLightingPass.uniform("gSpec"), 3); 
+	glUniform1i(shaderLightingPass.uniform("ssao"), 4); 
 	shaderSSAO.enable();
 	glUniform1i(shaderSSAO.uniform("gPosition"), 0);
 	glUniform1i(shaderSSAO.uniform("gNormal"), 1);
@@ -178,16 +180,24 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
-	// - Albedo color buffer
-	if( !gAlbedo ){ glGenTextures(1, &gAlbedo); }
-	glBindTexture(GL_TEXTURE_2D, gAlbedo);
+	// - Diffuse color buffer
+	if( !gDiffuse ){ glGenTextures(1, &gDiffuse); }
+	glBindTexture(GL_TEXTURE_2D, gDiffuse);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, win_width, win_height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gDiffuse, 0);
+	// - Specular color buffer
+	if( !gSpec ){ glGenTextures(1, &gSpec); }
+	glBindTexture(GL_TEXTURE_2D, gSpec);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, win_width, win_height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gSpec, 0);
+
 	// - Tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
-	const GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-	glDrawBuffers(3, attachments);
+	const GLuint attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, attachments);
 
 	// - Create and attach depth buffer (renderbuffer)
 	if( !rboDepth ){ glGenRenderbuffers(1, &rboDepth); }
@@ -213,6 +223,7 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
 	std::cout << "SSAO Framebuffer not complete!" << std::endl; }
+
 	// - and blur stage
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
 	if( !ssaoColorBufferBlur ){ glGenTextures(1, &ssaoColorBufferBlur); }
@@ -261,9 +272,54 @@ void RenderGL::draw_objects( bool update_vbo ){
 
 	Camera *camera = scene->cameras[0].get();
 
+	//
+	//	Update VBOs
+	//
+	for( int i=0; i<scene->objects.size(); ++i ){
+		BaseObject::AppData *mesh = &scene->objects[i]->app;
+		if( mesh->faces_ibo <= 0 || mesh->tris_vao <=0 || update_vbo ){
+			// Otherwise check if we need to do an update
+			if( !load_mesh_buffers( mesh ) ){ continue; } // TODO throw
+		}
+	}
+
+	//
+	//	Geometry Pass
+	//
+	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	geometry_pass( camera );
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	//
+	//	Lighting Pass
+	//
+	lighting_pass( camera );
+
+} // end draw objects
+
+
+void RenderGL::geometry_pass( Camera *camera ){
+
+	shaderGeometryPass.enable();
+
+	// Camera transforms
+	trimesh::fxform model;
+	trimesh::fxform &view = camera->app.view;
+	trimesh::fxform &projection = camera->app.projection;
+	glUniformMatrix4fv(shaderGeometryPass.uniform("projection"), 1, GL_FALSE, projection);
+	glUniformMatrix4fv(shaderGeometryPass.uniform("view"), 1, GL_FALSE, view);
+	glUniformMatrix4fv(shaderGeometryPass.uniform("model"), 1, GL_FALSE, model);
+
+	//
+	//	Geometry pass is for each object
+	//
 	for( int i=0; i<scene->objects.size(); ++i ){
 
+		// Get the mesh
 		std::shared_ptr<BaseObject> obj = scene->objects[i];
+		BaseObject::AppData *mesh = &obj->app;
+		if( mesh->num_vertices <= 0 || mesh->num_faces <= 0 ){ continue; }
 
 		// Get the material
 		Material *mat = NULL;
@@ -271,10 +327,22 @@ void RenderGL::draw_objects( bool update_vbo ){
 		if( mat_id < scene->materials.size() && mat_id >= 0 ){ mat = scene->materials[mat_id].get(); }
 		else { mat = &defaultMat; }
 
-		draw_mesh( &obj->app, mat, camera, update_vbo );
+		// Set material diffuse color
+		glUniform4f( shaderGeometryPass.uniform("color"), mat->app.diff[0], mat->app.diff[1], mat->app.diff[2], mat->app.shini );
+
+		{ // Draw mesh triangles
+			glBindVertexArray(mesh->tris_vao);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->faces_ibo);
+			glDrawElements(GL_TRIANGLES, mesh->num_faces*3, GL_UNSIGNED_INT, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+			glBindVertexArray(0);
+		}
+
 	}
 
-} // end draw objects
+	shaderGeometryPass.disable();
+
+} // end geometry pass
 
 
 void RenderGL::draw_objects_subdivided( bool update_vbo ){
@@ -419,38 +487,12 @@ void RenderGL::draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *came
 }
 
 
-void RenderGL::draw_mesh_new( BaseObject::AppData *mesh, Material *mat, Camera *cam, bool update_vbo ){
-
-	if( mat->app.mode == 2 ){ return; } // Check if mesh has the "invisible" material and we can just ignore it.
-	if( mesh->num_vertices <= 0 || mesh->num_faces <= 0 ){ return; } // Check for valid mesh data
-	if( mesh->faces_ibo <= 0 || mesh->tris_vao <=0 || update_vbo ){ // Otherwise check if we need to do an update
-		if( !load_mesh_buffers( mesh ) ){ return; }
-	}
-
-	// Lights
-	Vec3f lightPos(2.0, 4.0, -2.0);
-	Vec3f lightColor(0.2, 0.2, 0.7);
+void RenderGL::lighting_pass( Camera *cam ){
 
 	// Camera transforms
 	trimesh::fxform model;
 	trimesh::fxform &view = cam->app.view;
 	trimesh::fxform &projection = cam->app.projection;
-
-        // 1. Geometry Pass: render scene's geometry/color data into gbuffer
-        glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	shaderGeometryPass.enable();
-	glUniformMatrix4fv(shaderGeometryPass.uniform("projection"), 1, GL_FALSE, projection);
-	glUniformMatrix4fv(shaderGeometryPass.uniform("view"), 1, GL_FALSE, view);
-	glUniformMatrix4fv(shaderGeometryPass.uniform("model"), 1, GL_FALSE, model);
-	{ // Draw mesh triangles
-		glBindVertexArray(mesh->tris_vao);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->faces_ibo);
-		glDrawElements(GL_TRIANGLES, mesh->num_faces*3, GL_UNSIGNED_INT, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		glBindVertexArray(0);
-	}
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // 2. Create SSAO texture
         glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
@@ -462,6 +504,7 @@ void RenderGL::draw_mesh_new( BaseObject::AppData *mesh, Material *mat, Camera *
 	glBindTexture(GL_TEXTURE_2D, gNormal);
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+
 	// Send kernel + rotation 
 	for (GLuint i = 0; i < 64; ++i){
 		glUniform3fv(shaderSSAO.uniform(("samples[" + std::to_string(i) + "]").c_str()), 1, &ssaoKernel[i][0]);
@@ -469,7 +512,6 @@ void RenderGL::draw_mesh_new( BaseObject::AppData *mesh, Material *mat, Camera *
 	glUniformMatrix4fv(shaderSSAO.uniform("projection"), 1, GL_FALSE, projection);
 	RenderQuad();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 
         // 3. Blur SSAO texture to remove noise
         glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
@@ -480,7 +522,6 @@ void RenderGL::draw_mesh_new( BaseObject::AppData *mesh, Material *mat, Camera *
 	RenderQuad();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-
         // 4. Lighting Pass: traditional deferred Blinn-Phong lighting now with added screen-space ambient occlusion
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shaderLightingPass.enable();
@@ -489,24 +530,32 @@ void RenderGL::draw_mesh_new( BaseObject::AppData *mesh, Material *mat, Camera *
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, gNormal);
         glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, gAlbedo);
-        glActiveTexture(GL_TEXTURE3); // Add extra SSAO texture to lighting pass
+        glBindTexture(GL_TEXTURE_2D, gDiffuse);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, gSpec);
+        glActiveTexture(GL_TEXTURE4);
         glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
-        // Also send light relevant uniforms
-        Vec3f lightPosView = view*lightPos;
-        glUniform3fv(shaderLightingPass.uniform("light.Position"), 1, &lightPosView[0]);
-        glUniform3fv(shaderLightingPass.uniform("light.Color"), 1, &lightColor[0]);
-        // Update attenuation parameters
-        const GLfloat constant = 1.0; // Note that we don't send this to the shader, we assume it is always 1.0 (in our case)
-        const GLfloat linear = 0.09;
-        const GLfloat quadratic = 0.032;
-        glUniform1f(shaderLightingPass.uniform("light.Linear"), linear);
-        glUniform1f(shaderLightingPass.uniform("light.Quadratic"), quadratic);
-        glUniform1i(shaderLightingPass.uniform("draw_mode"), 1);
+
+	// Setup lighting
+	glUniform1i( shaderLightingPass.uniform("num_lights"), scene->lights.size() );
+	for( int l=0; l<scene->lights.size(); ++l ){
+		Light::AppData *light = &scene->lights[l]->app;
+		std::stringstream array_ss; array_ss << "lights[" << l << "].";
+		std::string array_str = array_ss.str();
+		glUniform3f( shaderLightingPass.uniform(array_str+"position"), light->position[0], light->position[1], light->position[2] );
+		glUniform3f( shaderLightingPass.uniform(array_str+"direction"), light->direction[0], light->direction[1], light->direction[2] );
+		glUniform3f( shaderLightingPass.uniform(array_str+"intensity"), light->intensity[0], light->intensity[1], light->intensity[2] );
+		glUniform3f( shaderLightingPass.uniform(array_str+"falloff"), light->falloff[0], light->falloff[1], light->falloff[2] );
+		glUniform1f( shaderLightingPass.uniform(array_str+"halfangle"), 0.5*(light->angle*M_PI/180.f) );
+		glUniform1i( shaderLightingPass.uniform(array_str+"type"), light->type );
+	} // end loop lights
+
+	// Set up camera
+	Vec3f eyepos = cam->get_eye();
+	glUniform3f( shaderLightingPass.uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
+
+	// Render to screen space
 	RenderQuad();
-
-
-
 }
 
 

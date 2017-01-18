@@ -352,9 +352,9 @@ void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 	back->app.direction.normalize();
 
 	// Set intensity
-	key->app.intensity = Vec3f(.7,.7,.7);
-	fill->app.intensity = Vec3f(.5,.5,.5);
-	back->app.intensity = Vec3f(.5,.5,.5);
+	key->app.intensity = Vec3f(.6,.6,.6);
+	fill->app.intensity = Vec3f(.3,.3,.3);
+	back->app.intensity = Vec3f(.3,.3,.3);
 
 	// Falloff (none)
 	key->app.falloff = Vec3f(1.f,0.f,0.f);
@@ -370,7 +370,7 @@ void SceneManager::get_bsphere( Vec3f *center, float *radius, bool recompute ){
 		trimesh::Miniball<3,float> mb;
 		for( int i=0; i<objects.size(); ++i ){
 			Vec3f min, max;
-			objects[i]->bounds( min, max );
+			objects[i]->get_bounds( min, max );
 			mb.check_in( trimesh::vec(min[0],min[1],min[2]) ); mb.check_in( trimesh::vec(max[0],max[1],max[2]) );
 		}
 		mb.build();

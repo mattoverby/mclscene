@@ -40,7 +40,7 @@ public:
 
 	Vec3f *p0, *p1, *p2, *n0, *n1, *n2;
 
-	void bounds( Vec3f &bmin, Vec3f &bmax ){
+	void get_bounds( Vec3f &bmin, Vec3f &bmax ){
 		AABB aabb; aabb += *p0; aabb += *p1; aabb += *p2;
 		bmin = aabb.min; bmax = aabb.max;
 	}
@@ -78,7 +78,7 @@ public:
 
 	void apply_xform( const trimesh::xform &xf );
 
-	void bounds( Vec3f &bmin, Vec3f &bmax );
+	void get_bounds( Vec3f &bmin, Vec3f &bmax );
 
 	void update();
 

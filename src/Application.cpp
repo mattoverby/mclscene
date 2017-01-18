@@ -355,9 +355,9 @@ void Application::run_simulator_step(){
 	if( !sim->step( scene, screen_dt ) ){ std::cerr << "\n**Application::display Error: Problem in simulation step" << std::endl; }
 	if( !sim->update( scene ) ){ std::cerr << "\n**Application::display Error: Problem in mesh update" << std::endl; }
 
-	// Update the scene radius
-	Vec3f unused;
-	scene->get_bsphere(&unused,&scene_radius,true);
+	// Probably don't need to do this
+//	Vec3f unused;
+//	scene->get_bsphere(&unused,&scene_radius,true);
 
 	// Update geometry on device
 	update_mesh_buffers = true;

@@ -75,7 +75,7 @@ int BVHBuilder::make_tree_lbvh( BVHNode *root, const std::vector< std::shared_pt
 	std::vector< Vec3f > centroids( prims.size() );
 	AABB world_aabb;
 	for( int i=0; i<prims.size(); ++i ){
-		Vec3f bmin, bmax; prims[i]->bounds( bmin, bmax );
+		Vec3f bmin, bmax; prims[i]->get_bounds( bmin, bmax );
 		world_aabb += bmin; world_aabb += bmax;
 		centroids[i]=( (bmin+bmax)*0.5f );
 	}
@@ -172,7 +172,7 @@ void BVHBuilder::lbvh_split( BVHNode *node,
 	// Now that the tree is constructed, create the aabb
 	for( int i=0; i<node->m_objects.size(); ++i ){
 		Vec3f bmin, bmax;
-		node->m_objects[i]->bounds( bmin, bmax );
+		node->m_objects[i]->get_bounds( bmin, bmax );
 		*(node->aabb) += bmin; *(node->aabb) += bmax;
 	}
 	if( node->left_child != NULL ){ *(node->aabb) += *(node->left_child->aabb); }
@@ -224,7 +224,7 @@ void BVHBuilder::spatial_split( BVHNode *node, const std::vector< std::shared_pt
 	// Create the aabb
 	std::vector< Vec3f > obj_centers( queue.size() ); // store the centers for later lookup
 	for( int i=0; i<queue.size(); ++i ){
-		Vec3f bmin, bmax; prims[ queue[i] ]->bounds( bmin, bmax );
+		Vec3f bmin, bmax; prims[ queue[i] ]->get_bounds( bmin, bmax );
 		*(node->aabb) += bmin; *(node->aabb) += bmax;
 		obj_centers[i] = Vec3f( (bmin+bmax)*0.5 );
 	}
