@@ -128,6 +128,35 @@ class ArgParser {
 }; // end class ArgParser
 
 
+
+//
+//	Temporary, new arg parser that works better
+//	than the old one above.
+//	TODO finish this
+//
+class NewArgParser {
+private:
+	typedef std::pair<std::string, std::string*> arg_node;
+	std::unordered_map< std::string, arg_node > args;
+
+public:
+	NewArgParser( const int &argc, char** argv ) {
+		// Loop through making a mapped link list
+		std::string *lastarg = 0;
+		for( int i=1; i<argc-1; ++i ){
+//			arg_node current = std::make_pair( argv[i], 0 );
+		}
+	}
+
+	template< typename T > const T get( const std::string label ) const {
+		if( args.count( label ) > 0 ){
+			return T();
+		}
+		else{ return T(); }
+	} // end getter
+};
+
+
 }; // end namespace mcl
 
 #endif

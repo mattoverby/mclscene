@@ -1,5 +1,6 @@
 
 #include "MCL/SceneManager.hpp"
+#include "MCL/ArgParser.hpp"
 
 using namespace mcl;
 
@@ -7,6 +8,10 @@ using namespace mcl;
 int main(int argc, char *argv[]){
 
 	if( argc < 2 ){ printf("Usage: %s <config file>\n", argv[0]); return 0; }
+
+	NewArgParser args( argc, argv );
+	double test = args.get<double>( "--testdouble" );
+	std::cout << "TEST: " << test << std::endl;
 
 	SceneManager scene;
 
