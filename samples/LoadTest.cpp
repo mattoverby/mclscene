@@ -13,6 +13,8 @@ int main(int argc, char *argv[]){
 	double test = args.get<double>( "--testdouble" );
 	std::cout << "TEST: " << test << std::endl;
 
+return 0;
+
 	SceneManager scene;
 
 	if( !scene.load( std::string(argv[1]) ) ){ return 0; }

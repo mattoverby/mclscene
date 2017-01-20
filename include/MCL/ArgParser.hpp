@@ -136,21 +136,22 @@ class ArgParser {
 //
 class NewArgParser {
 private:
-	typedef std::pair<std::string, std::string*> arg_node;
-	std::unordered_map< std::string, arg_node > args;
+	std::unordered_map< std::string, std::string > args;
 
 public:
 	NewArgParser( const int &argc, char** argv ) {
-		// Loop through making a mapped link list
-		std::string *lastarg = 0;
-		for( int i=1; i<argc-1; ++i ){
-//			arg_node current = std::make_pair( argv[i], 0 );
+		for( int i=1; i<argc-2; ++i ){
+			args[ argv[i] ] = argv[i+1];
 		}
+		if( argc>1 ){ args[ argv[argc-1] ] = ""; }
 	}
 
 	template< typename T > const T get( const std::string label ) const {
 		if( args.count( label ) > 0 ){
-			return T();
+			std::stringstream ss;
+			ss << args.at( label );
+			T value; ss >> value;
+			return value;
 		}
 		else{ return T(); }
 	} // end getter
