@@ -76,6 +76,7 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	ssaoFBO = 0;
 	ssaoBlurFBO = 0;
 	lightingFBO = 0;
+	lightingBuffer = 0;
 	ssaoColorBuffer = 0;
 	ssaoColorBufferBlur = 0;
 	noiseTexture = 0;
@@ -87,7 +88,7 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	shaderLightingPass.init_from_files(fullpath("src/ssao.vs"), fullpath("src/ssao_lighting.frag"));
 	shaderSSAO.init_from_files(fullpath("src/ssao.vs"), fullpath("src/ssao.frag"));
 	shaderSSAOBlur.init_from_files(fullpath("src/ssao.vs"), fullpath("src/ssao_blur.frag"));
-//	shaderFXAA.init_from_files(fullpath("src/ssao.vs"), fullpath("src/ssao_fxaa.frag"));
+	shaderFXAA.init_from_files(fullpath("src/ssao.vs"), fullpath("src/fxaa.frag"));
 
 	// Set samplers
 	shaderLightingPass.enable();
@@ -142,7 +143,7 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 
 void RenderGL::update_window_size( int win_width, int win_height ){
 
-	int multisample = 4;
+	window_size = Vec2i( win_width, win_height );
 
 	// Set up G-Buffer
 	//
@@ -227,19 +228,18 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBufferBlur, 0);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
 	std::cout << "SSAO Blur Framebuffer not complete!" << std::endl; }
-/*
+
 	// Render stage
+	if( !lightingFBO ){ glGenFramebuffers(1, &lightingFBO); }
 	glBindFramebuffer(GL_FRAMEBUFFER, lightingFBO);
-	if( !lightingFBO ){ glGenTextures(1, &lightingFBO); }
-	glBindTexture(GL_TEXTURE_2D, lightingFBO);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, win_width, win_height, 0, GL_RGB, GL_FLOAT, NULL);
+	if( !lightingBuffer ){ glGenTextures(1, &lightingBuffer); }
+	glBindTexture(GL_TEXTURE_2D, lightingBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, win_width, win_height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lightingFBO, 0);
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
-	std::cout << "Lighting Framebuffer not complete!" << std::endl; }
-*/
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lightingBuffer, 0);
 
+	// Done
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -370,7 +370,7 @@ void RenderGL::geometry_pass( Camera *camera ){
 
 	}
 
-	shaderGeometryPass.disable();
+	glUseProgram(0);
 
 } // end geometry pass
 
@@ -400,7 +400,6 @@ void RenderGL::lighting_pass( Camera *cam ){
 	}
 	glUniformMatrix4fv(shaderSSAO.uniform("projection"), 1, GL_FALSE, projection);
 	RenderQuad();
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         // 3. Blur SSAO texture to remove noise
         glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
@@ -411,7 +410,7 @@ void RenderGL::lighting_pass( Camera *cam ){
 	RenderQuad();
 
         // 4. Lighting Pass: traditional deferred Blinn-Phong lighting now with added screen-space ambient occlusion
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, lightingFBO);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shaderLightingPass.enable();
         glActiveTexture(GL_TEXTURE0);
@@ -443,13 +442,16 @@ void RenderGL::lighting_pass( Camera *cam ){
 	Vec3f eyepos = cam->get_eye();
 	glUniform3f( shaderLightingPass.uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
 
+	RenderQuad(); // render
 
+	// Post-FX
 	// 5. Anti-Aliasing (FXAA)
-//        glBindFramebuffer(GL_FRAMEBUFFER, 0); // Render to screen
-//        glActiveTexture(GL_TEXTURE0);
-//        glBindTexture(GL_TEXTURE_2D, lightingFBO);
-//        shaderFXAA.enable();
-
+	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Render to screen
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	shaderFXAA.enable();
+	glUniform2f( shaderFXAA.uniform("screen_size"), window_size[0], window_size[1] );
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, lightingBuffer);
 
 	// Render to screen space
 	RenderQuad();

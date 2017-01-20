@@ -40,7 +40,7 @@
 //		myshader.enable();
 //		glUniform3f( myshader.uniform("color"), 1.f, 0.f, 0.f );
 //		< Draw stuff >
-//		myshader.disable();
+//		glUseProgram(0);
 //	}
 //
 
@@ -58,9 +58,8 @@ public:
 	// Init the shader from strings (must create OpenGL context first!)
 	inline void init_from_strings( std::string vertex_source, std::string frag_source ){ init(vertex_source, frag_source); }
 
+	// Bind the shader to set uniforms
 	inline void enable();
-
-	inline void disable(){ glUseProgram(0); }
 
 	// Returns the bound location of a named attribute
 	inline GLuint attribute( const std::string name );

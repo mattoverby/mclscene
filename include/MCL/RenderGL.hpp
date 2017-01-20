@@ -67,6 +67,8 @@ private:
 	Shader shaderSSAOBlur;
 	Shader shaderFXAA;
 
+	Vec2i window_size;
+
 	std::vector<Vec3f> ssaoKernel;
 	void RenderQuad();
 
@@ -75,7 +77,7 @@ private:
 	GLuint gPosition, gNormal, gDiffuse, gSpec; // render buffs
 	GLuint rboDepth; // depth buffer
 	GLuint ssaoFBO, ssaoBlurFBO; // ambient occlusion
-	GLuint lightingFBO; // post lighting stage
+	GLuint lightingFBO, lightingBuffer; // post lighting stage
 	GLuint ssaoColorBuffer, ssaoColorBufferBlur;
 	GLuint noiseTexture; // occlusion noise
 
