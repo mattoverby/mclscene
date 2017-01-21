@@ -118,11 +118,12 @@ int Application::display(){
 
 	glewExperimental = GL_TRUE;
 	glewInit();
-	if( !renderer.init( scene ) ){ return EXIT_FAILURE; } // creates shaders
 
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
 	framebuffer_size_callback(window, width, height); // sets the projection matrix
+
+	if( !renderer.init( scene, width, height ) ){ return EXIT_FAILURE; } // creates shaders
 
 	// Initialize OpenGL
 	glEnable(GL_DEPTH_TEST);
@@ -148,13 +149,13 @@ int Application::display(){
 			run_simulator_step();
 		}
 
+		{ // Update camera
+			if( update_view ){ current_cam->update_view(); update_view = false; }
+		}
+
 		//
 		//	Render
 		//
-		{ // Clear screen
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			if( update_view ){ current_cam->update_view(); update_view = false; }
-		}
 
 		{ // Render scene stuff
 			renderer.draw_objects( update_mesh_buffers );

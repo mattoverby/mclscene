@@ -64,7 +64,6 @@ class TriangleMesh : public BaseObject {
 public:
 	std::vector< Vec3f > vertices; // all vertices in the tet mesh
 	std::vector< Vec3f > normals; // zero length for all non-surface normals
-	std::vector< Vec3f > colors; // per vertex colors
 	std::vector< Vec3i > faces; // surface triangles
 	std::vector< Vec2f > texcoords; // per vertex uv coords
 

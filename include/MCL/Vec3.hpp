@@ -62,9 +62,6 @@ namespace mcl {
 		std::vector<int> num_normals;
 		std::vector<float*> normals;
 
-		std::vector<int> num_colors;
-		std::vector<float*> colors;
-
 		std::vector<int> num_texcoords;
 		std::vector<float*> texcoords;
 
@@ -76,7 +73,6 @@ namespace mcl {
 		void clear(){
 			num_vertices.clear(); vertices.clear();
 			num_normals.clear(); normals.clear();
-			num_colors.clear(); colors.clear();
 			num_texcoords.clear(); texcoords.clear();
 			num_faces.clear(); faces.clear();
 		}

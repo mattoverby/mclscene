@@ -67,30 +67,31 @@ public:
 	// The following data is used by mcl::Application.
 	// Derived object is responsible for managing these pointers.
 	struct AppData {
-		AppData() : material(-1), dynamic(false), subdivide_mesh(false),
-		vertices(0), normals(0), colors(0), texcoords(0), faces(0),
-		num_vertices(0), num_normals(0), num_colors(0), num_texcoords(0), num_faces(0),
-		verts_vbo(0), colors_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), tris_vao(0) {}
 
-		// If the vertices are often changing (e.g. a deforming mesh) set this to true.
-		bool dynamic;
-		bool subdivide_mesh; // subdivide the mesh before rendering for better visuals
+		AppData() : material(-1), dynamic(false), subdivide_mesh(false), flat_shading(false),
+			vertices(0), normals(0), texcoords(0), faces(0),
+			num_vertices(0), num_normals(0), num_texcoords(0), num_faces(0),
+			verts_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), tris_vao(0) {}
 
+		bool dynamic; // Set to true if mesh vertices often change
+		bool subdivide_mesh; // Subdivide the mesh before rendering for better visuals (SLOW)
+		bool flat_shading; // Double up on verts/norms before rendering (ALSO SLOW)
+		
 		// Index into SceneManager::materials
 		int material;
 
-		// Vertex stride used for vertices, normals, and colors
-		virtual size_t vertex_stride(){ return sizeof(float)*3; }
-		virtual size_t texcoord_stride(){ return sizeof(float)*2; }
-		virtual size_t face_stride(){ return sizeof(int)*3; }
+		// Vertex stride used for vertices, normals
+		size_t vertex_stride(){ return sizeof(float)*3; }
+		size_t texcoord_stride(){ return sizeof(float)*2; }
+		size_t face_stride(){ return sizeof(int)*3; }
 
 		float* vertices; // XYZ
 		float* normals; // XYZ, normalized
-		float* colors; // RGB, 0-1
 		float* texcoords; // uv tex coords
 		int* faces;
-		int num_vertices, num_normals, num_colors, num_texcoords, num_faces;
-		unsigned int verts_vbo, colors_vbo, normals_vbo, texcoords_vbo, faces_ibo, tris_vao;
+		int num_vertices, num_normals, num_texcoords, num_faces;
+		unsigned int verts_vbo, normals_vbo, texcoords_vbo, faces_ibo, tris_vao;
+
 	} app ;
 };
 

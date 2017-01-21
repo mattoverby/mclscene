@@ -132,13 +132,11 @@ void TetMesh::update(){
 	this->app.num_vertices = vertices.size();
 	this->app.num_normals = normals.size();
 	this->app.num_faces = faces.size();
-	this->app.num_colors = colors.size();
 	this->app.num_texcoords = texcoords.size();
 
 	this->app.vertices = &vertices[0][0];
 	this->app.normals = &normals[0][0];
 	this->app.faces = &faces[0][0];
-	this->app.colors = &colors[0][0];
 	this->app.texcoords = &texcoords[0][0];
 }
 

@@ -61,7 +61,7 @@ void RenderGL::RenderQuad(){
 
 
 
-bool RenderGL::init( mcl::SceneManager *scene_ ) {
+bool RenderGL::init( mcl::SceneManager *scene_, int win_width, int win_height ) {
 
 	scene = scene_;
 	quadVAO = 0;
@@ -81,14 +81,11 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	ssaoColorBufferBlur = 0;
 	noiseTexture = 0;
 
-	std::stringstream bp_ss;
-	bp_ss << MCLSCENE_SRC_DIR << "/src/shader";
-
-	shaderGeometryPass.init_from_files(fullpath("src/ssao_geometry.vs"), fullpath("src/ssao_geometry.frag"));
-	shaderLightingPass.init_from_files(fullpath("src/ssao.vs"), fullpath("src/ssao_lighting.frag"));
-	shaderSSAO.init_from_files(fullpath("src/ssao.vs"), fullpath("src/ssao.frag"));
-	shaderSSAOBlur.init_from_files(fullpath("src/ssao.vs"), fullpath("src/ssao_blur.frag"));
-	shaderFXAA.init_from_files(fullpath("src/ssao.vs"), fullpath("src/fxaa.frag"));
+	shaderGeometryPass.init_from_files(fullpath("src/shaders/ssao_geometry.vs"), fullpath("src/shaders/ssao_geometry.frag"));
+	shaderLightingPass.init_from_files(fullpath("src/shaders/passthrough.vs"), fullpath("src/shaders/ssao_lighting.frag"));
+	shaderSSAO.init_from_files(fullpath("src/shaders/passthrough.vs"), fullpath("src/shaders/ssao.frag"));
+	shaderSSAOBlur.init_from_files(fullpath("src/shaders/passthrough.vs"), fullpath("src/shaders/ssao_blur.frag"));
+	shaderFXAA.init_from_files(fullpath("src/shaders/passthrough.vs"), fullpath("src/shaders/fxaa.frag"));
 
 	// Set samplers
 	shaderLightingPass.enable();
@@ -102,7 +99,7 @@ bool RenderGL::init( mcl::SceneManager *scene_ ) {
 	glUniform1i(shaderSSAO.uniform("gNormal"), 1);
 	glUniform1i(shaderSSAO.uniform("texNoise"), 2);
 
-	update_window_size( 1024, 768 );
+	update_window_size( win_width, win_height );
 
 	// Sample kernel
 	std::uniform_real_distribution<float> randomFloats(0.f,1.f);
@@ -282,6 +279,7 @@ void RenderGL::draw_objects( bool update_vbo ){
 	//
 	for( int i=0; i<scene->objects.size(); ++i ){
 
+		// Only update the VBOs if we have to
 		BaseObject::AppData *mesh = &scene->objects[i]->app;
 		if( mesh->faces_ibo > 0 && mesh->tris_vao > 0 && !update_vbo ){ continue; }
 
@@ -298,12 +296,38 @@ void RenderGL::draw_objects( bool update_vbo ){
 			mesh->normals = &tempmesh.normals[0][0];
 			mesh->faces = &tempmesh.faces[0][0];
 			mesh->texcoords = &tempmesh.texcoords[0][0];
-			mesh->colors = &tempmesh.colors[0][0];
 			mesh->num_vertices = tempmesh.vertices.size();
 			mesh->num_normals = tempmesh.normals.size();
 			mesh->num_faces = tempmesh.faces.size();
 			mesh->num_texcoords = tempmesh.texcoords.size();
-			mesh->num_colors = tempmesh.colors.size();
+			load_mesh_buffers( mesh );
+
+		} else if( mesh->flat_shading ){
+
+			// Loop through faces and store redundant vertices
+			// and normals for each face to do flat shading.
+			TriangleMesh tempmesh;
+			tempmesh.vertices.reserve( mesh->num_vertices );
+			tempmesh.faces.reserve( mesh->num_faces );
+			for( int i=0; i<mesh->num_faces; ++i ){
+				Vec3i f( mesh->faces[i*3], mesh->faces[i*3+1], mesh->faces[i*3+2] );
+				int v_idx = tempmesh.vertices.size();
+				tempmesh.vertices.push_back( Vec3f( mesh->vertices[f[0]*3], mesh->vertices[f[0]*3+1], mesh->vertices[f[0]*3+2] ) );
+				tempmesh.vertices.push_back( Vec3f( mesh->vertices[f[1]*3], mesh->vertices[f[1]*3+1], mesh->vertices[f[1]*3+2] ) );
+				tempmesh.vertices.push_back( Vec3f( mesh->vertices[f[2]*3], mesh->vertices[f[2]*3+1], mesh->vertices[f[2]*3+2] ) );
+				tempmesh.faces.push_back( Vec3i(v_idx,v_idx+1,v_idx+2) );
+			}
+			tempmesh.need_normals(true);
+		
+			// We will use the app data stored with that object.
+			mesh->vertices = &tempmesh.vertices[0][0];
+			mesh->normals = &tempmesh.normals[0][0];
+			mesh->faces = &tempmesh.faces[0][0];
+			mesh->texcoords = 0;
+			mesh->num_vertices = tempmesh.vertices.size();
+			mesh->num_normals = tempmesh.normals.size();
+			mesh->num_faces = tempmesh.faces.size();
+			mesh->num_texcoords = 0;
 			load_mesh_buffers( mesh );
 
 		} else { load_mesh_buffers( mesh ); }

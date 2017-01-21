@@ -303,8 +303,6 @@ void SceneManager::get_vertex_pool( VertexPool &pool, bool dynamic_only, bool re
 		vertex_pool.num_vertices.push_back( app->num_vertices );
 		vertex_pool.normals.push_back( app->normals );
 		vertex_pool.num_normals.push_back( app->num_normals );
-		vertex_pool.colors.push_back( app->colors );
-		vertex_pool.num_colors.push_back( app->num_colors );
 		vertex_pool.texcoords.push_back( app->texcoords );
 		vertex_pool.num_texcoords.push_back( app->num_texcoords );
 		vertex_pool.faces.push_back( app->faces );

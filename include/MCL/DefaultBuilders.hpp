@@ -46,7 +46,6 @@ typedef std::function<std::shared_ptr<Material> ( std::string type, std::vector<
 
 static void trimesh_copy( std::shared_ptr<mcl::TriangleMesh> to_mesh, trimesh::TriMesh *from_mesh ){
 	for( int i=0; i<from_mesh->vertices.size(); ++i ){ to_mesh->vertices.push_back( mcl::Vec3f( from_mesh->vertices[i][0], from_mesh->vertices[i][1], from_mesh->vertices[i][2] ) ); }
-	for( int i=0; i<from_mesh->colors.size(); ++i ){ to_mesh->colors.push_back( mcl::Vec3f( from_mesh->colors[i][0], from_mesh->colors[i][1], from_mesh->colors[i][2] ) ); }
 	for( int i=0; i<from_mesh->faces.size(); ++i ){ to_mesh->faces.push_back( mcl::Vec3i( from_mesh->faces[i][0], from_mesh->faces[i][1], from_mesh->faces[i][2] ) ); }
 	for( int i=0; i<from_mesh->texcoords.size(); ++i ){ to_mesh->texcoords.push_back( mcl::Vec2f( from_mesh->texcoords[i][0], from_mesh->texcoords[i][1] ) ); }
 	to_mesh->update();
@@ -54,11 +53,9 @@ static void trimesh_copy( std::shared_ptr<mcl::TriangleMesh> to_mesh, trimesh::T
 
 static void trimesh_copy( trimesh::TriMesh *to_mesh, BaseObject::AppData *from_mesh ){
 	to_mesh->vertices.clear(); to_mesh->vertices.reserve( from_mesh->num_vertices );
-	to_mesh->colors.clear(); to_mesh->colors.reserve( from_mesh->num_colors );
 	to_mesh->faces.clear(); to_mesh->faces.reserve( from_mesh->num_faces );
 	to_mesh->texcoords.clear(); to_mesh->texcoords.reserve( from_mesh->num_texcoords );
 	for( int i=0; i<from_mesh->num_vertices; ++i ){ to_mesh->vertices.push_back( trimesh::vec( from_mesh->vertices[i*3+0], from_mesh->vertices[i*3+1], from_mesh->vertices[i*3+2] ) ); }
-	for( int i=0; i<from_mesh->num_colors; ++i ){ to_mesh->colors.push_back( trimesh::vec( from_mesh->colors[i*3+0], from_mesh->colors[i*3+1], from_mesh->colors[i*3+2] ) ); }
 	for( int i=0; i<from_mesh->num_faces; ++i ){ to_mesh->faces.push_back( trimesh::TriMesh::Face( from_mesh->faces[i*3+0], from_mesh->faces[i*3+1], from_mesh->faces[i*3+2] ) ); }
 	for( int i=0; i<from_mesh->num_texcoords; ++i ){ to_mesh->texcoords.push_back( trimesh::vec2( from_mesh->texcoords[i*2+0], from_mesh->texcoords[i*2+1] ) ); }
 }
@@ -137,6 +134,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 		trimesh::TriMesh tempmesh;
 		make_beam( &tempmesh, tess, chunks );
 		trimesh_copy( std::dynamic_pointer_cast<mcl::TriangleMesh>(new_obj), &tempmesh );
+		new_obj->app.flat_shading = true; // otherwise corners get screwy
 
 	} // end build box
 

@@ -32,7 +32,7 @@ class RenderGL  {
 public:
 	// Initialize shaders. Must be called after
 	// OpenGL context has been created.
-	bool init( mcl::SceneManager *scene_ );
+	bool init( mcl::SceneManager *scene_, int win_width, int win_height );
 
 	// Draws all objects in the SceneManager (that have AppData::mesh)
 	// If VBOs have not been generated for the AppData mesh, they will be generated.

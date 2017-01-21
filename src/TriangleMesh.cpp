@@ -82,13 +82,11 @@ void TriangleMesh::update(){
 	this->app.num_vertices = vertices.size();
 	this->app.num_normals = normals.size();
 	this->app.num_faces = faces.size();
-	this->app.num_colors = colors.size();
 	this->app.num_texcoords = texcoords.size();
 
 	this->app.vertices = &vertices[0][0];
 	this->app.normals = &normals[0][0];
 	this->app.faces = &faces[0][0];
-	this->app.colors = &colors[0][0];
 	this->app.texcoords = &texcoords[0][0];
 }
 
@@ -148,14 +146,11 @@ bool TriangleMesh::load( std::string filename ){
 
 		// Copy over data
 		vertices.resize( newmesh->vertices.size() );
-		colors.resize( newmesh->colors.size() );
 		texcoords.resize( newmesh->texcoords.size() );
 		faces.resize( newmesh->faces.size() );
 
 		#pragma omp parallel for
 		for( int i=0; i<vertices.size(); ++i ){ vertices[i] = Vec3f( newmesh->vertices[i][0], newmesh->vertices[i][1], newmesh->vertices[i][2] ); }
-		#pragma omp parallel for
-		for( int i=0; i<colors.size(); ++i ){ colors[i] = Vec3f( newmesh->colors[i][0], newmesh->colors[i][1], newmesh->colors[i][2] ); }
 		#pragma omp parallel for
 		for( int i=0; i<texcoords.size(); ++i ){ texcoords[i] = Vec2f( newmesh->texcoords[i][0], newmesh->texcoords[i][1] ); }
 		#pragma omp parallel for
@@ -259,7 +254,7 @@ bool TriangleMesh::load_obj( std::string file ){
 				float x, y, z; ss >> x >> y >> z; // vertices
 				vertices.push_back( Vec3f(x,y,z) );
 				float cx, cy, cz; // colors
-				if( ss >> cx >> cy >> cz ){ colors.push_back( Vec3f(cx,cy,cz) ); }
+//				if( ss >> cx >> cy >> cz ){ colors.push_back( Vec3f(cx,cy,cz) ); }
 			}
 
 			else if( tok == "vt" ){
