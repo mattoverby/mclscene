@@ -9,12 +9,6 @@ int main(int argc, char *argv[]){
 
 	if( argc < 2 ){ printf("Usage: %s <config file>\n", argv[0]); return 0; }
 
-	NewArgParser args( argc, argv );
-	double test = args.get<double>( "--testdouble" );
-	std::cout << "TEST: " << test << std::endl;
-
-return 0;
-
 	SceneManager scene;
 
 	if( !scene.load( std::string(argv[1]) ) ){ return 0; }

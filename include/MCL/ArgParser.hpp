@@ -25,136 +25,71 @@
 
 #include <sstream>
 #include <string>
-#include <vector>
 #include <unordered_map>
-
 
 //
 // MCLSCENE ArgParser does simple space-delimited argument parsing
 //
-// What it can do:
-//	-Any argument type (so long as >> operator is defined, see test_ArgParser.cpp)
-//	-Out of order argument retrieval (see example below)
-//	-Multi-value argument (space delimited input, comma delimited output,
-//		see testString argument in example below)
-//
-// What it doesn't do:
-//	-Error correction or detection
-//
 // To run a sample program:
 //
-//	./test_parser --testDouble 0.3 --testString hello world --testInt 3 --testFloat 0.33
+//	./test_parser --testDouble 0.3 --someflag --testString helloworld --testInt 3 --testFloat 0.33
 //
 // To load your arguments in the source:
 //
 //	mcl::ArgParser aParser( argc, argv );
-//	double testDouble = aParser.get<double>("testDouble");
-//	float testFloat = aParser.get<float>("testFloat");
-//	int testInt = aParser.get<int>("testInt");
-//	std::string testString = aParser.get<std::string>("testString");
+//	double testDouble = aParser.get<double>("--testDouble");
+//	float testFloat = aParser.get<float>("--testFloat");
+//	int testInt = aParser.get<int>("--testInt");
+//	std::string testString = aParser.get<std::string>("--testString");
+//	bool someflag_set = aParser.exists("someflag");
 //
-// Or if you have defaults that you want to overwrite if the argument is given:
+// Or if you have defaults that you want to overwrite only if the argument is given:
 //
 //	double overwriteMe = 3.0;
-//	aParser.get<double>("overwriteMe", &overwriteMe);
+//	aParser.get<double>("--overwriteMe", &overwriteMe);
 //
 // And each value will be:
 //
 //	testDouble: 0.3
 //	testFloat: 0.33
 //	testInt: 3
-//	testString: hello,world
+//	testString: helloworld
 //
 
 
 namespace mcl {
 
-
 class ArgParser {
-
-	public:
-		ArgParser( const int &argc, char** argv ) {
-			std::vector<std::string> args_strings( argc-1, "" );
-			for( int i=1; i<argc; i++ ){
-				std::stringstream inputSS( argv[i] );
-				inputSS >> args_strings[i-1];
-			}
-			formTable( args_strings );
-		} // end constructor
-
-		template< typename T > const T get( const std::string label ) const {
-			if( args.count( label ) > 0 ){
-				std::stringstream ss( args.at(label) );
-				T result; ss >> result; return result;
-			}
-			else{ return T(); }
-		} // end getter
-
-		// Return true on exists, false otherwise
-		template< typename T > const bool get( const std::string label, T *result ) const {
-			if( exists( label ) ){
-				std::stringstream ss( args.at(label) );
-				ss >> *result; return true;
-			}
-			else{ return false; }
-		} // end getter to reference
-
-		const bool exists( const std::string label ) const {
-			if( args.count( label ) > 0 ){ return true; }
-			return false;
-		}
-
-	protected:
-		std::unordered_map< std::string, std::string > args; // [ arg, value ]
-
-		const void formTable( const std::vector<std::string> &args_strings ) {
-			std::string curr_label = "";
-			for( int i=0; i<args_strings.size(); i++ ){
-				std::string curr = args_strings[i];
-				size_t index = curr.find("--");
-				if( index == std::string::npos && curr_label.size() > 0 ){
-					std::string curr_val( args[curr_label] );
-					std::stringstream ss; ss << curr_val;
-					if( ss.str().size() > 0 ){ ss << ","; }
-					ss << curr; args[curr_label] = ss.str();
-				}
-				else{
-					curr_label = curr.substr(2);
-					args[curr_label] = std::string("");
-				}
-			} // end loop strings
-		} // end form table
-
-}; // end class ArgParser
-
-
-
-//
-//	Temporary, new arg parser that works better
-//	than the old one above.
-//	TODO finish this
-//
-class NewArgParser {
 private:
 	std::unordered_map< std::string, std::string > args;
 
 public:
-	NewArgParser( const int &argc, char** argv ) {
-		for( int i=1; i<argc-2; ++i ){
-			args[ argv[i] ] = argv[i+1];
-		}
-		if( argc>1 ){ args[ argv[argc-1] ] = ""; }
+	ArgParser( const int &argc, char** argv ) {
+		for( int i=1; i<argc-2; ++i ){ args[ argv[i] ] = argv[i+1]; }
+		if( argc>1 ){ args[ argv[argc-1] ] = "0"; }
 	}
 
+	// Return whether or not an argument exists
+	inline bool exists( const std::string label ) const { return ( args.count( label ) > 0 ); }
+
+	// Return the value of the argument (or zero, if not exists)
 	template< typename T > const T get( const std::string label ) const {
-		if( args.count( label ) > 0 ){
-			std::stringstream ss;
-			ss << args.at( label );
+		if( exists(label) ){
+			std::stringstream ss; ss << args.at( label );
 			T value; ss >> value;
 			return value;
 		}
 		else{ return T(); }
 	} // end getter
+
+	// Return true on exists, false otherwise.
+	template< typename T > const bool get( const std::string label, T *result ) const {
+		if( exists(label) ){
+			std::stringstream ss; ss << args.at( label );
+			ss >> *result; return true;
+		}
+		return false;
+	} // end getter to reference
 };
 
 
