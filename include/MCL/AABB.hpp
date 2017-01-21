@@ -22,7 +22,7 @@
 #ifndef MCLSCENE_AABB_H
 #define MCLSCENE_AABB_H 1
 
-#include "MCL/Vec3.hpp"
+#include "MCL/Vec.hpp"
 
 namespace mcl {
 

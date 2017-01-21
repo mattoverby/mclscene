@@ -90,7 +90,7 @@ set( MCLSCENE_SRCS
 	include/MCL/TriangleMesh.hpp	src/TriangleMesh.cpp
 	include/MCL/PointCloud.hpp	src/PointCloud.cpp
 	include/MCL/BVH.hpp		src/BVH.cpp
-	include/MCL/Vec3.hpp
+	include/MCL/Vec.hpp
 	include/MCL/Param.hpp
 	include/MCL/Object.hpp
 	include/MCL/VertexSort.hpp

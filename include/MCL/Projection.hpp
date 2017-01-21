@@ -24,7 +24,7 @@
 #define MCLSCENE_PROJECTION_H 1
 
 #include <math.h>
-#include "MCL/Vec3.hpp"
+#include "MCL/Vec.hpp"
 
 namespace mcl {
 

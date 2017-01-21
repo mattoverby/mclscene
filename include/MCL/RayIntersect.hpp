@@ -23,7 +23,6 @@
 #define MCLSCENE_RAYINTERSECT_H 1
 
 #include <memory>
-#include "MCL/Vec3.hpp"
 #include "MCL/Projection.hpp"
 
 namespace mcl {

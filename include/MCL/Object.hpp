@@ -76,7 +76,8 @@ public:
 		bool dynamic; // Set to true if mesh vertices often change
 		bool subdivide_mesh; // Subdivide the mesh before rendering for better visuals (SLOW)
 		bool flat_shading; // Double up on verts/norms before rendering (ALSO SLOW)
-		
+	//	bool wireframe; // Draw edges of the mesh. Can be combined with invisible material. TODO
+
 		// Index into SceneManager::materials
 		int material;
 
@@ -90,7 +91,7 @@ public:
 		float* texcoords; // uv tex coords
 		int* faces;
 		int num_vertices, num_normals, num_texcoords, num_faces;
-		unsigned int verts_vbo, normals_vbo, texcoords_vbo, faces_ibo, tris_vao;
+		unsigned int verts_vbo, normals_vbo, texcoords_vbo, barycoords_vbo, faces_ibo, tris_vao;
 
 	} app ;
 };
