@@ -284,12 +284,15 @@ void RenderGL::draw_objects( bool update_vbo ){
 		BaseObject::AppData *mesh = &scene->objects[i]->app;
 		if( mesh->faces_ibo > 0 && mesh->tris_vao > 0 && !update_vbo ){ continue; }
 
-		if( mesh->subdivide_mesh ){
+		// TODO: Subdivide AND flat shading
+		if( mesh->subdivide_mesh>0 ){
 
 			// Do subdivision with trimesh
 			trimesh::TriMesh tempmesh;
 			trimesh_copy( &tempmesh, mesh );
-			trimesh::subdiv( &tempmesh ); // creates faces
+			for( int si=0; si<mesh->subdivide_mesh; ++si ){
+				trimesh::subdiv( &tempmesh ); // creates faces
+			}
 			tempmesh.need_normals(true);
 
 			// We will use the app data stored with that object.

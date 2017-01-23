@@ -71,12 +71,16 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//
 	//	First build the transform and other common params
 	//
+	bool flat_shading = false;
+	int subdivide_mesh = 0;
 	xform x_form;
 	for( int i=0; i<params.size(); ++i ){
 		std::string tag = parse::to_lower(params[i].tag);
 		if( tag=="translate" ){ x_form = params[i].as_xform() * x_form; }
 		else if( tag=="scale" ){ x_form = params[i].as_xform() * x_form; }
 		else if( tag=="rotate" ){ x_form = params[i].as_xform() * x_form; }
+		else if( tag=="subdivide" || tag=="subdivide_mesh" ){ subdivide_mesh = abs(params[i].as_int()); }
+		else if( tag=="flat" || tag=="flat_shading" ){ flat_shading = params[i].as_bool(); }
 	}
 	
 
@@ -310,6 +314,8 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 
 	if( new_obj != NULL ){
 		new_obj->apply_xform( x_form );
+		new_obj->app.flat_shading = flat_shading;
+		new_obj->app.subdivide_mesh = (unsigned int)subdivide_mesh;
 		return new_obj;
 	}
 

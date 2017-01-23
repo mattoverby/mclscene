@@ -68,13 +68,13 @@ public:
 	// Derived object is responsible for managing these pointers.
 	struct AppData {
 
-		AppData() : material(-1), dynamic(false), subdivide_mesh(false), flat_shading(false),
+		AppData() : material(-1), dynamic(false), subdivide_mesh(0), flat_shading(false),
 			vertices(0), normals(0), texcoords(0), faces(0),
 			num_vertices(0), num_normals(0), num_texcoords(0), num_faces(0),
 			verts_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), tris_vao(0) {}
 
 		bool dynamic; // Set to true if mesh vertices often change
-		bool subdivide_mesh; // Subdivide the mesh before rendering for better visuals (SLOW)
+		unsigned int subdivide_mesh; // Number of mesh subdivisions before rendering for better visuals (SLOW)
 		bool flat_shading; // Double up on verts/norms before rendering (ALSO SLOW)
 	//	bool wireframe; // Draw edges of the mesh. Can be combined with invisible material. TODO
 
