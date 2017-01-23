@@ -30,7 +30,7 @@ uniform Light lights[MAX_NUM_LIGHTS];
 //
 //	Blinn-Phong color
 //
-vec3 BlinnPhong(Light light, vec3 N, vec3 fragPos, vec3 V, vec3 diff_albedo, vec4 spec_albedo, float mat_ambocc ){
+vec3 BlinnPhong(Light light, vec3 N, vec3 fragPos, vec3 V, vec4 diff_amb, vec4 spec_albedo, float mat_ambocc ){
 
 	// L vector (vector pointing toward light source)
 	vec3 L = vec3(0,0,0);
@@ -42,12 +42,12 @@ vec3 BlinnPhong(Light light, vec3 N, vec3 fragPos, vec3 V, vec3 diff_albedo, vec
 	}
 
 	// Ambient
-	float amb = 0.05f;
-	vec3 ambient = amb * mat_ambocc * diff_albedo;
+	float amb = 0.1f;
+	vec3 ambient = amb * mat_ambocc * diff_amb.rgb;
 
 	// Diffuse 
 	float diff = max( dot(N, L), 0.f );
-	vec3 diffuse = diff * diff_albedo * light.intensity;
+	vec3 diffuse = diff * diff_amb.rgb * light.intensity;
 
 	// Specular
 	vec3 H = normalize(L + V);
@@ -72,7 +72,7 @@ void main(){
 	if(N == vec3(1.0, 1.0, 1.0)){ discard; } // Skip if no normal (e.g. background)
 
 	vec3 vposition = texture(gPosition, TexCoords).rgb;
-	vec3 diffuse = texture(gDiffuse, TexCoords).rgb;
+	vec4 diffuse = texture(gDiffuse, TexCoords);
 	vec4 specular = texture(gSpec, TexCoords);
 	float mat_ambocc = texture(ssao, TexCoords).r;
 

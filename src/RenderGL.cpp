@@ -381,7 +381,7 @@ void RenderGL::geometry_pass( Camera *camera ){
 		if( textures.count(mat->app.texture)>0 ){ texture_id = textures[ mat->app.texture ]; }
 
 		// Set material diffuse color
-		glUniform3f( shaderGeometryPass.uniform("diff_color"), mat->app.diff[0], mat->app.diff[1], mat->app.diff[2] );
+		glUniform4f( shaderGeometryPass.uniform("diff_color"), mat->app.diff[0], mat->app.diff[1], mat->app.diff[2], mat->app.amb.norm() );
 		glUniform4f( shaderGeometryPass.uniform("spec_color"), mat->app.spec[0], mat->app.spec[1], mat->app.spec[2], mat->app.shini );
 
 		{ // Draw mesh triangles
