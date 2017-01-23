@@ -62,6 +62,7 @@ private:
 	std::unordered_map< std::string, int > textures; // file->texture_id
 
 	Shader shaderGeometryPass;
+	Shader shaderGeometryPassTextured;
 	Shader shaderLightingPass;
 	Shader shaderSSAO;
 	Shader shaderSSAOBlur;

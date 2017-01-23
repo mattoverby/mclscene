@@ -81,6 +81,7 @@ bool RenderGL::init( mcl::SceneManager *scene_, int win_width, int win_height ) 
 	ssaoColorBufferBlur = 0;
 	noiseTexture = 0;
 
+	shaderGeometryPassTextured.init_from_files(fullpath("src/shaders/ssao_geometry.vs"), fullpath("src/shaders/ssao_geometry_textured.frag"));
 	shaderGeometryPass.init_from_files(fullpath("src/shaders/ssao_geometry.vs"), fullpath("src/shaders/ssao_geometry.frag"));
 	shaderLightingPass.init_from_files(fullpath("src/shaders/passthrough.vs"), fullpath("src/shaders/ssao_lighting.frag"));
 	shaderSSAO.init_from_files(fullpath("src/shaders/passthrough.vs"), fullpath("src/shaders/ssao.frag"));
@@ -378,11 +379,23 @@ void RenderGL::geometry_pass( Camera *camera ){
 
 		// Textures
 		GLuint texture_id = 0;
-		if( textures.count(mat->app.texture)>0 ){ texture_id = textures[ mat->app.texture ]; }
+		if( textures.count(mat->app.texture)>0 ){
 
-		// Set material diffuse color
-		glUniform4f( shaderGeometryPass.uniform("diff_color"), mat->app.diff[0], mat->app.diff[1], mat->app.diff[2], mat->app.amb.norm() );
-		glUniform4f( shaderGeometryPass.uniform("spec_color"), mat->app.spec[0], mat->app.spec[1], mat->app.spec[2], mat->app.shini );
+			shaderGeometryPassTextured.enable();
+			texture_id = textures[ mat->app.texture ];
+		        glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, texture_id);
+
+			glUniformMatrix4fv(shaderGeometryPassTextured.uniform("projection"), 1, GL_FALSE, camera->app.projection);
+			glUniformMatrix4fv(shaderGeometryPassTextured.uniform("view"), 1, GL_FALSE, camera->app.view);
+			glUniformMatrix4fv(shaderGeometryPassTextured.uniform("model"), 1, GL_FALSE, model);
+			glUniform4f( shaderGeometryPassTextured.uniform("spec_color"), mat->app.spec[0], mat->app.spec[1], mat->app.spec[2], mat->app.shini );
+		}
+		else{
+			// Set material diffuse color
+			glUniform4f( shaderGeometryPass.uniform("diff_color"), mat->app.diff[0], mat->app.diff[1], mat->app.diff[2], mat->app.amb.norm() );
+			glUniform4f( shaderGeometryPass.uniform("spec_color"), mat->app.spec[0], mat->app.spec[1], mat->app.spec[2], mat->app.shini );
+		}
 
 		{ // Draw mesh triangles
 			glBindVertexArray(mesh->tris_vao);
@@ -392,6 +405,13 @@ void RenderGL::geometry_pass( Camera *camera ){
 			glBindVertexArray(0);
 		}
 
+		if( texture_id>0 ){
+			glBindTexture( GL_TEXTURE_2D, 0 );
+			shaderGeometryPass.enable();
+			glUniformMatrix4fv(shaderGeometryPass.uniform("projection"), 1, GL_FALSE, camera->app.projection);
+			glUniformMatrix4fv(shaderGeometryPass.uniform("view"), 1, GL_FALSE, camera->app.view);
+			glUniformMatrix4fv(shaderGeometryPass.uniform("model"), 1, GL_FALSE, model);
+		}
 	}
 
 	glUseProgram(0);
