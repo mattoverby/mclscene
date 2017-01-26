@@ -377,13 +377,10 @@ void RenderGL::geometry_pass( Camera *camera ){
 		if( mesh->num_vertices <= 0 || mesh->num_faces <= 0 ){ continue; }
 		if( mesh->material == MATERIAL_INVISIBLE ){ continue; }
 
-		// Get material idx
-		int mat_id = mesh->material;
-
 		// Get the material
 		Material *mat = 0;
-		if( mat_id == MATERIAL_NOTSET ){ mat = &defaultMat; }
-		else{ mat = scene->materials[mat_id].get(); } // could segfault!
+		if( mesh->material == MATERIAL_NOTSET ){ mat = &defaultMat; }
+		else{ mat = scene->materials[mesh->material].get(); } // could segfault!
 
 		// Textures
 		GLuint texture_id = 0;

@@ -41,7 +41,7 @@
 //	float testFloat = aParser.get<float>("--testFloat");
 //	int testInt = aParser.get<int>("--testInt");
 //	std::string testString = aParser.get<std::string>("--testString");
-//	bool someflag_set = aParser.exists("someflag");
+//	bool someflag_set = aParser.exists("--someflag");
 //
 // Or if you have defaults that you want to overwrite only if the argument is given:
 //
@@ -54,6 +54,8 @@
 //	testFloat: 0.33
 //	testInt: 3
 //	testString: helloworld
+//	someflag_set: true
+//	overwriteMe: 3.0
 //
 
 
@@ -61,6 +63,7 @@ namespace mcl {
 
 class ArgParser {
 private:
+	// Are there faster string-optimized hash tables?
 	std::unordered_map< std::string, std::string > args;
 
 public:
@@ -82,7 +85,7 @@ public:
 		else{ return T(); }
 	} // end getter
 
-	// Return true on exists, false otherwise.
+	// Return true on exists and overwrites value, false otherwise.
 	template< typename T > const bool get( const std::string label, T *result ) const {
 		if( exists(label) ){
 			std::stringstream ss; ss << args.at( label );

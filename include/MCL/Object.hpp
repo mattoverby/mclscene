@@ -71,6 +71,8 @@ public:
 			verts_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), tris_vao(0) {}
 
 		bool dynamic; // Set to true if mesh vertices often change
+
+		// TODO: make these component of material instead of object
 		unsigned int subdivide_mesh; // Number of mesh subdivisions before rendering for better visuals (SLOW)
 		bool flat_shading; // Double up on verts/norms before rendering (ALSO SLOW)
 	//	bool wireframe; // Draw edges of the mesh. Can be combined with invisible material. TODO

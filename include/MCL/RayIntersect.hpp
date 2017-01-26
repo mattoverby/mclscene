@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -27,12 +27,16 @@
 
 namespace mcl {
 
+//
+//	TODO: clean up types
+//
+
 namespace intersect {
 
 	class Ray {
 	public:
 		Ray(){ direction=Vec3f(0,0,-1); eps=1e-5f; }
-		Ray( Vec3f o, Vec3f d, float e=1e-5f ){
+		Ray( Vec3f o, Vec3f d, double e=1e-5f ){
 			origin=o; direction=d; eps=e;
 			origin += direction*eps;
 		}
@@ -55,6 +59,9 @@ namespace intersect {
 	// ray -> triangle without early exit
 	static inline bool ray_triangle( const Ray *ray, const Vec3f &p0, const Vec3f &p1, const Vec3f &p2,
 		const Vec3f &n0, const Vec3f &n1, const Vec3f &n2, Payload *payload );
+
+	// ray -> triangle without smoothed normals
+	static inline bool ray_triangle( const Ray *ray, const Vec3f &p0, const Vec3f &p1, const Vec3f &p2, Payload *payload );
 
 	// ray -> axis aligned bounding box
 	// Returns true/false only and does not set the payload.
@@ -102,6 +109,35 @@ static inline bool mcl::intersect::ray_triangle( const Ray *ray, const Vec3f &p0
 	return false;
 
 } // end  ray -> triangle
+
+// ray -> triangle without smoothed normals
+static inline bool mcl::intersect::ray_triangle( const Ray *ray, const Vec3f &p0, const Vec3f &p1, const Vec3f &p2, Payload *payload ){
+
+	const Vec3f e0 = p1 - p0;
+	const Vec3f e1 = p0 - p2;
+	const Vec3f n = e1.cross( e0 );
+
+	const Vec3f e2 = ( 1.0f / n.dot( ray->direction ) ) * ( p0 - ray->origin );
+	const Vec3f i  = ray->direction.cross( e2 );
+
+	double beta  = i.dot( e1 );
+	double gamma = i.dot( e0 );
+	double alpha = 1.f - beta - gamma;
+
+	double t = n.dot( e2 );
+	bool hit = ( (t<payload->t_max) & (t>payload->t_min) & (beta>=-ray->eps*0.5f) & (gamma>=-ray->eps*0.5f) & (beta+gamma<=1.f) );
+
+	if( hit ){
+		payload->n = n;
+		payload->t_max = t;
+		payload->hit_point = ray->origin + ray->direction*t;
+		return true;
+	}
+
+	return false;
+
+} // end  ray -> triangle
+
 
 // ray -> axis aligned bounding box
 static inline bool mcl::intersect::ray_aabb( const Ray *ray, const Vec3f &min, const Vec3f &max, const Payload *payload ){
