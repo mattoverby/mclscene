@@ -57,9 +57,6 @@ public:
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode=0 ){ return ""; }
 
-	// Returns the material index in SceneManager::materials
-	virtual int get_material() const { return app.material; }
-
 	// If an object is made up of other (smaller) objects, they are needed for BVH construction.
 	// This function expects you to append the prims vector, not overwrite the whole thing.
 	virtual void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){ prims.push_back( shared_from_this() ); }
@@ -68,7 +65,7 @@ public:
 	// Derived object is responsible for managing these pointers.
 	struct AppData {
 
-		AppData() : material(-1), dynamic(false), subdivide_mesh(0), flat_shading(false),
+		AppData() : material(MATERIAL_NOTSET), dynamic(false), subdivide_mesh(0), flat_shading(false),
 			vertices(0), normals(0), texcoords(0), faces(0),
 			num_vertices(0), num_normals(0), num_texcoords(0), num_faces(0),
 			verts_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), tris_vao(0) {}

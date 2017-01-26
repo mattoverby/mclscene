@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -19,60 +19,42 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_MATERIAL_H
-#define MCLSCENE_MATERIAL_H 1
+#ifndef MCLSCENE_COLORMAP_H
+#define MCLSCENE_COLORMAP_H 1
 
-#include <memory>
-#include <cassert>
-#include "MCL/Param.hpp"
+#include "Vec.hpp"
 
-///
-///	Simple object types
-///
 namespace mcl {
 
+//	TODO this class in under construction
 //
-//	Base material class
+//	ColorMap is a class to manage colors for data sets.
+//	There are several default named mappings, but you can
+//	also set a map from colorbrewer2.org by copying the text
+//	in export->javascript.
 //
-class Material {
+class ColorMap {
 public:
-	Material(){}
-	Material( Vec3f amb, Vec3f diff, Vec3f spec, float shini ) {
-		app.amb = amb; app.diff = diff; app.spec = spec; app.shini = shini; }
+	// Javascript hex colors from colorbrewer2.org, e.g.:
+	// mymap.set_map("['#e5f5f9','#99d8c9','#2ca25f']");
+	void set_map( std::string new_map );
 
-	virtual ~Material(){}
+private:
+	std::vector<Vec3f> map; // rgbs
 
-	// Returns a string containing xml code for saving to a scenefile.
-	virtual std::string get_xml( int mode ){
-/*
-		std::stringstream xml;
-		xml << "\t<Material type=\"blinnphong\" >\n";
-		xml << "\t\t<Ambient value=\"" << app.amb.str() << "\" />\n";
-		xml << "\t\t<Diffuse value=\"" << app.diff.str() << "\" />\n";
-		xml << "\t\t<Specular value=\"" << app.spec.str() << "\" />\n";
-		xml << "\t\t<Shininess  value=\"" << app.shini << "\" />\n";
-		if( app.texture.size() ){ xml << "\t\t<texture value=\"" << app.texture << "\" />\n"; }
-		xml << "\t</Material>";
-		return xml.str();
-*/
-		std::cout << "TODO: Material::get_xml" << std::endl;
-		return "";
-	}
+	Vec3f hex_to_rgb( std::string hex_str );
 
-	// Used by mcl::Application
-	// This data is used by the mclscene OpenGL renderer
-	// Colors should be between 0 and 1.
-	// Shininess should be between 0 and 1 (and multiplied by 128 later)
-	struct AppData {
-		AppData() : amb(0,0,0), diff(1,0,0), spec(0,0,0), shini(1), texture("") {}
-		Vec3f amb, diff, spec;
-		float shini;
-		std::string texture;
-		int flags;
-	} app ;
+}; // end class color map
 
-};
 
+//
+//	Implementation
+//
+
+void ColorMap::set_map( std::string new_map ){}
+
+
+Vec3f ColorMap::hex_to_rgb( std::string hex_str ){}
 
 } // end namespace mcl
 

@@ -73,6 +73,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//
 	bool flat_shading = false;
 	int subdivide_mesh = 0;
+	bool invis_material = false;
 	xform x_form;
 	for( int i=0; i<params.size(); ++i ){
 		std::string tag = parse::to_lower(params[i].tag);
@@ -81,6 +82,9 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 		else if( tag=="rotate" ){ x_form = params[i].as_xform() * x_form; }
 		else if( tag=="subdivide" || tag=="subdivide_mesh" ){ subdivide_mesh = abs(params[i].as_int()); }
 		else if( tag=="flat" || tag=="flat_shading" ){ flat_shading = params[i].as_bool(); }
+		else if( tag=="material" ){
+			if( parse::to_lower(params[i].as_string())=="invisible" ){ invis_material = true; }
+		}
 	}
 	
 
@@ -316,6 +320,7 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 		new_obj->apply_xform( x_form );
 		new_obj->app.flat_shading = flat_shading;
 		new_obj->app.subdivide_mesh = (unsigned int)subdivide_mesh;
+		if( invis_material ){ new_obj->app.material = MATERIAL_INVISIBLE; }
 		return new_obj;
 	}
 
@@ -358,8 +363,6 @@ static std::shared_ptr<Material> default_build_material( std::string type, std::
 			}
 			else if( tag=="texture" ){ mat->app.texture = params[i].as_string(); }
 			else if( tag=="shininess" || tag=="exponent" ){ mat->app.shini=params[i].as_int(); }
-			else if( tag=="mode" ){ mat->app.mode=(unsigned int)params[i].as_int(); }
-
 		}
 		std::shared_ptr<Material> new_mat( mat );
 		return new_mat;
@@ -535,9 +538,6 @@ static std::shared_ptr<Material> make_preset_material( std::string preset ){// M
 	else if( preset=="whiterubber"){ m = ( MaterialPreset::WhiteRubber ); }
 	else if( preset=="yellowrubber"){ m = ( MaterialPreset::YellowRubber ); }
 
-	// Special
-	else if( preset=="invisible" ){ m = ( MaterialPreset::Invisible ); }
-
 	//
 	//	Create the material
 	//
@@ -599,10 +599,6 @@ static std::shared_ptr<Material> make_preset_material( std::string preset ){// M
 		r= std::shared_ptr<Material>( new Material( Vec3f(0.05, 0.05, 0.05), Vec3f(0.5, 0.5, 0.5), Vec3f(0.7, 0.7, 0.7), 0.078125 ) ); break;
 	case MaterialPreset::YellowRubber:
 		r= std::shared_ptr<Material>( new Material( Vec3f(0.05, 0.05, 0.0), Vec3f(0.5, 0.5, 0.4), Vec3f(0.7, 0.7, 0.04), 0.078125 ) ); break;
-
-	// Special
-	case MaterialPreset::Invisible:
-		r= std::shared_ptr<Material>( new Material() ); r->app.mode = 2; break;
 
 	default: break;
 

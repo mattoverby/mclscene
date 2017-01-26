@@ -9,6 +9,7 @@ in vec2 TexCoords;
 in vec3 FragPos;
 in vec3 Normal;
 uniform vec4 spec_color; // color + shininess
+uniform int red_back;
 
 void main()
 {    
@@ -18,6 +19,7 @@ void main()
     gNormal = normalize(Normal);
     // And the diffuse per-fragment color
     gDiffuse = texture(theTexture,TexCoords);
+	if(!gl_FrontFacing && bool(red_back)){ gDiffuse = vec4(1,0,0,1); }
     // The specular per-frag color
     gSpec = spec_color;
 }

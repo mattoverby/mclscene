@@ -102,6 +102,7 @@ set( MCLSCENE_SRCS
 	include/MCL/Material.hpp
 	include/MCL/Simulator.hpp
 	include/MCL/RayIntersect.hpp
+	include/MCL/ColorMap.hpp
 	include/MCL/DefaultBuilders.hpp
 )
 

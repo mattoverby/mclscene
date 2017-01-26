@@ -23,10 +23,25 @@
 #define MCLSCENE_VEC3_H 1
 
 #include <Eigen/Geometry> // needed for cross product
-#include "Vec.h"
-#include "XForm.h"
+#include "Vec.h" // trimesh's vec
+#include "XForm.h" // trimesh transforms
 
 namespace mcl {
+
+	// Eventually I will put enums in a better place
+	// Material settings:
+	enum {
+		// Can be returned as object's material:
+		MATERIAL_INVISIBLE = -2,
+		MATERIAL_NOTSET = -1,
+
+		// Material flags:
+		MATERIAL_RED_BACKFACE = 1 << 0, // Color backfacing triangles red
+//		SECOND = 1 << 1, // same as 2, binary 10
+//		THIRD = 1 << 2, // same as 4, binary 100
+//		FOURTH = 1 << 3 // same as 8, binary 1000
+	};
+
 
 	typedef Eigen::Vector4f Vec4f;
 	typedef Eigen::Vector3f Vec3f;

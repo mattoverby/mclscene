@@ -284,6 +284,9 @@ void RenderGL::draw_objects( bool update_vbo ){
 		BaseObject::AppData *mesh = &scene->objects[i]->app;
 		if( mesh->faces_ibo > 0 && mesh->tris_vao > 0 && !update_vbo ){ continue; }
 
+		// Skip invisibles
+		if( mesh->material == MATERIAL_INVISIBLE ){ continue; }
+
 		// TODO: Subdivide AND flat shading
 		if( mesh->subdivide_mesh>0 ){
 
@@ -372,13 +375,15 @@ void RenderGL::geometry_pass( Camera *camera ){
 		// Get the mesh
 		BaseObject::AppData *mesh = &scene->objects[i]->app;
 		if( mesh->num_vertices <= 0 || mesh->num_faces <= 0 ){ continue; }
+		if( mesh->material == MATERIAL_INVISIBLE ){ continue; }
+
+		// Get material idx
+		int mat_id = mesh->material;
 
 		// Get the material
 		Material *mat = 0;
-		int mat_id = scene->objects[i]->get_material();
-		if( mat_id < scene->materials.size() && mat_id >= 0 ){ mat = scene->materials[mat_id].get(); }
-		else { mat = &defaultMat; }
-		if( mat->app.mode == 2 ){ continue; } // invisible
+		if( mat_id == MATERIAL_NOTSET ){ mat = &defaultMat; }
+		else{ mat = scene->materials[mat_id].get(); } // could segfault!
 
 		// Textures
 		GLuint texture_id = 0;
@@ -393,11 +398,13 @@ void RenderGL::geometry_pass( Camera *camera ){
 			glUniformMatrix4fv(shaderGeometryPassTextured.uniform("view"), 1, GL_FALSE, camera->app.view);
 			glUniformMatrix4fv(shaderGeometryPassTextured.uniform("model"), 1, GL_FALSE, model);
 			glUniform4f( shaderGeometryPassTextured.uniform("spec_color"), mat->app.spec[0], mat->app.spec[1], mat->app.spec[2], mat->app.shini );
+			glUniform1i( shaderGeometryPassTextured.uniform("red_back"), int(mat->app.flags & MATERIAL_RED_BACKFACE) );
 		}
 		else{
 			// Set material diffuse color
 			glUniform4f( shaderGeometryPass.uniform("diff_color"), mat->app.diff[0], mat->app.diff[1], mat->app.diff[2], mat->app.amb.norm() );
 			glUniform4f( shaderGeometryPass.uniform("spec_color"), mat->app.spec[0], mat->app.spec[1], mat->app.spec[2], mat->app.shini );
+			glUniform1i( shaderGeometryPass.uniform("red_back"), int(mat->app.flags & MATERIAL_RED_BACKFACE) );
 		}
 
 		{ // Draw mesh triangles
