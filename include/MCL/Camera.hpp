@@ -22,8 +22,7 @@
 #ifndef MCLSCENE_CAMERA_H
 #define MCLSCENE_CAMERA_H 1
 
-#include <Vec.h>
-#include <XForm.h>
+#include "MCL/Vec.hpp"
 #include <string>
 
 namespace mcl {

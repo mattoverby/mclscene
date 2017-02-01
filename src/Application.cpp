@@ -38,7 +38,7 @@ std::vector< std::function<void ( GLFWwindow* window, int width, int height )> >
 // Application
 //
 
-Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_), update_mesh_buffers(true) {
+Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_), update_mesh_buffers(true), close_window(false) {
 	Input &input = Input::getInstance(); // initialize the singleton
 
 	scene->get_bsphere(&scene_center,&scene_radius,true);
@@ -133,7 +133,7 @@ int Application::display(){
 	// Game loop
 	float t_old = glfwGetTime();
 	screen_dt = 0.f;
-	while( !glfwWindowShouldClose(window) ){
+	while( !glfwWindowShouldClose(window) && !close_window ){
 
 		//
 		//	Update

@@ -68,7 +68,7 @@ private:
 
 public:
 	ArgParser( const int &argc, char** argv ) {
-		for( int i=1; i<argc-2; ++i ){ args[ argv[i] ] = argv[i+1]; }
+		for( int i=1; i<argc-1; ++i ){ args[ argv[i] ] = argv[i+1]; }
 		if( argc>1 ){ args[ argv[argc-1] ] = "0"; }
 	}
 

@@ -57,6 +57,9 @@ public:
 	// Starts the game loop and returns success status
 	virtual int display();
 
+	// Stop the game loop
+	void close(){ close_window=true; }
+
 	// Add a callback to the gui to be called every frame
 	void add_callback( std::function<void ( GLFWwindow* window, Camera *cam, float screen_dt )> &cb ){ render_callbacks.push_back( cb ); }
 
@@ -78,6 +81,7 @@ protected:
 	float scene_radius; // recomputed on simulation step
 	Vec3f scene_center; // set once in constructor
 	bool left_mouse_drag, right_mouse_drag;
+	bool close_window;
 
 	bool update_mesh_buffers; // set to true on run_simulator_step
 	void run_simulator_step();
