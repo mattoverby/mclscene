@@ -37,29 +37,40 @@ namespace mcl {
 //	    way to do this later. For now, there are just a few duplicate functions
 //	    to wrap the implementation for different types.
 //
+//
+//	Example usage:
+//
+//		Vec3f pt_on_tri = projection::point_triangle( some_point, vertex1, vertex2, vertex3 );
+//		Vec3d pt_on_sphere = projection::point_sphere( some_point, center, radius );
+//		float dist_to_aabb = projection::point_aabb( some_point, aabb_min, aabb_max );
+//
 namespace projection {
 
 	//
 	//	Projection on Triangle
-	//	triangle should be array of 3
 	//
-	template <typename T> static Vec3<T> Triangle( const Vec3<T> &point, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 );
-	static Vec3f point_triangle( const Vec3f &point, const Vec3f &p1, const Vec3f &p2, const Vec3f &p3 ){ return Triangle<float>(point,p1,p2,p3); }
-	static Vec3d point_triangle( const Vec3d &point, const Vec3d &p1, const Vec3d &p2, const Vec3d &p3 ){ return Triangle<double>(point,p1,p2,p3); }
+	template <typename T> static inline Vec3<T> Triangle( const Vec3<T> &point, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 );
+	static inline Vec3f point_triangle( const Vec3f &point, const Vec3f &p1, const Vec3f &p2, const Vec3f &p3 ){ return Triangle<float>(point,p1,p2,p3); }
+	static inline Vec3d point_triangle( const Vec3d &point, const Vec3d &p1, const Vec3d &p2, const Vec3d &p3 ){ return Triangle<double>(point,p1,p2,p3); }
 
 	//
 	//	Projection on Sphere
 	//
-	template <typename T> static Vec3<T> Sphere( const Vec3<T> &center, const T &rad, const Vec3<T> &point );
-	static Vec3f Sphere( const Vec3f &center, const float &rad, const Vec3f &point ){ return Sphere<float>(center,rad,point); }
-	static Vec3d Sphere( const Vec3d &center, const double &rad, const Vec3d &point ){ return Sphere<double>(center,rad,point); }
+	template <typename T> static inline Vec3<T> Sphere( const Vec3<T> &point, const Vec3<T> &center, const T &rad );
+	static inline Vec3f point_sphere( const Vec3f &point, const Vec3f &center, const float &rad ){ return Sphere<float>(point,center,rad); }
+	static inline Vec3d point_sphere( const Vec3d &point, const Vec3d &center, const double &rad ){ return Sphere<double>(point,center,rad); }
+
+	//
+	//	Instead of projection, point_aabb returns squared-distance from a point to the AABB
+	//
+	template <typename T> static inline T AABB( const Vec3<T> &point, const Vec3<T> &min, const Vec3<T> &max );
+	static inline float point_aabb( const Vec3f &point, const Vec3f &min, const Vec3f &max ){ return AABB<float>(point,min,max); }
+	static inline double point_aabb( const Vec3d &point, const Vec3d &min, const Vec3d &max ){ return AABB<double>(point,min,max); }
 
 	//
 	//	Helper functions
 	//
-	template <typename T> static T myclamp( const T &val, const T &min, const T &max ){
-		return val < min ? min : (val > max ? max : val);
-	}
+	template <typename T> static inline T myclamp( const T &val ){ return val < 0 ? 0 : (val > 1 ? 1 : val); }
 
 }; // end namespace Projection
 
@@ -67,7 +78,7 @@ namespace projection {
 //	Implementation
 //
 
-template <typename T> static Vec3<T> projection::Triangle( const Vec3<T> &point, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 ){
+template <typename T> static inline Vec3<T> projection::Triangle( const Vec3<T> &point, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 ){
 
 	Vec3<T> edge0 = p2 - p1;
 	Vec3<T> edge1 = p3 - p1;
@@ -89,21 +100,21 @@ template <typename T> static Vec3<T> projection::Triangle( const Vec3<T> &point,
 		if ( s < zero ) {
 		    if ( t < zero ) {
 			if ( d < zero ) {
-			    s = myclamp( -d/a, zero, one );
+			    s = myclamp( -d/a );
 			    t = zero;
 			}
 			else {
 			    s = zero;
-			    t = myclamp( -e/c, zero, one );
+			    t = myclamp( -e/c );
 			}
 		    }
 		    else {
 			s = zero;
-			t = myclamp( -e/c, zero, one );
+			t = myclamp( -e/c );
 		    }
 		}
 		else if ( t < zero ) {
-		    s = myclamp( -d/a, zero, one );
+		    s = myclamp( -d/a );
 		    t = zero;
 		}
 		else {
@@ -119,11 +130,11 @@ template <typename T> static Vec3<T> projection::Triangle( const Vec3<T> &point,
 		    if ( tmp1 > tmp0 ) {
 			T numer = tmp1 - tmp0;
 			T denom = a-T(2)*b+c;
-			s = myclamp( numer/denom, zero, one );
+			s = myclamp( numer/denom );
 			t = one-s;
 		    }
 		    else {
-			t = myclamp( -e/c, zero, one );
+			t = myclamp( -e/c );
 			s = zero;
 		    }
 		}
@@ -131,18 +142,18 @@ template <typename T> static Vec3<T> projection::Triangle( const Vec3<T> &point,
 		    if ( a+d > b+e ) {
 			T numer = c+e-b-d;
 			T denom = a-T(2)*b+c;
-			s = myclamp( numer/denom, zero, one );
+			s = myclamp( numer/denom );
 			t = one-s;
 		    }
 		    else {
-			s = myclamp( -e/c, zero, one );
+			s = myclamp( -e/c );
 			t = zero;
 		    }
 		}
 		else {
 		    T numer = c+e-b-d;
 		    T denom = a-T(2)*b+c;
-		    s = myclamp( numer/denom, zero, one );
+		    s = myclamp( numer/denom );
 		    t = one - s;
 		}
 	}
@@ -153,11 +164,21 @@ template <typename T> static Vec3<T> projection::Triangle( const Vec3<T> &point,
 } // end project triangle
 
 
-template <typename T> static Vec3<T> projection::Sphere( const Vec3<T> &center, const T &rad, const Vec3<T> &point ){
+template <typename T> static inline Vec3<T> projection::Sphere( const Vec3<T> &point, const Vec3<T> &center, const T &rad ){
 	Vec3<T> dir = point-center;
 	dir.normalize();
 	return ( center + dir*rad );
 } // end project sphere
+
+
+template <typename T> static inline T projection::AABB( const Vec3<T> &point, const Vec3<T> &min, const Vec3<T> &max ){
+	T sqDist(0);
+	for( int i=0; i<3; ++i ){
+		if( point[i] < min[i] ){ sqDist += (min[i]-point[i])*(min[i]-point[i]); }
+		if( point[i] > max[i] ){ sqDist += (point[i]-max[i])*(point[i]-max[i]); }
+	}
+	return sqDist;
+} // end point aabb
 
 
 } // end namespace mcl

@@ -49,7 +49,7 @@ public:
 	virtual void apply_xform( const trimesh::xform &xf ){}
 
 	// Used by BVHTraversal.
-	virtual bool ray_intersect( const intersect::Ray *ray, intersect::Payload *payload ) const { return false; }
+	virtual bool ray_intersect( const raycast::Ray *ray, raycast::Payload *payload ) const { return false; }
 
 	// Projection on to surface
 	virtual Vec3f projection( const Vec3f &point ) const { return point; }

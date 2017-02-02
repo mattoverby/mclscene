@@ -32,7 +32,7 @@ namespace mcl {
 //
 //	Several common classes and static functions related to ray tracing
 //
-namespace intersect {
+namespace raycast {
 
 	//
 	//	Ray
@@ -54,10 +54,15 @@ namespace intersect {
 	//
 	template<typename T> class rtPayload {
 	public:
-		rtPayload( const Ray *ray ){ t_min=ray->eps; t_max=9999999.0; launch_point=ray->origin; }
+		void init( const rtRay<T> &ray ){ t_min=ray.eps; launch_point=ray.origin; }
+
+		rtPayload() : t_min(1e-5), t_max(9999999) {}
+		rtPayload( const rtRay<T> *ray ) : t_max(9999999) { init(*ray); }
+
 		double t_min, t_max;
-		Vec3f n, hit_point, launch_point;
-		int material; // index into SceneManager::materials
+		Vec3<T> launch_point;
+		mutable Vec3<T> n, hit_point;
+		mutable int material; // index into SceneManager::materials
 	};
 	typedef rtPayload<float> Payload;
 
@@ -82,10 +87,7 @@ namespace intersect {
 	// Returns true/false only and does not set the payload.
 	static inline bool ray_aabb( const Ray *ray, const Vec3f &min, const Vec3f &max, const Payload *payload );
 
-	// Squared distance from point to aabb
-	static inline double point_aabb( const Vec3f &point, const Vec3f &min, const Vec3f &max );
-
-} // end namespace intersect
+} // end namespace raycast
 
 } // end namespace mcl
 
@@ -94,7 +96,7 @@ namespace intersect {
 //
 
 // ray -> triangle without early exit
-static inline bool mcl::intersect::ray_triangle( const Ray *ray, const Vec3f &p0, const Vec3f &p1, const Vec3f &p2,
+static inline bool mcl::raycast::ray_triangle( const Ray *ray, const Vec3f &p0, const Vec3f &p1, const Vec3f &p2,
 	const Vec3f &n0, const Vec3f &n1, const Vec3f &n2, Payload *payload ){
 
 	const Vec3f e0 = p1 - p0;
@@ -123,7 +125,7 @@ static inline bool mcl::intersect::ray_triangle( const Ray *ray, const Vec3f &p0
 } // end  ray -> triangle
 
 // ray -> triangle without smoothed normals
-static inline bool mcl::intersect::ray_triangle( const Ray *ray, const Vec3f &p0, const Vec3f &p1, const Vec3f &p2, Payload *payload ){
+static inline bool mcl::raycast::ray_triangle( const Ray *ray, const Vec3f &p0, const Vec3f &p1, const Vec3f &p2, Payload *payload ){
 
 	const Vec3f e0 = p1 - p0;
 	const Vec3f e1 = p0 - p2;
@@ -152,7 +154,7 @@ static inline bool mcl::intersect::ray_triangle( const Ray *ray, const Vec3f &p0
 
 
 // ray -> axis aligned bounding box
-static inline bool mcl::intersect::ray_aabb( const Ray *ray, const Vec3f &min, const Vec3f &max, const Payload *payload ){
+static inline bool mcl::raycast::ray_aabb( const Ray *ray, const Vec3f &min, const Vec3f &max, const Payload *payload ){
 
 	double txmin=0.f, txmax=0.f;
 	double dirX = 1.f / ray->direction[0];
@@ -198,15 +200,6 @@ static inline bool mcl::intersect::ray_aabb( const Ray *ray, const Vec3f &min, c
 
 } // end ray box intersection
 
-
-static inline double mcl::intersect::point_aabb( const Vec3f &point, const Vec3f &min, const Vec3f &max ){
-	double sqDist=0.f;
-	for( int i=0; i<3; ++i ){
-		if( point[i] < min[i] ){ sqDist += (min[i]-point[i])*(min[i]-point[i]); }
-		if( point[i] > max[i] ){ sqDist += (point[i]-max[i])*(point[i]-max[i]); }
-	}
-	return sqDist;
-}
 
 
 #endif

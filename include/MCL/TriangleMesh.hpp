@@ -45,8 +45,8 @@ public:
 		bmin = aabb.min; bmax = aabb.max;
 	}
 
-	bool ray_intersect( const intersect::Ray *ray, intersect::Payload *payload ) const {
-		bool hit = intersect::ray_triangle( ray, *p0, *p1, *p2, *n0, *n1, *n2, payload );
+	bool ray_intersect( const raycast::Ray *ray, raycast::Payload *payload ) const {
+		bool hit = raycast::ray_triangle( ray, *p0, *p1, *p2, *n0, *n1, *n2, payload );
 		if( hit ){ payload->material = this->app.material; }
 		return hit;
 	}

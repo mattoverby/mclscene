@@ -316,6 +316,7 @@ void RenderGL::draw_objects( bool update_vbo ){
 			TriangleMesh tempmesh;
 			tempmesh.vertices.reserve( mesh->num_vertices );
 			tempmesh.faces.reserve( mesh->num_faces );
+			tempmesh.texcoords.reserve( mesh->num_texcoords );
 			for( int i=0; i<mesh->num_faces; ++i ){
 				Vec3i f( mesh->faces[i*3], mesh->faces[i*3+1], mesh->faces[i*3+2] );
 				int v_idx = tempmesh.vertices.size();
@@ -323,6 +324,11 @@ void RenderGL::draw_objects( bool update_vbo ){
 				tempmesh.vertices.push_back( Vec3f( mesh->vertices[f[1]*3], mesh->vertices[f[1]*3+1], mesh->vertices[f[1]*3+2] ) );
 				tempmesh.vertices.push_back( Vec3f( mesh->vertices[f[2]*3], mesh->vertices[f[2]*3+1], mesh->vertices[f[2]*3+2] ) );
 				tempmesh.faces.push_back( Vec3i(v_idx,v_idx+1,v_idx+2) );
+				if( mesh->num_texcoords ){
+					tempmesh.texcoords.push_back( Vec2f( mesh->texcoords[f[0]*2], mesh->texcoords[f[0]*2+1] ) );
+					tempmesh.texcoords.push_back( Vec2f( mesh->texcoords[f[1]*2], mesh->texcoords[f[1]*2+1] ) );
+					tempmesh.texcoords.push_back( Vec2f( mesh->texcoords[f[2]*2], mesh->texcoords[f[2]*2+1] ) );
+				}
 			}
 			tempmesh.need_normals(true);
 		
@@ -330,11 +336,11 @@ void RenderGL::draw_objects( bool update_vbo ){
 			mesh->vertices = &tempmesh.vertices[0][0];
 			mesh->normals = &tempmesh.normals[0][0];
 			mesh->faces = &tempmesh.faces[0][0];
-			mesh->texcoords = 0;
+			mesh->texcoords = &tempmesh.texcoords[0][0];
 			mesh->num_vertices = tempmesh.vertices.size();
 			mesh->num_normals = tempmesh.normals.size();
 			mesh->num_faces = tempmesh.faces.size();
-			mesh->num_texcoords = 0;
+			mesh->num_texcoords = tempmesh.texcoords.size();
 			load_mesh_buffers( mesh );
 
 		} else { load_mesh_buffers( mesh ); }

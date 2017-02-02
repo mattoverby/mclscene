@@ -110,11 +110,11 @@ class BVHTraversal {
 public:
 	// Ray-Scene traversal for closest object (light rays)
 	// Can also be used for selection rays if the last argument is used, as it sets the shared ptr of the object hit.
-	static bool closest_hit( const BVHNode *node, const intersect::Ray *ray, intersect::Payload *payload, std::shared_ptr<BaseObject> *obj=0 );
+	static bool closest_hit( const BVHNode *node, const raycast::Ray *ray, raycast::Payload *payload, std::shared_ptr<BaseObject> *obj=0 );
 
 	// Ray-Scene traversal for any object, early exit (shadow rays)
 	// Remember to set your t_max in the payload!
-	static bool any_hit( const BVHNode *node, const intersect::Ray *ray, intersect::Payload *payload );
+	static bool any_hit( const BVHNode *node, const raycast::Ray *ray, raycast::Payload *payload );
 
 	// Point-Scene traversal for closest object to a given point.
 	// Projection is the point on the object surface, obj is the pointer to the object.
