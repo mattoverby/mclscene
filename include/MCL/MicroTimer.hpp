@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -25,10 +25,6 @@
 
 #include <chrono>
 
-// -Timer starts upon construction and doesn't stop until destruction.
-// -It can be reset back to zero with reset().
-// -It returns elapsed time in double precision.
-//
 // Example:
 //
 //	mcl::MicroTimer timer;
@@ -39,16 +35,14 @@
 //	double elapsed_milliseconds = timer.elapsed_ms();
 //	double elapsed_seconds = timer.elapsed_s();
 //
-//	   Note: Each elapsed_* value above includes the calls before
-//	   it. If you require precision in multiple units it's more
-//	   accurate to only call MicroTimer::elapsed_us() and convert
-//	   the result to whatever units you need.
+//	Notes:
+//	   You may want to change the clock type based on application
 //
-
 namespace mcl {
 
 class MicroTimer {
-	typedef std::chrono::steady_clock C; // clock type
+	typedef std::chrono::high_resolution_clock C;
+//	typedef std::chrono::steady_clock C;
 	public:
 
 		MicroTimer() : start_time( C::now() ){}
@@ -78,8 +72,8 @@ class MicroTimer {
 		}
 
 	private:
-		std::chrono::time_point<std::chrono::steady_clock> start_time;
-		mutable std::chrono::time_point<std::chrono::steady_clock> curr_time;
+		std::chrono::time_point<C> start_time;
+		mutable std::chrono::time_point<C> curr_time;
 
 }; // end class MicroTimer
 

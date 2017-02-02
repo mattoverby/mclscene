@@ -52,7 +52,7 @@ public:
 	}
 
 	Vec3f projection( const Vec3f &point ) const {
-		return intersect::point_triangle( point, *p0, *p1, *p2 );
+		return projection::point_triangle( point, *p0, *p1, *p2 );
 	}
 };
 

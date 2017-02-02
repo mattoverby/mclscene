@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -32,27 +32,33 @@ namespace mcl {
 //	Several static functions for projecting a point onto a geometric surface.
 //	Will return a point on the surface that is nearest to the one given.
 //
-namespace Projection {
+//	NOTE:
+//	    I was having trouble with template type deduction. I'll have to figure out the right
+//	    way to do this later. For now, there are just a few duplicate functions
+//	    to wrap the implementation for different types.
+//
+namespace projection {
 
 	//
 	//	Projection on Triangle
 	//	triangle should be array of 3
 	//
-	static Eigen::Vector3d Triangle( Eigen::Vector3d *triangle, Eigen::Vector3d point );
+	template <typename T> static Vec3<T> Triangle( const Vec3<T> &point, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 );
+	static Vec3f point_triangle( const Vec3f &point, const Vec3f &p1, const Vec3f &p2, const Vec3f &p3 ){ return Triangle<float>(point,p1,p2,p3); }
+	static Vec3d point_triangle( const Vec3d &point, const Vec3d &p1, const Vec3d &p2, const Vec3d &p3 ){ return Triangle<double>(point,p1,p2,p3); }
 
 	//
 	//	Projection on Sphere
 	//
-	static Eigen::Vector3d Sphere( const Eigen::Vector3d &center, const double &rad, const Eigen::Vector3d &point );
+	template <typename T> static Vec3<T> Sphere( const Vec3<T> &center, const T &rad, const Vec3<T> &point );
+	static Vec3f Sphere( const Vec3f &center, const float &rad, const Vec3f &point ){ return Sphere<float>(center,rad,point); }
+	static Vec3d Sphere( const Vec3d &center, const double &rad, const Vec3d &point ){ return Sphere<double>(center,rad,point); }
 
 	//
 	//	Helper functions
 	//
-	static double myclamp( double val, double min, double max ){
-		double v = val;
-		if( v < min ){ v = min; }
-		if( v > max ){ v = max; }
-		return v;
+	template <typename T> static T myclamp( const T &val, const T &min, const T &max ){
+		return val < min ? min : (val > max ? max : val);
 	}
 
 }; // end namespace Projection
@@ -61,92 +67,98 @@ namespace Projection {
 //	Implementation
 //
 
-static Eigen::Vector3d Projection::Triangle( Eigen::Vector3d *tri, Eigen::Vector3d point ){
+template <typename T> static Vec3<T> projection::Triangle( const Vec3<T> &point, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 ){
 
-	Eigen::Vector3d edge0 = tri[1] - tri[0];
-	Eigen::Vector3d edge1 = tri[2] - tri[0];
-	Eigen::Vector3d v0 = tri[0] - point;
+	Vec3<T> edge0 = p2 - p1;
+	Vec3<T> edge1 = p3 - p1;
+	Vec3<T> v0 = p1 - point;
 
-	double a = edge0.dot( edge0 );
-	double b = edge0.dot( edge1 );
-	double c = edge1.dot( edge1 );
-	double d = edge0.dot( v0 );
-	double e = edge1.dot( v0 );
-	double det = a*c - b*b;
-	double s = b*e - c*d;
-	double t = b*d - a*e;
+	T a = edge0.dot( edge0 );
+	T b = edge0.dot( edge1 );
+	T c = edge1.dot( edge1 );
+	T d = edge0.dot( v0 );
+	T e = edge1.dot( v0 );
+	T det = a*c - b*b;
+	T s = b*e - c*d;
+	T t = b*d - a*e;
+
+	const T zero(0);
+	const T one(1);
 
 	if ( s + t < det ) {
-		if ( s < 0.0 ) {
-		    if ( t < 0.0 ) {
-			if ( d < 0.0 ) {
-			    s = myclamp( -d/a, 0.0, 1.0 );
-			    t = 0.0;
+		if ( s < zero ) {
+		    if ( t < zero ) {
+			if ( d < zero ) {
+			    s = myclamp( -d/a, zero, one );
+			    t = zero;
 			}
 			else {
-			    s = 0.0;
-			    t = myclamp( -e/c, 0.0, 1.0 );
+			    s = zero;
+			    t = myclamp( -e/c, zero, one );
 			}
 		    }
 		    else {
-			s = 0.0;
-			t = myclamp( -e/c, 0.0, 1.0 );
+			s = zero;
+			t = myclamp( -e/c, zero, one );
 		    }
 		}
-		else if ( t < 0.0 ) {
-		    s = myclamp( -d/a, 0.0, 1.0 );
-		    t = 0.0;
+		else if ( t < zero ) {
+		    s = myclamp( -d/a, zero, one );
+		    t = zero;
 		}
 		else {
-		    double invDet = 1.0 / det;
+		    T invDet = one / det;
 		    s *= invDet;
 		    t *= invDet;
 		}
 	}
 	else {
-		if ( s < 0.0 ) {
-		    double tmp0 = b+d;
-		    double tmp1 = c+e;
+		if ( s < zero ) {
+		    T tmp0 = b+d;
+		    T tmp1 = c+e;
 		    if ( tmp1 > tmp0 ) {
-			double numer = tmp1 - tmp0;
-			double denom = a-2.0*b+c;
-			s = myclamp( numer/denom, 0.0, 1.0 );
-			t = 1.0-s;
+			T numer = tmp1 - tmp0;
+			T denom = a-T(2)*b+c;
+			s = myclamp( numer/denom, zero, one );
+			t = one-s;
 		    }
 		    else {
-			t = myclamp( -e/c, 0.0, 1.0 );
-			s = 0.0;
+			t = myclamp( -e/c, zero, one );
+			s = zero;
 		    }
 		}
-		else if ( t < 0.0 ) {
+		else if ( t < zero ) {
 		    if ( a+d > b+e ) {
-			double numer = c+e-b-d;
-			double denom = a-2.0*b+c;
-			s = myclamp( numer/denom, 0.0, 1.0 );
-			t = 1.0-s;
+			T numer = c+e-b-d;
+			T denom = a-T(2)*b+c;
+			s = myclamp( numer/denom, zero, one );
+			t = one-s;
 		    }
 		    else {
-			s = myclamp( -e/c, 0.0, 1.0 );
-			t = 0.0;
+			s = myclamp( -e/c, zero, one );
+			t = zero;
 		    }
 		}
 		else {
-		    double numer = c+e-b-d;
-		    double denom = a-2.0*b+c;
-		    s = myclamp( numer/denom, 0.0, 1.0 );
-		    t = 1.0 - s;
+		    T numer = c+e-b-d;
+		    T denom = a-T(2)*b+c;
+		    s = myclamp( numer/denom, zero, one );
+		    t = one - s;
 		}
 	}
 
-	return Eigen::Vector3d( tri[0] + s*edge0 + t*edge1 );
+	Vec3<T> result = p1 + edge0*s + edge1*t;
+	return result;
 
 } // end project triangle
 
-static Eigen::Vector3d Projection::Sphere( const Eigen::Vector3d &center, const double &rad, const Eigen::Vector3d &point ){
-	Eigen::Vector3d dir = point-center;
+
+template <typename T> static Vec3<T> projection::Sphere( const Vec3<T> &center, const T &rad, const Vec3<T> &point ){
+	Vec3<T> dir = point-center;
 	dir.normalize();
-	return Eigen::Vector3d( center + rad*dir );
+	return ( center + dir*rad );
 } // end project sphere
+
 
 } // end namespace mcl
 

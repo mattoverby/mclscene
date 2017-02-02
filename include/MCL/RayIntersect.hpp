@@ -28,33 +28,48 @@
 namespace mcl {
 
 //
-//	TODO: clean up types
+//	TODO: variable type (double or float)
 //
-
+//	Several common classes and static functions related to ray tracing
+//
 namespace intersect {
 
-	class Ray {
+	//
+	//	Ray
+	//
+	template<typename T> class rtRay {
 	public:
-		Ray(){ direction=Vec3f(0,0,-1); eps=1e-5f; }
-		Ray( Vec3f o, Vec3f d, double e=1e-5f ){
+		rtRay(){ direction=Vec3<T>(0,0,-1); eps(1e-5); }
+		rtRay( Vec3<T> o, Vec3<T> d, T e=1e-5 ){
 			origin=o; direction=d; eps=e;
 			origin += direction*eps;
 		}
-		Vec3f origin, direction;
-		double eps;
+		Vec3<T> origin, direction;
+		T eps;
 	};
+	typedef rtRay<float> Ray; // default type is float
 
-	class Payload {
+	//
+	//	Payload
+	//
+	template<typename T> class rtPayload {
 	public:
-		Payload( const Ray *ray ){ t_min=ray->eps; t_max=9999999.0; launch_point=ray->origin; }
+		rtPayload( const Ray *ray ){ t_min=ray->eps; t_max=9999999.0; launch_point=ray->origin; }
 		double t_min, t_max;
 		Vec3f n, hit_point, launch_point;
 		int material; // index into SceneManager::materials
 	};
+	typedef rtPayload<float> Payload;
 
-	static inline Vec3f reflect( const Vec3f incident, const Vec3f norm ){
-		return ( incident - 2.f * norm * norm.dot( incident ) );
+
+	// Ideal specular reflection
+	template<typename T> static Vec3<T> reflect( const Vec3<T> &incident, const Vec3<T> &norm ){
+		return ( incident - T(2) * norm * norm.dot( incident ) );
 	}
+
+	//
+	//	Intersection functions
+	//
 
 	// ray -> triangle without early exit
 	static inline bool ray_triangle( const Ray *ray, const Vec3f &p0, const Vec3f &p1, const Vec3f &p2,
@@ -69,9 +84,6 @@ namespace intersect {
 
 	// Squared distance from point to aabb
 	static inline double point_aabb( const Vec3f &point, const Vec3f &min, const Vec3f &max );
-
-	// Point-on-triangle test: returns projection on to triangle surface
-	static inline mcl::Vec3f point_triangle( const Vec3f &point, const Vec3f &p0, const Vec3f &p1, const Vec3f &p2 );
 
 } // end namespace intersect
 
@@ -194,13 +206,6 @@ static inline double mcl::intersect::point_aabb( const Vec3f &point, const Vec3f
 		if( point[i] > max[i] ){ sqDist += (point[i]-max[i])*(point[i]-max[i]); }
 	}
 	return sqDist;
-}
-
-
-static inline mcl::Vec3f mcl::intersect::point_triangle( const Vec3f &point, const Vec3f &p0, const Vec3f &p1, const Vec3f &p2 ){
-	Eigen::Vector3d tripoints[3] = { p0.cast<double>(), p1.cast<double>(), p2.cast<double>() };
-	Eigen::Vector3d proj = mcl::Projection::Triangle( tripoints, point.cast<double>() );
-	return Vec3f( proj[0], proj[1], proj[2] );
 }
 
 

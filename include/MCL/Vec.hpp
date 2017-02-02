@@ -40,16 +40,27 @@ namespace mcl {
 //		SECOND = 1 << 1, // future
 	};
 
+	// Usage:
+	//	mcl::Vec3<double> dblvec;
+	//	mcl::Vec2<float> fltvec;
+	//	and so on...
+	template <typename T> using Vec4 = Eigen::Matrix<T,4,1>;
+	template <typename T> using Vec3 = Eigen::Matrix<T,3,1>;
+	template <typename T> using Vec2 = Eigen::Matrix<T,2,1>;
 
-	typedef Eigen::Vector4f Vec4f;
-	typedef Eigen::Vector3f Vec3f;
-	typedef Eigen::Vector2f Vec2f;
-	typedef Eigen::Vector3i Vec3i;
-	typedef Eigen::Vector2i Vec2i;
-	typedef Eigen::Vector4i Vec4i;
+	// Common types that I don't feel like typing out all the time:
+	typedef Vec4<float> Vec4f;
+	typedef Vec3<float> Vec3f;
+	typedef Vec2<float> Vec2f;
+	typedef Vec4<double> Vec4d;
+	typedef Vec3<double> Vec3d;
+	typedef Vec2<double> Vec2d;
+	typedef Vec4<int> Vec4i;
+	typedef Vec3<int> Vec3i;
+	typedef Vec2<int> Vec2i;
 
 	// Temporary quick fix:
-	static inline Vec3f to_Vec3f(trimesh::vec p){ return Vec3f(p[0],p[1],p[2]); } 
+	static inline Vec3f to_Vec3f(trimesh::vec p){ return Vec3f(p[0],p[1],p[2]); }
 
 	static inline std::string to_str(const Vec3f &v){
 		std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2];
