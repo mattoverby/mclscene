@@ -35,24 +35,27 @@ namespace mcl {
 //
 //	If a pointer to SceneManager is passed, the obj/mat/light/cam is added.
 //
-//	Most of these functions come from Trimesh2 by Szymon Rusinkiewicz (GNU GPL, version 2)
+//	Most of the make_something functions come from Trimesh2 by Szymon Rusinkiewicz (GNU GPL, version 2).
+//	Unless otherwise noted, objects are centered at origin.
 //
 namespace factory {
 
 	// A basic sphere
-	std::shared_ptr<TriangleMesh> make_sphere( Vec3f center, float radius, int tess, SceneManager *scene=nullptr );
+	static inline std::shared_ptr<TriangleMesh> make_sphere( Vec3f center, float radius, int tess, SceneManager *scene=nullptr );
 
-	// A non-symmetric cube
-	std::shared_ptr<TriangleMesh> make_cube( int tess, SceneManager *scene=nullptr );
+	// A 1x1x1 non-symmetric cube
+	static inline std::shared_ptr<TriangleMesh> make_cube( int tess, SceneManager *scene=nullptr );
 
 	// A beam is one or more connected cubes (chunks)
-	std::shared_ptr<TriangleMesh> make_beam( int chunks, int tess, SceneManager *scene=nullptr );
+	static inline std::shared_ptr<TriangleMesh> make_beam( int chunks, int tess, SceneManager *scene=nullptr );
 
-	// plane
+	// A 1x1 plane along x/y axis
+	static inline std::shared_ptr<TriangleMesh> make_plane( int tess_x, int tess_y, SceneManager *scene=nullptr );
 
-	// cylinder
+	static inline std::shared_ptr<TriangleMesh> make_cyl( int tess_c, int tess_l, float r, SceneManager *scene=nullptr );
 
-	// torus
+	static inline std::shared_ptr<TriangleMesh> make_torus( int tess, float inner_rad, float outer_rad, SceneManager *scene=nullptr );
+
 
 	// Helpers
 	static inline void mkpoint(std::shared_ptr<TriangleMesh> mesh, float x, float y, float z);
@@ -73,7 +76,7 @@ namespace factory {
 //	Implementation
 //
 
-std::shared_ptr<TriangleMesh> factory::make_sphere( Vec3f center, float radius, int tess, SceneManager *scene ){
+static inline std::shared_ptr<TriangleMesh> factory::make_sphere( Vec3f center, float radius, int tess, SceneManager *scene ){
 
 	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
 
@@ -132,7 +135,7 @@ std::shared_ptr<TriangleMesh> factory::make_sphere( Vec3f center, float radius, 
 } // end make sphere
 
 
-std::shared_ptr<TriangleMesh> factory::make_beam( int chunks, int tess, SceneManager *scene ){
+static inline std::shared_ptr<TriangleMesh> factory::make_beam( int chunks, int tess, SceneManager *scene ){
 
 	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
 
@@ -187,7 +190,7 @@ std::shared_ptr<TriangleMesh> factory::make_beam( int chunks, int tess, SceneMan
 
 
 
-std::shared_ptr<TriangleMesh> factory::make_cube( int tess, SceneManager *scene ){
+static inline std::shared_ptr<TriangleMesh> factory::make_cube( int tess, SceneManager *scene ){
 
 	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
 
@@ -324,6 +327,193 @@ std::shared_ptr<TriangleMesh> factory::make_cube( int tess, SceneManager *scene 
 	return mesh;
 }
 
+static inline std::shared_ptr<TriangleMesh> factory::make_plane( int tess_x, int tess_y, SceneManager *scene ){
+
+	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
+
+	if (tess_x < 1)
+		tess_x = 1;
+	if (tess_y < 1)
+		tess_y = 1;
+
+	int n_verts = (tess_x+1)*(tess_y+1)+(tess_x*tess_y);
+	mesh->vertices.reserve(n_verts);
+	double y_step = 1.0 / tess_y;
+	double x_step = 1.0 / tess_x;
+
+	// Make grid of vertices
+	for( int x=0; x<(tess_x+1); ++x ){
+		for( int y=0; y<(tess_y+1); ++y ){
+			float xp = -1.0f + 2.0f * x / tess_x;
+			float yp = -1.0f + 2.0f * y / tess_y;
+			mkpoint(mesh, xp, yp, 0);
+		}
+	}
+
+	// Make center points
+	for( int x=0; x<(tess_x); ++x ){
+		for( int y=0; y<(tess_y); ++y ){
+			float xp = -1.0f + 2.0f * x / tess_x;
+			float yp = -1.0f + 2.0f * y / tess_y;
+			xp += 1.f/tess_x;
+			yp += 1.f/tess_y;
+			mkpoint(mesh, xp, yp, 0);
+		}
+	}
+
+	assert( n_verts == (int)mesh->vertices.size() );
+
+	// Make faces
+	mesh->faces.reserve(tess_x*tess_y*4);
+	for( int x=0; x<tess_x; ++x ){
+		for( int y=0; y<tess_y; ++y ){
+			int ll=y+x*(tess_y+1);
+			int lr=y+(x+1)*(tess_y+1);
+			int ul=ll+1;
+			int ur=lr+1;
+			int cent=(tess_x+1)*(tess_y+1) + x*tess_y + y;
+			mkquad_sym(mesh, ll, lr, ul, ur, cent);
+		}
+	}
+
+	// Make texture coordinates
+	mesh->texcoords.reserve( mesh->vertices.size() );
+	for( int i=0; i<mesh->vertices.size(); ++i ){
+		Vec3f p = mesh->vertices[i];
+		float u = (p[0]+1.f)/2.f;
+		float v = 1.f-(p[1]+1.f)/2.f;
+		mesh->texcoords.push_back( Vec2f(u,v) );
+	}
+
+	mesh->update();
+	if( scene != nullptr ){
+		std::vector< Param > params;
+		params.push_back( Param( "tess_x", t_to_str(tess_x) ) );
+		params.push_back( Param( "tess_y", t_to_str(tess_y) ) );
+		scene->object_params.push_back( params );
+		scene->objects.push_back( mesh );
+	}
+
+	return mesh;
+
+}
+
+
+static inline std::shared_ptr<TriangleMesh> factory::make_cyl(int tess_c, int tess_l, float r, SceneManager *scene){
+
+	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
+
+	if (tess_c < 3)
+		tess_c = 3;
+	if (tess_l < 1)
+		tess_l = 1;
+
+	mesh->vertices.reserve(2+3*tess_c*tess_l-tess_c);
+
+	mkpoint(mesh, 0, 0, -1);
+	for (int j = 1; j <= tess_l; j++) {
+		float rr = r * j / tess_l;
+		for (int i = 0; i < tess_c; i++) {
+			float th = M_TWOPIf * i / tess_c;
+			mkpoint(mesh, rr*cos(th), rr*sin(th), -1);
+		}
+	}
+	int side_start = mesh->vertices.size();
+	for (int j = 1; j < tess_l; j++) {
+		float z = -1.0f + 2.0f * j / tess_l;
+		for (int i = 0; i < tess_c; i++) {
+			float th = M_TWOPIf * i / tess_c;
+			mkpoint(mesh, r*cos(th), r*sin(th), z);
+		}
+	}
+	int top_start = mesh->vertices.size();
+	for (int j = tess_l; j > 0; j--) {
+		float rr = r * j / tess_l;
+		for (int i = 0; i < tess_c; i++) {
+			float th = M_TWOPIf * i / tess_c;
+			mkpoint(mesh, rr*cos(th), rr*sin(th), 1);
+		}
+	}
+	mkpoint(mesh, 0, 0, 1);
+
+	mesh->faces.reserve(6*tess_c*tess_l - 2*tess_c);
+
+	for (int i = 0; i < tess_c; i++)
+		mkface(mesh, 0, ((i+1)%tess_c)+1, i+1);
+	for (int j = 1; j < tess_l; j++) {
+		int base = 1 + (j-1) * tess_c;
+		for (int i = 0; i < tess_c; i++) {
+			int i1 = (i+1)%tess_c;
+			mkquad(mesh, base+tess_c+i1, base+tess_c+i,
+				base+i1, base+i);
+		}
+	}
+
+	for (int j = 0; j < tess_l; j++) {
+		int base = side_start - tess_c + j * tess_c;
+		for (int i = 0; i < tess_c; i++) {
+			int i1 = (i+1)%tess_c;
+			mkquad(mesh, base + i, base + i1,
+				base+tess_c+i, base+tess_c+i1);
+		}
+	}
+
+	for (int j = 0; j < tess_l-1; j++) {
+		int base = top_start + j * tess_c;
+		for (int i = 0; i < tess_c; i++) {
+			int i1 = (i+1)%tess_c;
+			mkquad(mesh, base+tess_c+i1, base+tess_c+i,
+				base+i1, base+i);
+		}
+	}
+	int base = top_start + (tess_l-1)*tess_c;
+	for (int i = 0; i < tess_c; i++)
+		mkface(mesh, base+i, base+((i+1)%tess_c), base+tess_c);
+
+	mesh->update();
+	if( scene != nullptr ){
+		std::vector< Param > params;
+		params.push_back( Param( "radius", t_to_str(r) ) );
+		params.push_back( Param( "tess_c", t_to_str(tess_c) ) );
+		params.push_back( Param( "tess_l", t_to_str(tess_l) ) );
+		scene->object_params.push_back( params );
+		scene->objects.push_back( mesh );
+	}
+
+	return mesh;
+}
+
+
+static inline std::shared_ptr<TriangleMesh> factory::make_torus( int tess, float inner_rad, float outer_rad, SceneManager *scene ){
+std::cout << "TODO: make_torus" << std::endl;
+return NULL;
+/*
+	if (tess < 3) tess = 3;
+
+	make_ccyl( mesh, tess, tess, outer_rad );
+
+	for (int i = 0; i < tess; i++)
+		mesh->vertices.pop_back();
+	for (size_t i = 0; i < mesh->faces.size(); i++) {
+		mesh->faces[i][0] %= mesh->vertices.size();
+		mesh->faces[i][1] %= mesh->vertices.size();
+		mesh->faces[i][2] %= mesh->vertices.size();
+	}
+
+	float r = inner_rad;
+
+	for (int j = 0; j < tess; j++) {
+		float th = M_TWOPIf * j / tess;
+		Vec3f circlepos(cos(th), sin(th), 0);
+		for (int i = 0; i < tess; i++) {
+			float ph = M_TWOPIf * i / tess;
+			mesh->vertices[i+j*tess] = circlepos +
+						      cosf(ph)*r*circlepos +
+						      sinf(ph)*r*vec(0,0,-1);
+		}
+	}
+*/
+}
 
 
 //
