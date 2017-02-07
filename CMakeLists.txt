@@ -91,6 +91,7 @@ set( MCLSCENE_SRCS
 	include/MCL/PointCloud.hpp	src/PointCloud.cpp
 	include/MCL/BVH.hpp		src/BVH.cpp
 	include/MCL/Vec.hpp
+	include/MCL/Factory.hpp
 	include/MCL/Param.hpp
 	include/MCL/Object.hpp
 	include/MCL/VertexSort.hpp

@@ -1,6 +1,7 @@
 
 #include "MCL/SceneManager.hpp"
 #include "MCL/ArgParser.hpp"
+#include "MCL/Factory.hpp"
 
 using namespace mcl;
 

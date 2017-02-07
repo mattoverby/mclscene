@@ -40,6 +40,24 @@ void TriangleMesh::get_bounds( Vec3f &bmin, Vec3f &bmax ){
 }
 
 
+Vec3f TriangleMesh::trinorm( unsigned int f){
+	if( f >= faces.size() ){ return Vec3f(0,0,0); }
+	Vec3f &v0 = vertices[faces[f][0]];
+	Vec3f &v1 = vertices[faces[f][1]];
+	Vec3f &v2 = vertices[faces[f][2]];
+	return ( 0.5f * ( (v1 - v0).cross(v2 - v0) ) );
+}
+
+void TriangleMesh::clear(){
+	vertices.clear();
+	normals.clear();
+	faces.clear();
+	texcoords.clear();
+	aabb.valid = false;
+	tri_refs.clear();
+}
+
+
 void TriangleMesh::need_normals( bool recompute ){
 
 	if( vertices.size() == normals.size() && !recompute ){ return; }
