@@ -96,9 +96,9 @@ class SceneManager {
 		// from the XML file (if any) are stored as vectors. They are listed in order parsed.
 		//
 		std::vector< std::vector<Param> > object_params;
-		std::vector< std::vector<Param> > camera_params;
-		std::vector< std::vector<Param> > light_params;
-		std::vector< std::vector<Param> > material_params;
+//		std::vector< std::vector<Param> > camera_params;
+//		std::vector< std::vector<Param> > light_params;
+//		std::vector< std::vector<Param> > material_params;
 
 	protected:
 

@@ -99,11 +99,11 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 	scene->objects.reserve(num_objects);
 	scene->object_params.reserve(num_objects);
 	scene->materials.reserve(num_materials);
-	scene->material_params.reserve(num_materials);
+//	scene->material_params.reserve(num_materials);
 	scene->cameras.reserve(num_cameras);
-	scene->camera_params.reserve(num_cameras);
+//	scene->camera_params.reserve(num_cameras);
 	scene->lights.reserve(num_lights);
-	scene->light_params.reserve(num_lights);
+//	scene->light_params.reserve(num_lights);
 
 	//
 	// Now parse scene information and create components
@@ -139,7 +139,7 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 				std::shared_ptr<Camera> cam = parse_camera( type, params );
 				if( cam != NULL ){
 					scene->cameras.push_back( cam );
-					scene->camera_params.push_back( params );
+//					scene->camera_params.push_back( params );
 				}
 			} // end build Camera
 
@@ -148,7 +148,7 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 				std::shared_ptr<Light> light = parse_light( type, params );
 				if( light != NULL ){
 					scene->lights.push_back( light );
-					scene->light_params.push_back( params );
+//					scene->light_params.push_back( params );
 				}
 			} // end build Light
 
@@ -172,7 +172,7 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 							if( mat != NULL ){
 								int idx = scene->materials.size();
 								scene->materials.push_back( mat );
-								scene->material_params.push_back( std::vector<Param>() );
+//								scene->material_params.push_back( std::vector<Param>() );
 								obj->app.material = idx;
 							}
 						} // is a material preset
@@ -187,7 +187,7 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 				if( mat != NULL ){
 					int idx = scene->materials.size();
 					scene->materials.push_back( mat );
-					scene->material_params.push_back( params );
+//					scene->material_params.push_back( params );
 				}
 			} // end build material
 

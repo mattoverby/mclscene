@@ -39,9 +39,9 @@ SceneManager::~SceneManager(){
 	lights.clear();
 	materials.clear();
 	object_params.clear();
-	material_params.clear();
-	camera_params.clear();
-	light_params.clear();
+//	material_params.clear();
+//	camera_params.clear();
+//	light_params.clear();
 }
 
 
@@ -170,7 +170,7 @@ void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 	Vec3f v = w.cross(u);
 
 	lights.clear();
-	light_params.clear();
+//	light_params.clear();
 
 	std::vector<Param> params;
 	std::shared_ptr<Light> key = parse_light( "directional", params );
@@ -179,9 +179,9 @@ void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 	lights.push_back( key );
 	lights.push_back( fill );
 	lights.push_back( back );
-	light_params.push_back( params );
-	light_params.push_back( params );
-	light_params.push_back( params );
+//	light_params.push_back( params );
+//	light_params.push_back( params );
+//	light_params.push_back( params );
 
 	float half_d = distance/2.f;
 	float quart_d = distance/4.f;
