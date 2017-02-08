@@ -33,7 +33,11 @@ SceneManager::SceneManager() {
 }
 
 
-SceneManager::~SceneManager(){
+SceneManager::~SceneManager(){ clear(); }
+
+
+void SceneManager::clear(){
+
 	objects.clear();
 	cameras.clear();
 	lights.clear();
@@ -42,6 +46,9 @@ SceneManager::~SceneManager(){
 //	material_params.clear();
 //	camera_params.clear();
 //	light_params.clear();
+
+	vertex_pool.clear();
+	root_bvh.reset(new BVHNode);
 }
 
 

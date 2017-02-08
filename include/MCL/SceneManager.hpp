@@ -54,6 +54,11 @@ class SceneManager {
 		void save( std::string xmlfile, int mode=0 );
 
 		//
+		// Clears all scene data.
+		//
+		void clear();
+
+		//
 		// Computes bounding volume heirarchy (AABB). Eventually I will add better heuristics.
 		// Type is:
 		// 	spatial = object median (slower, better balanced)
@@ -93,12 +98,10 @@ class SceneManager {
 
 		//
 		// In addition to creating the components, the original parameters parsed
-		// from the XML file (if any) are stored as vectors. They are listed in order parsed.
+		// from the XML file (if any) are stored as vectors.
+		// They are listed in order parsed.
 		//
 		std::vector< std::vector<Param> > object_params;
-//		std::vector< std::vector<Param> > camera_params;
-//		std::vector< std::vector<Param> > light_params;
-//		std::vector< std::vector<Param> > material_params;
 
 	protected:
 
