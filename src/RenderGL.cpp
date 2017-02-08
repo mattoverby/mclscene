@@ -22,6 +22,8 @@
 #include "MCL/RenderGL.hpp"
 #include "SOIL2.h"
 #include "MCL/MicroTimer.hpp"
+#include "TriMesh_algo.h"
+#include "MCL/TriangleMesh.hpp"
 
 using namespace mcl;
 
@@ -32,6 +34,21 @@ static inline std::string fullpath( std::string file ){
 
 static inline float lerp(float a, float b, float f){ return a + f * (b - a); }
 
+static void trimesh_copy( std::shared_ptr<mcl::TriangleMesh> to_mesh, trimesh::TriMesh *from_mesh ){
+	for( int i=0; i<from_mesh->vertices.size(); ++i ){ to_mesh->vertices.push_back( mcl::Vec3f( from_mesh->vertices[i][0], from_mesh->vertices[i][1], from_mesh->vertices[i][2] ) ); }
+	for( int i=0; i<from_mesh->faces.size(); ++i ){ to_mesh->faces.push_back( mcl::Vec3i( from_mesh->faces[i][0], from_mesh->faces[i][1], from_mesh->faces[i][2] ) ); }
+	for( int i=0; i<from_mesh->texcoords.size(); ++i ){ to_mesh->texcoords.push_back( mcl::Vec2f( from_mesh->texcoords[i][0], from_mesh->texcoords[i][1] ) ); }
+	to_mesh->update();
+}
+
+static void trimesh_copy( trimesh::TriMesh *to_mesh, BaseObject::AppData *from_mesh ){
+	to_mesh->vertices.clear(); to_mesh->vertices.reserve( from_mesh->num_vertices );
+	to_mesh->faces.clear(); to_mesh->faces.reserve( from_mesh->num_faces );
+	to_mesh->texcoords.clear(); to_mesh->texcoords.reserve( from_mesh->num_texcoords );
+	for( int i=0; i<from_mesh->num_vertices; ++i ){ to_mesh->vertices.push_back( trimesh::vec( from_mesh->vertices[i*3+0], from_mesh->vertices[i*3+1], from_mesh->vertices[i*3+2] ) ); }
+	for( int i=0; i<from_mesh->num_faces; ++i ){ to_mesh->faces.push_back( trimesh::TriMesh::Face( from_mesh->faces[i*3+0], from_mesh->faces[i*3+1], from_mesh->faces[i*3+2] ) ); }
+	for( int i=0; i<from_mesh->num_texcoords; ++i ){ to_mesh->texcoords.push_back( trimesh::vec2( from_mesh->texcoords[i*2+0], from_mesh->texcoords[i*2+1] ) ); }
+}
 
 // RenderQuad() Renders a 1x1 quad in NDC, best used for framebuffer color targets
 void RenderGL::RenderQuad(){

@@ -19,7 +19,8 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#include "MCL/SceneManager.hpp"
+//#include "MCL/SceneManager.hpp"
+#include "MCL/SceneLoader.hpp"
 #include "bsphere.h" // for miniball (trimesh2)
 
 using namespace mcl;
@@ -27,10 +28,6 @@ using namespace trimesh;
 
 SceneManager::SceneManager() {
 	root_bvh=NULL;
-	createObject = default_build_object;
-	createCamera = default_build_camera;
-	createLight = default_build_light;
-	createMaterial = default_build_material;
 	last_radius=-1.f;
 	last_center = Vec3f(0,0,0);
 }
@@ -49,161 +46,7 @@ SceneManager::~SceneManager(){
 
 
 bool SceneManager::load( std::string filename ){
-
-	//
-	//	Load the XML file into mcl::Component
-	//
-
-	std::string xmldir = parse::fileDir( filename );
-	pugi::xml_document doc;
-	pugi::xml_parse_result result = doc.load_file(filename.c_str());
-	if( !result ){
-		std::cerr << "\n**SceneManager::load_xml Error: Unable to load " << filename << std::endl;
-		return false;
-	}
-
-	// Get the node that stores scene info
-	pugi::xml_node head_node = doc.first_child();
-	while( parse::to_lower(head_node.name()) != "mclscene" && head_node ){ head_node = head_node.next_sibling(); }
-
-	// First, create a mapping for named references.
-	// Currently only doing materials and objects
-	int num_materials = 0; int num_objects = 0;
-	int num_cameras = 0; int num_lights = 0;
-	std::unordered_map< std::string, int > material_map;
-	std::unordered_map< std::string, int > object_map;
-	std::vector<pugi::xml_node> children(head_node.begin(), head_node.end()); // grab all children to iterate with omp
-
-	//
-	// Preliminary loop to create the name to index mappings
-	//
-//#pragma omp parallel for reduction(+:num_materials,num_objects,num_cameras,num_lights)
-	for( int i=0; i<children.size(); ++i ){
-		std::string tag = parse::to_lower(children[i].name());
-		std::string name = parse::to_lower(children[i].attribute("name").as_string());
-		if( name.size() > 0 ){
-			if( tag == "material" ){
-//#pragma omp critical
-				{ material_map[name]=num_materials; }
-			}
-			if( tag == "object" ){
-//#pragma omp critical
-				{ object_map[name]=num_objects; }
-			}
-		} // end has a name
-
-		// Increment counters
-		if( tag == "material" ){ num_materials++; }
-		else if( tag == "object" ){ num_objects++; }
-		else if( tag == "camera" ){ num_cameras++; }
-		else if( tag == "light" ){ num_lights++; }
-
-	} // end create name maps
-
-	// Reserve space for scene components
-	objects.reserve(num_objects);
-	object_params.reserve(num_objects);
-	materials.reserve(num_materials);
-	material_params.reserve(num_materials);
-	cameras.reserve(num_cameras);
-	camera_params.reserve(num_cameras);
-	lights.reserve(num_lights);
-	light_params.reserve(num_lights);
-
-	//
-	// Now parse scene information and create components
-	// Not parallelized to maintain correct file-to-index order
-	//
-	for( int child=0; child<children.size(); ++child ){
-
-		pugi::xml_node curr_node = children[child];
-		std::string type = curr_node.attribute("type").as_string();
-		std::string tag = parse::to_lower(curr_node.name());
-
-		if( type.size() == 0 ){
-			std::cerr << "\n**SceneManager::load_xml Error: Component \"" << curr_node.name() << "\" need a type." << std::endl;
-			return false;
-		}
-
-		// Load the parameters
-		std::vector<Param> params;
-		{
-			load_params( params, curr_node );
-			// If any parameters are "file" or "texture" give it the path name from the current execution directory
-			for( int i=0; i<params.size(); ++i ){
-				if( parse::to_lower(params[i].tag) == "file" || parse::to_lower(params[i].tag) == "texture" ){
-					params[i].value = xmldir + params[i].as_string();
-				}
-			}
-		} // end load parameters
-
-		// Now build
-		{
-			//	Build Camera
-			if( tag == "camera" ){
-				std::shared_ptr<Camera> cam = createCamera( type, params );
-				if( cam != NULL ){
-					cameras.push_back( cam );
-					camera_params.push_back( params );
-				}
-			} // end build Camera
-
-			//	Build Light
-			else if( tag == "light" ){
-				std::shared_ptr<Light> light = createLight( type, params );
-				if( light != NULL ){
-					lights.push_back( light );
-					light_params.push_back( params );
-				}
-			} // end build Light
-
-			//	Build Object
-			else if( tag == "object" ){
-				std::shared_ptr<BaseObject> obj = createObject( type, params );
-				if( obj != NULL ){
-					objects.push_back( obj );
-					object_params.push_back( params );
-
-					// See if we can figure out the material
-					int mat_param_index = param_index("material",params);
-
-					if( mat_param_index >= 0 ){
-						std::string material_name = parse::to_lower( params[mat_param_index].as_string() );
-						if( material_map.count(material_name) > 0 ){
-							obj->app.material = material_map[material_name];
-						} // is a named material
-						else {
-							std::shared_ptr<Material> mat = make_preset_material( material_name );
-							if( mat != NULL ){
-								int idx = materials.size();
-								materials.push_back( mat );
-								material_params.push_back( std::vector<Param>() );
-								obj->app.material = idx;
-							}
-						} // is a material preset
-					} // end check material
-				}
-			} // end build object
-
-			//	Build Material
-			if( tag == "material" ){
-				std::shared_ptr<Material> mat = createMaterial( type, params );
-				if( mat != NULL ){
-					int idx = materials.size();
-					materials.push_back( mat );
-					material_params.push_back( params );
-				}
-			} // end build material
-
-		} // end create component
-
-	} // end loop scene info
-
-	//
-	//	Success, all done.
-	//
-	return true;
-	
+	return load_mclscene( filename, this );
 } // end load
 
 
@@ -329,9 +172,16 @@ void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 	lights.clear();
 	light_params.clear();
 
-	std::shared_ptr<Light> key = make_light<Light>( "directional" );
-	std::shared_ptr<Light> fill = make_light<Light>( "directional" );
-	std::shared_ptr<Light> back = make_light<Light>( "directional" );
+	std::vector<Param> params;
+	std::shared_ptr<Light> key = parse_light( "directional", params );
+	std::shared_ptr<Light> fill = parse_light( "directional", params );
+	std::shared_ptr<Light> back = parse_light( "directional", params );
+	lights.push_back( key );
+	lights.push_back( fill );
+	lights.push_back( back );
+	light_params.push_back( params );
+	light_params.push_back( params );
+	light_params.push_back( params );
 
 	float half_d = distance/2.f;
 	float quart_d = distance/4.f;

@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -19,53 +19,194 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_DEFAULTBUILDERS_H
-#define MCLSCENE_DEFAULTBUILDERS_H 1
 
-#include <functional> // for std::function
-#include "TriMeshBuilder.h"
-#include "TetMesh.hpp"
-#include "TriangleMesh.hpp"
-#include "PointCloud.hpp"
-#include "Material.hpp"
-#include "Light.hpp"
-#include "Camera.hpp"
+#ifndef MCLSCENE_SCENELOADER_H
+#define MCLSCENE_SCENELOADER_H 1
+
+#include "MCL/SceneManager.hpp"
+#include "MCL/ShapeFactory.hpp"
 #include "../../deps/pugixml/pugixml.hpp"
 
 namespace mcl {
 
 
-//
-//	The builder types
-//
-typedef std::function<std::shared_ptr<Camera> ( std::string type, std::vector<Param> &params )> BuildCamCallback;
-typedef std::function<std::shared_ptr<BaseObject> ( std::string type, std::vector<Param> &params )> BuildObjCallback;
-typedef std::function<std::shared_ptr<Light> ( std::string type, std::vector<Param> &params )> BuildLightCallback;
-typedef std::function<std::shared_ptr<Material> ( std::string type, std::vector<Param> &params )> BuildMatCallback;
+	//
+	//	Load an mclscene file, returns true on success
+	//
+	static inline bool load_mclscene( std::string filename, SceneManager *scene );
 
+	//
+	//	Helper functions
+	//
+	static inline std::shared_ptr<BaseObject> parse_object( std::string type, std::vector<Param> &params );
+	static inline std::shared_ptr<Material> parse_material( std::string type, std::vector<Param> &params );
+	static inline std::shared_ptr<Camera> parse_camera( std::string type, std::vector<Param> &params );
+	static inline std::shared_ptr<Light> parse_light( std::string type, std::vector<Param> &params );
+	static inline std::shared_ptr<Material> parse_preset_material( std::string preset );
 
-static void trimesh_copy( std::shared_ptr<mcl::TriangleMesh> to_mesh, trimesh::TriMesh *from_mesh ){
-	for( int i=0; i<from_mesh->vertices.size(); ++i ){ to_mesh->vertices.push_back( mcl::Vec3f( from_mesh->vertices[i][0], from_mesh->vertices[i][1], from_mesh->vertices[i][2] ) ); }
-	for( int i=0; i<from_mesh->faces.size(); ++i ){ to_mesh->faces.push_back( mcl::Vec3i( from_mesh->faces[i][0], from_mesh->faces[i][1], from_mesh->faces[i][2] ) ); }
-	for( int i=0; i<from_mesh->texcoords.size(); ++i ){ to_mesh->texcoords.push_back( mcl::Vec2f( from_mesh->texcoords[i][0], from_mesh->texcoords[i][1] ) ); }
-	to_mesh->update();
+} // end namespace mcl
+
+//
+//	Implementation
+//
+
+static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene ){
+
+	//
+	//	Load the XML file into mcl::Component
+	//
+
+	std::string xmldir = parse::fileDir( filename );
+	pugi::xml_document doc;
+	pugi::xml_parse_result result = doc.load_file(filename.c_str());
+	if( !result ){
+		std::cerr << "\n**SceneManager::load_xml Error: Unable to load " << filename << std::endl;
+		return false;
+	}
+
+	// Get the node that stores scene info
+	pugi::xml_node head_node = doc.first_child();
+	while( parse::to_lower(head_node.name()) != "mclscene" && head_node ){ head_node = head_node.next_sibling(); }
+
+	// First, create a mapping for named references.
+	// Currently only doing materials and objects
+	int num_materials = 0; int num_objects = 0;
+	int num_cameras = 0; int num_lights = 0;
+	std::unordered_map< std::string, int > material_map;
+	std::unordered_map< std::string, int > object_map;
+	std::vector<pugi::xml_node> children(head_node.begin(), head_node.end()); // grab all children to iterate with omp
+
+	//
+	// Preliminary loop to create the name to index mappings
+	//
+	for( int i=0; i<children.size(); ++i ){
+		std::string tag = parse::to_lower(children[i].name());
+		std::string name = parse::to_lower(children[i].attribute("name").as_string());
+		if( name.size() > 0 ){
+			if( tag == "material" ){ material_map[name]=num_materials; }
+			if( tag == "object" ){ object_map[name]=num_objects; }
+		} // end has a name
+
+		// Increment counters
+		if( tag == "material" ){ num_materials++; }
+		else if( tag == "object" ){ num_objects++; }
+		else if( tag == "camera" ){ num_cameras++; }
+		else if( tag == "light" ){ num_lights++; }
+
+	} // end create name maps
+
+	// Reserve space for scene components
+	scene->objects.reserve(num_objects);
+	scene->object_params.reserve(num_objects);
+	scene->materials.reserve(num_materials);
+	scene->material_params.reserve(num_materials);
+	scene->cameras.reserve(num_cameras);
+	scene->camera_params.reserve(num_cameras);
+	scene->lights.reserve(num_lights);
+	scene->light_params.reserve(num_lights);
+
+	//
+	// Now parse scene information and create components
+	// Not parallelized to maintain correct file-to-index order
+	//
+	for( int child=0; child<children.size(); ++child ){
+
+		pugi::xml_node curr_node = children[child];
+		std::string type = curr_node.attribute("type").as_string();
+		std::string tag = parse::to_lower(curr_node.name());
+
+		if( type.size() == 0 ){
+			std::cerr << "\n**SceneManager::load_xml Error: Component \"" << curr_node.name() << "\" need a type." << std::endl;
+			return false;
+		}
+
+		// Load the parameters
+		std::vector<Param> params;
+		{
+			load_params( params, curr_node );
+			// If any parameters are "file" or "texture" give it the path name from the current execution directory
+			for( int i=0; i<params.size(); ++i ){
+				if( parse::to_lower(params[i].tag) == "file" || parse::to_lower(params[i].tag) == "texture" ){
+					params[i].value = xmldir + params[i].as_string();
+				}
+			}
+		} // end load parameters
+
+		// Now build
+		{
+			//	Build Camera
+			if( tag == "camera" ){
+				std::shared_ptr<Camera> cam = parse_camera( type, params );
+				if( cam != NULL ){
+					scene->cameras.push_back( cam );
+					scene->camera_params.push_back( params );
+				}
+			} // end build Camera
+
+			//	Build Light
+			else if( tag == "light" ){
+				std::shared_ptr<Light> light = parse_light( type, params );
+				if( light != NULL ){
+					scene->lights.push_back( light );
+					scene->light_params.push_back( params );
+				}
+			} // end build Light
+
+			//	Build Object
+			else if( tag == "object" ){
+				std::shared_ptr<BaseObject> obj = parse_object( type, params );
+				if( obj != NULL ){
+					scene->objects.push_back( obj );
+					scene->object_params.push_back( params );
+
+					// See if we can figure out the material
+					int mat_param_index = param_index("material",params);
+
+					if( mat_param_index >= 0 ){
+						std::string material_name = parse::to_lower( params[mat_param_index].as_string() );
+						if( material_map.count(material_name) > 0 ){
+							obj->app.material = material_map[material_name];
+						} // is a named material
+						else {
+							std::shared_ptr<Material> mat = parse_preset_material( material_name );
+							if( mat != NULL ){
+								int idx = scene->materials.size();
+								scene->materials.push_back( mat );
+								scene->material_params.push_back( std::vector<Param>() );
+								obj->app.material = idx;
+							}
+						} // is a material preset
+					} // end check material
+
+				}
+			} // end build object
+
+			//	Build Material
+			if( tag == "material" ){
+				std::shared_ptr<Material> mat = parse_material( type, params );
+				if( mat != NULL ){
+					int idx = scene->materials.size();
+					scene->materials.push_back( mat );
+					scene->material_params.push_back( params );
+				}
+			} // end build material
+
+		} // end create component
+
+	} // end loop scene info
+
+	//
+	//	Success, all done.
+	//
+	return true;
 }
 
-static void trimesh_copy( trimesh::TriMesh *to_mesh, BaseObject::AppData *from_mesh ){
-	to_mesh->vertices.clear(); to_mesh->vertices.reserve( from_mesh->num_vertices );
-	to_mesh->faces.clear(); to_mesh->faces.reserve( from_mesh->num_faces );
-	to_mesh->texcoords.clear(); to_mesh->texcoords.reserve( from_mesh->num_texcoords );
-	for( int i=0; i<from_mesh->num_vertices; ++i ){ to_mesh->vertices.push_back( trimesh::vec( from_mesh->vertices[i*3+0], from_mesh->vertices[i*3+1], from_mesh->vertices[i*3+2] ) ); }
-	for( int i=0; i<from_mesh->num_faces; ++i ){ to_mesh->faces.push_back( trimesh::TriMesh::Face( from_mesh->faces[i*3+0], from_mesh->faces[i*3+1], from_mesh->faces[i*3+2] ) ); }
-	for( int i=0; i<from_mesh->num_texcoords; ++i ){ to_mesh->texcoords.push_back( trimesh::vec2( from_mesh->texcoords[i*2+0], from_mesh->texcoords[i*2+1] ) ); }
-}
 
 //
-//	Default Object Builder: Everything is a trimesh or tetmesh.
+//	Default Object Builder
 //
-static std::shared_ptr<BaseObject> default_build_object( std::string type, std::vector<Param> &params ){
+static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string type, std::vector<mcl::Param> &params ){
 
-	using namespace trimesh;
 	type = parse::to_lower(type);
 
 	//
@@ -74,7 +215,9 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	bool flat_shading = false;
 	int subdivide_mesh = 0;
 	bool invis_material = false;
-	xform x_form;
+	int tess = 3;
+	trimesh::xform x_form;
+	std::string filename = "";
 	for( int i=0; i<params.size(); ++i ){
 		std::string tag = parse::to_lower(params[i].tag);
 		if( tag=="translate" ){ x_form = params[i].as_xform() * x_form; }
@@ -82,6 +225,8 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 		else if( tag=="rotate" ){ x_form = params[i].as_xform() * x_form; }
 		else if( tag=="subdivide" || tag=="subdivide_mesh" ){ subdivide_mesh = abs(params[i].as_int()); }
 		else if( tag=="flat" || tag=="flat_shading" ){ flat_shading = params[i].as_bool(); }
+		else if( tag=="tess" ){ tess=params[i].as_int(); }
+		else if( tag=="file" || tag=="filename" ){ filename=params[i].as_string(); }
 		else if( tag=="material" ){
 			if( parse::to_lower(params[i].as_string())=="invisible" ){ invis_material = true; }
 		}
@@ -95,29 +240,17 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//	Sphere
 	//
 	if( type == "sphere" ){
-		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
+
 		double radius = 1.0;
 		Vec3f center(0,0,0);
-		int tessellation = 1;
+		int tess = 3;
 
 		for( int i=0; i<params.size(); ++i ){
 			if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_double(); }
 			else if( parse::to_lower(params[i].tag)=="center" ){ center=params[i].as_vec3(); }
-			else if( parse::to_lower(params[i].tag)=="tess" ){ tessellation=params[i].as_int(); }
 		}
 
-		trimesh::TriMesh tempmesh;
-		make_sphere_polar( &tempmesh, tessellation, tessellation );
-
-		// Now scale it by the radius
-		xform s_xf = trimesh::xform::scale(radius,radius,radius);
-		apply_xform(&tempmesh, s_xf);
-
-		// Translate so center is correct
-		xform t_xf = trimesh::xform::trans(center[0],center[1],center[2]);
-		apply_xform(&tempmesh, t_xf);
-
-		trimesh_copy( std::dynamic_pointer_cast<mcl::TriangleMesh>(new_obj), &tempmesh );
+		new_obj = factory::make_sphere( center, radius, tess );
 
 	} // end build sphere
 
@@ -126,24 +259,8 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//	Box
 	//
 	else if( type == "box" || type == "cube" ){
-		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
-
-		//
-		//	For some reason the make_cube function is broken???
-		//	Just use the make beam with 1 chunk for now.
-		//
-
-		int tess = 3;
-		int chunks = 1;
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="tess" ){ tess=params[i].as_int(); }
-
-		}
-		trimesh::TriMesh tempmesh;
-		make_beam( &tempmesh, tess, chunks );
-		trimesh_copy( std::dynamic_pointer_cast<mcl::TriangleMesh>(new_obj), &tempmesh );
-		new_obj->app.flat_shading = true; // otherwise corners get screwy
-
+		new_obj = factory::make_beam( 1, tess );
+		flat_shading = true;
 	} // end build box
 
 
@@ -151,27 +268,14 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//	Plane, 2 or more triangles
 	//
 	else if( type == "plane" ){
-
-		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
-
-		// Length and width are actually #tris along the horizontal and vertical
-		int width = 10;
-		int length = 10;
-		double noise = 0.0;
-
+		int tess_x = 10;
+		int tess_y = 10;
 		for( int i=0; i<params.size(); ++i ){
 			std::string tag = parse::to_lower(params[i].tag);
-			if( tag=="width" ){ width=params[i].as_int(); }
-			else if( tag=="length" ){ length=params[i].as_int(); }
-			else if( tag=="tess" ){ length=params[i].as_int(); width=length=params[i].as_int(); }
-			else if( tag=="noise" ){ noise=params[i].as_double(); }
+			if( tag=="width" || tag=="tess_x" ){ tess_x=params[i].as_int(); }
+			else if( tag=="length" || tag=="tess_y" ){ tess_y=params[i].as_int(); }
 		}
-
-		trimesh::TriMesh tempmesh;
-		make_sym_plane( &tempmesh, width, length );
-		if( noise > 0.0 ){ trimesh::noisify( &tempmesh, noise ); }
-		trimesh_copy( std::dynamic_pointer_cast<mcl::TriangleMesh>(new_obj), &tempmesh );
-
+		new_obj = factory::make_plane( tess_x, tess_y );
 	} // end build plane
 
 
@@ -179,90 +283,50 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//	Beam
 	//
 	else if( type == "beam" ){
-
-		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
-
-		int tess = 3;
 		int chunks = 5;
-
 		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="tess" ){ tess=params[i].as_int(); }
-			else if( parse::to_lower(params[i].tag)=="chunks" ){ chunks=params[i].as_int(); }
+			if( parse::to_lower(params[i].tag)=="chunks" ){ chunks=params[i].as_int(); }
 		}
-
-		trimesh::TriMesh tempmesh;
-		make_beam( &tempmesh, tess, chunks );
-		trimesh_copy( std::dynamic_pointer_cast<mcl::TriangleMesh>(new_obj), &tempmesh );
-
+		new_obj = factory::make_beam( chunks, tess );
+		flat_shading = true;
 	} // end build beam
+
 
 	//
 	//	Cylinder
 	//
 	else if( type == "cylinder" ){
-
-		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
-
 		float radius = 1.f;
 		int tess_l=10, tess_c=10;
-
 		for( int i=0; i<params.size(); ++i ){
 			if( parse::to_lower(params[i].tag)=="tess_l" ){ tess_l=params[i].as_int(); }
 			if( parse::to_lower(params[i].tag)=="tess_c" ){ tess_c=params[i].as_int(); }
 			else if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_float(); }
 		}
-
-		trimesh::TriMesh tempmesh;
-		trimesh::make_ccyl( &tempmesh, tess_l, tess_c, radius );
-		trimesh_copy( std::dynamic_pointer_cast<mcl::TriangleMesh>(new_obj), &tempmesh );
-
+		new_obj = factory::make_cyl( tess_l, tess_c, radius );
 	} // end build cylinder
-
 
 
 	//
 	//	Torus
 	//
 	else if( type == "torus" ){
-
-		new_obj = std::shared_ptr<BaseObject>( new TriangleMesh() );
-
-		int tess_th=50, tess_ph=20;
 		float inner_rad = 0.25f;
 		float outer_rad = 1.f; // doesn't do anything?
-
 		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="tess_th" ){ tess_th=params[i].as_int(); }
-			else if( parse::to_lower(params[i].tag)=="tess_ph" ){ tess_ph=params[i].as_int(); }
-			else if( parse::to_lower(params[i].tag)=="inner_radius" ){ inner_rad=params[i].as_float(); }
+			if( parse::to_lower(params[i].tag)=="inner_radius" ){ inner_rad=params[i].as_float(); }
 		}
-
-		trimesh::TriMesh tempmesh;
-		trimesh::make_torus( &tempmesh, tess_th, tess_ph, inner_rad, outer_rad );
-		trimesh_copy( std::dynamic_pointer_cast<mcl::TriangleMesh>(new_obj), &tempmesh );
-
+		new_obj = factory::make_torus( tess, inner_rad, outer_rad );
 	}
 
 
 	//
-	//	Triangle Mesh, 2 or more triangles
+	//	Triangle Mesh
 	//
 	else if( type == "trimesh" || type == "trianglemesh" ){
-
 		std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
-
-		std::string filename = "";
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="file" ){ filename=params[i].as_string(); }
-		}
-
-		// Try to load the trimesh
-		if( filename.size() ){
-			if( !mesh->load( filename ) ){ printf("\n**TriMesh Error: failed to load file %s\n", filename.c_str()); }
-		}
-
+		if( !mesh->load( filename ) ){ printf("\n**TriMesh Error: failed to load file %s\n", filename.c_str()); }
 		new_obj = std::shared_ptr<BaseObject>( mesh );
-
 	} // end build trimesh
 
 
@@ -270,58 +334,23 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//	Tet Mesh
 	//
 	else if( type == "tetmesh" ){
-
 		std::shared_ptr<TetMesh> mesh( new TetMesh() );
-		std::string filename = "";
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="file" ){ filename=params[i].as_string(); }
-		}
-
-		if( filename.size() ){
-			if( !mesh->load( filename ) ){ printf("\n**TetMesh Error: failed to load file %s\n", filename.c_str()); }
-		}
-
+		if( !mesh->load( filename ) ){ printf("\n**TetMesh Error: failed to load file %s\n", filename.c_str()); }
 		new_obj = std::shared_ptr<BaseObject>( mesh );
-
 	} // end build tet mesh
 
-/*
-	//
-	//	Point Cloud
-	//
-	else if( type == "pointcloud" ){
-
-		std::shared_ptr<PointCloud> cloud( new PointCloud() );
-		std::string filename = "";
-		bool fill = false;
-		for( int i=0; i<params.size(); ++i ){
-			if( parse::to_lower(params[i].tag)=="file" ){ filename=params[i].as_string(); }
-			if( parse::to_lower(params[i].tag)=="fill" ){ fill=params[i].as_bool(); }
-		}
-
-		if( filename.size() ){
-			if( !cloud->load( filename, fill ) ){ printf("\n**PointCloud Error: failed to load file %s\n", filename.c_str()); }
-		}
-
-		new_obj = std::shared_ptr<BaseObject>( cloud );
-
-	} // end build particle cloud
-*/
 
 	//
-	//	Unknown
+	//	Apply regular params
 	//
-	else{
-		std::cerr << "**Error: I don't know how to create an object of type " << type << std::endl;
-	}
-
-
 	if( new_obj != NULL ){
 		new_obj->apply_xform( x_form );
 		new_obj->app.flat_shading = flat_shading;
 		new_obj->app.subdivide_mesh = (unsigned int)subdivide_mesh;
 		if( invis_material ){ new_obj->app.material = MATERIAL_INVISIBLE; }
 		return new_obj;
+	} else {
+		std::cerr << "**Error: I don't know how to create an object of type " << type << std::endl;
 	}
 
 
@@ -330,13 +359,13 @@ static std::shared_ptr<BaseObject> default_build_object( std::string type, std::
 	//
 	return NULL;
 
-} // end object builder
+} // end parse object
 
 
 //
 //	Default Material Builder
 //
-static std::shared_ptr<Material> default_build_material( std::string type, std::vector<Param> &params ){
+static inline std::shared_ptr<mcl::Material> mcl::parse_material( std::string type, std::vector<mcl::Param> &params ){
 
 	type = parse::to_lower(type);
 
@@ -382,7 +411,7 @@ static std::shared_ptr<Material> default_build_material( std::string type, std::
 //
 //	Default Light Builder
 //
-static std::shared_ptr<Light> default_build_light( std::string type, std::vector<Param> &params ){
+static inline std::shared_ptr<mcl::Light> mcl::parse_light( std::string type, std::vector<mcl::Param> &params ){
 
 	type = parse::to_lower(type);
 	std::shared_ptr<Light> light( new Light() );
@@ -438,7 +467,7 @@ static std::shared_ptr<Light> default_build_light( std::string type, std::vector
 //
 //	Default Camera
 //
-static std::shared_ptr<Camera> default_build_camera( std::string type, std::vector<Param> &params ){
+static inline std::shared_ptr<mcl::Camera> mcl::parse_camera( std::string type, std::vector<mcl::Param> &params ){
 
 	type = parse::to_lower(type);
 	Vec3f eye(0,0,1), direction(0,0,-1), lookat(0,0,0);
@@ -458,10 +487,9 @@ static std::shared_ptr<Camera> default_build_camera( std::string type, std::vect
 
 
 	//
-	//	Default (TODO: params)
+	//	Trackball camera
 	//
 	if( type == "trackball" ){
-		
 		std::shared_ptr<Camera> cam( new Trackball( eye, lookat ) );
 		return cam;
 	}
@@ -479,6 +507,7 @@ static std::shared_ptr<Camera> default_build_camera( std::string type, std::vect
 
 
 
+
 //
 //	OpenGL Material Presets
 //	See: http://devernay.free.fr/cours/opengl/materials.html
@@ -486,8 +515,7 @@ static std::shared_ptr<Camera> default_build_camera( std::string type, std::vect
 //	Create a blinn phong material from preset values.
 //	Calling this function does NOT add them to the SceneManager data vectors.
 //
-static std::shared_ptr<Material> make_preset_material( std::string preset ){// MaterialPreset m ){
-	using namespace trimesh;
+static inline std::shared_ptr<mcl::Material> mcl::parse_preset_material( std::string preset ){
 
 	//
 	//	This used to be multiple functions and these types were global.
@@ -609,8 +637,5 @@ static std::shared_ptr<Material> make_preset_material( std::string preset ){// M
 
 } // end material preset
 
-
-
-} // end namespace mcl
-
 #endif
+

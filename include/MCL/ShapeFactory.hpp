@@ -52,8 +52,10 @@ namespace factory {
 	// A 1x1 plane along x/y axis
 	static inline std::shared_ptr<TriangleMesh> make_plane( int tess_x, int tess_y, SceneManager *scene=nullptr );
 
+	
 	static inline std::shared_ptr<TriangleMesh> make_cyl( int tess_c, int tess_l, float r, SceneManager *scene=nullptr );
 
+	// TODO
 	static inline std::shared_ptr<TriangleMesh> make_torus( int tess, float inner_rad, float outer_rad, SceneManager *scene=nullptr );
 
 
@@ -78,12 +80,13 @@ namespace factory {
 
 static inline std::shared_ptr<TriangleMesh> factory::make_sphere( Vec3f center, float radius, int tess, SceneManager *scene ){
 
+	float M_TWOPIf = M_PI*2.f;
 	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
 
 	mesh->vertices.reserve(2+tess*(tess-1));
 	mkpoint(mesh, 0, 0, -1);
 	for (int j = 1; j < tess; j++) {
-		float th = M_PIf * j / tess;
+		float th = M_PI * j / tess;
 		float z = -cos(th);
 		float r = sin(th);
 		for (int i = 0; i < tess; i++) {
@@ -401,6 +404,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_plane( int tess_x, int
 
 static inline std::shared_ptr<TriangleMesh> factory::make_cyl(int tess_c, int tess_l, float r, SceneManager *scene){
 
+	float M_TWOPIf = M_PI*2.f;
 	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
 
 	if (tess_c < 3)

@@ -91,7 +91,8 @@ set( MCLSCENE_SRCS
 	include/MCL/PointCloud.hpp	src/PointCloud.cpp
 	include/MCL/BVH.hpp		src/BVH.cpp
 	include/MCL/Vec.hpp
-	include/MCL/Factory.hpp
+	include/MCL/ShapeFactory.hpp
+	include/MCL/SceneLoader.hpp
 	include/MCL/Param.hpp
 	include/MCL/Object.hpp
 	include/MCL/VertexSort.hpp
@@ -104,7 +105,6 @@ set( MCLSCENE_SRCS
 	include/MCL/Simulator.hpp
 	include/MCL/RayIntersect.hpp
 	include/MCL/ColorMap.hpp
-	include/MCL/DefaultBuilders.hpp
 )
 
 # Create the library
@@ -157,9 +157,6 @@ if(MCL_BUILD_SAMPLES)
 
 #		add_executable( bvh_viewer samples/BVHViewer.cpp )
 #		target_link_libraries( bvh_viewer ${MCLSCENE_LIBRARIES} )
-
-		add_executable( eigentest samples/EigenTest.cpp )
-		target_link_libraries( eigentest ${MCLSCENE_LIBRARIES} )
 
 	endif(MCL_BUILD_RENDERING)
 

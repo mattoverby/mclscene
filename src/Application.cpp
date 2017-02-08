@@ -47,9 +47,9 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 	// Make camera if one was not loaded
 	if( scene->cameras.size()==0 ){
 		Vec3f eye = scene_center; eye[2]-=(scene_radius*4.f);
-		std::shared_ptr<Trackball> cam = scene->make_camera<Trackball>( "trackball" );
-		cam->eye = eye;
-		cam->lookat = scene_center;
+		std::shared_ptr<Trackball> cam( new Trackball(eye, scene_center) );
+		scene->cameras.push_back( cam );
+		scene->camera_params.push_back( std::vector<Param>() );
 		cam->update_view();
 	}
 	current_cam = scene->cameras[0].get();

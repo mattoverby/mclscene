@@ -2,7 +2,6 @@
 #include "MCL/SceneManager.hpp"
 #include "MCL/Application.hpp"
 #include "MCL/MicroTimer.hpp"
-#include "MCL/Factory.hpp"
 
 using namespace mcl;
 

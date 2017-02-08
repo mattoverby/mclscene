@@ -23,17 +23,12 @@
 #define MCLSCENE_SCENEMANAGER_H 1
 
 #include "BVH.hpp"
-#include "DefaultBuilders.hpp"
+#include "MCL/Object.hpp"
+#include "MCL/Camera.hpp"
+#include "MCL/Material.hpp"
+#include "MCL/Light.hpp"
 
-//
-//	Loading a scene with SceneManager:
-//	1) Replace the build callbacks with your own methods, if needed.
-//		See include/MCL/DefaultBuilders.hpp for details.
-//	2) Load an XML file with SceneManager::load (see conf/ for examples).
-//		OR you can use the make_object, make_light, make_camera, and make_material
-//		functions. They return shared pointers of the scene component
-//		and you can set the parameters directly.
-//
+
 namespace mcl {
 
 class SceneManager {
@@ -105,26 +100,6 @@ class SceneManager {
 		std::vector< std::vector<Param> > light_params;
 		std::vector< std::vector<Param> > material_params;
 
-		//
-		// Functions that create a component and pushes it to the
-		// vectors (above). Calls the builder callbacks (below).
-		// Uses dynamic_pointer_cast, so use at your own risk.
-		//
-		template<typename T=BaseObject> std::shared_ptr<T> make_object( std::string type );
-		template<typename T=Light> std::shared_ptr<T> make_light( std::string type );
-		template<typename T=Camera> std::shared_ptr<T> make_camera( std::string type );
-		template<typename T=Material> std::shared_ptr<T> make_material( std::string type );
-
-		//
-		// Creator Callbacks, invoked on a "load" or "make_<thing>" call.
-		// These can be changed to a custom function.
-		// For more details, see include/MCL/DefaultBuilders.hpp
-		//
-		BuildObjCallback createObject;
-		BuildCamCallback createCamera;
-		BuildLightCallback createLight;
-		BuildMatCallback createMaterial;
-
 	protected:
 
 		// Root bvh is created by build_bvh.
@@ -140,46 +115,6 @@ class SceneManager {
 		VertexPool vertex_pool;
 
 }; // end class SceneManager
-
-//
-//	Template functions
-//
-
-template<typename T> std::shared_ptr<T> SceneManager::make_object( std::string type ){
-	std::vector<Param> params;
-	std::shared_ptr<BaseObject> newObject = createObject( type, params );
-	if( !newObject ){ return NULL; }
-	objects.push_back( newObject ); object_params.push_back( params );
-	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( newObject );
-	if( !casted_ptr ){ return NULL; } return casted_ptr;
-} // end make object
-
-template<typename T> std::shared_ptr<T> SceneManager::make_camera( std::string type ){
-	std::vector<Param> params;
-	std::shared_ptr<Camera> newCam = createCamera( type, params );
-	if( !newCam ){ return NULL; }
-	cameras.push_back( newCam ); camera_params.push_back( params );
-	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( newCam );
-	if( !casted_ptr ){ return NULL; } return casted_ptr;
-} // end make camera
-
-template<typename T> std::shared_ptr<T> SceneManager::make_light( std::string type ){
-	std::vector<Param> params;
-	std::shared_ptr<Light> newLight = createLight( type, params );
-	if( !newLight ){ return NULL; }
-	lights.push_back( newLight ); light_params.push_back( params );
-	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( newLight );
-	if( !casted_ptr ){ return NULL; } return casted_ptr;
-} // end make light
-
-template<typename T> std::shared_ptr<T> SceneManager::make_material( std::string type ){
-	std::vector<Param> params;
-	std::shared_ptr<Material> newMat = createMaterial( type, params );
-	if( !newMat ){ return NULL; }
-	materials.push_back( newMat ); material_params.push_back( params );
-	std::shared_ptr<T> casted_ptr = std::dynamic_pointer_cast<T>( newMat );
-	if( !casted_ptr ){ return NULL; } return casted_ptr;
-} // end make material
 
 } // end namespace mcl
 
