@@ -209,7 +209,43 @@ static bool mesh_exists( const std::string& name ){
 }
 
 void TriangleMesh::save( std::string filename ){
-	std::cout << "\n\n**TODO: TriangleMesh::save\n\n" << std::endl;
+	int fsize = filename.size();
+	if( fsize<4 ){ printf("\n**TriangleMesh::save Error: Filetype must be .obj\n"); return; }
+	std::string ftype = filename.substr( fsize-4,4 );
+	if( ftype != ".obj" ){ printf("\n**TriangleMesh::save Error: Filetype must be .obj\n"); return; }
+
+	std::ofstream fs;
+	fs.open( filename.c_str() );
+	fs << "# Generated with mclscene by Matt Overby (www.mattoverby.net)";
+
+	int nv = vertices.size();
+	int nn = normals.size();
+	int nt = texcoords.size();
+
+	for( int i=0; i<nv; ++i ){
+		fs << "\nv " << vertices[i][0] << ' ' << vertices[i][1] << ' ' << vertices[i][2];
+	}
+	for( int i=0; i<nn; ++i ){
+		fs << "\nvn " << normals[i][0] << ' ' << normals[i][1] << ' ' << normals[i][2];
+	}
+	for( int i=0; i<nt; ++i ){
+		fs << "\nvt " << texcoords[i][0] << ' ' << texcoords[i][1];
+	}
+	for( int i=0; i<faces.size(); ++i ){
+		Vec3i f = faces[i]; f[0]+=1; f[1]+=1; f[2]+=1;
+
+		if( nn==0 && nt==0 ){ // no normals or texcoords
+			fs << "\nf " << f[0] << ' ' << f[1] << ' ' << f[2];
+		} else if( nn==0 && nt>0 ){ // no normals, has texcoords
+			fs << "\nf " << f[0]<<'/'<<f[0]<< ' ' << f[1]<<'/'<<f[1]<< ' ' << f[2]<<'/'<<f[2];
+		} else if( nn>0 && nt==0 ){ // has normals, no texcoords
+			fs << "\nf " << f[0]<<"//"<<f[0]<< ' ' << f[1]<<"//"<<f[1]<< ' ' << f[2]<<"//"<<f[2];
+		} else if( nn>0 && nt>0 ){ // has normals and texcoords
+			fs << "\nf " << f[0]<<'/'<<f[0]<<'/'<<f[0]<< ' ' << f[1]<<'/'<<f[1]<<'/'<<f[1]<< ' ' << f[2]<<'/'<<f[2]<<'/'<<f[2];
+		}
+	} // end loop faces
+
+	fs.close();
 }
 
 std::string TriangleMesh::get_xml( int mode ){
@@ -291,6 +327,7 @@ bool TriangleMesh::load_obj( std::string file ){
 						std::string f_str; ss >> f_str;
 						std::stringstream ss2(f_str); std::string s2;
 						while( std::getline(ss2, s2, '/') ){
+							if( s2.size()==0 ){ continue; }
 							f_vals.push_back( std::stoi(s2)-1 );
 						}
 					}

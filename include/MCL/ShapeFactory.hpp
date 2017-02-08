@@ -58,7 +58,7 @@ namespace factory {
 	// A 1x1 plane along x/y axis
 	static inline std::shared_ptr<TriangleMesh> make_plane( int tess_x, int tess_y, SceneManager *scene=nullptr );
 
-	
+	// Cylinder centered on z axis. tess_c is the triangle resultion at the base.
 	static inline std::shared_ptr<TriangleMesh> make_cyl( int tess_c, int tess_l, float r, SceneManager *scene=nullptr );
 
 	// TODO
