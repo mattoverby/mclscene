@@ -39,10 +39,10 @@ public:
 	virtual ~Simulator(){}
 
 	// Compute a simulation time step
-	virtual bool step( const mcl::SceneManager *scene, float screen_dt ) = 0;
+	virtual void step( const mcl::SceneManager *scene, float screen_dt ) = 0;
 	
 	// Update the scene's objects with new vertex positions, normals, etc...
-	virtual bool update( mcl::SceneManager *scene ) = 0;
+	virtual void update( mcl::SceneManager *scene ) = 0;
 
 }; // end class simulation
 } // end namespace mcl

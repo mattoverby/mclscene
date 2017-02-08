@@ -46,7 +46,7 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 
 	// Make camera if one was not loaded
 	if( scene->cameras.size()==0 ){
-		Vec3f eye = scene_center; eye[2]-=(scene_radius*4.f);
+		Vec3f eye = scene_center; eye[2]+=(scene_radius*4.f);
 		std::shared_ptr<Trackball> cam( new Trackball(eye, scene_center) );
 		scene->cameras.push_back( cam );
 		scene->camera_params.push_back( std::vector<Param>() );
@@ -349,8 +349,8 @@ void Application::save_screenshot(GLFWwindow* window){
 
 void Application::run_simulator_step(){
 
-	if( !sim->step( scene, screen_dt ) ){ std::cerr << "\n**Application::display Error: Problem in simulation step" << std::endl; }
-	if( !sim->update( scene ) ){ std::cerr << "\n**Application::display Error: Problem in mesh update" << std::endl; }
+	sim->step( scene, screen_dt );
+	sim->update( scene );
 
 	// Probably don't need to do this
 //	Vec3f unused;

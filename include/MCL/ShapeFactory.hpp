@@ -40,6 +40,12 @@ namespace mcl {
 //
 namespace factory {
 
+	// An empty TriangleMesh
+	static inline std::shared_ptr<TriangleMesh> make_trimesh( SceneManager *scene=nullptr );
+
+	// An empty TetMesh
+	static inline std::shared_ptr<TetMesh> make_tetmesh( SceneManager *scene=nullptr );
+
 	// A basic sphere
 	static inline std::shared_ptr<TriangleMesh> make_sphere( Vec3f center, float radius, int tess, SceneManager *scene=nullptr );
 
@@ -77,6 +83,26 @@ namespace factory {
 //
 //	Implementation
 //
+
+static inline std::shared_ptr<TriangleMesh> factory::make_trimesh( SceneManager *scene ){
+	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
+	mesh->update();
+	if( scene != nullptr ){
+		scene->object_params.push_back( std::vector<Param>() );
+		scene->objects.push_back( mesh );
+	}
+	return mesh;
+}
+
+static inline std::shared_ptr<TetMesh> factory::make_tetmesh( SceneManager *scene ){
+	std::shared_ptr<TetMesh> mesh( new TetMesh() );
+	mesh->update();
+	if( scene != nullptr ){
+		scene->object_params.push_back( std::vector<Param>() );
+		scene->objects.push_back( mesh );
+	}
+	return mesh;
+}
 
 static inline std::shared_ptr<TriangleMesh> factory::make_sphere( Vec3f center, float radius, int tess, SceneManager *scene ){
 
