@@ -20,7 +20,7 @@
 // By Matt Overby (http://www.mattoverby.net)
 
 #include "MCL/TetMesh.hpp"
-#include "MCL/VertexSort.hpp"
+#include "MCL/HashKeys.hpp"
 #include <chrono>
 #include <map>
 #ifdef MCLSCENE_ENABLE_TETGEN

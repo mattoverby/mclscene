@@ -392,6 +392,9 @@ static inline std::shared_ptr<mcl::Material> mcl::parse_material( std::string ty
 			}
 			else if( tag=="texture" ){ mat->app.texture = params[i].as_string(); }
 			else if( tag=="shininess" || tag=="exponent" ){ mat->app.shini=params[i].as_int(); }
+			else if( tag=="red_back" ){
+				if( params[i].as_int()>0 ){ mat->app.flags = mat->app.flags | MATERIAL_RED_BACKFACE; }
+			}
 		}
 		std::shared_ptr<Material> new_mat( mat );
 		return new_mat;

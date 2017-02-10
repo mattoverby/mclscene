@@ -95,7 +95,7 @@ set( MCLSCENE_SRCS
 	include/MCL/SceneLoader.hpp
 	include/MCL/Param.hpp
 	include/MCL/Object.hpp
-	include/MCL/VertexSort.hpp
+	include/MCL/HashKeys.hpp
 	include/MCL/Camera.hpp
 	include/MCL/Light.hpp
 	include/MCL/AABB.hpp

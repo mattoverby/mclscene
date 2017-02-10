@@ -48,6 +48,7 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 	if( scene->cameras.size()==0 ){
 		Vec3f eye = scene_center; eye[2]+=(scene_radius*4.f);
 		std::shared_ptr<Trackball> cam( new Trackball(eye, scene_center) );
+		cam->clipping = Vec2f( scene_radius*0.1f, scene_radius*20.f );
 		scene->cameras.push_back( cam );
 //		scene->camera_params.push_back( std::vector<Param>() );
 		cam->update_view();
