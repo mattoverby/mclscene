@@ -308,7 +308,7 @@ bool BVHTraversal::any_hit( const BVHNode* node, const raycast::Ray *ray, raycas
 bool BVHTraversal::closest_object( const BVHNode *node, const Vec3f &point, Vec3f &projection, std::shared_ptr<BaseObject> *obj ){
 
 	double dist = (projection - point).squaredNorm();
-	if( projection::point_aabb( point, node->aabb->min, node->aabb->max ) > dist ){ return false; }
+	if( projection::point_aabb_dist( point, node->aabb->min, node->aabb->max ) > dist ){ return false; }
 
 	// See if there are children to intersect
 	bool left_hit=false, right_hit=false;
