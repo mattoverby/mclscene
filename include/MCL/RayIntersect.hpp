@@ -39,10 +39,9 @@ namespace raycast {
 	//
 	template<typename T> class rtRay {
 	public:
-		rtRay(){ direction=Vec3<T>(0,0,-1); eps(1e-5); }
-		rtRay( Vec3<T> o, Vec3<T> d, T e=1e-5 ){
+		rtRay(){ direction=Vec3<T>(0,0,-1); eps=T(1e-5); }
+		rtRay( Vec3<T> o, Vec3<T> d, T e=T(1e-5) ){
 			origin=o; direction=d; eps=e;
-			origin += direction*eps;
 		}
 		Vec3<T> origin, direction;
 		T eps;
@@ -57,7 +56,7 @@ namespace raycast {
 		void init( const rtRay<T> &ray ){ t_min=ray.eps; launch_point=ray.origin; }
 
 		rtPayload() : t_min(1e-5), t_max(9999999) {}
-		rtPayload( const rtRay<T> *ray ) : t_max(9999999) { init(*ray); }
+		rtPayload( const rtRay<T> &ray ) : t_max(9999999) { init(ray); }
 
 		double t_min, t_max;
 		Vec3<T> launch_point;

@@ -199,8 +199,7 @@ template <typename T> static inline Vec3<T> projection::Triangle( const Vec3<T> 
 		}
 	}
 
-	Vec3<T> result = p1 + edge0*s + edge1*t;
-	return result;
+	return ( p1 + edge0*s + edge1*t );
 
 } // end project triangle
 

@@ -116,6 +116,21 @@ namespace mcl {
 //		SECOND = 1 << 1, // future
 	};
 
+
+	// Assumes T is float or double
+	template <typename T> static inline Vec3<T> spherical_to_cartesian(T theta, T phi){
+		T sin_t, cos_t, sin_p, cos_p;
+		sincosf(theta, &sin_t, &cos_t);
+		sincosf(phi, &sin_p, &cos_p);
+		return Vec3<T>( sin_t * sin_p, sin_t * cos_p, cos_t );
+	}
+
+	template <typename T> static inline Vec2<T> cartesian_to_spherical(const Vec3<T> &v){
+		Vec2<T> r( std::acos(v[2]), std::atan2(v[1], v[0]) );
+		if(r[1] < 0){ r[1] += 2*M_PI; }
+		return r;
+	}
+
 } // end namespace mcl
 
 

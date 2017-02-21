@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -180,9 +180,9 @@ void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 //	light_params.clear();
 
 	std::vector<Param> params;
-	std::shared_ptr<Light> key = parse_light( "directional", params );
-	std::shared_ptr<Light> fill = parse_light( "directional", params );
-	std::shared_ptr<Light> back = parse_light( "directional", params );
+	std::shared_ptr<Light> key = parse_light( "spot", params );
+	std::shared_ptr<Light> fill = parse_light( "spot", params );
+	std::shared_ptr<Light> back = parse_light( "spot", params );
 	lights.push_back( key );
 	lights.push_back( fill );
 	lights.push_back( back );
