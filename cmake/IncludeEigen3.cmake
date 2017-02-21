@@ -22,9 +22,9 @@
 find_package(Eigen3)
 if(NOT EIGEN3_FOUND)
 	set(EIGEN3_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/eigen3 )
-	message("Eigen3 not found, cloning into ${EIGEN3_DIR}")
 	# We'll just use OMP's Eigen3 for now
 	IF(NOT EXISTS ${EIGEN3_DIR})
+		message("Eigen3 not found, cloning into ${EIGEN3_DIR}")
 #		execute_process(COMMAND git clone https://github.com/OPM/eigen3 ${EIGEN3_DIR})
 		execute_process(COMMAND hg clone https://bitbucket.org/eigen/eigen/ ${EIGEN3_DIR})
 	endif()
