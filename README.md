@@ -37,7 +37,7 @@ If you *don't* want a specific object to be rendered, use the material name "inv
 - Support for texture wrapping
 - Mesh instancing
 - Export to other renderers (e.g., mitsuba, blender)
-- Save materials on export
+- Replace glew so I can handle multiple Application instances
 
 # license
 

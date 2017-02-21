@@ -43,6 +43,8 @@ public:
 	// Updates the screen space buffers
 	void update_window_size( int win_width, int win_height );
 
+	~RenderGL();
+
 private:
 	// For SSAO, do a geometry pass to set up g-buffers
 	void geometry_pass( Camera *camera );

@@ -94,6 +94,9 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 
 Application::Application( mcl::SceneManager *scene_ ) : Application(scene_,0) {}
 
+Application::~Application(){
+	Input::clear();
+}
 
 int Application::display(){
 
@@ -141,7 +144,7 @@ int Application::display(){
 	glfwGetFramebufferSize(window, &width, &height);
 	framebuffer_size_callback(window, width, height); // sets the projection matrix
 
-	if( !renderer.init( scene, width, height ) ){ return EXIT_FAILURE; } // creates shaders
+	if( !renderer.init( scene, width, height ) ){ glfwTerminate(); return EXIT_FAILURE; } // creates shaders
 
 	// Initialize OpenGL
 	glEnable(GL_DEPTH_TEST);
@@ -187,6 +190,9 @@ int Application::display(){
 		}
 
 	} // end game loop
+
+	glfwDestroyWindow(window);
+	glfwTerminate();
 
 	return EXIT_SUCCESS;
 
@@ -366,6 +372,8 @@ void Application::save_screenshot(GLFWwindow* window){
 }
 
 void Application::run_simulator_step(){
+
+	if( sim == 0 ){ return; }
 
 	sim->step( scene, screen_dt );
 	sim->update( scene );

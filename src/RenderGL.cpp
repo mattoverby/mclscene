@@ -52,13 +52,14 @@ static void trimesh_copy( trimesh::TriMesh *to_mesh, BaseObject::AppData *from_m
 
 // RenderQuad() Renders a 1x1 quad in NDC, best used for framebuffer color targets
 void RenderGL::RenderQuad(){
+
 	if (quadVAO == 0){
 		GLfloat quadVertices[] = {
-		// Positions        // Texture Coords
-		-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-		1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+			// Positions        // Texture Coords
+			-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+			-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+			1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+			1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
 		};
 		// Setup plane VAO
 		glGenVertexArrays(1, &quadVAO);
@@ -81,7 +82,6 @@ void RenderGL::RenderQuad(){
 bool RenderGL::init( mcl::SceneManager *scene_, int win_width, int win_height ) {
 
 	scene = scene_;
-	quadVAO = 0;
 	quadVAO = 0;
 	quadVBO = 0;
 	gBuffer = 0;
@@ -529,6 +529,7 @@ void RenderGL::lighting_pass( Camera *cam ){
 
 	// Render to screen space
 	RenderQuad();
+
 }
 
 
@@ -609,13 +610,7 @@ bool RenderGL::load_mesh_buffers( BaseObject::AppData *mesh ){
 
 
 
-
-
-
-
-
-
-//RenderGL::~RenderGL(){
+RenderGL::~RenderGL(){
 	// Apparently in modern GL, textures are released when OpenGL context is
 	// destroyed. Unless I missunderstood something...
 
@@ -634,7 +629,7 @@ bool RenderGL::load_mesh_buffers( BaseObject::AppData *mesh ){
 //	glDeleteTextures(1, &noiseTexture);
 //	glDeleteTextures(1, &ssaoColorBuffer);
 //	glDeleteTextures(1, &ssaoColorBufferBlur);
-//}
+}
 
 
 

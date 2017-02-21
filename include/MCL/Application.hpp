@@ -52,10 +52,10 @@ public:
 	// Creates a gui with a combined simulation engine.
 	Application( mcl::SceneManager *scene_, Simulator *sim_ );
 
-	virtual ~Application(){}
+	~Application();
 
 	// Starts the game loop and returns success status
-	virtual int display();
+	int display();
 
 	// Stop the game loop
 	void close(){ close_window=true; }
@@ -142,6 +142,14 @@ public:
 	static std::vector< std::function<void ( GLFWwindow* window, double x, double y )> > cursor_position_callbacks;
 	static std::vector< std::function<void ( GLFWwindow* window, double x, double y )> > scroll_callbacks;
 	static std::vector< std::function<void ( GLFWwindow* window, int width, int height )> > framebuffer_size_callbacks;
+
+	static void clear(){
+		key_callbacks.clear();
+		mouse_button_callbacks.clear();
+		cursor_position_callbacks.clear();
+		scroll_callbacks.clear();
+		framebuffer_size_callbacks.clear();
+	}
 
 private:
 	Input(void){}
