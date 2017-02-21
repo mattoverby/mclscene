@@ -1,4 +1,4 @@
-# Copyright (c) 2016 University of Minnesota
+# Copyright (c) 2017 University of Minnesota
 # 
 # MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 # Redistribution and use in source and binary forms, with or without modification, are
@@ -39,6 +39,9 @@ option(MCL_ENABLE_TETGEN "Enable tetgen for auto-tetrahedralization of meshes" O
 #	dependencies
 #
 
+# ExternalProject will be used to make clones of dependencies from github
+include(ExternalProject)
+
 # trimesh, included in deps/
 set( TRIMESH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/trimesh2" )
 add_subdirectory( ${TRIMESH_DIR} ) # sets TRIMESH_INCLUDE and TRIMESH_SRCS
@@ -59,7 +62,11 @@ find_package( Eigen3 REQUIRED )
 if(MCL_BUILD_RENDERING)
 
 	find_package(OpenGL 4)
-	find_package(GLFW 3)
+
+	# Attempt to find a local install of GLFW 3. If not found, clone
+	# a copy from git and link it locally.
+	include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeGLFW.cmake )
+
 	find_package(GLEW)
 	find_package(PNG)
 
@@ -126,6 +133,9 @@ endif(MCL_BUILD_RENDERING)
 # Finally, include our needed files and add the library
 include_directories( ${MCLSCENE_INCLUDE_DIRS} )
 add_library( mclscene ${TRIMESH_SRCS} ${TETGEN_SRCS} ${MCLSCENE_SRCS} )
+if(GLFW_CLONED)
+	add_dependencies(mclscene glfw)
+endif()
 
 # Set the libraries variable in parent scope if exists
 get_directory_property(HasParent PARENT_DIRECTORY)
