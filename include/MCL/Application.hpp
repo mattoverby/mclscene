@@ -67,6 +67,8 @@ public:
 	RenderGL renderer;
 
 	// Camera
+	// Currently you cannot change the camera after you create an Application.
+	// current_cam will be set to the zero-th cam in SceneManager (or assigned a default).
 	bool update_view;
 	Camera *current_cam;
 

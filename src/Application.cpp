@@ -72,6 +72,23 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 	Input::cursor_position_callbacks.push_back( std::bind( &Application::cursor_position_callback, this, _1, _2, _3 ) );
 	Input::scroll_callbacks.push_back( std::bind( &Application::scroll_callback, this, _1, _2, _3 ) );
 	Input::framebuffer_size_callbacks.push_back( std::bind( &Application::framebuffer_size_callback, this, _1, _2, _3 ) );
+
+
+	if( current_cam->has_key_cb() ){
+		Input::key_callbacks.push_back( std::bind( &Camera::key_callback, current_cam, _1, _2, _3, _4, _5 ) );
+	}
+	if( current_cam->has_mouse_button_cb() ){
+		Input::mouse_button_callbacks.push_back( std::bind( &Camera::mouse_button_callback, current_cam, _1, _2, _3, _4 ) );
+	}
+	if( current_cam->has_cursor_position_cb() ){
+		Input::cursor_position_callbacks.push_back( std::bind( &Camera::cursor_position_callback, current_cam, _1, _2, _3 ) );
+	}
+	if( current_cam->has_scroll_cb() ){
+		Input::scroll_callbacks.push_back( std::bind( &Camera::scroll_callback, current_cam, _1, _2, _3 ) );
+	}
+	if( current_cam->has_framebuffer_size_cb() ){
+		Input::framebuffer_size_callbacks.push_back( std::bind( &Camera::framebuffer_size_callback, current_cam, _1, _2, _3 ) );
+	}
 }
 
 
