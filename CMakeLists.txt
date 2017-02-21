@@ -56,7 +56,7 @@ set( TETGEN_SRCS "" )
 endif(MCL_ENABLE_TETGEN)
 
 # Eigen3
-find_package( Eigen3 REQUIRED )
+include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeEigen3.cmake )
 
 # Rendering libraries
 if(MCL_BUILD_RENDERING)

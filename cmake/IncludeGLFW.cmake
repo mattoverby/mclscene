@@ -26,6 +26,7 @@ if(NOT GLFW_FOUND)
 
 	set(glfw_checkout_Dir ${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw)
 	make_directory(${glfw_checkout_Dir})
+	message("GLFW3 not found, cloning into ${glfw_checkout_Dir}")
 
 	set(glfw_PREFIX "${glfw_checkout_Dir}")
 	set(glfw_INSTALL_DIR "${glfw_checkout_Dir}/install")
