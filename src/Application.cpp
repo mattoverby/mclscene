@@ -67,6 +67,7 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 
 	// Add callbacks to the input class
 	using namespace std::placeholders;    // adds visibility of _1, _2, _3,...
+	Input::clear(); // clear existing callbacks
 	Input::key_callbacks.push_back( std::bind( &Application::key_callback, this, _1, _2, _3, _4, _5 ) );
 	Input::mouse_button_callbacks.push_back( std::bind( &Application::mouse_button_callback, this, _1, _2, _3, _4 ) );
 	Input::cursor_position_callbacks.push_back( std::bind( &Application::cursor_position_callback, this, _1, _2, _3 ) );
@@ -93,10 +94,6 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 
 
 Application::Application( mcl::SceneManager *scene_ ) : Application(scene_,0) {}
-
-Application::~Application(){
-	Input::clear();
-}
 
 int Application::display(){
 

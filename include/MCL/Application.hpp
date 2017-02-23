@@ -52,8 +52,6 @@ public:
 	// Creates a gui with a combined simulation engine.
 	Application( mcl::SceneManager *scene_, Simulator *sim_ );
 
-	~Application();
-
 	// Starts the game loop and returns success status
 	int display();
 
@@ -103,10 +101,11 @@ protected:
 
 
 //
-//	A bit hacky, but allows us to use class functions as input callbacks.
+//	A bit hacky and hurts performance, but allows us to use class functions as input callbacks.
+//	This will have to do for now.
 //	E.g.
 //		using namespace std::placeholders; // adds visibility of _1, _2, _3,...
-//		Input::key_callbacks.push_back( std::bind(&MyClass::key_callback,this,_1,_2,_3,_4,_5) );
+//		Input::key_callbacks.push_back( std::bind(&MyClass::key_callback,myClassPtr,_1,_2,_3,_4,_5) );
 //
 class Input {
 public:
