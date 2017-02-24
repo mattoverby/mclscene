@@ -36,7 +36,7 @@ public:
 	bool valid;
 
 //	trimesh::vec center(){ return (min+max)*0.5f; }
-	Vec3f center(){ return (min+max)*0.5; }
+	Vec3f center() const { return (min+max)*0.5; }
 
 //	float radius(){ return trimesh::len(max-min)*0.5f; }
 	double radius(){ return (max-min).norm()*0.5f; }

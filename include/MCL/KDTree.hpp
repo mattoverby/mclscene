@@ -33,10 +33,10 @@ namespace mcl {
 //
 class KDTNode {
 public:
-	KDTNode(){ left_child=NULL; right_child=NULL; }
+	KDTNode(){ left_child=nullptr; right_child=nullptr; }
 	~KDTNode() {
-		if( left_child != NULL ){ delete left_child; }
-		if( right_child != NULL){ delete right_child; }
+		if(left_child != nullptr){ delete left_child; }
+		if(right_child != nullptr){ delete right_child; }
 	}
 
 	// Allocated in make_tree:
@@ -46,7 +46,7 @@ public:
 	bool is_leaf() const { return m_objects.size()>0; }
 
 	unsigned short axis; // 0, 1, 2
-	Vec3f point; // the point that splits the plane
+	float median;
 };
 
 
@@ -75,10 +75,10 @@ namespace kdtree {
 
 static inline void kdtree::make_tree( KDTNode *root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth ){
 	
-	if( root == NULL ){ root = new KDTNode(); }
+	if( root == nullptr ){ root = new KDTNode(); }
 	else{
-		if( root->left_child != NULL ){ delete root->left_child; root->left_child = NULL; }
-		if( root->right_child != NULL){ delete root->right_child; root->right_child = NULL; }
+		if( root->left_child != nullptr ){ delete root->left_child; root->left_child = nullptr; }
+		if( root->right_child != nullptr ){ delete root->right_child; root->right_child = nullptr; }
 		root->m_objects.clear();
 	}
 
@@ -111,11 +111,10 @@ static inline void kdtree::object_median_split( KDTNode *node, const std::vector
 	}
 
 	// Set KDTree node details
-	node->point = aabb.center();
 	node->axis = split_axis;
-	double mid_pt = node->point[ split_axis ];
+	node->median = aabb.center()[ split_axis ];
 
-	// If num faces == 1, we're done
+	// See if we're a leaf
 	if( queue.size()==0 ){ return; }
 	else if( queue.size()==1 || max_depth <= 0 ){
 		node->m_objects.reserve( queue.size() );
@@ -127,8 +126,8 @@ static inline void kdtree::object_median_split( KDTNode *node, const std::vector
 	// Note that a triangle may be added to both sides of the KDTree!
 	std::vector<int> left_queue, right_queue;
 	for( int i=0; i<queue.size(); ++i ){
-		if( obj_min[i] <= mid_pt ){ left_queue.push_back( queue[i] ); }
-		if( obj_max[i] >= mid_pt ){ right_queue.push_back( queue[i] ); }
+		if( obj_min[i] < node->median ){ left_queue.push_back( queue[i] ); }
+		if( obj_max[i] >= node->median ){ right_queue.push_back( queue[i] ); }
 	}
 
 	// Create the children
@@ -143,38 +142,54 @@ static inline void kdtree::object_median_split( KDTNode *node, const std::vector
 // Projection is the point on the object surface, obj is the pointer to the object.
 static inline bool kdtree::closest_object( const KDTNode *node, const Vec3f &point, Vec3f &projection, std::shared_ptr<BaseObject> *obj ){
 
-	// If we're a leaf, find closest projection
-	if( node->is_leaf() ){
-		double dist = (point-projection).squaredNorm();
-		bool obj_hit = false;
-		for( int i=0; i<node->m_objects.size(); ++i ){
-
-			Vec3f p = node->m_objects[i]->projection( point );
-			Vec3f n = point - p;
-
-			// See if this projection is closer
-			double curr_dist = n.squaredNorm();
-			if( curr_dist < dist ){
-				projection = p;
-				obj_hit = true;
-				obj=&(node->m_objects[i]);
-				dist = curr_dist;
-			}
-		}
-		return obj_hit;
-	} // end is leaf node
-
-	// Otherwise parse the tree
+	// Parse the tree
 	bool left_hit = false; bool right_hit = false;
-	if( node->left_child != NULL && point[node->axis] <= node->point[node->axis] ){
+	float pt = point[ node->axis ]; // point
+	float med = node->median; // node median
+
+	// If the point is very close to the median of the node, there is a
+	// chance something closer might be on the other branch.
+
+	// Check left?
+	if( pt < med && node->left_child != nullptr ){
 		left_hit = kdtree::closest_object( node->left_child, point, projection, obj );
-	}
-	if( node->right_child != NULL && point[node->axis] >= node->point[node->axis] ){
-		right_hit = kdtree::closest_object( node->right_child, point, projection, obj );
+
+		float dist = (projection-point).squaredNorm();
+		bool check_both = dist > (pt-med)*(pt-med) && node->right_child != nullptr;
+		if( check_both ){ right_hit = kdtree::closest_object( node->right_child, point, projection, obj ); }
 	}
 
+	// Check right?
+	else if( pt >= med && node->right_child != nullptr ){
+		right_hit = kdtree::closest_object( node->right_child, point, projection, obj );
+
+		float dist = (projection-point).squaredNorm();
+		bool check_both = dist > (pt-med)*(pt-med) && node->left_child != nullptr;
+		if( check_both ){ left_hit = kdtree::closest_object( node->left_child, point, projection, obj ); }
+	}
+
+	// If we traversed the tree, return
 	if( left_hit || right_hit ){ return true; }
-	return false;
+
+	// If we're a leaf, find closest projection
+	bool obj_hit = false;
+	double dist = (point-projection).squaredNorm(); // current closest obj
+	for( int i=0; i<node->m_objects.size(); ++i ){
+
+		Vec3f p = node->m_objects[i]->projection(point);
+		Vec3f n = point - p;
+
+		// See if this projection is closer
+		double curr_dist = n.squaredNorm();
+		if( curr_dist < dist ){
+			projection = p;
+			obj_hit = true;
+			obj=&(node->m_objects[i]);
+			dist = curr_dist;
+		}
+	}
+
+	return obj_hit;
 }
 
 
