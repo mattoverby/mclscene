@@ -118,7 +118,7 @@ public:
 
 	// Point-Scene traversal for closest object to a given point.
 	// Projection is the point on the object surface, obj is the pointer to the object.
-	// Returns false if a point was not in any AABB. A KD-Tree would be better for this.
+	// Returns false if a point was not in any AABB.
 	static bool closest_object( const BVHNode *node, const Vec3f &point, Vec3f &projection, std::shared_ptr<BaseObject> *obj );
 };
 

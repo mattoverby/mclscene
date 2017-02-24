@@ -3,6 +3,7 @@
 #include "MCL/Application.hpp"
 #include "MCL/MicroTimer.hpp"
 #include "MCL/ShapeFactory.hpp"
+#include "MCL/KDTree.hpp"
 
 using namespace mcl;
 
