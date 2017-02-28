@@ -46,7 +46,8 @@ public:
 	bool load( std::string filename );
 
 	// Saves the tet mesh to .ele and .node files.
-	// Do not include extensions on the filename argument.
+	// If extention is .tet, saves as a .tet file.
+	// Otherwise do not include extensions on the filename argument.
 	void save( std::string filename );
 
 	std::string get_xml( int mode );
