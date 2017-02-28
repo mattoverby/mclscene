@@ -59,8 +59,13 @@ bool TetMesh::load( std::string filename ){
 	// Get the extension
 	std::string ext = tetmesh_helper::to_lower( tetmesh_helper::get_ext(filename) );
 
+	if( ext=="tet" ){
+		if( !load_tet( filename ) ){ return false; }
+		if( !need_surface() ){ return false; }
+	}
+
 	// If it's a PLY we need to use tetgen
-	if( ext=="ply" ){
+	else if( ext=="ply" ){
 
 		#ifndef MCLSCENE_ENABLE_TETGEN
 
@@ -230,6 +235,7 @@ bool TetMesh::load_ele( std::string filename ){
 		int idx;
 		int node_ids[4];
 		lineSS >> idx >> node_ids[0] >> node_ids[1] >> node_ids[2] >> node_ids[3];
+//		lineSS >> idx >> node_ids[0] >> node_ids[2] >> node_ids[1] >> node_ids[3];
 
 		// Check for 1-indexed
 		if( i==0 && idx==1 ){ starts_with_one = true; }
@@ -255,6 +261,51 @@ bool TetMesh::load_ele( std::string filename ){
 
 } // end load ele file
 
+
+bool TetMesh::load_tet( std::string filename ){
+
+	// Load the vertices of the tetmesh
+	std::ifstream filestream;
+	filestream.open( filename.c_str() );
+	if( !filestream ){ std::cerr << "\n**TetMesh Error: Could not load " << filename << std::endl; return false; }
+
+	std::string header;
+	getline( filestream, header );
+	std::stringstream headerSS(header);
+	std::string tetstr;
+	int n_tets = 0; int n_verts = 0; headerSS >> tetstr >> n_verts >> n_tets;
+
+	//
+	//	Load Vertices
+	//
+	vertices.reserve( n_verts );
+	for( int i=0; i<n_verts; ++i ){
+		std::string line;
+		getline( filestream, line );
+		std::stringstream lineSS(line);
+		double x, y, z;
+		lineSS >> x >> y >> z;
+		vertices.push_back( Vec3f( x, y, z ) );
+	}
+
+	//
+	//	Load Tets
+	//
+	tets.reserve( n_tets );
+	for( int i=0; i<n_tets; ++i ){
+		std::string line;
+		getline( filestream, line );
+		std::stringstream lineSS(line);
+		int a, b, c, d;
+		lineSS >> a >> b >> c >> d;
+		tets.push_back( Vec4i( a, b, c, d ) );
+	}
+
+	filestream.close();
+
+	return true;
+
+} // end load ele file
 
 bool TetMesh::need_surface(){
 

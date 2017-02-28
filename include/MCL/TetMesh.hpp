@@ -38,6 +38,8 @@ public:
 	std::vector< Vec2f > texcoords; // per vertex uv coords
 
 	// Filename is the first part of a tetmesh which must contain an .ele and .node file.
+	// Can also load a ".tet" file which is a list of vertices and eles in the same file.
+	// I'll put some docs on filetypes some day.
 	// If a ply file is supplied, tetgen will be used to tetrahedralize the mesh (however,
 	// the ply must be ascii, not binary).
 	// Returns true on success
@@ -72,6 +74,8 @@ private:
 	bool load_node( std::string filename );
 
 	bool load_ele( std::string filename );
+
+	bool load_tet( std::string filename );
 
 	// Computes a surface mesh, called by load
 	bool need_surface();
