@@ -248,6 +248,7 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 		for( int i=0; i<params.size(); ++i ){
 			if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_double(); }
 			else if( parse::to_lower(params[i].tag)=="center" ){ center=params[i].as_vec3(); }
+			else if( parse::to_lower(params[i].tag)=="tess" ){ tess=params[i].as_int(); }
 		}
 
 		new_obj = factory::make_sphere( center, radius, tess );

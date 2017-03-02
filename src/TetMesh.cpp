@@ -132,17 +132,20 @@ void TetMesh::need_normals( bool recompute ){
 void TetMesh::update(){
 
 	need_normals(true); aabb.valid=false;
+	if( this->app.wireframe ){ need_edges(); }
 
 	// Update app data
 	this->app.num_vertices = vertices.size();
 	this->app.num_normals = normals.size();
 	this->app.num_faces = faces.size();
 	this->app.num_texcoords = texcoords.size();
+	this->app.num_edges = edges.size();
 
 	this->app.vertices = &vertices[0][0];
 	this->app.normals = &normals[0][0];
 	this->app.faces = &faces[0][0];
 	this->app.texcoords = &texcoords[0][0];
+	this->app.edges = &edges[0][0];
 }
 
 // Transform the mesh by the given matrix
@@ -309,6 +312,8 @@ bool TetMesh::load_tet( std::string filename ){
 
 bool TetMesh::need_surface(){
 
+	if( faces.size()>0 ){ return true; }
+
 	// vertex ids -> number of faces using these indices
 	std::unordered_map< int3, int > face_ids;
 
@@ -386,6 +391,23 @@ void TetMesh::make_tri_refs(){
 	} // end loop faces
 
 } // end make triangle references
+
+
+void TetMesh::need_edges(){
+
+	if( edges.size()>0 ){ return; }
+	if( faces.size()==0 ){ need_surface(); }
+
+	edges.reserve( faces.size()*3 );
+	for( int f=0; f<faces.size(); ++f ){
+		edges.push_back( Vec2i(faces[f][0],faces[f][1]) );
+		edges.push_back( Vec2i(faces[f][0],faces[f][2]) );
+		edges.push_back( Vec2i(faces[f][1],faces[f][2]) );
+	}
+	this->app.num_edges = edges.size();
+	this->app.edges = &edges[0][0];
+
+}
 
 
 void TetMesh::get_bounds( Vec3f &bmin, Vec3f &bmax ){

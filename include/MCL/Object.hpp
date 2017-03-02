@@ -65,17 +65,17 @@ public:
 	// Derived object is responsible for managing these pointers.
 	struct AppData {
 
-		AppData() : material(MATERIAL_NOTSET), dynamic(false), subdivide_mesh(0), flat_shading(false),
+		AppData() : material(MATERIAL_NOTSET), dynamic(false), subdivide_mesh(0), flat_shading(false), wireframe(false),
 			vertices(0), normals(0), texcoords(0), faces(0),
-			num_vertices(0), num_normals(0), num_texcoords(0), num_faces(0),
-			verts_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), tris_vao(0) {}
+			num_vertices(0), num_normals(0), num_texcoords(0), num_faces(0), num_edges(0),
+			verts_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), wire_ibo(0), tris_vao(0) {}
 
 		bool dynamic; // Set to true if mesh vertices often change
 
 		// TODO: make these component of material instead of object
 		unsigned int subdivide_mesh; // Number of mesh subdivisions before rendering for better visuals (SLOW)
 		bool flat_shading; // Double up on verts/norms before rendering (ALSO SLOW)
-	//	bool wireframe; // Draw edges of the mesh. Can be combined with invisible material. TODO
+		bool wireframe; // Draw edges of the mesh. Can be combined with invisible material. TODO
 
 		// Index into SceneManager::materials
 		int material;
@@ -89,8 +89,9 @@ public:
 		float* normals; // XYZ, normalized
 		float* texcoords; // uv tex coords
 		int* faces;
-		int num_vertices, num_normals, num_texcoords, num_faces;
-		unsigned int verts_vbo, normals_vbo, texcoords_vbo, barycoords_vbo, faces_ibo, tris_vao;
+		int* edges;
+		int num_vertices, num_normals, num_texcoords, num_faces, num_edges;
+		unsigned int verts_vbo, normals_vbo, texcoords_vbo, barycoords_vbo, faces_ibo, wire_ibo, tris_vao;
 
 	} app ;
 };

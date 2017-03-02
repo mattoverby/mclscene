@@ -91,21 +91,37 @@ void TriangleMesh::need_normals( bool recompute ){
 
 } // end compute normals
 
+void TriangleMesh::need_edges(){
+
+	if( edges.size()>0 ){ return; }
+	for( int f=0; f<faces.size(); ++f ){
+		edges.push_back( Vec2i(faces[f][0],faces[f][1]) );
+		edges.push_back( Vec2i(faces[f][0],faces[f][2]) );
+		edges.push_back( Vec2i(faces[f][1],faces[f][2]) );
+	}
+	this->app.num_edges = edges.size();
+	this->app.edges = &edges[0][0];
+}
+
 
 void TriangleMesh::update(){
 
 	need_normals(true); aabb.valid=false;
+	if( this->app.wireframe ){ need_edges(); }
 
 	// Update app data
 	this->app.num_vertices = vertices.size();
 	this->app.num_normals = normals.size();
 	this->app.num_faces = faces.size();
 	this->app.num_texcoords = texcoords.size();
+	this->app.num_edges = edges.size();
 
 	this->app.vertices = &vertices[0][0];
 	this->app.normals = &normals[0][0];
 	this->app.faces = &faces[0][0];
 	this->app.texcoords = &texcoords[0][0];
+	this->app.edges = &edges[0][0];
+
 }
 
 

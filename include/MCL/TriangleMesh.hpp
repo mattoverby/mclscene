@@ -66,6 +66,7 @@ public:
 	std::vector< Vec3f > normals; // zero length for all non-surface normals
 	std::vector< Vec3i > faces; // surface triangles
 	std::vector< Vec2f > texcoords; // per vertex uv coords
+	std::vector< Vec2i > edges;
 
 	// Returns true on success
 	bool load( std::string filename );
@@ -82,6 +83,9 @@ public:
 	void update();
 
 	void need_normals( bool recompute=false );
+
+	// Creates edges for rendering wireframe
+	void need_edges();
 
 	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
 		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }

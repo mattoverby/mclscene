@@ -36,6 +36,7 @@ public:
 	std::vector< Vec3f > normals; // zero length for all non-surface normals
 	std::vector< Vec3i > faces; // surface triangles
 	std::vector< Vec2f > texcoords; // per vertex uv coords
+	std::vector< Vec2i > edges; // contains surface edges only
 
 	// Filename is the first part of a tetmesh which must contain an .ele and .node file.
 	// Can also load a ".tet" file which is a list of vertices and eles in the same file.
@@ -57,6 +58,8 @@ public:
 
 	// Transform the mesh by the given matrix
 	void apply_xform( const trimesh::xform &xf );
+
+	void need_edges();
 
 	void update();
 

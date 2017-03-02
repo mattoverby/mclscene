@@ -435,6 +435,14 @@ void RenderGL::geometry_pass( Camera *camera ){
 			glBindVertexArray(0);
 		}
 
+		if( mesh->wireframe ){
+			glBindVertexArray(mesh->tris_vao);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->wire_ibo);
+			glDrawElements(GL_LINES, mesh->num_edges*2, GL_UNSIGNED_INT, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+			glBindVertexArray(0);
+		}
+
 		if( texture_id>0 ){
 			glBindTexture( GL_TEXTURE_2D, 0 );
 			shaderGeometryPass.enable();
@@ -573,6 +581,12 @@ bool RenderGL::load_mesh_buffers( BaseObject::AppData *mesh ){
 		glGenBuffers(1, &mesh->faces_ibo);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->faces_ibo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->num_faces*mesh->face_stride(), mesh->faces, GL_STATIC_DRAW);
+	}
+
+	if( !mesh->wire_ibo && mesh->wireframe ){
+		glGenBuffers(1, &mesh->wire_ibo);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->wire_ibo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->num_edges*sizeof(int)*2, mesh->edges, GL_STATIC_DRAW);
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);

@@ -305,37 +305,6 @@ bool BVHTraversal::any_hit( const BVHNode* node, const raycast::Ray *ray, raycas
 } // end ray intersect
 
 
-bool BVHTraversal::closest_object( const BVHNode *node, const Vec3f &point, Vec3f &projection, std::shared_ptr<BaseObject> *obj ){
-
-	double dist = (projection - point).squaredNorm();
-	if( projection::point_aabb_dist( point, node->aabb->min, node->aabb->max ) > dist ){ return false; }
-
-	// See if there are children to intersect
-	bool left_hit=false, right_hit=false;
-	if( node->left_child != NULL ){ left_hit = BVHTraversal::closest_object( node->left_child, point, projection, obj ); }
-	if( node->right_child != NULL ){ right_hit = BVHTraversal::closest_object( node->right_child, point, projection, obj ); }
-	if( left_hit || right_hit ){ return true; }
-
-	// Otherwise it's a leaf node, check objects
-	bool obj_hit = false;
-	for( int i=0; i<node->m_objects.size(); ++i ){
-		Vec3f p = node->m_objects[i]->projection( point );
-		Vec3f n = point - p;
-
-		// See if this projection is closer
-		double curr_dist = n.squaredNorm();
-		if( curr_dist < dist ){
-			projection = p;
-			obj_hit = true;
-			obj=&(node->m_objects[i]);
-			dist = curr_dist;
-		}
-	}
-	return obj_hit;
-
-} // end closest object
-
-
 void BVHNode::get_edges( std::vector<Vec3f> &edges, bool add_children ){
 
 	{
