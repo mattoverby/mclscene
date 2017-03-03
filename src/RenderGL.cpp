@@ -220,7 +220,7 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
 		std::cout << "GBuffer Framebuffer not complete!" << std::endl;
 	}
-
+/*
 	// Shadows
 	if( !depthMapFBO ){ glGenFramebuffers(1, &depthMapFBO); }
 	if( !depthMap ){ glGenTextures(1, &depthMap); }
@@ -234,6 +234,7 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
 	glNamedFramebufferDrawBuffer(depthMapFBO, GL_NONE);
 	glNamedFramebufferDrawBuffer(depthMapFBO, GL_NONE);
+*/
 
 	// Also create framebuffer to hold SSAO processing stage 
 	if( !ssaoFBO ){ glGenFramebuffers(1, &ssaoFBO); }
