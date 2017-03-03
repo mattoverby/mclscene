@@ -481,7 +481,7 @@ void RenderGL::lighting_pass( Camera *cam ){
 	float scene_radius = 0.f;
 	Vec3f scene_center;
 	scene->get_bsphere(&scene_center,&scene_radius,false);
-	ssao_radius = scene_radius*0.2f;
+	ssao_radius = scene_radius*0.3f;
 
 	// Camera transforms
 	trimesh::fxform model;
