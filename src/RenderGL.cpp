@@ -457,6 +457,7 @@ void RenderGL::geometry_pass( Camera *camera ){
 
 		if( mesh->wireframe ){
 			glUniform4f( shaderGeometryPass.uniform("diff_color"), 0.f, 0.f, 0.f, mat->app.amb.norm() );
+			glUniform4f( shaderGeometryPass.uniform("spec_color"), 0.f, 0.f, 0.f, 1.f );
 			glBindVertexArray(mesh->tris_vao);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->wire_ibo);
 			glDrawElements(GL_LINES, mesh->num_edges*2, GL_UNSIGNED_INT, 0);
