@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -365,16 +365,19 @@ void RenderGL::draw_objects( bool update_vbo ){
 				}
 			}
 			tempmesh.need_normals(true);
+			tempmesh.need_edges(true);
 		
 			// We will use the app data stored with that object.
 			mesh->vertices = &tempmesh.vertices[0][0];
 			mesh->normals = &tempmesh.normals[0][0];
 			mesh->faces = &tempmesh.faces[0][0];
 			mesh->texcoords = &tempmesh.texcoords[0][0];
+			mesh->edges = &tempmesh.edges[0][0];
 			mesh->num_vertices = tempmesh.vertices.size();
 			mesh->num_normals = tempmesh.normals.size();
 			mesh->num_faces = tempmesh.faces.size();
 			mesh->num_texcoords = tempmesh.texcoords.size();
+			mesh->num_edges = tempmesh.edges.size();
 			load_mesh_buffers( mesh );
 
 		} else { load_mesh_buffers( mesh ); }
@@ -453,6 +456,7 @@ void RenderGL::geometry_pass( Camera *camera ){
 		}
 
 		if( mesh->wireframe ){
+			glUniform4f( shaderGeometryPass.uniform("diff_color"), 0.f, 0.f, 0.f, mat->app.amb.norm() );
 			glBindVertexArray(mesh->tris_vao);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->wire_ibo);
 			glDrawElements(GL_LINES, mesh->num_edges*2, GL_UNSIGNED_INT, 0);

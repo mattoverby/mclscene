@@ -4,7 +4,9 @@
 	<Object name="bunny_562" type="tetmesh" >
 		<File value="bunny562faces.1" />
 		<Scale value="10 10 10" />
-		<Material value="gold" />
+		<Material value="CyanPlastic" />
+		<wireframe value="1" />
+		<flat_shading value="1" />
 	</Object>
 
 	<Object name="obj1" type="box" >

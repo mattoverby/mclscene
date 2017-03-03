@@ -215,6 +215,7 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 	bool flat_shading = false;
 	int subdivide_mesh = 0;
 	bool invis_material = false;
+	bool wireframe = false;
 	int tess = 3;
 	trimesh::xform x_form;
 	std::string filename = "";
@@ -223,7 +224,8 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 		if( tag=="translate" ){ x_form = params[i].as_xform() * x_form; }
 		else if( tag=="scale" ){ x_form = params[i].as_xform() * x_form; }
 		else if( tag=="rotate" ){ x_form = params[i].as_xform() * x_form; }
-		else if( tag=="subdivide" || tag=="subdivide_mesh" ){ subdivide_mesh = abs(params[i].as_int()); }
+		else if( tag=="subdivide" || tag=="subdivide_mesh" ){ subdivide_mesh = std::abs(params[i].as_int()); }
+		else if( tag=="wireframe" ){ wireframe = params[i].as_bool(); }
 		else if( tag=="flat" || tag=="flat_shading" ){ flat_shading = params[i].as_bool(); }
 		else if( tag=="tess" ){ tess=params[i].as_int(); }
 		else if( tag=="file" || tag=="filename" ){ filename=params[i].as_string(); }
@@ -327,6 +329,7 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 	else if( type == "trimesh" || type == "trianglemesh" ){
 		std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
 		if( !mesh->load( filename ) ){ printf("\n**TriMesh Error: failed to load file %s\n", filename.c_str()); }
+		if( wireframe ){ mesh->need_edges(); }
 		new_obj = std::shared_ptr<BaseObject>( mesh );
 	} // end build trimesh
 
@@ -337,6 +340,7 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 	else if( type == "tetmesh" ){
 		std::shared_ptr<TetMesh> mesh( new TetMesh() );
 		if( !mesh->load( filename ) ){ printf("\n**TetMesh Error: failed to load file %s\n", filename.c_str()); }
+		if( wireframe ){ mesh->need_edges(); }
 		new_obj = std::shared_ptr<BaseObject>( mesh );
 	} // end build tet mesh
 
@@ -348,6 +352,7 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 		new_obj->apply_xform( x_form );
 		new_obj->app.flat_shading = flat_shading;
 		new_obj->app.subdivide_mesh = (unsigned int)subdivide_mesh;
+		new_obj->app.wireframe = wireframe;
 		if( invis_material ){ new_obj->app.material = MATERIAL_INVISIBLE; }
 		return new_obj;
 	} else {

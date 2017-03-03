@@ -91,9 +91,10 @@ void TriangleMesh::need_normals( bool recompute ){
 
 } // end compute normals
 
-void TriangleMesh::need_edges(){
+void TriangleMesh::need_edges( bool recompute ){
 
-	if( edges.size()>0 ){ return; }
+	if( edges.size()>0 && !recompute ){ return; }
+	edges.clear();
 	for( int f=0; f<faces.size(); ++f ){
 		edges.push_back( Vec2i(faces[f][0],faces[f][1]) );
 		edges.push_back( Vec2i(faces[f][0],faces[f][2]) );

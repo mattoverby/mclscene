@@ -85,7 +85,7 @@ public:
 	void need_normals( bool recompute=false );
 
 	// Creates edges for rendering wireframe
-	void need_edges();
+	void need_edges( bool recompute=false );
 
 	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
 		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }

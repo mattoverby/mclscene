@@ -24,7 +24,7 @@
 
 #include <memory>
 #include "XForm.h"
-#include "RayIntersect.hpp"
+#include "Raycast.hpp"
 
 namespace mcl {
 

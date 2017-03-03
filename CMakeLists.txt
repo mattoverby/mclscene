@@ -110,7 +110,7 @@ set( MCLSCENE_SRCS
 	include/MCL/Projection.hpp
 	include/MCL/Material.hpp
 	include/MCL/Simulator.hpp
-	include/MCL/RayIntersect.hpp
+	include/MCL/Raycast.hpp
 	include/MCL/ColorMap.hpp
 )
 
