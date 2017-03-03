@@ -47,13 +47,13 @@ vec3 BlinnPhong(Light light, vec3 N, vec3 fragPos, vec3 V, vec4 diff_amb, vec4 s
 
 	// Diffuse 
 	float diff = max( dot(N, L), 0.f );
-	vec3 diffuse = diff * diff_amb.rgb * light.intensity;
+	vec3 diffuse = diff * mat_ambocc * diff_amb.rgb * light.intensity;
 
 	// Specular
 	vec3 H = normalize(L + V);
 	float shini = max( 1.f, spec_albedo[3]*128.f ); // glsl pow function needs exp>=1
 	float spec = pow( max( mydot(N, H), 0.f), shini );
-	vec3 specular = spec * spec_albedo.rgb * light.intensity;
+	vec3 specular = spec * mat_ambocc * spec_albedo.rgb * light.intensity;
 
 	// Attenuation (falloff)
 	float dist = length( light.position - fragPos );

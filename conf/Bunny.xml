@@ -7,4 +7,12 @@
 		<Material value="gold" />
 	</Object>
 
+	<Object name="obj1" type="box" >
+		<translate value="0 -.6 0" />
+		<width value="20" />
+		<length value="20" />
+		<Material value="whiteplastic" />
+	</Object>
+
+
 </mclScene>

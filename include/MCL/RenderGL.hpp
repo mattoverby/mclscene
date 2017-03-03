@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -76,6 +76,8 @@ private:
 	void RenderQuad();
 
 	GLuint quadVAO, quadVBO; // for deferred shading
+	GLuint depthMapFBO; // for shadows
+	GLuint depthMap;
 	GLuint gBuffer; // G-Buffer
 	GLuint gPosition, gNormal, gDiffuse, gSpec; // render buffs
 	GLuint rboDepth; // depth buffer
@@ -83,6 +85,10 @@ private:
 	GLuint lightingFBO, lightingBuffer; // post lighting stage
 	GLuint ssaoColorBuffer, ssaoColorBufferBlur;
 	GLuint noiseTexture; // occlusion noise
+
+	const GLuint SHADOW_WIDTH = 1024;
+	const GLuint SHADOW_HEIGHT = 1024;
+	float ssao_radius;
 
 	mcl::SceneManager *scene;
 

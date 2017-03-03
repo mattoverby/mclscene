@@ -93,10 +93,12 @@ bool RenderGL::init( mcl::SceneManager *scene_, int win_width, int win_height ) 
 	ssaoFBO = 0;
 	ssaoBlurFBO = 0;
 	lightingFBO = 0;
+	depthMapFBO = 0;
 	lightingBuffer = 0;
 	ssaoColorBuffer = 0;
 	ssaoColorBufferBlur = 0;
 	noiseTexture = 0;
+	depthMap = 0;
 
 	shaderGeometryPassTextured.init_from_files(fullpath("src/shaders/ssao_geometry.vs"), fullpath("src/shaders/ssao_geometry_textured.frag"));
 	shaderGeometryPass.init_from_files(fullpath("src/shaders/ssao_geometry.vs"), fullpath("src/shaders/ssao_geometry.frag"));
@@ -122,11 +124,12 @@ bool RenderGL::init( mcl::SceneManager *scene_, int win_width, int win_height ) 
 	// Sample kernel
 	std::uniform_real_distribution<float> randomFloats(0.f,1.f);
 	std::default_random_engine generator;
-	for(int i = 0; i < 32; ++i){
+	int num_ssao_samples = 64;
+	for(int i = 0; i < num_ssao_samples; ++i){
 		Vec3f sample(randomFloats(generator)*2.f-1.f, randomFloats(generator)*2.f-1.f, randomFloats(generator));
 		sample.normalize();
 		sample *= randomFloats(generator);
-		float scale = float(i) / 64.0;
+		float scale = float(i) / float(num_ssao_samples);
 
 		// Scale samples s.t. they're more aligned to center of kernel
 		scale = lerp(0.1f, 1.0f, scale*scale);
@@ -217,6 +220,20 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
 		std::cout << "GBuffer Framebuffer not complete!" << std::endl;
 	}
+
+	// Shadows
+	if( !depthMapFBO ){ glGenFramebuffers(1, &depthMapFBO); }
+	if( !depthMap ){ glGenTextures(1, &depthMap); }
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glNamedFramebufferDrawBuffer(depthMapFBO, GL_NONE);
+	glNamedFramebufferDrawBuffer(depthMapFBO, GL_NONE);
 
 	// Also create framebuffer to hold SSAO processing stage 
 	if( !ssaoFBO ){ glGenFramebuffers(1, &ssaoFBO); }
@@ -460,6 +477,12 @@ void RenderGL::geometry_pass( Camera *camera ){
 
 void RenderGL::lighting_pass( Camera *cam ){
 
+	// Get scene radius
+	float scene_radius = 0.f;
+	Vec3f scene_center;
+	scene->get_bsphere(&scene_center,&scene_radius,false);
+	ssao_radius = scene_radius*0.2f;
+
 	// Camera transforms
 	trimesh::fxform model;
 	trimesh::fxform &view = cam->app.view;
@@ -480,6 +503,7 @@ void RenderGL::lighting_pass( Camera *cam ){
 	for (GLuint i = 0; i < (size_t)ssaoKernel.size(); ++i){
 		glUniform3fv(shaderSSAO.uniform(("samples[" + std::to_string(i) + "]").c_str()), 1, &ssaoKernel[i][0]);
 	}
+	glUniform1f(shaderSSAO.uniform("radius"), ssao_radius);
 	glUniformMatrix4fv(shaderSSAO.uniform("projection"), 1, GL_FALSE, projection);
 	RenderQuad();
 
