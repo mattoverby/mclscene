@@ -3,19 +3,17 @@
 
 	<Object name="obj1" type="tetmesh" >
 		<file value="beam.mesh" />
-		<chunks value="4" />
-		<tess value="4" />
 		<Material value="ruby" />
 		<wireframe value="1" />
 	</Object>
-<!--
-	<Object name="obj2" type="torus" >
-		<tess_ph value="20" />
-		<tess_th value="50" />
-		<inner_radius value=".4" />
-		<Material value="emerald" />
-	</Object>
 
+	<Object name="obj2" type="beam" >
+		<chunks value="3" />
+		<tess value="4" />
+		<translate value="1 1 1" />
+		<scale value="0.5 0.5 0.5" />
+	</Object>
+<!--
 
 	<Object  type="sphere" >
 		<tess value="24" />
