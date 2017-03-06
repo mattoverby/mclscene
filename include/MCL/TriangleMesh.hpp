@@ -98,6 +98,10 @@ public:
 	// Clear all mesh data
 	void clear();
 
+	// When stitching meshes together, this function will
+	// join two vertices as one if they are within dist.
+	void collapse_points( float distance );
+
 private:
 	AABB aabb;
 

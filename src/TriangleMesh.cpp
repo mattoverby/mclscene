@@ -22,6 +22,7 @@
 #include "MCL/TriangleMesh.hpp"
 #include <chrono>
 #include "TriMesh_algo.h"
+#include <unordered_map>
 
 using namespace mcl;
 namespace trimesh_helper {
@@ -375,5 +376,64 @@ bool TriangleMesh::load_obj( std::string file ){
 	return true;
 
 } // end load obj
+
+
+void TriangleMesh::collapse_points( float distance ){
+
+	float dx = distance*distance;
+	std::unordered_map< int, std::vector<int> > same_as;
+
+	// Make a map of nodes that overlap
+	for( int i=0; i<vertices.size(); ++i ){
+		same_as[i] = std::vector<int>();
+		for( int j=0; j<vertices.size(); ++j ){
+			if( i==j ){ continue; }
+			float dist = (vertices[i]-vertices[j]).squaredNorm();
+			if( dist < dx ){
+				same_as[i].push_back(j);
+			}
+		}
+	}
+
+	// Remove duplicates
+	std::unordered_map< int, std::vector<int> >::iterator it = same_as.begin();
+	for( ; it != same_as.end(); ++it ){
+		for( int i=0; i<it->second.size(); ++i ){
+			same_as.erase( it->second[i] );
+		}
+	}
+
+	// Update vertices
+	std::unordered_map< int, int > vertex_map;
+	std::vector<Vec3f> old_verts = vertices;
+	vertices.clear();
+	it = same_as.begin();
+	for( ; it != same_as.end(); ++it ){
+		int orig_idx = it->first;
+		int new_idx = vertices.size();
+		vertex_map[ orig_idx ] = new_idx;
+		if( same_as.count(orig_idx)>0 ){
+			for( int i=0; i<same_as[orig_idx].size(); ++i ){
+				vertex_map[ same_as[orig_idx][i] ] = new_idx;
+			}
+		}
+		vertices.push_back( old_verts[ it->first ] );
+	}
+
+	// Update faces
+	for( int i=0; i<faces.size(); ++i ){
+		for( int j=0; j<3; ++j ){
+			faces[i][j] = vertex_map[ faces[i][j] ];
+		}
+	}
+
+	// Remake normals
+	if( normals.size() ){
+		normals.clear();
+		need_normals(true);
+	}
+
+} // end collapse points
+
 
 

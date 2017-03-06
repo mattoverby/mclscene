@@ -201,6 +201,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_beam( int chunks, int 
 
 	}
 
+	mesh->collapse_points(0.1f);
 	mesh->update();
 
 	// Add to SceneManager

@@ -3,7 +3,7 @@
 
 	<Object name="obj1" type="tetmesh" >
 		<file value="beam.mesh" />
-		<Material value="ruby" />
+		<Material value="invisible" />
 		<wireframe value="1" />
 	</Object>
 
