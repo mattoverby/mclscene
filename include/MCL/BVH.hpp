@@ -89,6 +89,9 @@ public:
 	// returns num nodes in tree
 	static int make_tree_spatial( BVHNode *root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=10 );
 
+	// Updates the bounding volumes of an already-constructed BVH if objects have moved.
+	static void update_bvh( BVHNode *root );
+
 	// Stats used for profiling:
 	static int n_nodes; // number of nodes in the last-created tree
 	static float avg_balance; // the "balance" of the last-created tree (lousy metric, but whatever)

@@ -260,6 +260,21 @@ void BVHBuilder::spatial_split( BVHNode *node, const std::vector< std::shared_pt
 } // end build spatial split tree
 
 
+void BVHBuilder::update_bvh( BVHNode *node ){
+
+	node->aabb->valid = false;
+
+	for( int i=0; i<node->m_objects.size(); ++i ){
+		Vec3f min, max;
+		
+		
+	}
+
+	if( node->left_child != NULL ){ update_bvh( node->left_child ); }
+	if( node->right_child != NULL ){ update_bvh( node->right_child ); }
+
+} // end update bvh
+
 //
 //	BVH Traversal
 //
