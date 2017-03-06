@@ -64,6 +64,11 @@ bool TetMesh::load( std::string filename ){
 		if( !need_surface() ){ return false; }
 	}
 
+	else if( ext=="mesh" ){
+		if( !load_mesh( filename ) ){ return false; }
+		if( !need_surface() ){ return false; }
+	}
+
 	// If it's a PLY we need to use tetgen
 	else if( ext=="ply" ){
 
@@ -309,6 +314,93 @@ bool TetMesh::load_tet( std::string filename ){
 	return true;
 
 } // end load ele file
+
+
+bool TetMesh::load_mesh( std::string filename ){
+
+	// Load the vertices of the tetmesh
+	std::ifstream filestream;
+	filestream.open( filename.c_str() );
+	if( !filestream ){ std::cerr << "\n**TetMesh Error: Could not load " << filename << std::endl; return false; }
+	vertices.clear();
+	tets.clear();
+
+
+	//
+	//	Might segfault. Don't care.
+	//
+	bool parsing_verts = false;
+	bool parsing_tets = false;
+	while( !filestream.eof() ){
+		std::string line="";
+		std::getline(filestream, line);
+		std::string linecpy = line;
+		std::string::iterator end_pos = std::remove(linecpy.begin(), linecpy.end(), ' ');
+		linecpy.erase(end_pos, linecpy.end());
+		if( linecpy.size()==0 ){ continue; }
+
+		std::stringstream ss1(line);
+		std::string tok; ss1 >> tok;
+
+		// Get num vertices
+		if( tetmesh_helper::to_lower(tok) == "vertices" ){
+			std::getline(filestream,line);
+			std::stringstream ss2(line);
+			int n_verts; ss2 >> n_verts;
+			if( n_verts <= 0 ){
+				std::cerr << "**TetMesh::load_mesh error: bad vertices: " << n_verts << std::endl;
+				return false;
+			}
+			vertices.resize(n_verts);
+			parsing_verts = true;
+			parsing_tets = false;
+			continue;
+		}
+		// Get num tets
+		else if( tetmesh_helper::to_lower(tok) == "tetrahedra" ){
+			std::getline(filestream,line);
+			std::stringstream ss2(line);
+			int n_tets; ss2 >> n_tets;
+			if( n_tets <= 0 ){
+				std::cerr << "**TetMesh::load_mesh error: bad tets: " << n_tets << std::endl;
+				return false;
+			}
+			tets.resize(n_tets);
+			parsing_verts = false;
+			parsing_tets = true;
+			continue;
+		}
+
+		else if( tetmesh_helper::to_lower(tok) == "end" ){
+			break;
+		}
+
+		// Parsing verts
+		if( parsing_verts ){
+			std::stringstream ss(line);
+			float x, y, z; int idx=-1;
+			ss >> x >> y >> z >> idx;
+			idx--;
+			if( idx < 0 || idx >= vertices.size() );
+			vertices[idx] = Vec3f(x,y,z);
+		} else if( parsing_tets ){
+			std::stringstream ss(line);
+			int x, y, z, w; int idx=-1;
+			ss >> x >> y >> z >> w >> idx;
+			idx--; x--; y--; z--; w--;
+			if( idx < 0 || idx >= tets.size() );
+			tets[idx] = Vec4i(x,y,z,w);
+		}
+
+	} // end loop file
+
+	filestream.close();
+
+	return true;
+
+} // end load ele file
+
+
 
 bool TetMesh::need_surface(){
 

@@ -79,7 +79,11 @@ private:
 
 	bool load_ele( std::string filename );
 
+	// .tet file
 	bool load_tet( std::string filename );
+
+	// .mesh file
+	bool load_mesh( std::string filename );
 
 	// Computes a surface mesh, called by load
 	bool need_surface();
