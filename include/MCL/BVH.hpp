@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -29,37 +29,16 @@
 
 namespace mcl {
 
-typedef long morton_type;
-typedef unsigned long long morton_encode_type;
-
-//
-//	BVH Initializer class for creating the tree and logging
-//
-class BVHInit {
-public:
-	BVHInit() : max_depth(10), n_nodes(0), avg_balance(0.f), runtime_s(0.f) {}
-	BVHInit( int max_depth_ ) : max_depth(max_depth_), n_nodes(0), avg_balance(0.f), runtime_s(0.f) {}
-
-	// Setup:
-	int max_depth; // The max depth of the tree => 2^(max_depth) nodes
-
-	// Logging (set by BVHBuilder):
-	int n_nodes; // number of nodes in the created tree
-	float avg_balance; // the "balance" of the last-created tree (lousy metric, but whatever)
-	float runtime_s; // time it took to build the bvh (seconds)
-};
-
 //
 //	BVH Node class that the tree is made up of
 //
 class BVHNode {
 public:
-	BVHNode() : aabb( new AABB ) { left_child=NULL; right_child=NULL; }
-	~BVHNode() {
-		// Should use a mempool this is slow...
+	BVHNode() : aabb( new AABB ) { left_child=nullptr; right_child=nullptr; }
+	~BVHNode() { // Should use a mempool this is slow...
 		delete aabb;
-		if( left_child != NULL ){ delete left_child; }
-		if( right_child != NULL){ delete right_child; }
+		if( left_child != nullptr ){ delete left_child; }
+		if( right_child != nullptr){ delete right_child; }
 	}
 
 	// Allocated in make_tree:
@@ -78,9 +57,6 @@ public:
 //
 class BVHBuilder {
 public:
-	// Create a tree using the BVHInit helper
-//	static int make_tree( std::shared_ptr<BVHNode> &root, const std::vector< std::shared_ptr<BaseObject> > &objects
-
 	// Parallel sorting construction (Lauterbach et al. 2009)
 	// returns num nodes in tree
 	static int make_tree_lbvh( BVHNode *root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=10 );
@@ -97,6 +73,8 @@ public:
 	static float avg_balance; // the "balance" of the last-created tree (lousy metric, but whatever)
 	static float runtime_s; // time it took to build the bvh (seconds)
 
+	typedef long morton_type;
+	typedef unsigned long long morton_encode_type;
 private:
 	static void lbvh_split( BVHNode *node, const int bit, const std::vector< std::shared_ptr<BaseObject> > &prims,
 		const std::vector< std::pair< morton_type, int > > &morton_codes, const int max_depth );
@@ -124,5 +102,27 @@ public:
 } // end namespace mcl
 
 
+
+
+
+
+//
+//	BVH Initializer class for creating the tree and logging
+//
+/*
+class BVHInit {
+public:
+	BVHInit() : max_depth(10), n_nodes(0), avg_balance(0.f), runtime_s(0.f) {}
+	BVHInit( int max_depth_ ) : max_depth(max_depth_), n_nodes(0), avg_balance(0.f), runtime_s(0.f) {}
+
+	// Setup:
+	int max_depth; // The max depth of the tree => 2^(max_depth) nodes
+
+	// Logging (set by BVHBuilder):
+	int n_nodes; // number of nodes in the created tree
+	float avg_balance; // the "balance" of the last-created tree (lousy metric, but whatever)
+	float runtime_s; // time it took to build the bvh (seconds)
+};
+*/
 
 #endif

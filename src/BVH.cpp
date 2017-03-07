@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -27,21 +27,21 @@ using namespace mcl;
 
 namespace helper {
 	// use: bool is_one = helper::check_bit( myInt, bit_position );
-	static inline bool check_bit( morton_type variable, int bit ){
-		std::bitset<sizeof(morton_type)*8> bs(variable);
+	static inline bool check_bit( BVHBuilder::morton_type variable, int bit ){
+		std::bitset<sizeof(BVHBuilder::morton_type)*8> bs(variable);
 		return ( bs[bit]==1 );
 	}
 }
 
-static inline morton_type morton_encode(const morton_encode_type x, const morton_encode_type y, const morton_encode_type z){
-	int n_iters = sizeof(morton_type)*8;
+static inline BVHBuilder::morton_type morton_encode(const BVHBuilder::morton_encode_type x, const BVHBuilder::morton_encode_type y, const BVHBuilder::morton_encode_type z){
+	int n_iters = sizeof(BVHBuilder::morton_type)*8;
 	// Step through the bits and assign them. The x2 for i is required to round-robinish interleaving
 	// and differs from typical morton encoding. Without them, I got thin slices along the x and z axes.
-	morton_type result = 0;
-	for( morton_type i = 0; i<n_iters; ++i ){
-		result |= (x & (morton_type(1) << i)) << i*2
-			| (y & (morton_type(1) << i)) << (i*2 + 1)
-			| (z & (morton_type(1) << i)) << (i*2 + 2);
+	BVHBuilder::morton_type result = 0;
+	for( BVHBuilder::morton_type i = 0; i<n_iters; ++i ){
+		result |= (x & (BVHBuilder::morton_type(1) << i)) << i*2
+			| (y & (BVHBuilder::morton_type(1) << i)) << (i*2 + 1)
+			| (z & (BVHBuilder::morton_type(1) << i)) << (i*2 + 2);
 	}
 	return result;
 }
@@ -58,7 +58,7 @@ int BVHBuilder::make_tree_lbvh( BVHNode *root, const std::vector< std::shared_pt
 
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	start = std::chrono::system_clock::now();
-	if( root == NULL ){ root = new BVHNode(); }
+	if( root == nullptr ){ root = new BVHNode(); }
 
 	// Get all the primitives in the domain
 	std::vector< std::shared_ptr<BaseObject> > prims;
@@ -175,8 +175,8 @@ void BVHBuilder::lbvh_split( BVHNode *node,
 		node->m_objects[i]->get_bounds( bmin, bmax );
 		*(node->aabb) += bmin; *(node->aabb) += bmax;
 	}
-	if( node->left_child != NULL ){ *(node->aabb) += *(node->left_child->aabb); }
-	if( node->right_child != NULL ){ *(node->aabb) += *(node->right_child->aabb); }
+	if( node->left_child != nullptr ){ *(node->aabb) += *(node->left_child->aabb); }
+	if( node->right_child != nullptr ){ *(node->aabb) += *(node->right_child->aabb); }
 
 }
 
@@ -186,10 +186,10 @@ int BVHBuilder::make_tree_spatial( BVHNode *root, const std::vector< std::shared
 
 	std::chrono::time_point<std::chrono::system_clock> start, end;
 	start = std::chrono::system_clock::now();
-	if( root == NULL ){ root = new BVHNode(); }
+	if( root == nullptr ){ root = new BVHNode(); }
 	else{
-		if( root->left_child != NULL ){ delete root->left_child; root->left_child = NULL; }
-		if( root->right_child != NULL){ delete root->right_child; root->right_child = NULL; }
+		if( root->left_child != nullptr ){ delete root->left_child; root->left_child = nullptr; }
+		if( root->right_child != nullptr){ delete root->right_child; root->right_child = nullptr; }
 		root->m_objects.clear();
 		root->aabb->valid = false;
 	}
@@ -264,14 +264,21 @@ void BVHBuilder::update_bvh( BVHNode *node ){
 
 	node->aabb->valid = false;
 
-	for( int i=0; i<node->m_objects.size(); ++i ){
-		Vec3f min, max;
-		
-		
+	if( node->left_child != nullptr ){
+		update_bvh( node->left_child );
+		*(node->aabb) += *(node->left_child->aabb);
+	}
+	if( node->right_child != nullptr ){
+		update_bvh( node->right_child );
+		*(node->aabb) += *(node->left_child->aabb);
 	}
 
-	if( node->left_child != NULL ){ update_bvh( node->left_child ); }
-	if( node->right_child != NULL ){ update_bvh( node->right_child ); }
+	for( int i=0; i<node->m_objects.size(); ++i ){
+		Vec3f min, max;
+		node->m_objects[i]->get_bounds(min,max);
+		*(node->aabb) += min;
+		*(node->aabb) += max;
+	}
 
 } // end update bvh
 
@@ -287,8 +294,8 @@ bool BVHTraversal::closest_hit( const BVHNode* node, const raycast::Ray *ray, ra
 
 	// See if there are children to intersect
 	bool left_hit=false, right_hit=false;
-	if( node->left_child != NULL ){ left_hit = BVHTraversal::closest_hit( node->left_child, ray, payload, obj ); }
-	if( node->right_child != NULL ){ right_hit = BVHTraversal::closest_hit( node->right_child, ray, payload, obj ); }
+	if( node->left_child != nullptr ){ left_hit = BVHTraversal::closest_hit( node->left_child, ray, payload, obj ); }
+	if( node->right_child != nullptr ){ right_hit = BVHTraversal::closest_hit( node->right_child, ray, payload, obj ); }
 	if( left_hit || right_hit ){ return true; }
 
 	// Loop over objects stored on this bvh node
@@ -307,8 +314,8 @@ bool BVHTraversal::any_hit( const BVHNode* node, const raycast::Ray *ray, raycas
 	if( !raycast::ray_aabb( ray, node->aabb->min, node->aabb->max, payload ) ){ return false; }
 
 	// See if there are children to intersect
-	if( node->left_child != NULL ){ if( BVHTraversal::any_hit( node->left_child, ray, payload ) ){ return true; } }
-	if( node->right_child != NULL ){ if( BVHTraversal::any_hit( node->right_child, ray, payload ) ){ return true; } }
+	if( node->left_child != nullptr ){ if( BVHTraversal::any_hit( node->left_child, ray, payload ) ){ return true; } }
+	if( node->right_child != nullptr ){ if( BVHTraversal::any_hit( node->right_child, ray, payload ) ){ return true; } }
 
 	// Otherwise it's a leaf node, check objects
 	for( int i=0; i<node->m_objects.size(); ++i ){
@@ -355,6 +362,6 @@ void BVHNode::get_edges( std::vector<Vec3f> &edges, bool add_children ){
 		edges.push_back( c ); edges.push_back( max );
 	}
 
-	if( left_child != NULL && add_children ){ left_child->get_edges( edges ); }
-	if( right_child != NULL && add_children ){ right_child->get_edges( edges ); }
+	if( left_child != nullptr && add_children ){ left_child->get_edges( edges ); }
+	if( right_child != nullptr && add_children ){ right_child->get_edges( edges ); }
 }
