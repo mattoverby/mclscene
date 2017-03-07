@@ -139,37 +139,20 @@ namespace mcl {
 //
 namespace trimesh {
 
-	static inline mcl::Vec4f operator*(const trimesh::xform &m, const mcl::Vec4f &v){
-		mcl::Vec4f r;
-		r[0] = m[0]*v[0]+m[4]*v[1]+m[8]*v[2]+m[12]*v[3];
-		r[1] = m[1]*v[0]+m[5]*v[1]+m[9]*v[2]+m[13]*v[3];
-		r[2] = m[2]*v[0]+m[6]*v[1]+m[10]*v[2]+m[14]*v[3];
-		r[3] = m[3]*v[0]+m[7]*v[1]+m[11]*v[2]+m[15]*v[3];
-		return r;
-	}
-
-	static inline mcl::Vec3f operator*(const trimesh::xform &m, const mcl::Vec3f &v){
-		mcl::Vec3f r;
+	template <typename T, typename U> static inline mcl::Vec3<T> operator*(const trimesh::XForm<U> &m, const mcl::Vec3<T> &v){
+		mcl::Vec3<T> r;
 		r[0] = m[0]*v[0]+m[4]*v[1]+m[8]*v[2]+m[12];
 		r[1] = m[1]*v[0]+m[5]*v[1]+m[9]*v[2]+m[13];
 		r[2] = m[2]*v[0]+m[6]*v[1]+m[10]*v[2]+m[14];
 		return r;
 	}
 
-	static inline mcl::Vec4f operator*(const trimesh::fxform &m, const mcl::Vec4f &v){
-		mcl::Vec4f r;
+	template <typename T, typename U> static inline mcl::Vec4<T> operator*(const trimesh::XForm<U> &m, const mcl::Vec4<T> &v){
+		mcl::Vec4<T> r;
 		r[0] = m[0]*v[0]+m[4]*v[1]+m[8]*v[2]+m[12]*v[3];
 		r[1] = m[1]*v[0]+m[5]*v[1]+m[9]*v[2]+m[13]*v[3];
 		r[2] = m[2]*v[0]+m[6]*v[1]+m[10]*v[2]+m[14]*v[3];
 		r[3] = m[3]*v[0]+m[7]*v[1]+m[11]*v[2]+m[15]*v[3];
-		return r;
-	}
-
-	static inline mcl::Vec3f operator*(const trimesh::fxform &m, const mcl::Vec3f &v){
-		mcl::Vec3f r;
-		r[0] = m[0]*v[0]+m[4]*v[1]+m[8]*v[2]+m[12];
-		r[1] = m[1]*v[0]+m[5]*v[1]+m[9]*v[2]+m[13];
-		r[2] = m[2]*v[0]+m[6]*v[1]+m[10]*v[2]+m[14];
 		return r;
 	}
 

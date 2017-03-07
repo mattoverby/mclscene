@@ -8,8 +8,8 @@ out vec4 outcolor;
 uniform sampler2D in_texture;
 uniform vec2 screen_size;
 
-#define FXAA_SPAN_MAX 8.0
-#define FXAA_REDUCE_MUL 1.0/8.0 // 0 = most blurry, 1 = no blur
+#define FXAA_SPAN_MAX 6.0
+#define FXAA_REDUCE_MUL 1.0/6.0 // 0 = most blurry, 1 = no blur
 #define FXAA_REDUCE_MIN 1.0/128.0
 
 void main( ) {
