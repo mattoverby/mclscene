@@ -167,6 +167,7 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 						if( material_map.count(material_name) > 0 ){
 							obj->app.material = material_map[material_name];
 						} // is a named material
+						else if( material_name == "invisible" ){} // handled by parse object
 						else {
 							std::shared_ptr<Material> mat = parse_preset_material( material_name );
 							if( mat != NULL ){
