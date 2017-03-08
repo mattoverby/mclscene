@@ -34,7 +34,7 @@ static inline std::string fullpath( std::string file ){
 
 static inline float lerp(float a, float b, float f){ return a + f * (b - a); }
 
-static void trimesh_copy( std::shared_ptr<mcl::TriangleMesh> to_mesh, trimesh::TriMesh *from_mesh ){
+static void trimesh_copy( std::shared_ptr<mcl::TriangleMesh> &to_mesh, trimesh::TriMesh *from_mesh ){
 	for( int i=0; i<from_mesh->vertices.size(); ++i ){ to_mesh->vertices.push_back( mcl::Vec3f( from_mesh->vertices[i][0], from_mesh->vertices[i][1], from_mesh->vertices[i][2] ) ); }
 	for( int i=0; i<from_mesh->faces.size(); ++i ){ to_mesh->faces.push_back( mcl::Vec3i( from_mesh->faces[i][0], from_mesh->faces[i][1], from_mesh->faces[i][2] ) ); }
 	for( int i=0; i<from_mesh->texcoords.size(); ++i ){ to_mesh->texcoords.push_back( mcl::Vec2f( from_mesh->texcoords[i][0], from_mesh->texcoords[i][1] ) ); }

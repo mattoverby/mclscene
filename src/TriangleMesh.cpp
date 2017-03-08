@@ -227,6 +227,10 @@ static bool mesh_exists( const std::string& name ){
 }
 
 void TriangleMesh::save( std::string filename ){
+
+	bool suppress_tex = true;
+	bool suppress_normals = true;
+
 	int fsize = filename.size();
 	if( fsize<4 ){ printf("\n**TriangleMesh::save Error: Filetype must be .obj\n"); return; }
 	std::string ftype = filename.substr( fsize-4,4 );
@@ -239,6 +243,8 @@ void TriangleMesh::save( std::string filename ){
 	int nv = vertices.size();
 	int nn = normals.size();
 	int nt = texcoords.size();
+	if( suppress_tex ){ nt=0; }
+	if( suppress_normals ){ nn=0; }
 
 	for( int i=0; i<nv; ++i ){
 		fs << "\nv " << vertices[i][0] << ' ' << vertices[i][1] << ' ' << vertices[i][2];
@@ -262,6 +268,8 @@ void TriangleMesh::save( std::string filename ){
 			fs << "\nf " << f[0]<<'/'<<f[0]<<'/'<<f[0]<< ' ' << f[1]<<'/'<<f[1]<<'/'<<f[1]<< ' ' << f[2]<<'/'<<f[2]<<'/'<<f[2];
 		}
 	} // end loop faces
+
+	fs << "\n";
 
 	fs.close();
 }

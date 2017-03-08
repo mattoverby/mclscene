@@ -1,20 +1,20 @@
 <?xml version="1.0"?>
 <mclScene>
 
-	<Object name="bunny_562" type="tetmesh" >
-		<File value="bunny562faces.1" />
-		<Scale value="10 10 10" />
+	<Object name="bunny_562" type="trimesh" >
+		<File value="pillow.obj" />
+		<Scale value="1 1 1" />
 		<Material value="CyanPlastic" />
 		<wireframe value="1" />
 		<flat_shading value="1" />
 	</Object>
-
+<!--
 	<Object name="obj1" type="box" >
 		<translate value="0 -.6 0" />
 		<width value="20" />
 		<length value="20" />
 		<Material value="whiteplastic" />
 	</Object>
-
+-->
 
 </mclScene>

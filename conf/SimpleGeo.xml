@@ -1,17 +1,18 @@
 <?xml version="1.0"?>
 <mclScene>
-
+<!--
 	<Object name="obj1" type="tetmesh" >
 		<file value="beam.mesh" />
 		<Material value="invisible" />
 		<wireframe value="1" />
 	</Object>
-
+-->
 	<Object name="obj2" type="beam" >
-		<chunks value="3" />
-		<tess value="4" />
-		<translate value="1 1 1" />
-		<scale value="0.5 0.5 0.5" />
+		<chunks value="1" />
+		<tess value="8" />
+		<wireframe value="1" />
+		<translate value="0 0 0" />
+		<scale value="1 0.5 1" />
 	</Object>
 <!--
 
