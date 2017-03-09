@@ -290,7 +290,7 @@ void BVHBuilder::update_bvh( BVHNode *node ){
 bool BVHTraversal::closest_hit( const BVHNode* node, const raycast::Ray *ray, raycast::Payload *payload, std::shared_ptr<BaseObject> *obj ){
 
 	// See if we hit the box
-	if( !raycast::ray_aabb( ray, node->aabb->min, node->aabb->max, payload ) ){ return false; }
+	if( !raycast::ray_aabb<float>( ray, node->aabb->min, node->aabb->max, payload ) ){ return false; }
 
 	// See if there are children to intersect
 	bool left_hit=false, right_hit=false;
@@ -311,7 +311,7 @@ bool BVHTraversal::closest_hit( const BVHNode* node, const raycast::Ray *ray, ra
 bool BVHTraversal::any_hit( const BVHNode* node, const raycast::Ray *ray, raycast::Payload *payload ){
 
 	// See if we hit the box
-	if( !raycast::ray_aabb( ray, node->aabb->min, node->aabb->max, payload ) ){ return false; }
+	if( !raycast::ray_aabb<float>( ray, node->aabb->min, node->aabb->max, payload ) ){ return false; }
 
 	// See if there are children to intersect
 	if( node->left_child != nullptr ){ if( BVHTraversal::any_hit( node->left_child, ray, payload ) ){ return true; } }
@@ -325,6 +325,35 @@ bool BVHTraversal::any_hit( const BVHNode* node, const raycast::Ray *ray, raycas
 	return false;
 
 } // end ray intersect
+
+
+bool BVHTraversal::closest_hit_dbl( const BVHNode *node, const raycast::rtRay<double> *ray, raycast::rtPayload<double> *payload, Vec3i *face_hit ){
+
+	if( !raycast::ray_aabb<double>( ray, node->aabb->min.cast<double>(), node->aabb->max.cast<double>(), payload ) ){ return false; }
+
+	// See if there are children to intersect
+	bool left_hit=false, right_hit=false;
+	if( node->left_child != nullptr ){ left_hit = BVHTraversal::closest_hit_dbl( node->left_child, ray, payload, face_hit ); }
+	if( node->right_child != nullptr ){ right_hit = BVHTraversal::closest_hit_dbl( node->right_child, ray, payload, face_hit ); }
+	if( left_hit || right_hit ){ return true; }
+
+	// Loop over objects stored on this bvh node
+	bool obj_hit = false;
+	const int n_faces = node->faces->size();
+	for( int i=0; i<n_faces; ++i ){
+		Vec3i &f( node->faces->at(i) );
+		Vec3d p0 = node->vertices->segment<3>(f[0]*3);
+		Vec3d p1 = node->vertices->segment<3>(f[1]*3);
+		Vec3d p2 = node->vertices->segment<3>(f[2]*3);
+		if( raycast::ray_triangle( ray, p0, p1, p2, payload ) ){
+			obj_hit = true;
+			if( face_hit != nullptr ){ *face_hit = f; }
+		}
+	}
+
+	return obj_hit;
+
+} // return closest hit double
 
 
 void BVHNode::get_edges( std::vector<Vec3f> &edges, bool add_children ){

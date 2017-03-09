@@ -55,11 +55,12 @@ namespace raycast {
 	public:
 		void init( const rtRay<T> &ray ){ t_min=ray.eps; launch_point=ray.origin; }
 
-		rtPayload() : t_min(1e-5), t_max(9999999) {}
-		rtPayload( const rtRay<T> &ray ) : t_max(9999999) { init(ray); }
+		rtPayload() : t_min(1e-5), t_max(9999999), bary(0,0,0) {}
+		rtPayload( const rtRay<T> &ray ) : t_max(9999999), bary(0,0,0) { init(ray); }
 
 		double t_min, t_max;
 		Vec3<T> launch_point;
+		mutable Vec3<T> bary;
 		mutable Vec3<T> n, hit_point;
 		mutable int material; // index into SceneManager::materials
 	};
@@ -80,15 +81,19 @@ namespace raycast {
 		const Vec3f &n0, const Vec3f &n1, const Vec3f &n2, Payload *payload );
 
 	// ray -> triangle without smoothed normals
-	static inline bool ray_triangle( const Ray *ray, const Vec3f &p0, const Vec3f &p1, const Vec3f &p2, Payload *payload );
+	template<typename T> static inline bool ray_triangle( const rtRay<T> *ray, const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2, rtPayload<T> *payload );
 
 	// ray -> axis aligned bounding box
 	// Returns true/false only and does not set the payload.
-	static inline bool ray_aabb( const Ray *ray, const Vec3f &min, const Vec3f &max, const Payload *payload );
+	template<typename T> static inline bool ray_aabb( const rtRay<T> *ray, const Vec3<T> &min, const Vec3<T> &max, const rtPayload<T> *payload );
+//	static inline bool ray_aabb_flt( const rtRay<float> *ray, const Vec3<float> &min, const Vec3<float> &max, const rtPayload<float> *payload ){
+//		return ray_aabb<float>( ray, min, max, payload );
+//	}
+//	static inline bool ray_aabb_dbl( const rtRay<double> *ray, const Vec3<double> &min, const Vec3<double> &max, const rtPayload<double> *payload ){
+//		return ray_aabb<double>( ray, min, max, payload );
+//	}
 
 } // end namespace raycast
-
-} // end namespace mcl
 
 //
 //	Implementation below
@@ -116,6 +121,7 @@ static inline bool mcl::raycast::ray_triangle( const Ray *ray, const Vec3f &p0, 
 		payload->n = alpha*n0 + beta*n1 + gamma*n2;
 		payload->t_max = t;
 		payload->hit_point = ray->origin + ray->direction*t;
+		payload->bary = Vec3f(alpha,beta,gamma);
 		return true;
 	}
 
@@ -124,26 +130,29 @@ static inline bool mcl::raycast::ray_triangle( const Ray *ray, const Vec3f &p0, 
 } // end  ray -> triangle
 
 // ray -> triangle without smoothed normals
-static inline bool mcl::raycast::ray_triangle( const Ray *ray, const Vec3f &p0, const Vec3f &p1, const Vec3f &p2, Payload *payload ){
+template<typename T> static inline bool mcl::raycast::ray_triangle( const rtRay<T> *ray,
+	const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2, rtPayload<T> *payload ){
 
-	const Vec3f e0 = p1 - p0;
-	const Vec3f e1 = p0 - p2;
-	const Vec3f n = e1.cross( e0 );
+	const Vec3<T> e0 = p1 - p0;
+	const Vec3<T> e1 = p0 - p2;
+	const Vec3<T> n = e1.cross( e0 );
+	const Vec3<T> e2 = ( 1.0 / n.dot( ray->direction ) ) * ( p0 - ray->origin );
+	const Vec3<T> i  = ray->direction.cross( e2 );
+	T beta  = i.dot( e1 );
+	T gamma = i.dot( e0 );
+	if( std::abs(beta)<std::numeric_limits<T>::min() ){ beta=T(0); }
+	if( std::abs(gamma)<std::numeric_limits<T>::min() ){ gamma=T(0); }
+	T alpha = 1.0 - beta - gamma;
+	T t = n.dot( e2 );
 
-	const Vec3f e2 = ( 1.0f / n.dot( ray->direction ) ) * ( p0 - ray->origin );
-	const Vec3f i  = ray->direction.cross( e2 );
+	bool bary_test = alpha>0.0 && beta>0.0 && gamma>0.0 && (alpha+beta+gamma)<=1.0;
+	bool hit = (t<payload->t_max) && (t>payload->t_min);
 
-	double beta  = i.dot( e1 );
-	double gamma = i.dot( e0 );
-	double alpha = 1.f - beta - gamma;
-
-	double t = n.dot( e2 );
-	bool hit = ( (t<payload->t_max) & (t>payload->t_min) & (beta>=-ray->eps*0.5f) & (gamma>=-ray->eps*0.5f) & (beta+gamma<=1.f) );
-
-	if( hit ){
+	if( hit && bary_test ){
 		payload->n = n;
 		payload->t_max = t;
 		payload->hit_point = ray->origin + ray->direction*t;
+		payload->bary = Vec3<T>(alpha,beta,gamma);
 		return true;
 	}
 
@@ -153,10 +162,11 @@ static inline bool mcl::raycast::ray_triangle( const Ray *ray, const Vec3f &p0, 
 
 
 // ray -> axis aligned bounding box
-static inline bool mcl::raycast::ray_aabb( const Ray *ray, const Vec3f &min, const Vec3f &max, const Payload *payload ){
+template<typename T> static inline bool mcl::raycast::ray_aabb( const rtRay<T> *ray,
+	const Vec3<T> &min, const Vec3<T> &max, const rtPayload<T> *payload ){
 
-	double txmin=0.f, txmax=0.f;
-	double dirX = 1.f / ray->direction[0];
+	T txmin=0.f, txmax=0.f;
+	T dirX = 1.f / ray->direction[0];
 	if( dirX >= 0.0 ){
 		txmin = dirX * ( min[0] - ray->origin[0] );
 		txmax = dirX * ( max[0] - ray->origin[0] );
@@ -166,8 +176,8 @@ static inline bool mcl::raycast::ray_aabb( const Ray *ray, const Vec3f &min, con
 		txmin = dirX * ( max[0] - ray->origin[0] );
 	}
 
-	double tymin=0.f, tymax=0.f;
-	double dirY = 1.f / ray->direction[1];
+	T tymin=0.f, tymax=0.f;
+	T dirY = 1.f / ray->direction[1];
 	if( ray->direction[1] >= 0.0 ){
 		tymin = dirY * ( min[1] - ray->origin[1] );
 		tymax = dirY * ( max[1] - ray->origin[1] );
@@ -180,8 +190,8 @@ static inline bool mcl::raycast::ray_aabb( const Ray *ray, const Vec3f &min, con
 	// First check: x/y axis
 	if( txmin > tymax || tymin > txmax ){ return false; }
 
-	double tzmin=0.f, tzmax=0.f;
-	double dirZ = 1.f / ray->direction[2];
+	T tzmin=0.f, tzmax=0.f;
+	T dirZ = 1.f / ray->direction[2];
 	if( ray->direction[2] >= 0.0 ){
 		tzmin = dirZ * ( min[2] - ray->origin[2] );
 		tzmax = dirZ * ( max[2] - ray->origin[2] );
@@ -199,6 +209,6 @@ static inline bool mcl::raycast::ray_aabb( const Ray *ray, const Vec3f &min, con
 
 } // end ray box intersection
 
-
+} // end namespace mcl
 
 #endif

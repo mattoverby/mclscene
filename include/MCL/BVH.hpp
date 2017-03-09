@@ -27,6 +27,10 @@
 #include <memory>
 #include <numeric>
 
+//
+//	TODO: Clean up construction/storage types. Right now I store a vec of objects or
+//	a pointer to vertices with indices (which I use for my physics implementaitons).
+//
 namespace mcl {
 
 //
@@ -34,7 +38,7 @@ namespace mcl {
 //
 class BVHNode {
 public:
-	BVHNode() : aabb( new AABB ) { left_child=nullptr; right_child=nullptr; }
+	BVHNode() : left_child(nullptr), right_child(nullptr), aabb( new AABB ), vertices(nullptr), faces(nullptr) {}
 	~BVHNode() { // Should use a mempool this is slow...
 		delete aabb;
 		if( left_child != nullptr ){ delete left_child; }
@@ -50,6 +54,10 @@ public:
 	bool is_leaf() const { return m_objects.size()>0; }
 	void get_edges( std::vector<Vec3f> &edges, bool add_children=true ); // for visual debugging
 	void bounds( Vec3f &bmin, Vec3f &bmax ) const { bmin=aabb->min; bmax=aabb->max; }
+
+	// Used for physics plugin
+	Eigen::VectorXd *vertices;
+	std::vector<Vec3i> *faces;
 };
 
 //
@@ -96,6 +104,9 @@ public:
 	// Ray-Scene traversal for any object, early exit (shadow rays)
 	// Remember to set your t_max in the payload!
 	static bool any_hit( const BVHNode *node, const raycast::Ray *ray, raycast::Payload *payload );
+
+	// Using double (temporary diff function until I get different types integrated better
+	static bool closest_hit_dbl( const BVHNode *node, const raycast::rtRay<double> *ray, raycast::rtPayload<double> *payload, Vec3i *face_hit=nullptr );
 };
 
 

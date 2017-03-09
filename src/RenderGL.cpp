@@ -235,13 +235,9 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	glNamedFramebufferDrawBuffer(depthMapFBO, GL_NONE);
 	glNamedFramebufferDrawBuffer(depthMapFBO, GL_NONE);
 */
-
-	// Also create framebuffer to hold SSAO processing stage 
-	if( !ssaoFBO ){ glGenFramebuffers(1, &ssaoFBO); }
-	if( !ssaoBlurFBO ){ glGenFramebuffers(1, &ssaoBlurFBO); }
-	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
-
 	// - SSAO color buffer
+	if( !ssaoFBO ){ glGenFramebuffers(1, &ssaoFBO); }
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 	if( !ssaoColorBuffer ){ glGenTextures(1, &ssaoColorBuffer); }
 	glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, win_width, win_height, 0, GL_RGB, GL_FLOAT, NULL);
@@ -252,6 +248,7 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	std::cout << "SSAO Framebuffer not complete!" << std::endl; }
 
 	// - and blur stage
+	if( !ssaoBlurFBO ){ glGenFramebuffers(1, &ssaoBlurFBO); }
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
 	if( !ssaoColorBufferBlur ){ glGenTextures(1, &ssaoColorBufferBlur); }
 	glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
@@ -271,6 +268,9 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lightingBuffer, 0);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+	std::cout << "Lighting Framebuffer not complete!" << std::endl; }
+
 
 	// Done
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

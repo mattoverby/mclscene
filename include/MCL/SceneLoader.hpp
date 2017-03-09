@@ -235,7 +235,6 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 		}
 	}
 	
-
 	std::shared_ptr<BaseObject> new_obj = NULL;
 
 
