@@ -260,6 +260,13 @@ void BVHBuilder::spatial_split( BVHNode *node, const std::vector< std::shared_pt
 } // end build spatial split tree
 
 
+int BVHBuilder::make_tree_spatial_dbl( BVHNode *root, Eigen::VectorXd *vertices, std::vector<Vec3i> *faces, int max_depth ){
+
+	return 0;
+
+} // end make spatial tree with double
+
+
 void BVHBuilder::update_bvh( BVHNode *node ){
 
 	node->aabb->valid = false;

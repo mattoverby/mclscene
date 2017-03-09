@@ -38,7 +38,7 @@ namespace mcl {
 //
 class BVHNode {
 public:
-	BVHNode() : left_child(nullptr), right_child(nullptr), aabb( new AABB ), vertices(nullptr), faces(nullptr) {}
+	BVHNode() : left_child(nullptr), right_child(nullptr), aabb(new AABB), vertices(nullptr), faces(nullptr) {}
 	~BVHNode() { // Should use a mempool this is slow...
 		delete aabb;
 		if( left_child != nullptr ){ delete left_child; }
@@ -73,6 +73,10 @@ public:
 	// returns num nodes in tree
 	static int make_tree_spatial( BVHNode *root, const std::vector< std::shared_ptr<BaseObject> > &objects, int max_depth=10 );
 
+	// Object Median split, round robin axis, double precision
+	// returns num nodes in tree
+	static int make_tree_spatial_dbl( BVHNode *root, Eigen::VectorXd *vertices, std::vector<Vec3i> *faces, int max_depth=10 );
+
 	// Updates the bounding volumes of an already-constructed BVH if objects have moved.
 	static void update_bvh( BVHNode *root );
 
@@ -81,6 +85,7 @@ public:
 	static float avg_balance; // the "balance" of the last-created tree (lousy metric, but whatever)
 	static float runtime_s; // time it took to build the bvh (seconds)
 
+	// Morten encodes for lbvh construction
 	typedef long morton_type;
 	typedef unsigned long long morton_encode_type;
 private:
