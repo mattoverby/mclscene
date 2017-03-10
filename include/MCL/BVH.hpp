@@ -38,11 +38,14 @@ namespace mcl {
 //
 class BVHNode {
 public:
-	BVHNode() : left_child(nullptr), right_child(nullptr), aabb(new AABB), vertices(nullptr), faces(nullptr) {}
+	BVHNode() : left_child(nullptr), right_child(nullptr), aabb(new AABB), vertices(nullptr) {}
 	~BVHNode() { // Should use a mempool this is slow...
 		delete aabb;
 		if( left_child != nullptr ){ delete left_child; }
 		if( right_child != nullptr){ delete right_child; }
+		face_indices.clear();
+		vertices = nullptr;
+		faces = nullptr;
 	}
 
 	// Allocated in make_tree:
@@ -56,8 +59,9 @@ public:
 	void bounds( Vec3f &bmin, Vec3f &bmax ) const { bmin=aabb->min; bmax=aabb->max; }
 
 	// Used for physics plugin
-	Eigen::VectorXd *vertices;
-	std::vector<Vec3i> *faces;
+	Eigen::VectorXd *vertices; // pointer to data
+	Eigen::VectorXi *faces; // pointer to data
+	std::vector<int> face_indices; // indices into faces
 };
 
 //
@@ -75,10 +79,10 @@ public:
 
 	// Object Median split, round robin axis, double precision
 	// returns num nodes in tree
-	static int make_tree_spatial_dbl( BVHNode *root, Eigen::VectorXd *vertices, std::vector<Vec3i> *faces, int max_depth=10 );
+	static int make_tree_spatial_dbl( BVHNode *root, Eigen::VectorXd *vertices, Eigen::VectorXi *faces, int max_depth=10 );
 
 	// Updates the bounding volumes of an already-constructed BVH if objects have moved.
-	static void update_bvh( BVHNode *root );
+	static void update( BVHNode *root );
 
 	// Stats used for profiling:
 	static int n_nodes; // number of nodes in the last-created tree
@@ -93,7 +97,8 @@ private:
 		const std::vector< std::pair< morton_type, int > > &morton_codes, const int max_depth );
 	static void spatial_split( BVHNode *node, const std::vector< std::shared_ptr<BaseObject> > &prims,
 		const std::vector< int > &queue, const int split_axis, const int max_depth );
-
+	static void spatial_split( BVHNode *node, Eigen::VectorXd *vertices, Eigen::VectorXi *faces,
+		const std::vector< int > &queue, const int split_axis, const int max_depth );
 	static int num_avg_balance;
 };
 
@@ -111,7 +116,8 @@ public:
 	static bool any_hit( const BVHNode *node, const raycast::Ray *ray, raycast::Payload *payload );
 
 	// Using double (temporary diff function until I get different types integrated better
-	static bool closest_hit_dbl( const BVHNode *node, const raycast::rtRay<double> *ray, raycast::rtPayload<double> *payload, Vec3i *face_hit=nullptr );
+	// Skip stride is the start and end indices of the faces to skip in the ray trace.
+	static bool closest_hit_dbl( const BVHNode *node, const raycast::rtRay<double> *ray, raycast::rtPayload<double> *payload, Vec2i skip_stride, Vec3i *face_hit );
 };
 
 

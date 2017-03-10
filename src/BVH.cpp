@@ -260,23 +260,92 @@ void BVHBuilder::spatial_split( BVHNode *node, const std::vector< std::shared_pt
 } // end build spatial split tree
 
 
-int BVHBuilder::make_tree_spatial_dbl( BVHNode *root, Eigen::VectorXd *vertices, std::vector<Vec3i> *faces, int max_depth ){
+int BVHBuilder::make_tree_spatial_dbl( BVHNode *root, Eigen::VectorXd *vertices, Eigen::VectorXi *faces, int max_depth ){
 
-	return 0;
+	if( root == nullptr ){ root = new BVHNode(); }
+	else{
+		if( root->left_child != nullptr ){ delete root->left_child; root->left_child = nullptr; }
+		if( root->right_child != nullptr){ delete root->right_child; root->right_child = nullptr; }
+		root->vertices = nullptr;
+		root->face_indices.clear();
+		root->aabb->valid = false;
+	}
+
+	n_nodes = 1;
+	if( faces->size()==0 ){ return 1; }
+
+	std::vector< int > queue( faces->size()/3 );
+	std::iota( std::begin(queue), std::end(queue), 0 );
+	spatial_split( root, vertices, faces, queue, 0, max_depth );
+
+	return n_nodes;
 
 } // end make spatial tree with double
 
 
-void BVHBuilder::update_bvh( BVHNode *node ){
+void BVHBuilder::spatial_split( BVHNode *node, Eigen::VectorXd *vertices, Eigen::VectorXi *faces,
+	const std::vector<int> &queue, const int split_axis, const int max_depth ) {
+
+	// Create the aabb
+	int n_queue = queue.size();
+	std::vector< Vec3d > obj_centers( n_queue, Vec3d(0,0,0) ); // store the centers for later lookup
+	for( int i=0; i<n_queue; ++i ){
+		int idx = queue[i];
+		const Vec3i &f = faces->segment<3>(idx*3);
+		Vec3d p0 = vertices->segment<3>(f[0]*3);
+		Vec3d p1 = vertices->segment<3>(f[1]*3);
+		Vec3d p2 = vertices->segment<3>(f[2]*3);
+		obj_centers[i] = ( p0 + p1 + p2 )*0.5;
+		*node->aabb += p0.cast<float>();
+		*node->aabb += p1.cast<float>();
+		*node->aabb += p2.cast<float>();
+	}
+	Vec3d center = node->aabb->center().cast<double>();
+
+	// See if we're done creating nodes
+	if( queue.size()==0 ){ return; }
+	else if( queue.size()==1 || max_depth <= 0 ){
+		node->vertices = vertices;
+		node->faces = faces;
+		node->face_indices.reserve( queue.size() );
+		for( int i=0; i<queue.size(); ++i ){
+			node->face_indices.push_back(queue[i]);
+		}
+		return;
+	}
+
+	// Split faces
+	std::vector<int> left_queue, right_queue;
+	for( int i=0; i<queue.size(); ++i ){
+		double oc = obj_centers[i][split_axis];
+		if( oc <= center[ split_axis ] ){ left_queue.push_back( queue[i] ); }
+		else if( oc > center[ split_axis ] ){ right_queue.push_back( queue[i] ); }
+	}
+
+	// Check to make sure things got sorted. Sometimes small meshes fail.
+	if( left_queue.size()==0 ){ left_queue.push_back( right_queue.back() ); right_queue.pop_back(); }
+	if( right_queue.size()==0 ){ right_queue.push_back( left_queue.back() ); left_queue.pop_back(); }
+
+	// Create the children
+	node->left_child = new BVHNode();
+	node->right_child = new BVHNode();
+	spatial_split( node->left_child, vertices, faces, left_queue, ((split_axis+1)%3), max_depth-1 );
+	spatial_split( node->right_child, vertices, faces, right_queue, ((split_axis+1)%3), max_depth-1 );
+	n_nodes += 2;
+
+} // end build spatial split tree
+
+
+void BVHBuilder::update( BVHNode *node ){
 
 	node->aabb->valid = false;
 
 	if( node->left_child != nullptr ){
-		update_bvh( node->left_child );
+		update( node->left_child );
 		*(node->aabb) += *(node->left_child->aabb);
 	}
 	if( node->right_child != nullptr ){
-		update_bvh( node->right_child );
+		update( node->right_child );
 		*(node->aabb) += *(node->left_child->aabb);
 	}
 
@@ -285,6 +354,15 @@ void BVHBuilder::update_bvh( BVHNode *node ){
 		node->m_objects[i]->get_bounds(min,max);
 		*(node->aabb) += min;
 		*(node->aabb) += max;
+	}
+
+	int n_faces = node->face_indices.size();
+	for( int i=0; i<n_faces; ++i ){
+		int idx = node->face_indices[i];
+		const Vec3i &f = node->faces->segment<3>(idx*3);
+		*(node->aabb) += node->vertices->segment<3>(f[0]*3).cast<float>();
+		*(node->aabb) += node->vertices->segment<3>(f[1]*3).cast<float>();
+		*(node->aabb) += node->vertices->segment<3>(f[2]*3).cast<float>();
 	}
 
 } // end update bvh
@@ -334,25 +412,28 @@ bool BVHTraversal::any_hit( const BVHNode* node, const raycast::Ray *ray, raycas
 } // end ray intersect
 
 
-bool BVHTraversal::closest_hit_dbl( const BVHNode *node, const raycast::rtRay<double> *ray, raycast::rtPayload<double> *payload, Vec3i *face_hit ){
+bool BVHTraversal::closest_hit_dbl( const BVHNode *node, const raycast::rtRay<double> *ray,
+	raycast::rtPayload<double> *payload, Vec2i skip_stride, Vec3i *face_hit ){
 
 	if( !raycast::ray_aabb<double>( ray, node->aabb->min.cast<double>(), node->aabb->max.cast<double>(), payload ) ){ return false; }
 
 	// See if there are children to intersect
 	bool left_hit=false, right_hit=false;
-	if( node->left_child != nullptr ){ left_hit = BVHTraversal::closest_hit_dbl( node->left_child, ray, payload, face_hit ); }
-	if( node->right_child != nullptr ){ right_hit = BVHTraversal::closest_hit_dbl( node->right_child, ray, payload, face_hit ); }
+	if( node->left_child != nullptr ){ left_hit = BVHTraversal::closest_hit_dbl( node->left_child, ray, payload, skip_stride, face_hit ); }
+	if( node->right_child != nullptr ){ right_hit = BVHTraversal::closest_hit_dbl( node->right_child, ray, payload, skip_stride, face_hit ); }
 	if( left_hit || right_hit ){ return true; }
 
 	// Loop over objects stored on this bvh node
 	bool obj_hit = false;
-	const int n_faces = node->faces->size();
+	const int n_faces = node->face_indices.size();
 	for( int i=0; i<n_faces; ++i ){
-		Vec3i &f( node->faces->at(i) );
-		Vec3d p0 = node->vertices->segment<3>(f[0]*3);
-		Vec3d p1 = node->vertices->segment<3>(f[1]*3);
-		Vec3d p2 = node->vertices->segment<3>(f[2]*3);
-		if( raycast::ray_triangle( ray, p0, p1, p2, payload ) ){
+		int idx = node->face_indices[i];
+		if( idx >= skip_stride[0] && idx < skip_stride[1] ){ continue; }
+		const Vec3i &f = node->faces->segment<3>(idx*3);
+		const Vec3d &p0 = node->vertices->segment<3>(f[0]*3);
+		const Vec3d &p1 = node->vertices->segment<3>(f[1]*3);
+		const Vec3d &p2 = node->vertices->segment<3>(f[2]*3);
+		if( raycast::ray_triangle<double>( ray, p0, p1, p2, payload ) ){
 			obj_hit = true;
 			if( face_hit != nullptr ){ *face_hit = f; }
 		}
