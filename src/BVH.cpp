@@ -424,6 +424,8 @@ bool BVHTraversal::closest_hit_dbl( const BVHNode *node, const raycast::rtRay<do
 	if( node->right_child != nullptr ){ right_hit = BVHTraversal::closest_hit_dbl( node->right_child, ray, payload, skip_stride, face_hit, closest_face ); }
 	if( left_hit || right_hit ){ return true; }
 
+	Vec3d curr_pos = ray->origin - ray->direction*payload->t_max;
+
 	// Loop over objects stored on this bvh node
 	bool obj_hit = false;
 	const int n_faces = node->face_indices.size();
@@ -438,6 +440,16 @@ bool BVHTraversal::closest_hit_dbl( const BVHNode *node, const raycast::rtRay<do
 			obj_hit = true;
 			if( face_hit != nullptr ){ *face_hit = f; }
 		}
+
+		// Check closest triangle
+		Vec3d tmp_p = mcl::projection::point_triangle( curr_pos, p0, p1, p2 );
+		Vec3d tmp_n = (tmp_p-curr_pos);
+		double tmp_dist = tmp_n.squaredNorm(); // distance to triangle
+		if( tmp_dist < payload->closest_dist ){
+			*closest_face = f;
+			payload->closest_p = tmp_p;
+			payload->closest_dist = tmp_dist;
+		} //else { continue; }
 	}
 
 	return obj_hit;

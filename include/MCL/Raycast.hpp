@@ -55,14 +55,17 @@ namespace raycast {
 	public:
 		void init( const rtRay<T> &ray ){ t_min=ray.eps; launch_point=ray.origin; }
 
-		rtPayload() : t_min(1e-5), t_max(9999999), bary(0,0,0) {}
-		rtPayload( const rtRay<T> &ray ) : t_max(9999999), bary(0,0,0) { init(ray); }
+		rtPayload() : t_min(1e-5), t_max(9999999), closest_dist(9999999), bary(0,0,0) {}
+		rtPayload( const rtRay<T> &ray ) : t_max(9999999), closest_dist(9999999), bary(0,0,0) { init(ray); }
 
-		double t_min, t_max;
+		T t_min, t_max;
 		Vec3<T> launch_point;
 		mutable Vec3<T> bary;
 		mutable Vec3<T> n, hit_point;
 		mutable int material; // index into SceneManager::materials
+
+		T closest_dist;
+		Vec3<T> closest_p;
 	};
 	typedef rtPayload<float> Payload;
 
