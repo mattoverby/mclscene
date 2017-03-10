@@ -117,7 +117,7 @@ public:
 
 	// Using double (temporary diff function until I get different types integrated better
 	// Skip stride is the start and end indices of the faces to skip in the ray trace.
-	static bool closest_hit_dbl( const BVHNode *node, const raycast::rtRay<double> *ray, raycast::rtPayload<double> *payload, Vec2i skip_stride, Vec3i *face_hit );
+	static bool closest_hit_dbl( const BVHNode *node, const raycast::rtRay<double> *ray, raycast::rtPayload<double> *payload, Vec2i skip_stride, Vec3i *face_hit, Vec3i *closest_face );
 };
 
 

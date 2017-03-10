@@ -22,6 +22,7 @@
 #include "MCL/BVH.hpp"
 #include <chrono>
 #include <bitset>
+#include "MCL/Projection.hpp"
 
 using namespace mcl;
 
@@ -413,14 +414,14 @@ bool BVHTraversal::any_hit( const BVHNode* node, const raycast::Ray *ray, raycas
 
 
 bool BVHTraversal::closest_hit_dbl( const BVHNode *node, const raycast::rtRay<double> *ray,
-	raycast::rtPayload<double> *payload, Vec2i skip_stride, Vec3i *face_hit ){
+	raycast::rtPayload<double> *payload, Vec2i skip_stride, Vec3i *face_hit, Vec3i *closest_face ){
 
 	if( !raycast::ray_aabb<double>( ray, node->aabb->min.cast<double>(), node->aabb->max.cast<double>(), payload ) ){ return false; }
 
 	// See if there are children to intersect
 	bool left_hit=false, right_hit=false;
-	if( node->left_child != nullptr ){ left_hit = BVHTraversal::closest_hit_dbl( node->left_child, ray, payload, skip_stride, face_hit ); }
-	if( node->right_child != nullptr ){ right_hit = BVHTraversal::closest_hit_dbl( node->right_child, ray, payload, skip_stride, face_hit ); }
+	if( node->left_child != nullptr ){ left_hit = BVHTraversal::closest_hit_dbl( node->left_child, ray, payload, skip_stride, face_hit, closest_face ); }
+	if( node->right_child != nullptr ){ right_hit = BVHTraversal::closest_hit_dbl( node->right_child, ray, payload, skip_stride, face_hit, closest_face ); }
 	if( left_hit || right_hit ){ return true; }
 
 	// Loop over objects stored on this bvh node
