@@ -65,7 +65,7 @@ namespace kdtree {
 	// Point-Scene traversal for closest object to a given point.
 	// Projection is the point on the object surface, obj is the pointer to the object.
 	// Returns true if a closest object was found (closer than distance between point and projection).
-	static inline bool closest_object( const KDTNode *node, const Vec3f &point, Vec3f &projection, std::shared_ptr<BaseObject> *obj );
+	static inline bool closest_object( const KDTNode *node, const Vec3f &point, Vec3f &projection, Vec3f &norm, std::shared_ptr<BaseObject> *obj );
 
 }; // end namespace kdtree
 
@@ -140,7 +140,7 @@ static inline void kdtree::object_median_split( KDTNode *node, const std::vector
 
 // Point-Scene traversal for closest object to a given point.
 // Projection is the point on the object surface, obj is the pointer to the object.
-static inline bool kdtree::closest_object( const KDTNode *node, const Vec3f &point, Vec3f &projection, std::shared_ptr<BaseObject> *obj ){
+static inline bool kdtree::closest_object( const KDTNode *node, const Vec3f &point, Vec3f &projection, Vec3f &norm, std::shared_ptr<BaseObject> *obj ){
 
 	// Parse the tree
 	bool left_hit = false; bool right_hit = false;
@@ -152,20 +152,20 @@ static inline bool kdtree::closest_object( const KDTNode *node, const Vec3f &poi
 
 	// Check left?
 	if( pt < med && node->left_child != nullptr ){
-		left_hit = kdtree::closest_object( node->left_child, point, projection, obj );
+		left_hit = kdtree::closest_object( node->left_child, point, projection, norm, obj );
 
 		float dist = (projection-point).squaredNorm();
 		bool check_both = dist > (pt-med)*(pt-med) && node->right_child != nullptr;
-		if( check_both ){ right_hit = kdtree::closest_object( node->right_child, point, projection, obj ); }
+		if( check_both ){ right_hit = kdtree::closest_object( node->right_child, point, projection, norm, obj ); }
 	}
 
 	// Check right?
 	else if( pt >= med && node->right_child != nullptr ){
-		right_hit = kdtree::closest_object( node->right_child, point, projection, obj );
+		right_hit = kdtree::closest_object( node->right_child, point, projection, norm, obj );
 
 		float dist = (projection-point).squaredNorm();
 		bool check_both = dist > (pt-med)*(pt-med) && node->left_child != nullptr;
-		if( check_both ){ left_hit = kdtree::closest_object( node->left_child, point, projection, obj ); }
+		if( check_both ){ left_hit = kdtree::closest_object( node->left_child, point, projection, norm, obj ); }
 	}
 
 	// If we traversed the tree, return
@@ -176,7 +176,8 @@ static inline bool kdtree::closest_object( const KDTNode *node, const Vec3f &poi
 	double dist = (point-projection).squaredNorm(); // current closest obj
 	for( int i=0; i<node->m_objects.size(); ++i ){
 
-		Vec3f p = node->m_objects[i]->projection(point);
+		Vec3f pn(0,0,0);
+		Vec3f p = node->m_objects[i]->projection(point,pn);
 		Vec3f n = point - p;
 
 		// See if this projection is closer
@@ -186,6 +187,8 @@ static inline bool kdtree::closest_object( const KDTNode *node, const Vec3f &poi
 			obj_hit = true;
 			obj=&(node->m_objects[i]);
 			dist = curr_dist;
+			if( pn.norm()>0 ){ norm = pn; }
+			else{ norm = n; }
 		}
 	}
 

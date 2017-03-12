@@ -274,6 +274,15 @@ void TriangleMesh::save( std::string filename ){
 	fs.close();
 }
 
+void TriangleMesh::make_ccw(){
+
+	for( int i=0; i<faces.size(); ++i ){
+		Vec3i f = faces[i];
+		faces[i] = Vec3i( f[0], f[2], f[1] );
+	}
+
+}
+
 std::string TriangleMesh::get_xml( int mode ){
 
 	std::string timestamp = get_timestamp_meshname();

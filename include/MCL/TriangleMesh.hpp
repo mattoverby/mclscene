@@ -54,6 +54,14 @@ public:
 	Vec3f projection( const Vec3f &point ) const {
 		return projection::point_triangle( point, *p0, *p1, *p2 );
 	}
+
+	Vec3f projection( const Vec3f &point, Vec3f &norm ) const {
+		const Vec3f e0 = *p1 - *p0;
+		const Vec3f e1 = *p0 - *p2;
+		norm = e1.cross( e0 );
+		return projection::point_triangle( point, *p0, *p1, *p2 );
+	}
+
 };
 
 
@@ -101,6 +109,8 @@ public:
 	// When stitching meshes together, this function will
 	// join two vertices as one if they are within dist.
 	void collapse_points( float distance );
+
+	void make_ccw();
 
 private:
 	AABB aabb;

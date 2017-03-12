@@ -53,6 +53,7 @@ public:
 
 	// Projection on to surface
 	virtual Vec3f projection( const Vec3f &point ) const { return point; }
+	virtual Vec3f projection( const Vec3f &point, Vec3f &norm ) const { return point; }
 
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode=0 ){ return ""; }
