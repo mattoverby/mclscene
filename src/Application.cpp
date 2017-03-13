@@ -112,12 +112,12 @@ int Application::display(){
 
 	// Get the monitor max window size
 	const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-	int max_width = 1024;
-	int max_height = 768;
-//	int max_width = mode->width;
-//	int max_height = mode->height;
-//	if( max_width >= 1920 ){ max_width=1920; max_height=1080; } // just use 1080 if they have it
-//	else{ max_width=1366; max_height=768; }
+//	int max_width = 1024;
+//	int max_height = 768;
+	int max_width = mode->width;
+	int max_height = mode->height;
+	if( max_width >= 1920 ){ max_width=1920; max_height=1080; } // just use 1080 if they have it
+	else{ max_width=1366; max_height=768; }
 
 	// Create the glfw window
 	window = glfwCreateWindow(max_width, max_height, "Viewer", NULL, NULL);
