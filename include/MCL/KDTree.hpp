@@ -25,6 +25,7 @@
 
 #include "MCL/Vec.hpp"
 #include "MCL/AABB.hpp"
+#include "MCL/Raycast.hpp"
 
 namespace mcl {
 
@@ -45,8 +46,14 @@ public:
 	mutable std::vector< std::shared_ptr<BaseObject> > m_objects; // empty unless a leaf node
 	bool is_leaf() const { return m_objects.size()>0; }
 
+
 	unsigned short axis; // 0, 1, 2
 	float median;
+	AABB aabb; 
+
+	Eigen::VectorXd *vertices; // pointer to data
+	Eigen::VectorXi *faces; // pointer to data
+	std::vector<int> face_indices; // indices into faces
 };
 
 
@@ -62,10 +69,17 @@ namespace kdtree {
 	static inline void object_median_split( KDTNode *node, const std::vector< std::shared_ptr<BaseObject> > &prims,
 		const std::vector< int > &queue, const int split_axis, const int max_depth );
 
+	static inline void make_tree( KDTNode *root, Eigen::VectorXd *vertices, Eigen::VectorXi *faces, int max_depth=10 );
+
+	static inline void median_split( KDTNode *node, Eigen::VectorXd *vertices, Eigen::VectorXi *faces, const std::vector<int> &queue, const int split_axis, const int max_depth );
 	// Point-Scene traversal for closest object to a given point.
 	// Projection is the point on the object surface, obj is the pointer to the object.
 	// Returns true if a closest object was found (closer than distance between point and projection).
 	static inline bool closest_object( const KDTNode *node, const Vec3f &point, Vec3f &projection, Vec3f &norm, std::shared_ptr<BaseObject> *obj );
+	static inline bool closest_object( const KDTNode *node, const Vec2i skip_stride, double& closest, const Vec3f &point, Vec3f &projection, Vec3f &norm, int* tri_idx);
+	static inline bool ray_intersection( const KDTNode *node, const mcl::raycast::rtRay<double> ray, const Vec2i skip_stride, double& t_max, Vec3f &projection, Vec3f &norm, int* tri_idx); 
+	static inline bool intersect_with_box(const AABB& aabb, const mcl::raycast::rtRay<double> ray, const double t_max, Vec3f& projection);
+	static inline bool close_to_box(const AABB& aabb, const Vec3f &point, const double closest);
 
 }; // end namespace kdtree
 
@@ -99,7 +113,7 @@ static inline void kdtree::make_tree( KDTNode *root, const std::vector< std::sha
 static inline void kdtree::object_median_split( KDTNode *node, const std::vector< std::shared_ptr<BaseObject> > &prims,
 	const std::vector< int > &queue, const int split_axis, const int max_depth ){
 
-	AABB aabb; // Create an AABB to compute center
+	// AABB aabb; // Create an AABB to compute center
 	std::vector< float > obj_min( queue.size() );
 	std::vector< float > obj_max( queue.size() );
 	for( int i=0; i<queue.size(); ++i ){
@@ -107,12 +121,12 @@ static inline void kdtree::object_median_split( KDTNode *node, const std::vector
 		prims[ queue[i] ]->get_bounds( bmin, bmax );
 		obj_min[i] = bmin[ split_axis ];
 		obj_max[i] = bmax[ split_axis ];
-		aabb += bmin; aabb += bmax;
+		node->aabb += bmin; node->aabb += bmax;
 	}
 
 	// Set KDTree node details
 	node->axis = split_axis;
-	node->median = aabb.center()[ split_axis ];
+	node->median = node->aabb.center()[ split_axis ];
 
 	// See if we're a leaf
 	if( queue.size()==0 ){ return; }
@@ -195,7 +209,288 @@ static inline bool kdtree::closest_object( const KDTNode *node, const Vec3f &poi
 	return obj_hit;
 }
 
+static inline void kdtree::make_tree( KDTNode *root, Eigen::VectorXd *vertices, Eigen::VectorXi *faces, int max_depth ) {
+	if (root == nullptr){ root = new KDTNode(); }
+	else {
+		if (root->left_child != nullptr) {
+			delete root->left_child;
+			root->left_child = nullptr;
+		}
+		if (root->right_child != nullptr) {
+			delete root->right_child;
+			root->right_child = nullptr;
+		}
+		root->vertices = nullptr;
+		root->face_indices.clear();
+		root->aabb.valid = false;
+	}
+	for (int i = 0; i < faces->size()/3; i++) {
+		Vec3i f = faces->segment<3>(i*3);
+		for (int j = 0; j < 3; j++) {
+			Vec3d x_d = vertices->segment<3>(f[j]*3);
+			Vec3f x(x_d(0), x_d(1), x_d(2));
+			root->aabb += x;
+		}
+	}
+	std::vector< int > queue( faces->size()/3 );
+	std::iota( std::begin(queue), std::end(queue), 0 );
+	median_split(root, vertices, faces, queue, 0, max_depth);
+}
 
+static inline void kdtree::median_split( KDTNode *node, Eigen::VectorXd *vertices, Eigen::VectorXi *faces, const std::vector<int> &queue, const int split_axis, const int max_depth ) {
+	std::vector< float > obj_min( queue.size() );
+	std::vector< float > obj_max( queue.size() );
+
+	AABB& aabb = node->aabb;
+	node->axis = split_axis;
+	node->median = aabb.center()[ split_axis ];
+
+	if (queue.size() == 0) {
+		return;
+	}
+	if (queue.size() == 1 || max_depth <= 0) {
+		node->vertices = vertices;
+		node->faces = faces;
+		node->face_indices.reserve( queue.size() );
+		for( int i=0; i<queue.size(); ++i ){
+			node->face_indices.push_back(queue[i]);
+		}
+		return;
+	}
+
+	std::vector<int> left_queue, right_queue;
+	for( int i=0; i<queue.size(); ++i ){
+		const Vec3i &f = faces->segment<3>(queue[i]*3);
+		AABB faceAABB;
+		for (int j = 0; j < 3; j++) {
+			Vec3d v_d = vertices->segment<3>(f[j]*3);
+			Vec3f v(v_d[0], v_d[1], v_d[2]);
+			faceAABB += v;
+		}
+		if (faceAABB.min[split_axis] < node->median) {
+			left_queue.push_back( queue[i] );
+		}
+		if (faceAABB.max[split_axis] >= node->median) {
+			right_queue.push_back( queue[i] );
+		}
+	}
+
+	// Create the children
+	node->left_child = new KDTNode();
+	node->left_child->aabb = aabb;
+	node->left_child->aabb.max[split_axis] = node->median;
+	node->right_child = new KDTNode();
+	node->right_child->aabb = aabb;
+	node->right_child->aabb.min[split_axis] = node->median;
+	median_split( node->left_child, vertices, faces, left_queue, ((split_axis+1)%3), max_depth-1 );
+	median_split( node->right_child, vertices, faces, right_queue, ((split_axis+1)%3), max_depth-1 );
+}
+
+static inline bool kdtree::closest_object( const KDTNode *node, const Vec2i skip_stride, double& closest, const Vec3f &point, Vec3f &projection, Vec3f &norm, int* tri_idx) {
+	bool left_hit = false, right_hit = false;
+	float pt = point[node->axis];
+	float med = node->median;
+
+	if (pt < med && node->left_child != nullptr && close_to_box(node->left_child->aabb, point, closest)) {
+		left_hit = closest_object(node->left_child, skip_stride, closest, point, projection, norm, tri_idx);
+		// float dist = (projection - point).squaredNorm();
+		// bool check_both = dist > (pt - med)*(pt - med) && node->right_child != nullptr;
+		// if (check_both) {
+		// 	right_hit = closest_object(node->right_child, skip_stride, closest, point, projection, norm, tri_idx);
+		// }
+	} 
+	if (pt >= med && node->right_child != nullptr && close_to_box(node->right_child->aabb, point, closest)) {
+		right_hit = closest_object(node->right_child, skip_stride, closest, point, projection, norm, tri_idx);
+		// float dist = (projection - point).squaredNorm();
+		// bool check_both = dist > (pt - med)*(pt - med) && node->left_child != nullptr;
+		// if (check_both) {
+		// 	left_hit = closest_object(node->left_child, skip_stride, closest, point, projection, norm, tri_idx);
+		// }
+	}
+
+	if (left_hit || right_hit) {
+		return true;
+	}
+
+	bool obj_hit = false;
+	// double dist = (point - projection).squaredNorm();
+
+	for (int i = 0; i < node->face_indices.size(); i++) {
+		int idx = node->face_indices[i];
+		if (idx >= skip_stride[0] && idx < skip_stride[1]) {
+			continue;
+		}
+		const Vec3i &f = node->faces->segment<3>(node->face_indices[i]*3);
+		Vec3f vs[3];
+		for (int j = 0; j < 3; j++) {
+			Vec3d v_d = node->vertices->segment<3>(f[j]*3);
+			vs[j] << v_d[0], v_d[1], v_d[2];
+		}
+		Vec3f p = mcl::projection::point_triangle(point, vs[0], vs[1], vs[2]);
+		double curr_dist = (p - point).squaredNorm();
+		Vec3f e0 = vs[1] - vs[0];
+		Vec3f e1 = vs[0] - vs[2];
+		Vec3f curr_n = e1.cross(e0);
+		if (curr_dist < closest) {
+			projection = p;
+			obj_hit = true;
+			closest = curr_dist;
+			curr_n.normalize();
+			norm = curr_n;
+			tri_idx[0] = f[0]*3;
+			tri_idx[1] = f[1]*3;
+			tri_idx[2] = f[2]*3;
+		}
+	}
+
+	return obj_hit;
+}
+
+static inline bool kdtree::ray_intersection( const KDTNode *node, const mcl::raycast::rtRay<double> ray, const Vec2i skip_stride, double& t_max, Vec3f &projection, Vec3f &norm, int* tri_idx) {
+	
+	bool left_hit = false, right_hit = false;
+	Vec3f box_proj;
+	if (node->left_child != nullptr && intersect_with_box(node->left_child->aabb, ray, t_max, box_proj)) {
+		left_hit = ray_intersection(node->left_child, ray, skip_stride, t_max, projection, norm, tri_idx);
+	} 
+	if (node->right_child != nullptr && intersect_with_box(node->right_child->aabb, ray, t_max, box_proj)) {
+		right_hit = ray_intersection(node->right_child, ray, skip_stride, t_max, projection, norm, tri_idx);
+	}
+	if (left_hit || right_hit) {
+		return true;
+	}
+
+	Vec3f x(ray.origin[0], ray.origin[1], ray.origin[2]);
+	Vec3f dir(ray.direction[0], ray.direction[1], ray.direction[2]);
+
+
+	// For a leaf node
+	bool obj_hit = false;
+	for( int i=0; i<node->face_indices.size(); ++i ){
+		int idx = node->face_indices[i];
+		if (idx >= skip_stride[0] && idx < skip_stride[1]) {
+			continue;
+		}
+		const Vec3i &f = node->faces->segment<3>(idx*3);
+		Vec3f vs[3];
+		for (int j = 0; j < 3; j++) {
+			Vec3d v_d = node->vertices->segment<3>(f[j]*3);
+			vs[j] << v_d[0], v_d[1], v_d[2];
+		}
+		Vec3f e0 = vs[1] - vs[0];
+		Vec3f e1 = vs[0] - vs[2];
+		Vec3f curr_n = e1.cross( e0 );
+		Vec3f e2 = ( 1.0 / curr_n.dot( dir ) ) * ( vs[0] - x );
+		Vec3f inter  = dir.cross( e2 );
+		double beta  = inter.dot( e1 );
+		double gamma = inter.dot( e0 );
+		double alpha = 1.0 - beta - gamma;
+		alpha = abs(alpha) < 1e-6 ? 0 : alpha;
+		beta = abs(beta) < 1e-6 ? 0 : beta;
+		gamma = abs(gamma) < 1e-6 ? 0 : gamma;
+		double t = curr_n.dot( e2 );
+		bool bary_test = alpha>0.0 && beta>0.0 && gamma>0.0 && (alpha+beta+gamma)<=1.0;
+		bool t_test = ( t>0 && t<t_max );
+		if (bary_test && t_test) {
+			obj_hit = true;
+			t_max = t;
+			projection = x + t*dir;
+			curr_n.normalize();
+			norm = curr_n;
+			tri_idx[0] = f[0]*3;
+			tri_idx[1] = f[1]*3;
+			tri_idx[2] = f[2]*3;
+		}
+	}
+
+	return obj_hit;
+}
+
+static inline bool kdtree::close_to_box(const AABB& aabb, const Vec3f &point, const double closest) {
+	Vec3f diff1 = point - aabb.max;
+	Vec3f diff2 = aabb.min - point;
+	if (diff1[0] <= 0 && diff1[1] <= 0 && diff1[2] <= 0
+		&& diff2[0] <= 0 && diff2[1] <= 0 && diff2[2] <= 0) {	// inside the box
+		return true;
+	}
+	double distance;
+	Vec3i s1, s2;
+	for (int i = 0; i < 3; i++) {
+		s1[i] = diff1[i] > 0 ? 1 : 0;
+		s2[i] = diff2[i] > 0 ? 1 : 0;
+	}
+	Vec3i ones(1, 1, 1);
+	Vec3f max(aabb.max[0]*s1[0], aabb.max[1]*s1[1], aabb.max[2]*s1[2]);
+	Vec3f min(aabb.min[0]*s2[0], aabb.min[1]*s2[1], aabb.min[2]*s2[2]);
+	if (ones.dot(s1) + ones.dot(s2) == 3) { // close to corner
+		if ((max + min - point).norm() < closest) {
+			return true;
+		}
+	} else if (ones.dot(s1) + ones.dot(s2) == 2) {
+		Vec3f d = max + min - point;
+		for (int i = 0; i < 3; i++) {
+			if ((s1 + s2)[i] == 0) {
+				d[i] = 0;
+			}
+		}
+		if (d.norm() < closest) {
+			return true;
+		}
+	} else if (ones.dot(s1) + ones.dot(s2) == 1) {
+		for (int i = 0; i < 3; i++) {
+			if ((s1 + s2)[i] == 1) {
+				if (abs(max[i] + min[i] - point[i]) > closest) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+static inline bool kdtree::intersect_with_box(const AABB& aabb, const mcl::raycast::rtRay<double> ray, const double t_max, Vec3f& projection) {
+	Vec3f x(ray.origin[0], ray.origin[1], ray.origin[2]);
+	Vec3f dir(ray.direction[0], ray.direction[1], ray.direction[2]);
+	Vec3f point = x + t_max*dir;
+
+	Vec3f diff1 = x - aabb.max;
+	Vec3f diff2 = aabb.min - x;
+	if (diff1[0] <= 0 && diff1[1] <= 0 && diff1[2] <= 0
+		&& diff2[0] <= 0 && diff2[1] <= 0 && diff2[2] <= 0) {	// inside the box
+		return true;
+	}
+	for (int a = 0; a < 3; a++) {
+		if (diff1[a] > 0) {
+			Vec3f n(0, 0, 0);
+			n[a] = -1;
+			double cos_theta = dir.dot(n);
+			double t = diff1[a]/cos_theta;
+			if (t < t_max && t > 0) {
+				projection = x + t*dir;
+				int a1 = (a + 1)%3, a2 = (a + 2)%3;
+				if (projection[a1] <= aabb.max[a1] && projection[a1] >= aabb.min[a1] &&
+					projection[a2] <= aabb.max[a2] && projection[a2] >= aabb.min[a2]) {
+					return true;
+				}
+			}
+		}
+		if (diff2[a] > 0) {
+			Vec3f n(0, 0, 0);
+			n[a] = 1;
+			double cos_theta = dir.dot(n);
+			double t = diff1[a]/cos_theta;
+			if (t < t_max && t > 0) {
+				projection = x + t*dir;
+				int a1 = (a + 1)%3, a2 = (a + 2)%3;
+				if (projection[a1] <= aabb.max[a1] && projection[a1] >= aabb.min[a1] &&
+					projection[a2] <= aabb.max[a2] && projection[a2] >= aabb.min[a2]) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
 
 } // end namespace mcl
 
