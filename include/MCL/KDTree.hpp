@@ -81,6 +81,7 @@ namespace kdtree {
 	static inline bool intersect_with_box(const AABB& aabb, const mcl::raycast::rtRay<double> ray, const double t_max, Vec3f& projection);
 	static inline bool close_to_box(const AABB& aabb, const Vec3f &point, const double closest);
 
+	static inline bool isValid(const KDTNode* root);
 }; // end namespace kdtree
 
 //
@@ -380,16 +381,30 @@ static inline bool kdtree::ray_intersection( const KDTNode *node, const mcl::ray
 		Vec3f e0 = vs[1] - vs[0];
 		Vec3f e1 = vs[0] - vs[2];
 		Vec3f curr_n = e1.cross( e0 );
+
+		// double d = curr_n.dot(vs[0]);
+		// double t = (d - curr_n.dot(x))/(curr_n.dot(dir));
+		// Vec3f temp_proj = x + t*dir;
+		// double area = e0.cross(e1).norm();
+		// Vec3f l0 = temp_proj - vs[0];
+		// Vec3f l1 = temp_proj - vs[1];
+		// Vec3f l2 = temp_proj - vs[2];
+		// double alpha = l1.cross(l2).norm()/area;
+		// double beta = l0.cross(l2).norm()/area;
+		// double gamma = l0.cross(l1).norm()/area;
+		// bool bary_test = abs(alpha + beta + gamma - 1) < 1e-6;
+
 		Vec3f e2 = ( 1.0 / curr_n.dot( dir ) ) * ( vs[0] - x );
 		Vec3f inter  = dir.cross( e2 );
 		double beta  = inter.dot( e1 );
 		double gamma = inter.dot( e0 );
 		double alpha = 1.0 - beta - gamma;
-		alpha = abs(alpha) < 1e-6 ? 0 : alpha;
-		beta = abs(beta) < 1e-6 ? 0 : beta;
-		gamma = abs(gamma) < 1e-6 ? 0 : gamma;
+		// alpha = abs(alpha) < 1e-6 ? 0 : alpha;
+		beta = abs(beta) < std::numeric_limits<double>::min() ? 0 : beta;
+		gamma = abs(gamma) < std::numeric_limits<double>::min() ? 0 : gamma;
 		double t = curr_n.dot( e2 );
 		bool bary_test = alpha>0.0 && beta>0.0 && gamma>0.0 && (alpha+beta+gamma)<=1.0;
+
 		bool t_test = ( t>0 && t<t_max );
 		if (bary_test && t_test) {
 			obj_hit = true;
@@ -468,8 +483,8 @@ static inline bool kdtree::intersect_with_box(const AABB& aabb, const mcl::rayca
 			if (t < t_max && t > 0) {
 				projection = x + t*dir;
 				int a1 = (a + 1)%3, a2 = (a + 2)%3;
-				if (projection[a1] <= aabb.max[a1] && projection[a1] >= aabb.min[a1] &&
-					projection[a2] <= aabb.max[a2] && projection[a2] >= aabb.min[a2]) {
+				double eps = 1e-6;
+				if (abs(projection[a1] - aabb.max[a1]) <= eps && eps >= abs(aabb.min[a1] - projection[a1]) && abs(projection[a2] - aabb.max[a2]) <= eps && eps >= abs(aabb.min[a2] - projection[a2])) {
 					return true;
 				}
 			}
@@ -478,18 +493,28 @@ static inline bool kdtree::intersect_with_box(const AABB& aabb, const mcl::rayca
 			Vec3f n(0, 0, 0);
 			n[a] = 1;
 			double cos_theta = dir.dot(n);
-			double t = diff1[a]/cos_theta;
+			double t = diff2[a]/cos_theta;
 			if (t < t_max && t > 0) {
 				projection = x + t*dir;
 				int a1 = (a + 1)%3, a2 = (a + 2)%3;
-				if (projection[a1] <= aabb.max[a1] && projection[a1] >= aabb.min[a1] &&
-					projection[a2] <= aabb.max[a2] && projection[a2] >= aabb.min[a2]) {
+				double eps = 1e-6;
+				if (abs(projection[a1] - aabb.max[a1]) <= eps && eps >= abs(aabb.min[a1] - projection[a1]) && abs(projection[a2] - aabb.max[a2]) <= eps && eps >= abs(aabb.min[a2] - projection[a2])) {
 					return true;
 				}
 			}
 		}
 	}
 	return false;
+}
+
+static inline bool kdtree::isValid(const KDTNode* root) {
+	if( root == nullptr ){
+		return false;
+	}
+	else if (root->left_child == nullptr && root->right_child == nullptr) {
+		return false;
+	}
+	return true;
 }
 
 } // end namespace mcl
