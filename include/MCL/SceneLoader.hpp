@@ -536,7 +536,7 @@ static inline std::shared_ptr<mcl::Material> mcl::parse_preset_material( std::st
 		Brass, Bronze, Chrome, Copper, Gold, Silver, // metals
 		BlackPlastic, CyanPlastic, GreenPlastic, RedPlastic, WhitePlastic, YellowPlastic, // plastic
 		BlackRubber, CyanRubber, GreenRubber, RedRubber, WhiteRubber, YellowRubber, // rubber
-		Invisible, Unknown // Special
+		Invisible, Cloth, Unknown // Special
 	};
 
 	std::shared_ptr<Material> r = NULL;
@@ -578,6 +578,9 @@ static inline std::shared_ptr<mcl::Material> mcl::parse_preset_material( std::st
 	//
 	//	Create the material
 	//
+
+	// Cloth
+	else if ( preset=="cloth"){ m = (MaterialPreset::Cloth); }
 
 	switch( m ){
 
@@ -636,6 +639,8 @@ static inline std::shared_ptr<mcl::Material> mcl::parse_preset_material( std::st
 		r= std::shared_ptr<Material>( new Material( Vec3f(0.05, 0.05, 0.05), Vec3f(0.5, 0.5, 0.5), Vec3f(0.7, 0.7, 0.7), 0.078125 ) ); break;
 	case MaterialPreset::YellowRubber:
 		r= std::shared_ptr<Material>( new Material( Vec3f(0.05, 0.05, 0.0), Vec3f(0.5, 0.5, 0.4), Vec3f(0.7, 0.7, 0.04), 0.078125 ) ); break;
+	case MaterialPreset::Cloth:
+		r= std::shared_ptr<Material>( new Material( Vec3f(0.25, 0.20725, 0.20725), Vec3f(1.0, 0.829, 0.829), Vec3f(0., 0., 0.), 0.088 ) ); break;
 
 	default: break;
 
