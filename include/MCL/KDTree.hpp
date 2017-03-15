@@ -76,7 +76,7 @@ namespace kdtree {
 	// Projection is the point on the object surface, obj is the pointer to the object.
 	// Returns true if a closest object was found (closer than distance between point and projection).
 	static inline bool closest_object( const KDTNode *node, const Vec3f &point, Vec3f &projection, Vec3f &norm, std::shared_ptr<BaseObject> *obj );
-	static inline bool closest_object( const KDTNode *node, const Vec2i skip_stride, double& closest, const Vec3f &point, Vec3f &projection, Vec3f &norm, int* tri_idx);
+	static inline bool closest_object( const KDTNode *node, const Vec2i stride, const bool toSkip, double& closest, const Vec3f &point, Vec3f &projection, Vec3f &norm, int* tri_idx);
 	static inline bool ray_intersection( const KDTNode *node, const mcl::raycast::rtRay<double> ray, const Vec2i skip_stride, double& t_max, Vec3f &projection, Vec3f &norm, int* tri_idx); 
 	static inline bool intersect_with_box(const AABB& aabb, const mcl::raycast::rtRay<double> ray, const double t_max, Vec3f& projection);
 	static inline bool close_to_box(const AABB& aabb, const Vec3f &point, const double closest);
@@ -287,13 +287,13 @@ static inline void kdtree::median_split( KDTNode *node, Eigen::VectorXd *vertice
 	median_split( node->right_child, vertices, faces, right_queue, ((split_axis+1)%3), max_depth-1 );
 }
 
-static inline bool kdtree::closest_object( const KDTNode *node, const Vec2i skip_stride, double& closest, const Vec3f &point, Vec3f &projection, Vec3f &norm, int* tri_idx) {
+static inline bool kdtree::closest_object( const KDTNode *node, const Vec2i stride, const bool toSkip, double& closest, const Vec3f &point, Vec3f &projection, Vec3f &norm, int* tri_idx) {
 	bool left_hit = false, right_hit = false;
 	float pt = point[node->axis];
 	float med = node->median;
 
 	if (pt < med && node->left_child != nullptr && close_to_box(node->left_child->aabb, point, closest)) {
-		left_hit = closest_object(node->left_child, skip_stride, closest, point, projection, norm, tri_idx);
+		left_hit = closest_object(node->left_child, stride, toSkip, closest, point, projection, norm, tri_idx);
 		// float dist = (projection - point).squaredNorm();
 		// bool check_both = dist > (pt - med)*(pt - med) && node->right_child != nullptr;
 		// if (check_both) {
@@ -301,7 +301,7 @@ static inline bool kdtree::closest_object( const KDTNode *node, const Vec2i skip
 		// }
 	} 
 	if (pt >= med && node->right_child != nullptr && close_to_box(node->right_child->aabb, point, closest)) {
-		right_hit = closest_object(node->right_child, skip_stride, closest, point, projection, norm, tri_idx);
+		right_hit = closest_object(node->right_child, stride, toSkip, closest, point, projection, norm, tri_idx);
 		// float dist = (projection - point).squaredNorm();
 		// bool check_both = dist > (pt - med)*(pt - med) && node->left_child != nullptr;
 		// if (check_both) {
@@ -318,8 +318,14 @@ static inline bool kdtree::closest_object( const KDTNode *node, const Vec2i skip
 
 	for (int i = 0; i < node->face_indices.size(); i++) {
 		int idx = node->face_indices[i];
-		if (idx >= skip_stride[0] && idx < skip_stride[1]) {
-			continue;
+		if (toSkip) {
+			if (idx >= stride[0] && idx < stride[1]) {
+				continue;
+			}
+		} else {
+			if (idx < stride[0] || idx >= stride[1]) {
+				continue;
+			}
 		}
 		const Vec3i &f = node->faces->segment<3>(node->face_indices[i]*3);
 		Vec3f vs[3];
