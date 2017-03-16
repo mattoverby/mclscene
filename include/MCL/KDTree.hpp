@@ -388,28 +388,28 @@ static inline bool kdtree::ray_intersection( const KDTNode *node, const mcl::ray
 		Vec3f e1 = vs[0] - vs[2];
 		Vec3f curr_n = e1.cross( e0 );
 
-		// double d = curr_n.dot(vs[0]);
-		// double t = (d - curr_n.dot(x))/(curr_n.dot(dir));
-		// Vec3f temp_proj = x + t*dir;
-		// double area = e0.cross(e1).norm();
-		// Vec3f l0 = temp_proj - vs[0];
-		// Vec3f l1 = temp_proj - vs[1];
-		// Vec3f l2 = temp_proj - vs[2];
-		// double alpha = l1.cross(l2).norm()/area;
-		// double beta = l0.cross(l2).norm()/area;
-		// double gamma = l0.cross(l1).norm()/area;
-		// bool bary_test = abs(alpha + beta + gamma - 1) < 1e-6;
+		double d = curr_n.dot(vs[0]);
+		double t = (d - curr_n.dot(x))/(curr_n.dot(dir));
+		Vec3f temp_proj = x + t*dir;
+		double area = e0.cross(e1).norm();
+		Vec3f l0 = temp_proj - vs[0];
+		Vec3f l1 = temp_proj - vs[1];
+		Vec3f l2 = temp_proj - vs[2];
+		double alpha = l1.cross(l2).norm()/area;
+		double beta = l0.cross(l2).norm()/area;
+		double gamma = l0.cross(l1).norm()/area;
+		bool bary_test = abs(alpha + beta + gamma - 1) < 1e-6;
 
-		Vec3f e2 = ( 1.0 / curr_n.dot( dir ) ) * ( vs[0] - x );
-		Vec3f inter  = dir.cross( e2 );
-		double beta  = inter.dot( e1 );
-		double gamma = inter.dot( e0 );
-		double alpha = 1.0 - beta - gamma;
-		// alpha = abs(alpha) < 1e-6 ? 0 : alpha;
-		beta = abs(beta) < std::numeric_limits<double>::min() ? 0 : beta;
-		gamma = abs(gamma) < std::numeric_limits<double>::min() ? 0 : gamma;
-		double t = curr_n.dot( e2 );
-		bool bary_test = alpha>0.0 && beta>0.0 && gamma>0.0 && (alpha+beta+gamma)<=1.0;
+		// Vec3f e2 = ( 1.0 / curr_n.dot( dir ) ) * ( vs[0] - x );
+		// Vec3f inter  = dir.cross( e2 );
+		// double beta  = inter.dot( e1 );
+		// double gamma = inter.dot( e0 );
+		// double alpha = 1.0 - beta - gamma;
+		// // alpha = abs(alpha) < 1e-6 ? 0 : alpha;
+		// beta = abs(beta) < std::numeric_limits<double>::min() ? 0 : beta;
+		// gamma = abs(gamma) < std::numeric_limits<double>::min() ? 0 : gamma;
+		// double t = curr_n.dot( e2 );
+		// bool bary_test = alpha>0.0 && beta>0.0 && gamma>0.0 && (alpha+beta+gamma)<=1.0;
 
 		bool t_test = ( t>0 && t<t_max );
 		if (bary_test && t_test) {
