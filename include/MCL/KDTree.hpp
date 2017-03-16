@@ -394,11 +394,11 @@ static inline bool kdtree::ray_intersection( const KDTNode *node, const mcl::ray
 
 		double d = curr_n.dot(vs[0]);
 		double t = (d - curr_n.dot(x))/(curr_n.dot(dir));
-		Vec3f temp_proj = x + t*dir;
+		Vec3d temp_proj = x + t*dir;
 		double area = e0.cross(e1).norm();
-		Vec3f l0 = temp_proj - vs[0];
-		Vec3f l1 = temp_proj - vs[1];
-		Vec3f l2 = temp_proj - vs[2];
+		Vec3d l0 = temp_proj - vs[0];
+		Vec3d l1 = temp_proj - vs[1];
+		Vec3d l2 = temp_proj - vs[2];
 		double alpha = l1.cross(l2).norm()/area;
 		double beta = l0.cross(l2).norm()/area;
 		double gamma = l0.cross(l1).norm()/area;
