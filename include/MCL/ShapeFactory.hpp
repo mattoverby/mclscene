@@ -49,7 +49,7 @@ namespace factory {
 	// A basic sphere
 	static inline std::shared_ptr<TriangleMesh> make_sphere( Vec3f center, float radius, int tess, SceneManager *scene=nullptr );
 
-	// A 1x1x1 non-symmetric cube
+	// A 2x2x2 non-symmetric cube centered at origin
 	static inline std::shared_ptr<TriangleMesh> make_cube( int tess, SceneManager *scene=nullptr );
 
 	// A box with specified boxmin/boxmax
@@ -364,10 +364,11 @@ static inline std::shared_ptr<TriangleMesh> factory::make_box( int tess, Vec3f b
 
 	// Just make a cube and translate/scale it
 	std::shared_ptr<TriangleMesh> box = factory::make_cube( tess, scene );
-	trimesh::xform t1 = trimesh::xform::trans( 1, 1, 1 ); // translate to origin
-	trimesh::xform scale = trimesh::xform::scale( boxmax[0]-boxmin[0], boxmax[1]-boxmin[1], boxmax[2]-boxmin[2] );
+	trimesh::xform t1 = trimesh::xform::trans( 1, 1, 1 ); // translate boxmin to origin
+	trimesh::xform scale1 = trimesh::xform::scale( 0.5, 0.5, 0.5 ); // max box 1x1x1
+	trimesh::xform scale2 = trimesh::xform::scale( boxmax[0]-boxmin[0], boxmax[1]-boxmin[1], boxmax[2]-boxmin[2] );
 	trimesh::xform t2 = trimesh::xform::trans( boxmin[0], boxmin[1], boxmin[2] ); // translate to boxmin
-	trimesh::xform xf = t2 * scale * t1;
+	trimesh::xform xf = t2 * scale2 * scale1 * t1;
 	box->apply_xform( xf );
 	return box;
 
