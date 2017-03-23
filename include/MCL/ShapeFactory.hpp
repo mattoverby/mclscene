@@ -52,6 +52,9 @@ namespace factory {
 	// A 1x1x1 non-symmetric cube
 	static inline std::shared_ptr<TriangleMesh> make_cube( int tess, SceneManager *scene=nullptr );
 
+	// A box with specified boxmin/boxmax
+	static inline std::shared_ptr<TriangleMesh> make_box( int tess, Vec3f boxmin, Vec3f boxmax, SceneManager *scene=nullptr );
+
 	// A beam is one or more connected cubes (chunks)
 	static inline std::shared_ptr<TriangleMesh> make_beam( int chunks, int tess, SceneManager *scene=nullptr );
 
@@ -355,6 +358,19 @@ static inline std::shared_ptr<TriangleMesh> factory::make_cube( int tess, SceneM
 	}
 
 	return mesh;
+}
+
+static inline std::shared_ptr<TriangleMesh> factory::make_box( int tess, Vec3f boxmin, Vec3f boxmax, SceneManager *scene ){
+
+	// Just make a cube and translate/scale it
+	std::shared_ptr<TriangleMesh> box = factory::make_cube( tess, scene );
+	trimesh::xform t1 = trimesh::xform::trans( 1, 1, 1 ); // translate to origin
+	trimesh::xform scale = trimesh::xform::scale( boxmax[0]-boxmin[0], boxmax[1]-boxmin[1], boxmax[2]-boxmin[2] );
+	trimesh::xform t2 = trimesh::xform::trans( boxmin[0], boxmin[1], boxmin[2] ); // translate to boxmin
+	trimesh::xform xf = t2 * scale * t1;
+	box->apply_xform( xf );
+	return box;
+
 }
 
 static inline std::shared_ptr<TriangleMesh> factory::make_plane( int tess_x, int tess_y, SceneManager *scene ){
