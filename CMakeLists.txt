@@ -27,13 +27,21 @@ add_definitions( -DMCLSCENE_BUILD_DIR="${CMAKE_BINARY_DIR}" ) # root build dir
 add_definitions( -DMCLSCENE_SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}" )
 set( CMAKE_BUILD_TYPE Release )
 
-
 #
 #	compilation options
 #
+
 option(MCL_BUILD_SAMPLES "Build mcl library samples" ON)
-option(MCL_BUILD_RENDERING "Build mclscene gui classes" ON)
+option(MCL_BUILD_RENDERING "Build mclscene rendering classes" ON)
 option(MCL_ENABLE_TETGEN "Enable tetgen for auto-tetrahedralization of meshes" OFF) # tet gen increases compile time
+option(MCL_FORCE_CLONE "Clone fresh dependencies" OFF)
+
+# If you do not have the core arb headers, you need an extensions library like glew.
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	option(MCL_USE_GLEW "Compile with glew instead of core" OFF)
+else()
+	option(MCL_USE_GLEW "Compile with glew instead of core" ON)
+endif()
 
 #
 #	dependencies
@@ -67,7 +75,14 @@ if(MCL_BUILD_RENDERING)
 	# a copy from git and link it locally.
 	include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeGLFW.cmake )
 
-	find_package(GLEW)
+	if(MCL_USE_GLEW)
+		set(GLEW_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/glew )
+		set(GLEW_SRCS ${GLEW_DIR}/src/glew.c ${GLEW_DIR}/include/GL/glew.h)
+		set(GLEW_INCLUDE_DIR ${GLEW_DIR}/include)
+	else()
+		set(GLEW_SRCS "")
+	endif(MCL_USE_GLEW)
+
 	find_package(PNG)
 
 	# soil2, included in deps/
@@ -121,13 +136,20 @@ set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include ${TRIMESH_INCLUDE
 # If we want to build with mclscene rendering support, add the window source files
 # and add the libraries/includes to the build variables.
 if(MCL_BUILD_RENDERING)
-	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} ${SOIL2_SRCS}
+	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} ${SOIL2_SRCS} ${GLEW_SRCS}
 		include/MCL/Application.hpp src/Application.cpp
 		include/MCL/RenderGL.hpp src/RenderGL.cpp
 		include/MCL/Shader.hpp
 	)
-	set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${GLEW_LIBRARIES} ${PNG_LIBRARY} )
+	set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${PNG_LIBRARY} )
 	set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} ${SOIL2_INCLUDE} ${OPENGL_INCLUDE_DIR} ${GLFW_INCLUDE_DIR} ${GLEW_INCLUDE_DIR} ${PNG_INCLUDE_DIR} )
+	if(MCL_USE_GLEW)
+		set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} ${GLEW_LIBRARIES} )
+		set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} ${GLEW_INCLUDE_DIR} )
+		add_definitions( -DMCL_USE_GLEW )
+	else()
+		add_definitions( -DGLFW_INCLUDE_GLCOREARB ) # let glfw include the extensions
+	endif(MCL_USE_GLEW)
 endif(MCL_BUILD_RENDERING)
 
 # Finally, include our needed files and add the library

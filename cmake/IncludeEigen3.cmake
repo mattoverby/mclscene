@@ -19,7 +19,10 @@
 #
 # By Matt Overby (http://www.mattoverby.net)
 
+if(NOT MCL_FORCE_CLONE)
 find_package(Eigen3)
+endif()
+
 if(NOT EIGEN3_FOUND)
 	set(EIGEN3_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/eigen3 )
 	IF(NOT EXISTS ${EIGEN3_DIR})
@@ -28,5 +31,6 @@ if(NOT EIGEN3_FOUND)
 		execute_process(COMMAND hg clone https://bitbucket.org/eigen/eigen/ ${EIGEN3_DIR})
 	endif()
 	set(EIGEN3_INCLUDE_DIR  ${EIGEN3_DIR})
+	set(EIGEN3_FOUND true)
 endif()
 

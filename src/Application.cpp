@@ -134,8 +134,10 @@ int Application::display(){
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1);
 
+	#ifdef MCL_USE_GLEW
 	glewExperimental = GL_TRUE;
 	glewInit();
+	#endif
 
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);

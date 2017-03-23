@@ -22,7 +22,9 @@
 #ifndef MCLSCENE_RENDERGL_H
 #define MCLSCENE_RENDERGL_H 1
 
+#ifdef MCL_USE_GLEW
 #include <GL/glew.h>
+#endif
 #include "MCL/Shader.hpp"
 #include "MCL/SceneManager.hpp"
 

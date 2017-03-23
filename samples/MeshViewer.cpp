@@ -55,7 +55,7 @@ int main(int argc, char *argv[]){
 	trimesh::subdiv(&tmesh);
 	trimesh_copy( newmesh, &tmesh );
 	newmesh->update();
-	newmesh->save( "surface.obj" );
+	newmesh->save( "blob.obj" );
 	scene.objects[0] = newmesh;
 
 	t.reset();

@@ -19,7 +19,9 @@
 #
 # By Matt Overby (http://www.mattoverby.net)
 
+if(NOT MCL_FORCE_CLONE)
 find_package(GLFW 3)
+endif()
 
 if(NOT GLFW_FOUND)
 	set( GLFW_CLONED true )
@@ -80,4 +82,5 @@ if(NOT GLFW_FOUND)
 	endif()
 
 	set(GLFW_LIBRARIES ${GLFW_LIBRARY} ${LIBS_ALL})
+	set(GLFW_FOUND true)
 endif()
