@@ -2,7 +2,7 @@
 <mclScene>
 
 	<Object name="bunny_562" type="trimesh" >
-		<File value="pillow.obj" />
+		<File value="bunny.ply" />
 		<Scale value="1 1 1" />
 		<Material value="CyanPlastic" />
 		<wireframe value="1" />

@@ -25,8 +25,10 @@
 #ifdef MCL_USE_GLEW
 #include <GL/glew.h>
 #endif
+#include <GLFW/glfw3.h>
 #include "MCL/Shader.hpp"
 #include "MCL/SceneManager.hpp"
+#include <random>
 
 namespace mcl {
 

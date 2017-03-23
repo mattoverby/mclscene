@@ -381,14 +381,14 @@ bool TetMesh::load_mesh( std::string filename ){
 			float x, y, z; int idx=-1;
 			ss >> x >> y >> z >> idx;
 			idx--;
-			if( idx < 0 || idx >= vertices.size() );
+			if( idx < 0 || idx >= vertices.size() )
 			vertices[idx] = Vec3f(x,y,z);
 		} else if( parsing_tets ){
 			std::stringstream ss(line);
 			int x, y, z, w; int idx=-1;
 			ss >> x >> y >> z >> w >> idx;
 			idx--; x--; y--; z--; w--;
-			if( idx < 0 || idx >= tets.size() );
+			if( idx < 0 || idx >= tets.size() )
 			tets[idx] = Vec4i(x,y,z,w);
 		}
 

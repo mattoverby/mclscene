@@ -25,7 +25,7 @@
 #include "MCL/Simulator.hpp"
 #include "MCL/SceneManager.hpp"
 #include "RenderGL.hpp"
-#include <GLFW/glfw3.h>
+
 
 
 namespace mcl {

@@ -39,6 +39,7 @@ option(MCL_FORCE_CLONE "Clone fresh dependencies" OFF)
 # If you do not have the core arb headers, you need an extensions library like glew.
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	option(MCL_USE_GLEW "Compile with glew instead of core" OFF)
+	option(MCL_FORCE_CLONE "Clone fresh dependencies" ON)
 else()
 	option(MCL_USE_GLEW "Compile with glew instead of core" ON)
 endif()
