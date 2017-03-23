@@ -29,16 +29,12 @@ namespace mcl {
 class AABB { // axis aligned bounding box
 public:
 	AABB() : valid(false) {}
-//	AABB( trimesh::vec min_, trimesh::vec max_ ) : min(min_), max(max_), valid(true) {}
-//	trimesh::vec min, max;
 	AABB( Vec3f min_, Vec3f max_ ) : min(min_), max(max_), valid(true) {}
 	Vec3f min, max;
 	bool valid;
 
-//	trimesh::vec center(){ return (min+max)*0.5f; }
 	Vec3f center() const { return (min+max)*0.5; }
 
-//	float radius(){ return trimesh::len(max-min)*0.5f; }
 	double radius(){ return (max-min).norm()*0.5f; }
 
 	AABB& operator+=(const AABB& aabb){

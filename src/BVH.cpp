@@ -412,7 +412,7 @@ bool BVHTraversal::any_hit( const BVHNode* node, const raycast::Ray *ray, raycas
 
 } // end ray intersect
 
-
+/*
 bool BVHTraversal::closest_hit_dbl( const BVHNode *node, const raycast::rtRay<double> *ray,
 	raycast::rtPayload<double> *payload, Vec2i skip_stride, Vec3i *face_hit, Vec3i *closest_face ){
 
@@ -455,7 +455,7 @@ bool BVHTraversal::closest_hit_dbl( const BVHNode *node, const raycast::rtRay<do
 	return obj_hit;
 
 } // return closest hit double
-
+*/
 
 void BVHNode::get_edges( std::vector<Vec3f> &edges, bool add_children ){
 

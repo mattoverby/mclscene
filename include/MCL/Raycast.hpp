@@ -54,9 +54,8 @@ namespace raycast {
 	template<typename T> class rtPayload {
 	public:
 		void init( const rtRay<T> &ray ){ t_min=ray.eps; launch_point=ray.origin; }
-
-		rtPayload() : t_min(1e-5), t_max(9999999), closest_dist(9999999), bary(0,0,0) {}
-		rtPayload( const rtRay<T> &ray ) : t_max(9999999), closest_dist(9999999), bary(0,0,0) { init(ray); }
+		rtPayload() : t_min(1e-5), t_max(9999999), bary(0,0,0) {}
+		rtPayload( const rtRay<T> &ray ) : t_max(9999999), bary(0,0,0) { init(ray); }
 
 		T t_min, t_max;
 		Vec3<T> launch_point;
@@ -64,11 +63,10 @@ namespace raycast {
 		mutable Vec3<T> n, hit_point;
 		mutable int material; // index into SceneManager::materials
 
-		T closest_dist;
-		Vec3<T> closest_p;
+//		T closest_dist;
+//		Vec3<T> closest_p;
 	};
 	typedef rtPayload<float> Payload;
-
 
 	// Ideal specular reflection
 	template<typename T> static Vec3<T> reflect( const Vec3<T> &incident, const Vec3<T> &norm ){
@@ -89,6 +87,7 @@ namespace raycast {
 	// ray -> axis aligned bounding box
 	// Returns true/false only and does not set the payload.
 	template<typename T> static inline bool ray_aabb( const rtRay<T> *ray, const Vec3<T> &min, const Vec3<T> &max, const rtPayload<T> *payload );
+
 //	static inline bool ray_aabb_flt( const rtRay<float> *ray, const Vec3<float> &min, const Vec3<float> &max, const rtPayload<float> *payload ){
 //		return ray_aabb<float>( ray, min, max, payload );
 //	}
@@ -168,6 +167,15 @@ template<typename T> static inline bool mcl::raycast::ray_triangle( const rtRay<
 template<typename T> static inline bool mcl::raycast::ray_aabb( const rtRay<T> *ray,
 	const Vec3<T> &min, const Vec3<T> &max, const rtPayload<T> *payload ){
 
+	// First check if origin is inside AABB
+	bool in_box = true;
+	for( int i=0; i<3; ++i ){
+		if( ray->origin[i] > max[i] ){ in_box = false; }
+		if( ray->origin[i] < min[i] ){ in_box = false; }
+	}
+	if( in_box ){ return true; }
+
+	// Compute edge t values
 	T txmin=0.f, txmax=0.f;
 	T dirX = 1.f / ray->direction[0];
 	if( dirX >= 0.0 ){
@@ -190,7 +198,7 @@ template<typename T> static inline bool mcl::raycast::ray_aabb( const rtRay<T> *
 		tymin = dirY * ( max[1] - ray->origin[1] );
 	}
 
-	// First check: x/y axis
+	// Now check x/y axis
 	if( txmin > tymax || tymin > txmax ){ return false; }
 
 	T tzmin=0.f, tzmax=0.f;
@@ -204,7 +212,7 @@ template<typename T> static inline bool mcl::raycast::ray_aabb( const rtRay<T> *
 		tzmin = dirZ * ( max[2] - ray->origin[2] );
 	}
 
-	// Second check: z axis
+	// Finally, check z axis
 	if( txmin > tzmax || tzmin > txmax ){ return false; }
 	if( tymin > tzmax || tzmin > tymax ){ return false; }
 
