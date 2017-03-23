@@ -547,14 +547,14 @@ static inline bool kdtree::ray_intersection( const KDTNode *node, const mcl::ray
 		double alpha = l1.cross(l2).norm()/area;
 		double beta = l0.cross(l2).norm()/area;
 		double gamma = l0.cross(l1).norm()/area;
-		bool bary_test = abs(alpha + beta + gamma - 1) < 1e-6;
+		bool bary_test = std::abs(alpha + beta + gamma - 1) < 1e-6;
 
 		// Vec3f e2 = ( 1.0 / curr_n.dot( dir ) ) * ( vs[0] - x );
 		// Vec3f inter  = dir.cross( e2 );
 		// double beta  = inter.dot( e1 );
 		// double gamma = inter.dot( e0 );
 		// double alpha = 1.0 - beta - gamma;
-		// // alpha = abs(alpha) < 1e-6 ? 0 : alpha;
+		// // alpha = std::abs(alpha) < 1e-6 ? 0 : alpha;
 		// beta = abs(beta) < std::numeric_limits<double>::min() ? 0 : beta;
 		// gamma = abs(gamma) < std::numeric_limits<double>::min() ? 0 : gamma;
 		// double t = curr_n.dot( e2 );
@@ -611,7 +611,7 @@ static inline bool kdtree::close_to_box(const AABB& aabb, const Vec3d &point, co
 	} else if (ones.dot(s1) + ones.dot(s2) == 1) {
 		for (int i = 0; i < 3; i++) {
 			if ((s1 + s2)[i] == 1) {
-				if (abs(max[i] + min[i] - point[i]) > closest) {
+				if (std::abs(max[i] + min[i] - point[i]) > closest) {
 					return true;
 				}
 			}
@@ -643,7 +643,7 @@ static inline bool kdtree::intersect_with_box(const AABB& aabb, const mcl::rayca
 				projection = x + t*dir;
 				int a1 = (a + 1)%3, a2 = (a + 2)%3;
 				double eps = 1e-6;
-				if (abs(projection[a1] - aabb.max[a1]) <= eps && eps >= abs(aabb.min[a1] - projection[a1]) && abs(projection[a2] - aabb.max[a2]) <= eps && eps >= abs(aabb.min[a2] - projection[a2])) {
+				if (std::abs(projection[a1] - aabb.max[a1]) <= eps && eps >= std::abs(aabb.min[a1] - projection[a1]) && std::abs(projection[a2] - aabb.max[a2]) <= eps && eps >= std::abs(aabb.min[a2] - projection[a2])) {
 					return true;
 				}
 			}
@@ -657,7 +657,7 @@ static inline bool kdtree::intersect_with_box(const AABB& aabb, const mcl::rayca
 				projection = x + t*dir;
 				int a1 = (a + 1)%3, a2 = (a + 2)%3;
 				double eps = 1e-6;
-				if (abs(projection[a1] - aabb.max[a1]) <= eps && eps >= abs(aabb.min[a1] - projection[a1]) && abs(projection[a2] - aabb.max[a2]) <= eps && eps >= abs(aabb.min[a2] - projection[a2])) {
+				if (std::abs(projection[a1] - aabb.max[a1]) <= eps && eps >= std::abs(aabb.min[a1] - projection[a1]) && std::abs(projection[a2] - aabb.max[a2]) <= eps && eps >= std::abs(aabb.min[a2] - projection[a2])) {
 					return true;
 				}
 			}

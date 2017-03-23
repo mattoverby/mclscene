@@ -35,12 +35,12 @@ option(MCL_BUILD_SAMPLES "Build mcl library samples" ON)
 option(MCL_BUILD_RENDERING "Build mclscene rendering classes" ON)
 option(MCL_ENABLE_TETGEN "Enable tetgen for auto-tetrahedralization of meshes" OFF) # tet gen increases compile time
 option(MCL_FORCE_CLONE "Clone fresh dependencies" OFF)
+option(MCL_USE_GLEW "Compile with glew instead of core" ON)
 
 # If you do not have the core arb headers, you need an extensions library like glew.
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	option(MCL_USE_GLEW "Compile with glew instead of core" OFF)
-else()
-	option(MCL_USE_GLEW "Compile with glew instead of core" ON)
+	option(MCL_FORCE_CLONE "Clone fresh dependencies" ON)
 endif()
 
 #

@@ -25,6 +25,7 @@
 #include <Eigen/Geometry> // needed for cross product
 #include "Vec.h" // trimesh's vec
 #include "XForm.h" // trimesh transforms
+#include <vector>
 
 //
 //	You can replace the internal vector type
