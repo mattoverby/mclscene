@@ -71,6 +71,9 @@ namespace kdtree {
 
 	static inline void make_tree( KDTNode *root, Eigen::VectorXd *vertices, Eigen::VectorXi *faces, int max_depth=10 );
 
+	// Make tree for scatter gather (no faces)
+//	template <typename T> static inline void make_tree( KDTNode *root, V *vertices, int max_depth=10 );
+
 	static inline void median_split( KDTNode *node, Eigen::VectorXd *vertices, Eigen::VectorXi *faces, const std::vector<int> &queue, const int split_axis, const int max_depth );
 
 	// Point-Scene traversal for closest object to a given point.

@@ -58,7 +58,7 @@ namespace factory {
 	// A beam is one or more connected cubes (chunks)
 	static inline std::shared_ptr<TriangleMesh> make_beam( int chunks, int tess, SceneManager *scene=nullptr );
 
-	// A 1x1 plane along x/y axis
+	// A 2x2 plane along x/y axis
 	static inline std::shared_ptr<TriangleMesh> make_plane( int tess_x, int tess_y, SceneManager *scene=nullptr );
 
 	// Cylinder centered on z axis. tess_c is the triangle resultion at the base.
@@ -444,7 +444,6 @@ static inline std::shared_ptr<TriangleMesh> factory::make_plane( int tess_x, int
 	return mesh;
 
 }
-
 
 static inline std::shared_ptr<TriangleMesh> factory::make_cyl(int tess_c, int tess_l, float r, SceneManager *scene){
 
