@@ -58,14 +58,14 @@ namespace mcl {
 	}
 
 	template <typename T> static inline Vec3<T> barycoords(const Vec3<T> &p, const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2){
-		Eigen::Vector3d v0 = p1 - p0, v1 = p2 - p0, v2 = p - p0;
-		double d00 = v0.dot(v0);
-		double d01 = v0.dot(v1);
-		double d11 = v1.dot(v1);
-		double d20 = v2.dot(v0);
-		double d21 = v2.dot(v1);
-		double invDenom = 1.0 / (d00 * d11 - d01 * d01);
-		Eigen::Vector3d r;
+		Vec3<T> v0 = p1 - p0, v1 = p2 - p0, v2 = p - p0;
+		T d00 = v0.dot(v0);
+		T d01 = v0.dot(v1);
+		T d11 = v1.dot(v1);
+		T d20 = v2.dot(v0);
+		T d21 = v2.dot(v1);
+		T invDenom = 1.0 / (d00 * d11 - d01 * d01);
+		Vec3<T> r;
 		r[1] = (d11 * d20 - d01 * d21) * invDenom;
 		r[2] = (d00 * d21 - d01 * d20) * invDenom;
 		r[0] = 1.0 - r[1] - r[2];

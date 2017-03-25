@@ -131,26 +131,34 @@ static inline bool mcl::raycast::ray_triangle( const Ray *ray, const Vec3f &p0, 
 
 } // end  ray -> triangle
 
+
 // ray -> triangle without smoothed normals
 template<typename T> static inline bool mcl::raycast::ray_triangle( const rtRay<T> *ray,
 	const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2, rtPayload<T> *payload ){
 
 	const Vec3<T> e0 = p1 - p0;
 	const Vec3<T> e1 = p0 - p2;
-	const Vec3<T> n = e1.cross( e0 );
+	Vec3<T> n = e1.cross( e0 );
 	const Vec3<T> e2 = ( 1.0 / n.dot( ray->direction ) ) * ( p0 - ray->origin );
 	const Vec3<T> i  = ray->direction.cross( e2 );
 	T beta  = i.dot( e1 );
 	T gamma = i.dot( e0 );
-	if( std::abs(beta)<std::numeric_limits<T>::min() ){ beta=T(0); }
-	if( std::abs(gamma)<std::numeric_limits<T>::min() ){ gamma=T(0); }
 	T alpha = 1.0 - beta - gamma;
 	T t = n.dot( e2 );
+	const T eps = ray->eps;
 
-	bool bary_test = alpha>0.0 && beta>0.0 && gamma>0.0 && (alpha+beta+gamma)<=1.0;
+//	if( std::abs(beta)<std::numeric_limits<T>::min() ){ beta=T(0); }
+//	if( std::abs(gamma)<std::numeric_limits<T>::min() ){ gamma=T(0); }
+//	if( std::abs(alpha)<std::numeric_limits<T>::min() ){ alpha=T(0); }
+
+	bool bary_test = alpha>0 && beta>0 && gamma>0 && (alpha+beta+gamma)<=1;
+//	bool bary_test2 = alpha<1 && beta<1 && gamma<1;
+//	if( bary_test && bary_test2 ){ payload->hit_count++; }
+
 	bool hit = (t<payload->t_max) && (t>payload->t_min);
 
 	if( hit && bary_test ){
+		n.normalize();
 		payload->n = n;
 		payload->t_max = t;
 		payload->hit_point = ray->origin + ray->direction*t;

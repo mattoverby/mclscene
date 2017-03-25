@@ -73,7 +73,7 @@ namespace kdtree {
 	// Find the closest point on a triangle, so long as the triangle is within the specifed range(s).
 	// If the range vector is left empty, all faces are considered.
 	// This allows use to "skip self" or skip other geometry we might want to ignore.
-	template <typename T> static inline bool closest_object( const KDNode<T> *node, const Vec3<T> &point, Vec3<T> &projection, Vec3<T> &normal, Vec3i &face,
+	template <typename T> static inline bool closest_object( const KDNode<T> *node, const Vec3<T> &point, Vec3<T> &projection, Vec3<T> &normal, Vec3i &face, Vec3<T> &bary, 
 		const std::vector<Vec2i> &range = std::vector<Vec2i>() );
 
 	// Ray-Scene traversal for closest object
@@ -84,7 +84,7 @@ namespace kdtree {
 	template <typename T> static inline bool collision( const KDNode<T> *node, const Vec3<T> &point, Vec3<T> &projection, Vec3<T> &normal, Vec3i &face, Vec3<T> &bary,
 		const std::vector<Vec2i> &range = std::vector<Vec2i>() );
 
-//	static inline bool closest_object( const KDTNode *node, const Vec2i stride, const bool toSkip, double& closest, const Vec3d &point, Vec3d &projection, Vec3d &norm, int* tri_idx);
+	static inline bool closest_object( const KDTNode *node, const Vec2i stride, const bool toSkip, double& closest, const Vec3d &point, Vec3d &projection, Vec3d &norm, int* tri_idx);
 	static inline bool ray_intersection( const KDTNode *node, const mcl::raycast::rtRay<double> ray, const Vec2i skip_stride, double& t_max, Vec3d &projection, Vec3d &norm, int* tri_idx); 
 
 	static inline bool intersect_with_box(const AABB& aabb, const mcl::raycast::rtRay<double> ray, const double t_max, Vec3d& projection);
@@ -219,81 +219,11 @@ template <typename T> static inline void kdtree::axis_median_split( KDNode<T> *n
 } // end axis median
 
 
-/*
-static inline bool kdtree::closest_object( const KDTNode *node, const Vec2i stride, const bool toSkip, double& closest, const Vec3d &point, Vec3d &projection, Vec3d &norm, int* tri_idx) {
-	bool left_hit = false, right_hit = false;
-	float pt = point[node->axis];
-	float med = node->median;
-
-
-	if (pt < med && node->left_child != nullptr && close_to_box(node->left_child->aabb, point, closest)) {
-		left_hit = closest_object(node->left_child, stride, toSkip, closest, point, projection, norm, tri_idx);
-		// float dist = (projection - point).squaredNorm();
-		// bool check_both = dist > (pt - med)*(pt - med) && node->right_child != nullptr;
-		// if (check_both) {
-		// 	right_hit = closest_object(node->right_child, skip_stride, closest, point, projection, norm, tri_idx);
-		// }
-	} 
-	if (pt >= med && node->right_child != nullptr && close_to_box(node->right_child->aabb, point, closest)) {
-		right_hit = closest_object(node->right_child, stride, toSkip, closest, point, projection, norm, tri_idx);
-		// float dist = (projection - point).squaredNorm();
-		// bool check_both = dist > (pt - med)*(pt - med) && node->left_child != nullptr;
-		// if (check_both) {
-		// 	left_hit = closest_object(node->left_child, skip_stride, closest, point, projection, norm, tri_idx);
-		// }
-	}
-
-	if (left_hit || right_hit) {
-		return true;
-	}
-
-	bool obj_hit = false;
-	// double dist = (point - projection).squaredNorm();
-
-	for (int i = 0; i < node->face_indices.size(); i++) {
-		int idx = node->face_indices[i];
-		if (toSkip) {
-			if (idx >= stride[0] && idx < stride[1]) {
-				continue;
-			}
-		} else {
-			if (idx < stride[0] || idx >= stride[1]) {
-				continue;
-			}
-		}
-		const Vec3i &f = node->faces->segment<3>(node->face_indices[i]*3);
-		Vec3d vs[3];
-		for (int j = 0; j < 3; j++) {
-			Vec3d v_d = node->vertices->segment<3>(f[j]*3);
-			vs[j] << v_d[0], v_d[1], v_d[2];
-		}
-		Vec3d p = mcl::projection::point_triangle(point, vs[0], vs[1], vs[2]);
-		double curr_dist = (p - point).squaredNorm();
-		Vec3d e0 = vs[1] - vs[0];
-		Vec3d e1 = vs[0] - vs[2];
-		Vec3d curr_n = e1.cross(e0);
-		if (curr_dist < closest) {
-			projection = p;
-			obj_hit = true;
-			closest = curr_dist;
-			curr_n.normalize();
-			norm = curr_n;
-			tri_idx[0] = f[0]*3;
-			tri_idx[1] = f[1]*3;
-			tri_idx[2] = f[2]*3;
-		}
-	}
-
-	return obj_hit;
-
-}
-*/
-
 
 // Point-Scene traversal for closest object to a given point.
 // Projection is the point on the object surface, obj is the pointer to the object.
 template <typename T> static inline bool kdtree::closest_object( const KDNode<T> *node, const Vec3<T> &point,
-	Vec3<T> &projection, Vec3<T> &normal, Vec3i &face, const std::vector<Vec2i> &range ){
+	Vec3<T> &projection, Vec3<T> &normal, Vec3i &face, Vec3<T> &bary, const std::vector<Vec2i> &range ){
 
 	// Parse the tree
 	bool left_hit = false; bool right_hit = false;
@@ -305,20 +235,20 @@ template <typename T> static inline bool kdtree::closest_object( const KDNode<T>
 
 	// Check left?
 	if( pt < med && node->left_child != nullptr ){
-		left_hit = kdtree::closest_object( node->left_child, point, projection, normal, face, range );
+		left_hit = kdtree::closest_object( node->left_child, point, projection, normal, face, bary, range );
 
 		T dist = (projection-point).norm();
 		bool check_both = dist > (pt-med)*(pt-med) && node->right_child != nullptr;
-		if( check_both ){ right_hit = kdtree::closest_object( node->right_child, point, projection, normal, face, range ); }
+		if( check_both ){ right_hit = kdtree::closest_object( node->right_child, point, projection, normal, face, bary, range ); }
 	}
 
 	// Check right?
 	else if( pt >= med && node->right_child != nullptr ){
-		right_hit = kdtree::closest_object( node->right_child, point, projection, normal, face, range );
+		right_hit = kdtree::closest_object( node->right_child, point, projection, normal, face, bary, range );
 
 		T dist = (projection-point).norm();
 		bool check_both = dist > (pt-med)*(pt-med) && node->left_child != nullptr;
-		if( check_both ){ left_hit = kdtree::closest_object( node->left_child, point, projection, normal, face, range ); }
+		if( check_both ){ left_hit = kdtree::closest_object( node->left_child, point, projection, normal, face, bary, range ); }
 	}
 
 	// If we traversed the tree, return
@@ -334,7 +264,7 @@ template <typename T> static inline bool kdtree::closest_object( const KDNode<T>
 		// See if we should skip this face
 		bool face_in_range = false;
 		for( int j=0; j<range.size(); ++j ){ if( fidx >= range[j][0] && fidx < range[j][1] ){ face_in_range=true; } }
-		if( !face_in_range ){ continue; }
+		if( !face_in_range && range.size()>0 ){ continue; }
 
 		// Extract the face from the buffers
 		const Vec3i f( node->faces[fidx*3+0], node->faces[fidx*3+1], node->faces[fidx*3+2] );
@@ -342,11 +272,12 @@ template <typename T> static inline bool kdtree::closest_object( const KDNode<T>
 		const Vec3<T> p1( node->vertices[f[1]*3], node->vertices[f[1]*3+1], node->vertices[f[1]*3+2] );
 		const Vec3<T> p2( node->vertices[f[2]*3], node->vertices[f[2]*3+1], node->vertices[f[2]*3+2] );
 		const Vec3<T> p = projection::Triangle<T>( point, p0, p1, p2 );
-		const Vec3<T> n = point - p;
+		Vec3<T> n = point - p;
+		double curr_dist = n.norm();
 
 		// See if this projection is closer
-		double curr_dist = n.norm();
 		if( curr_dist < dist ){
+			bary = mcl::barycoords<T>( p, p0, p1, p2 );
 			projection = p;
 			obj_found = true;
 			dist = curr_dist;
@@ -386,13 +317,13 @@ template <typename T> static inline bool kdtree::closest_hit( const KDNode<T> *n
 		// See if we should skip this face
 		bool face_in_range = false;
 		for( int j=0; j<range.size(); ++j ){ if( fidx >= range[j][0] && fidx < range[j][1] ){ face_in_range=true; } }
-		if( !face_in_range ){ continue; }
+		if( !face_in_range && range.size()>0 ){ continue; }
 
 		// Extract the face from the buffers
 		const Vec3i f( node->faces[fidx*3+0], node->faces[fidx*3+1], node->faces[fidx*3+2] );
-		const Vec3<T> p0( node->vertices[f[0]*3], node->vertices[f[0]*3+1], node->vertices[f[0]*3+2] );
-		const Vec3<T> p1( node->vertices[f[1]*3], node->vertices[f[1]*3+1], node->vertices[f[1]*3+2] );
-		const Vec3<T> p2( node->vertices[f[2]*3], node->vertices[f[2]*3+1], node->vertices[f[2]*3+2] );
+		const Vec3<T> p0( node->vertices[f[0]*3+0], node->vertices[f[0]*3+1], node->vertices[f[0]*3+2] );
+		const Vec3<T> p1( node->vertices[f[1]*3+0], node->vertices[f[1]*3+1], node->vertices[f[1]*3+2] );
+		const Vec3<T> p2( node->vertices[f[2]*3+0], node->vertices[f[2]*3+1], node->vertices[f[2]*3+2] );
 
 		// raycast::ray_triangle sets everything except face index
 		bool curr_hit = raycast::ray_triangle( ray, p0, p1, p2, payload );
@@ -403,8 +334,6 @@ template <typename T> static inline bool kdtree::closest_hit( const KDNode<T> *n
 	}
 
 	return obj_hit;
-
-
 
 } // end closest hit
 
@@ -457,7 +386,7 @@ template <typename T> static inline bool kdtree::collision( const KDNode<T> *nod
 		// See if we should skip this face
 		bool face_in_range = false;
 		for( int j=0; j<range.size(); ++j ){ if( fidx >= range[j][0] && fidx < range[j][1] ){ face_in_range=true; } }
-		if( !face_in_range ){ continue; }
+		if( !face_in_range && range.size()>0 ){ continue; }
 
 		// Extract the face from the buffers
 		const Vec3i f( node->faces[fidx*3+0], node->faces[fidx*3+1], node->faces[fidx*3+2] );
@@ -466,6 +395,7 @@ template <typename T> static inline bool kdtree::collision( const KDNode<T> *nod
 		const Vec3<T> p2( node->vertices[f[2]*3], node->vertices[f[2]*3+1], node->vertices[f[2]*3+2] );
 		const Vec3<T> p = projection::Triangle<T>( point, p0, p1, p2 );
 		const Vec3<T> n = p - point;
+		const Vec3<T> n2 = p - projection;
 
 		// Compute triangle norm
 		const Vec3<T> e0 = p1 - p0;
@@ -473,12 +403,14 @@ template <typename T> static inline bool kdtree::collision( const KDNode<T> *nod
 		Vec3<T> norm = e0.cross(e1);
 		norm.normalize();
 
+		double eps = 1e-4;
+
 		// See if we're on the wrong side of the face
-		if( n.dot(norm) < 0 ){ continue; }
+		if( n.dot(norm) < -eps ){ continue; }
 
 		// See if we're in the triangle area
 		Vec3<T> curr_bary = mcl::barycoords( p, p0, p1, p2 );
-		bool in_area = (curr_bary[0]>0 && curr_bary[1]>0 && curr_bary[2]>0 && curr_bary[0]+curr_bary[1]+curr_bary[2]<=1);
+		bool in_area = (curr_bary[0]>-eps && curr_bary[1]>-eps && curr_bary[2]>-eps && curr_bary[0]+curr_bary[1]+curr_bary[2]<1.0+eps);
 		if( !in_area ){ continue; }
 
 		// See if its closer
@@ -492,6 +424,7 @@ template <typename T> static inline bool kdtree::collision( const KDNode<T> *nod
 		dist = curr_dist;
 		face = f;
 		normal = norm;
+//		normal.normalize();
 
 	}
 
@@ -502,7 +435,6 @@ template <typename T> static inline bool kdtree::collision( const KDNode<T> *nod
 
 
 static inline bool kdtree::ray_intersection( const KDTNode *node, const mcl::raycast::rtRay<double> ray, const Vec2i skip_stride, double& t_max, Vec3d &projection, Vec3d &norm, int* tri_idx) {
-
 /*
 	bool left_hit = false, right_hit = false;
 	Vec3d box_proj;
@@ -664,6 +596,76 @@ static inline bool kdtree::intersect_with_box(const AABB& aabb, const mcl::rayca
 		}
 	}
 	return false;
+*/
+}
+
+
+
+static inline bool kdtree::closest_object( const KDTNode *node, const Vec2i stride, const bool toSkip, double& closest, const Vec3d &point, Vec3d &projection, Vec3d &norm, int* tri_idx) {
+/*
+	bool left_hit = false, right_hit = false;
+	float pt = point[node->axis];
+	float med = node->median;
+
+	if (pt < med && node->left_child != nullptr && close_to_box(node->left_child->aabb, point, closest)) {
+		left_hit = closest_object(node->left_child, stride, toSkip, closest, point, projection, norm, tri_idx);
+		// float dist = (projection - point).squaredNorm();
+		// bool check_both = dist > (pt - med)*(pt - med) && node->right_child != nullptr;
+		// if (check_both) {
+		// 	right_hit = closest_object(node->right_child, skip_stride, closest, point, projection, norm, tri_idx);
+		// }
+	} 
+	if (pt >= med && node->right_child != nullptr && close_to_box(node->right_child->aabb, point, closest)) {
+		right_hit = closest_object(node->right_child, stride, toSkip, closest, point, projection, norm, tri_idx);
+		// float dist = (projection - point).squaredNorm();
+		// bool check_both = dist > (pt - med)*(pt - med) && node->left_child != nullptr;
+		// if (check_both) {
+		// 	left_hit = closest_object(node->left_child, skip_stride, closest, point, projection, norm, tri_idx);
+		// }
+	}
+
+	if (left_hit || right_hit) {
+		return true;
+	}
+
+	bool obj_hit = false;
+	// double dist = (point - projection).squaredNorm();
+
+	for (int i = 0; i < node->face_indices.size(); i++) {
+		int idx = node->face_indices[i];
+		if (toSkip) {
+			if (idx >= stride[0] && idx < stride[1]) {
+				continue;
+			}
+		} else {
+			if (idx < stride[0] || idx >= stride[1]) {
+				continue;
+			}
+		}
+		const Vec3i &f = node->faces->segment<3>(node->face_indices[i]*3);
+		Vec3d vs[3];
+		for (int j = 0; j < 3; j++) {
+			Vec3d v_d = node->vertices->segment<3>(f[j]*3);
+			vs[j] << v_d[0], v_d[1], v_d[2];
+		}
+		Vec3d p = mcl::projection::point_triangle(point, vs[0], vs[1], vs[2]);
+		double curr_dist = (p - point).squaredNorm();
+		Vec3d e0 = vs[1] - vs[0];
+		Vec3d e1 = vs[0] - vs[2];
+		Vec3d curr_n = e1.cross(e0);
+		if (curr_dist < closest) {
+			projection = p;
+			obj_hit = true;
+			closest = curr_dist;
+			curr_n.normalize();
+			norm = curr_n;
+			tri_idx[0] = f[0]*3;
+			tri_idx[1] = f[1]*3;
+			tri_idx[2] = f[2]*3;
+		}
+	}
+
+	return obj_hit;
 */
 }
 

@@ -69,6 +69,11 @@ namespace projection {
 	static inline double point_aabb_dist( const Vec3d &point, const Vec3d &min, const Vec3d &max ){ return AABB_dist<double>(point,min,max); }
 
 	//
+	//	Point in aabb
+	//
+	template <typename T> static inline bool point_in_aabb( const Vec3<T> &point, const Vec3<T> &min, const Vec3<T> &max );
+
+	//
 	//	Helper functions
 	//
 	template <typename T> static inline T myclamp( const T &val ){ return val < 0 ? 0 : (val > 1 ? 1 : val); }
@@ -180,6 +185,13 @@ template <typename T> static inline T projection::AABB_dist( const Vec3<T> &poin
 	}
 	return sqDist;
 } // end point aabb
+
+template <typename T> static inline bool projection::point_in_aabb( const Vec3<T> &point, const Vec3<T> &min, const Vec3<T> &max ){
+	for( int i=0; i<3; ++i ){
+		if( point[i] < min[i] || point[i] > max[i] ){ return false; }
+	}
+	return true;
+}
 
 } // end namespace mcl
 
