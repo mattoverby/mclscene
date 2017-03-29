@@ -69,9 +69,10 @@ namespace projection {
 	static inline double point_aabb_dist( const Vec3d &point, const Vec3d &min, const Vec3d &max ){ return AABB_dist<double>(point,min,max); }
 
 	//
-	//	Point in aabb
+	//	Point in whatever
 	//
 	template <typename T> static inline bool point_in_aabb( const Vec3<T> &point, const Vec3<T> &min, const Vec3<T> &max );
+	template <typename T> static inline bool point_in_tet( const Vec3<T> &point, const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 );
 
 	//
 	//	Helper functions
@@ -191,6 +192,20 @@ template <typename T> static inline bool projection::point_in_aabb( const Vec3<T
 		if( point[i] < min[i] || point[i] > max[i] ){ return false; }
 	}
 	return true;
+}
+
+template <typename T> static inline bool check_norm( const Vec3<T> &point,
+	const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 ){
+	const Vec3<T> n = (p1 - p0).cross(p2 - p0);
+	const T dp3 = n.dot(p3 - p0);
+	const T dp = n.dot(point - p0);
+	return (dp3*dp>0);
+}
+
+template <typename T> static inline bool projection::point_in_tet( const Vec3<T> &point,
+	const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 ){
+	return check_norm<T>(point, p0, p1, p2, p3) && check_norm<T>(point, p1, p2, p3, p0) &&
+		check_norm<T>(point, p2, p3, p0, p1) && check_norm<T>(point, p3, p0, p1, p2);
 }
 
 } // end namespace mcl

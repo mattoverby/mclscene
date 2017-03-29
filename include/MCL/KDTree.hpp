@@ -74,9 +74,6 @@ namespace kdtree {
 	// Creates a k-d tree from a pool of vertices and tetrahedra
 	template <typename T> static inline void make_tree_tets( KDNode<T> *root, T *vertices, int *indices, int n_tets, int max_depth );
 
-	// Object-median split
-//	template <typename T> static inline void object_median_split( KDNode<T> *node, const std::vector<int> &queue, const int split_axis, const int max_depth );
-
 	// Split the middle of the box into smaller grids. Faster build, less quality tree
 	template <typename T> static inline void axis_median_split( KDNode<T> *node, const std::vector<int> &queue, const int split_axis, const int max_depth );
 
@@ -92,6 +89,13 @@ namespace kdtree {
 	// Ray-Scene traversal for closest object
 	template <typename T> static inline bool closest_hit( const KDNode<T> *node, const raycast::rtRay<T> *ray, raycast::rtPayload<T> *payload, Vec3i &face,
 		const std::vector<Vec2i> &range = std::vector<Vec2i>() );
+
+	// Point-in-tet test for a given vertex. If idx belongs to the tet, it is ignored.
+	template <typename T> static inline bool point_in_tet( const KDNode<T> *node, int idx, const Vec3<T> &point );
+
+	// Closest face that doesn't include a particular index (for self collisions)
+	template <typename T> static inline bool closest_face_nonself( int idx, const KDNode<T> *node, const Vec3<T> &point, Vec3<T> &projection, Vec3<T> &normal, Vec3i &face, Vec3<T> &bary );
+
 /*
 	static inline bool closest_object( const KDTNode *node, const Vec2i stride, const bool toSkip, double& closest, const Vec3d &point, Vec3d &projection, Vec3d &norm, int* tri_idx);
 	static inline bool ray_intersection( const KDTNode *node, const mcl::raycast::rtRay<double> ray, const Vec2i skip_stride, double& t_max, Vec3d &projection, Vec3d &norm, int* tri_idx); 
@@ -204,51 +208,6 @@ template <typename T> static inline void kdtree::make_tree_tets( KDNode<T> *root
 	root->indices = indices;
 	axis_median_split(root, queue, 0, max_depth);
 }
-
-
-/*
-// object median split
-static inline void kdtree::object_median_split( KDTNode *node, const std::vector< std::shared_ptr<BaseObject> > &prims,
-	const std::vector< int > &queue, const int split_axis, const int max_depth ){
-
-	// AABB aabb; // Create an AABB to compute center
-	std::vector< float > obj_min( queue.size() );
-	std::vector< float > obj_max( queue.size() );
-	for( int i=0; i<queue.size(); ++i ){
-		Vec3f bmin, bmax;
-		prims[ queue[i] ]->get_bounds( bmin, bmax );
-		obj_min[i] = bmin[ split_axis ];
-		obj_max[i] = bmax[ split_axis ];
-		node->aabb += bmin; node->aabb += bmax;
-	}
-
-	// Set KDTree node details
-	node->axis = split_axis;
-	node->median = node->aabb.center()[ split_axis ];
-
-	// See if we're a leaf
-	if( queue.size()==0 ){ return; }
-	else if( queue.size()==1 || max_depth <= 0 ){
-		node->m_objects.reserve( queue.size() );
-		for( int i=0; i<queue.size(); ++i ){ node->m_objects.push_back( prims[ queue[i] ] ); }
-		return;
-	}
-
-	// Split faces
-	// Note that a triangle may be added to both sides of the KDTree!
-	std::vector<int> left_queue, right_queue;
-	for( int i=0; i<queue.size(); ++i ){
-		if( obj_min[i] < node->median ){ left_queue.push_back( queue[i] ); }
-		if( obj_max[i] >= node->median ){ right_queue.push_back( queue[i] ); }
-	}
-
-	// Create the children
-	node->left_child = new KDTNode();
-	node->right_child = new KDTNode();
-	object_median_split( node->left_child, prims, left_queue, ((split_axis+1)%3), max_depth-1 );
-	object_median_split( node->right_child, prims, right_queue, ((split_axis+1)%3), max_depth-1 );
-}
-*/
 
 
 template <typename T> static inline void kdtree::axis_median_split( KDNode<T> *node,
@@ -472,6 +431,66 @@ template <typename T> static inline bool kdtree::closest_face( const KDNode<T> *
 } // end closest object
 
 
+template <typename T> static inline bool kdtree::closest_face_nonself( int idx, const KDNode<T> *node, const Vec3<T> &point, Vec3<T> &projection, Vec3<T> &normal, Vec3i &face, Vec3<T> &bary ){
+
+	// Parse the tree
+	bool left_hit = false; bool right_hit = false;
+	T pt = point[ node->axis ]; // point
+	T med = node->median; // node median
+
+	// If the point is very close to the median of the node, there is a
+	// chance something closer might be on the other branch.
+	if( pt < med && node->left_child != nullptr ){
+		left_hit = kdtree::closest_face_nonself( idx, node->left_child, point, projection, normal, face, bary );
+		T dist = (projection-point).norm();
+		bool check_both = dist > (pt-med)*(pt-med) && node->right_child != nullptr;
+		if( check_both ){ right_hit = kdtree::closest_face_nonself( idx, node->right_child, point, projection, normal, face, bary ); }
+	}
+	else if( pt >= med && node->right_child != nullptr ){
+		right_hit = kdtree::closest_face_nonself( idx, node->right_child, point, projection, normal, face, bary );
+		T dist = (projection-point).norm();
+		bool check_both = dist > (pt-med)*(pt-med) && node->left_child != nullptr;
+		if( check_both ){ left_hit = kdtree::closest_face_nonself( idx, node->left_child, point, projection, normal, face, bary ); }
+	}
+	if( left_hit || right_hit ){ return true; }
+
+	// If we're a leaf, find closest projection
+	bool obj_found = false;
+	double dist = (point-projection).norm(); // current closest obj
+	const int nf = node->m_indices.size();
+	for( int i=0; i<nf; ++i ){
+		int fidx = node->m_indices[i];
+		const Vec3i f( node->indices[fidx*3+0], node->indices[fidx*3+1], node->indices[fidx*3+2] );
+
+		// See if we should skip this face
+		if( f[0]==idx || f[1]==idx || f[2]==idx ){ continue; }
+
+		const Vec3<T> p0( node->vertices[f[0]*3], node->vertices[f[0]*3+1], node->vertices[f[0]*3+2] );
+		const Vec3<T> p1( node->vertices[f[1]*3], node->vertices[f[1]*3+1], node->vertices[f[1]*3+2] );
+		const Vec3<T> p2( node->vertices[f[2]*3], node->vertices[f[2]*3+1], node->vertices[f[2]*3+2] );
+		const Vec3<T> p = projection::Triangle<T>( point, p0, p1, p2 );
+		Vec3<T> n = point - p;
+		double curr_dist = n.norm();
+
+		// See if this projection is closer
+		if( curr_dist < dist ){
+			bary = mcl::barycoords<T>( p, p0, p1, p2 );
+			projection = p;
+			obj_found = true;
+			dist = curr_dist;
+			face = f;
+			Vec3<T> e0 = p1 - p0;
+			Vec3<T> e1 = p2 - p0;
+			normal = e0.cross(e1);
+			normal.normalize();
+		}
+	}
+
+	return obj_found;
+}
+
+
+
 // Ray-Scene traversal for closest object
 template <typename T> static inline bool kdtree::closest_hit( const KDNode<T> *node, const raycast::rtRay<T> *ray, raycast::rtPayload<T> *payload, Vec3i &face,
 	const std::vector<Vec2i> &range ){
@@ -514,6 +533,46 @@ template <typename T> static inline bool kdtree::closest_hit( const KDNode<T> *n
 	return obj_hit;
 
 } // end closest hit
+
+// Point in tet test
+template <typename T> static inline bool kdtree::point_in_tet( const KDNode<T> *node, int idx, const Vec3<T> &point ){
+
+	if( node->mode != 3 ){ return false; }
+
+	// See if we're inside the box
+	Vec3<T> bmin( node->aabb.min[0], node->aabb.min[1], node->aabb.min[2] );
+	Vec3<T> bmax( node->aabb.max[0], node->aabb.max[1], node->aabb.max[2] );
+	if( !projection::point_in_aabb<T>( point, bmin, bmax ) ){ return false; }
+
+	// See if there are children to intersect
+	bool left_hit=false, right_hit=false;
+	if( node->left_child != nullptr ){ left_hit = kdtree::point_in_tet( node->left_child, idx, point ); }
+	if( node->right_child != nullptr ){ right_hit = kdtree::point_in_tet( node->right_child, idx, point ); }
+	if( left_hit || right_hit ){ return true; }
+
+	// For a leaf node
+	for( int i=0; i<node->m_indices.size(); ++i ){
+		int fidx = node->m_indices[i];
+
+		// See if we should skip this face
+		const Vec4i t( node->indices[fidx*4+0], node->indices[fidx*4+1], node->indices[fidx*4+2], node->indices[fidx*4+3] );
+
+		// Extract the face from the buffers
+		bool skip = false;
+		for( int j=0; j<4; ++j ){ if(idx==t[j]){ skip==true; } }
+		if( skip ){ continue; }
+
+		const Vec3<T> p0( node->vertices[t[0]*3+0], node->vertices[t[0]*3+1], node->vertices[t[0]*3+2] );
+		const Vec3<T> p1( node->vertices[t[1]*3+0], node->vertices[t[1]*3+1], node->vertices[t[1]*3+2] );
+		const Vec3<T> p2( node->vertices[t[2]*3+0], node->vertices[t[2]*3+1], node->vertices[t[2]*3+2] );
+		const Vec3<T> p3( node->vertices[t[3]*3+0], node->vertices[t[3]*3+1], node->vertices[t[3]*3+2] );
+
+		if( projection::point_in_tet( point, p0, p1, p2, p3 ) ){ return true; }
+	}
+
+	return false;
+
+} // end point in tet
 
 /*
 static void round_zero( double &val ){
