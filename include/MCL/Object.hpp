@@ -28,73 +28,57 @@
 
 namespace mcl {
 
-class RenderMesh; // forward declare
+//
+//	Primitive type declaration
+//
+enum class Prim { Any, Tri, Tet, Edge, Point };
+
 
 //
 //	Base, pure virtual
 //
 class BaseObject : public std::enable_shared_from_this<BaseObject> {
 public:
+	BaseObject() : material(-1), flags(0) {}
 	virtual ~BaseObject(){}
 
 	// Return the bounding box of the object
 	virtual void get_bounds( Vec3f &bmin, Vec3f &bmax ) = 0;
 
-	// Called externally when the object has been modified, sometimes
-	// needed to update bounding, recalculate normals, etc...
-	virtual void update(){}
+	// Get per-vertex data. Some pointers may be left null if the object
+	// does not have values for them. Returns true on success.
+	virtual bool get_vertices(
+		float* &vertices, int &num_vertices,
+		float* &normals, int &num_normals,
+		float* &texcoords, int &num_texcoords ) = 0;
+
+	// Get primitive data, returns true on success
+	// Prim type is the type of primitive being requested, as objects
+	// may be meshes of multiple primitives/simplexes
+	virtual bool get_primitives( const Prim &type, int* &indices, int &num_prims ) = 0;
 
 	// Apply a transformation matrix to the object. Most objects will
 	// just apply the transform directly. Others (instances) will just store the xform.
 	virtual void apply_xform( const trimesh::xform &xf ){}
 
-	// Used by BVHTraversal.
-	virtual bool ray_intersect( const raycast::Ray *ray, raycast::Payload *payload ) const { return false; }
-
-	// Projection on to surface
-	virtual Vec3f projection( const Vec3f &point ) const { return point; }
-	virtual Vec3f projection( const Vec3f &point, Vec3f &norm ) const { return point; }
-
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode=0 ){ return ""; }
 
-	// If an object is made up of other (smaller) objects, they are needed for BVH construction.
-	// This function expects you to append the prims vector, not overwrite the whole thing.
-	virtual void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){ prims.push_back( shared_from_this() ); }
+	// The material index into SceneManager::materials
+	int material;
 
-	// The following data is used by mcl::Application.
-	// Derived object is responsible for managing these pointers.
-	struct AppData {
-
-		AppData() : material(MATERIAL_NOTSET), dynamic(false), subdivide_mesh(0), flat_shading(false), wireframe(false),
-			vertices(0), normals(0), texcoords(0), faces(0),
-			num_vertices(0), num_normals(0), num_texcoords(0), num_faces(0), num_edges(0),
-			verts_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), wire_ibo(0), tris_vao(0) {}
-
-		bool dynamic; // Set to true if mesh vertices often change
-
-		// TODO: make these component of material instead of object
-		unsigned int subdivide_mesh; // Number of mesh subdivisions before rendering for better visuals (SLOW)
-		bool flat_shading; // Double up on verts/norms before rendering (ALSO SLOW)
-		bool wireframe; // Draw edges of the mesh. Can be combined with invisible material. TODO
-
-		// Index into SceneManager::materials
-		int material;
-
-		// Vertex stride used for vertices, normals
-		size_t vertex_stride(){ return sizeof(float)*3; }
-		size_t texcoord_stride(){ return sizeof(float)*2; }
-		size_t face_stride(){ return sizeof(int)*3; }
-
-		float* vertices; // XYZ
-		float* normals; // XYZ, normalized
-		float* texcoords; // uv tex coords
-		int* faces;
-		int* edges;
-		int num_vertices, num_normals, num_texcoords, num_faces, num_edges;
-		unsigned int verts_vbo, normals_vbo, texcoords_vbo, barycoords_vbo, faces_ibo, wire_ibo, tris_vao;
-
-	} app ;
+	// Several flags can be tied to an object, to check them:
+	//	bool has_flag = obj->flags & BaseObject::SOME_FLAG
+	// You can add your own flag by using any bits past LASTFLAG
+	int flags;
+	enum {
+		INVISIBLE = 1 << 1, // Do not render the mesh
+		DYNAMIC = 1 << 2, // Use GL_DYNAMIC_DRAW
+		SUBDIVIDE = 1 << 3, // Subdivide faces for smoother rendering
+		FLAT = 1 << 4, // Use flat shading
+		WIREFRAME = 1 << 5, // Use wireframe rendering
+		LASTFLAG = 1 << 6,
+	};
 };
 
 

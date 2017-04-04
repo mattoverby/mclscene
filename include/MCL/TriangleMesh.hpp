@@ -27,44 +27,6 @@
 
 namespace mcl {
 
-
-//
-//	Triangle (reference)
-//	Contains pointers to vertices and normals of a TriangleMesh
-//
-class TriangleRef : public BaseObject {
-public:
-	TriangleRef( Vec3f *p0_, Vec3f *p1_, Vec3f *p2_,
-		Vec3f *n0_, Vec3f *n1_, Vec3f *n2_ ) :
-		p0(p0_), p1(p1_), p2(p2_), n0(n0_), n1(n1_), n2(n2_) {}
-
-	Vec3f *p0, *p1, *p2, *n0, *n1, *n2;
-
-	void get_bounds( Vec3f &bmin, Vec3f &bmax ){
-		AABB aabb; aabb += *p0; aabb += *p1; aabb += *p2;
-		bmin = aabb.min; bmax = aabb.max;
-	}
-
-	bool ray_intersect( const raycast::Ray *ray, raycast::Payload *payload ) const {
-		bool hit = raycast::ray_triangle( ray, *p0, *p1, *p2, *n0, *n1, *n2, payload );
-		if( hit ){ payload->material = this->app.material; }
-		return hit;
-	}
-
-	Vec3f projection( const Vec3f &point ) const {
-		return projection::point_triangle( point, *p0, *p1, *p2 );
-	}
-
-	Vec3f projection( const Vec3f &point, Vec3f &norm ) const {
-		const Vec3f e0 = *p1 - *p0;
-		const Vec3f e1 = *p0 - *p2;
-		norm = e1.cross( e0 );
-		return projection::point_triangle( point, *p0, *p1, *p2 );
-	}
-
-};
-
-
 //
 //	Just a convenient wrapper to plug into the system
 //
@@ -75,6 +37,15 @@ public:
 	std::vector< Vec3i > faces; // surface triangles
 	std::vector< Vec2f > texcoords; // per vertex uv coords
 	std::vector< Vec2i > edges;
+
+	// Get per-vertex data
+	bool get_vertices(
+		float* &vertices, int &num_vertices,
+		float* &normals, int &num_normals,
+		float* &texcoords, int &num_texcoords );
+
+	// Get primitive data
+	bool get_primitives( const Prim &type, int* &indices, int &num_prims );
 
 	// Returns true on success
 	bool load( std::string filename );
@@ -88,17 +59,15 @@ public:
 
 	void get_bounds( Vec3f &bmin, Vec3f &bmax );
 
-	void update();
-
 	void need_normals( bool recompute=false );
 
 	// Creates edges for rendering wireframe
 	void need_edges( bool recompute=false );
 
-	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
-		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
-		prims.insert( prims.end(), tri_refs.begin(), tri_refs.end() );
-	}
+//	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
+//		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
+//		prims.insert( prims.end(), tri_refs.begin(), tri_refs.end() );
+//	}
 
 	// Normal of face f
 	Vec3f trinorm( unsigned int f );
@@ -116,8 +85,8 @@ private:
 	AABB aabb;
 
 	// Triangle refs are used for BVH hook-in.
-	void make_tri_refs();
-	std::vector< std::shared_ptr<BaseObject> > tri_refs;
+//	void make_tri_refs();
+//	std::vector< std::shared_ptr<BaseObject> > tri_refs;
 
 	bool load_obj( std::string filename );
 };

@@ -38,6 +38,15 @@ public:
 	std::vector< Vec2f > texcoords; // per vertex uv coords
 	std::vector< Vec2i > edges; // contains surface edges only
 
+	// Get per-vertex data
+	bool get_vertices(
+		float* &vertices, int &num_vertices,
+		float* &normals, int &num_normals,
+		float* &texcoords, int &num_texcoords );
+
+	// Get primitive data
+	bool get_primitives( const Prim &type, int* &indices, int &num_prims );
+
 	// Filename is the first part of a tetmesh which must contain an .ele and .node file.
 	// Can also load a ".tet" file which is a list of vertices and eles in the same file.
 	// I'll put some docs on filetypes some day.
@@ -54,21 +63,14 @@ public:
 	std::string get_xml( int mode );
 
 	// Compute the normals for surface vertices. The inner normals are length zero.
-	void need_normals( bool recompute=true );
+	void need_normals( bool recompute=false );
 
 	// Transform the mesh by the given matrix
 	void apply_xform( const trimesh::xform &xf );
 
 	void need_edges();
 
-	void update();
-
 	void get_bounds( Vec3f &bmin, Vec3f &bmax );
-
-	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
-		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
-		prims.insert( prims.end(), tri_refs.begin(), tri_refs.end() );
-	}
 
 	void get_surface_vertices( std::vector<int> *indices );
 
@@ -78,16 +80,10 @@ public:
 
 private:
 	AABB aabb;
-
-	bool load_node( std::string filename );
-
-	bool load_ele( std::string filename );
-
-	// .tet file
-	bool load_tet( std::string filename );
-
-	// .mesh file
-	bool load_mesh( std::string filename );
+	bool load_node( std::string filename ); // .node file
+	bool load_ele( std::string filename ); // .ele file
+	bool load_tet( std::string filename ); // .tet file
+	bool load_mesh( std::string filename ); // .mesh file
 
 	// Computes a surface mesh, called by load
 	bool need_surface();
@@ -98,10 +94,6 @@ private:
 	// as the original ply.
 	// Returns an empty string on failure.
 	std::string make_tetmesh( std::string filename );
-
-	// Triangle refs are used for BVH hook-in.
-	void make_tri_refs();
-	std::vector< std::shared_ptr<BaseObject> > tri_refs;
 
 }; // end class TetMesh
 

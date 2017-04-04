@@ -95,8 +95,6 @@ bool TetMesh::load( std::string filename ){
 		if( !need_surface() ){ return false; }
 	}
 
-	update();
-
 	return true;
 }
 
@@ -108,13 +106,9 @@ void TetMesh::need_normals( bool recompute ){
 	if( normals.size() != vertices.size() ){ normals.resize( vertices.size() ); }
 	const int nv = normals.size();
 
-#pragma omp parallel for
-	for( int i = 0; i < nv; ++i ){
-		normals[i][0] = 0.f; normals[i][1] = 0.f; normals[i][2] = 0.f;
-	}
+	std::fill( normals.begin(), normals.end(), Vec3f(0,0,0) );
 
 	int nf = faces.size();
-//#pragma omp parallel for
 	for( int i = 0; i < nf; ++i ){
 		const Vec3f &p0 = vertices[faces[i][0]];
 		const Vec3f &p1 = vertices[faces[i][1]];
@@ -129,29 +123,38 @@ void TetMesh::need_normals( bool recompute ){
 		normals[faces[i][2]] += facenormal * (1.0f / (l2c * l2b));
 	}
 
-#pragma omp parallel for
 	for (int i = 0; i < nv; i++){ normals[i].normalize(); }
 
 } // end compute normals
 
-void TetMesh::update(){
+bool TetMesh::get_vertices(
+	float* &verts, int &num_vertices,
+	float* &norms, int &num_normals,
+	float* &tex, int &num_texcoords ){
 
-	need_normals(true); aabb.valid=false;
-	if( this->app.wireframe ){ need_edges(); }
+	if( normals.size()==0 ){ need_normals(); }
 
 	// Update app data
-	this->app.num_vertices = vertices.size();
-	this->app.num_normals = normals.size();
-	this->app.num_faces = faces.size();
-	this->app.num_texcoords = texcoords.size();
-	this->app.num_edges = edges.size();
+	num_vertices = vertices.size();
+	num_normals = normals.size();
+	num_texcoords = texcoords.size();
+//	this->app.num_edges = edges.size();
 
-	this->app.vertices = &vertices[0][0];
-	this->app.normals = &normals[0][0];
-	this->app.faces = &faces[0][0];
-	this->app.texcoords = &texcoords[0][0];
-	this->app.edges = &edges[0][0];
+	verts = &vertices[0][0];
+	norms = &normals[0][0];
+	tex = &texcoords[0][0];
+//	this->app.edges = &edges[0][0];
+
+	return true;
 }
+
+bool TetMesh::get_primitives( const Prim &type, int* &indices, int &num_prims ){
+	if( type==Prim::Edge ){ indices = &edges[0][0]; num_prims = edges.size(); return true; }
+	if( type==Prim::Tet ){ indices = &tets[0][0]; num_prims = tets.size(); return true; }
+	if( type==Prim::Tri ){ indices = &faces[0][0]; num_prims = faces.size(); return true; }
+	return false;
+}
+
 
 // Transform the mesh by the given matrix
 void TetMesh::apply_xform( const trimesh::xform &xf ){
@@ -467,7 +470,7 @@ void TetMesh::get_surface_vertices( std::vector<int> *indices ){
 
 } // end get surface verts
 
-
+/*
 void TetMesh::make_tri_refs(){
 
 	tri_refs.clear();
@@ -483,7 +486,7 @@ void TetMesh::make_tri_refs(){
 	} // end loop faces
 
 } // end make triangle references
-
+*/
 
 void TetMesh::need_edges(){
 
@@ -496,8 +499,8 @@ void TetMesh::need_edges(){
 		edges.push_back( Vec2i(faces[f][0],faces[f][2]) );
 		edges.push_back( Vec2i(faces[f][1],faces[f][2]) );
 	}
-	this->app.num_edges = edges.size();
-	this->app.edges = &edges[0][0];
+//	this->app.num_edges = edges.size();
+//	this->app.edges = &edges[0][0];
 
 }
 

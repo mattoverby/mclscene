@@ -55,7 +55,7 @@ void TriangleMesh::clear(){
 	faces.clear();
 	texcoords.clear();
 	aabb.valid = false;
-	tri_refs.clear();
+//	tri_refs.clear();
 }
 
 
@@ -101,29 +101,35 @@ void TriangleMesh::need_edges( bool recompute ){
 		edges.push_back( Vec2i(faces[f][0],faces[f][2]) );
 		edges.push_back( Vec2i(faces[f][1],faces[f][2]) );
 	}
-	this->app.num_edges = edges.size();
-	this->app.edges = &edges[0][0];
+//	this->app.num_edges = edges.size();
+//	this->app.edges = &edges[0][0];
 }
 
+bool TriangleMesh::get_vertices(
+	float* &verts, int &num_vertices,
+	float* &norms, int &num_normals,
+	float* &tex, int &num_texcoords ){
 
-void TriangleMesh::update(){
-
-	need_normals(true); aabb.valid=false;
-	if( this->app.wireframe ){ need_edges(); }
+	if( normals.size()==0 ){ need_normals(); }
 
 	// Update app data
-	this->app.num_vertices = vertices.size();
-	this->app.num_normals = normals.size();
-	this->app.num_faces = faces.size();
-	this->app.num_texcoords = texcoords.size();
-	this->app.num_edges = edges.size();
+	num_vertices = vertices.size();
+	num_normals = normals.size();
+	num_texcoords = texcoords.size();
+//	this->app.num_edges = edges.size();
 
-	this->app.vertices = &vertices[0][0];
-	this->app.normals = &normals[0][0];
-	this->app.faces = &faces[0][0];
-	this->app.texcoords = &texcoords[0][0];
-	this->app.edges = &edges[0][0];
+	verts = &vertices[0][0];
+	norms = &normals[0][0];
+	tex = &texcoords[0][0];
+//	this->app.edges = &edges[0][0];
 
+	return true;
+}
+
+bool TriangleMesh::get_primitives( const Prim &type, int* &indices, int &num_prims ){
+	if( type==Prim::Edge ){ indices = &edges[0][0]; num_prims = edges.size(); return true; }
+	if( type==Prim::Tri ){ indices = &faces[0][0]; num_prims = faces.size(); return true; }
+	return false;
 }
 
 
@@ -134,8 +140,6 @@ void TriangleMesh::apply_xform( const trimesh::xform &xf ){
 #pragma omp parallel for
 	for (int i = 0; i < nv; i++){ vertices[i] = xf * vertices[i]; }
 
-	update();
-
 	aabb.valid = false;
 	for( int f=0; f<faces.size(); ++f ){
 		aabb += vertices[ faces[f][0] ];
@@ -144,7 +148,7 @@ void TriangleMesh::apply_xform( const trimesh::xform &xf ){
 	}
 }
 
-
+/*
 void TriangleMesh::make_tri_refs(){
 
 	tri_refs.clear();
@@ -160,7 +164,7 @@ void TriangleMesh::make_tri_refs(){
 	} // end loop faces
 
 } // end make triangle references
-
+*/
 
 bool TriangleMesh::load( std::string filename ){
 
@@ -168,7 +172,7 @@ bool TriangleMesh::load( std::string filename ){
 	vertices.clear();
 	normals.clear();
 	faces.clear();
-	tri_refs.clear();
+//	tri_refs.clear();
 
 	// If it's an obj file, load it with my own function:	
 	if( trimesh_helper::to_lower(filename.substr(filename.size()-3)) == "obj"){
@@ -197,15 +201,13 @@ bool TriangleMesh::load( std::string filename ){
 	}
 
 	// Remake the triangle refs and aabb
-	make_tri_refs();
+//	make_tri_refs();
 	aabb.valid = false;
 	for( int f=0; f<faces.size(); ++f ){
 		aabb += vertices[ faces[f][0] ];
 		aabb += vertices[ faces[f][1] ];
 		aabb += vertices[ faces[f][2] ];
 	}
-
-	update();
 
 	return true;
 

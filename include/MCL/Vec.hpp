@@ -71,7 +71,7 @@ namespace mcl {
 		r[0] = 1.0 - r[1] - r[2];
 		return r;
 	}
-
+/*
 	struct VertexPool {
 		VertexPool() : valid(false) {}
 		bool valid;
@@ -103,8 +103,8 @@ namespace mcl {
 		std::vector<int> num_texcoords;
 		std::vector<float*> texcoords;
 
-		std::vector<int> num_faces;
-		std::vector<int*> faces;
+//		std::vector<int> num_faces;
+//		std::vector<int*> faces;
 
 		std::vector<int> index; // index into SceneManager::objects
 
@@ -112,23 +112,26 @@ namespace mcl {
 			num_vertices.clear(); vertices.clear();
 			num_normals.clear(); normals.clear();
 			num_texcoords.clear(); texcoords.clear();
-			num_faces.clear(); faces.clear();
+//			num_faces.clear(); faces.clear();
 			index.clear();
 		}
 
 	}; // end vertex pool
+*/
 
 
 	// Eventually I will put enums in a better place
 	// Material settings:
 	enum {
 		// Can be returned as object's material:
-		MATERIAL_INVISIBLE = -2,
+		MATERIAL_INVISIBLE = -2, // TODO allow combination with wireframe
 		MATERIAL_NOTSET = -1,
 
 		// Material flags:
 		MATERIAL_RED_BACKFACE = 1 << 0, // Color backfacing triangles red
-//		SECOND = 1 << 1, // future
+//		MATERIAL_WIREFRAME = 1 << 1, // Wireframe rendering
+//		MATERIAL_FLAT = 1 << 2, // Flat shading rendering
+//		MATERIAL_SUBDIVIDE = 1 << 3, // Subdivide mesh for better smoothing
 	};
 
 

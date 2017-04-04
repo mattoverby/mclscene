@@ -64,7 +64,7 @@ class SceneManager {
 		// 	spatial = object median (slower, better balanced)
 		//	linear = parallel build w/ morton codes (probably has an error somewhere)
 		//
-		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="spatial" );
+//		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="spatial" );
 
 		//
 		// Computes an exact bounding sphere, excluding cameras and lights.
@@ -78,7 +78,7 @@ class SceneManager {
 		// If dynamic_only is true, only objects marked with the "DYNAMIC" flag
 		// will be added to the pool.
 		//
-		void get_vertex_pool( VertexPool &pool, bool dynamic_only, bool recompute=false );
+//		void get_vertex_pool( VertexPool &pool, bool dynamic_only, bool recompute=false );
 
 		//
 		// For an initial eye position and scene center, creates a 3pt lighting rig.
@@ -107,15 +107,15 @@ class SceneManager {
 
 		// Root bvh is created by build_bvh.
 		// build_bvh is called by get_bvh.
-		void build_bvh( std::string split_mode );
-		std::shared_ptr<BVHNode> root_bvh;
+//		void build_bvh( std::string split_mode );
+//		std::shared_ptr<BVHNode> root_bvh;
 
 		// Cached bounding sphere stats:
 		float last_radius;
 		Vec3f last_center;
 
 		// Cached VertexPool
-		VertexPool vertex_pool;
+//		VertexPool vertex_pool;
 
 }; // end class SceneManager
 

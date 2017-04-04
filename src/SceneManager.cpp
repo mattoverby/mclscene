@@ -27,7 +27,7 @@ using namespace mcl;
 using namespace trimesh;
 
 SceneManager::SceneManager() {
-	root_bvh=NULL;
+//	root_bvh=NULL;
 	last_radius=-1.f;
 	last_center = Vec3f(0,0,0);
 }
@@ -47,8 +47,8 @@ void SceneManager::clear(){
 //	camera_params.clear();
 //	light_params.clear();
 
-	vertex_pool.clear();
-	root_bvh.reset(new BVHNode);
+//	vertex_pool.clear();
+//	root_bvh.reset(new BVHNode);
 }
 
 
@@ -73,11 +73,11 @@ void SceneManager::save( std::string xmlfile, int mode ){
 		// Loop over objects
 		for( int i=0; i<objects.size(); ++i ){
 			xml << "\n" << objects[i]->get_xml( mode );
-			int mat = objects[i]->app.material;
-			if( mat >= 0 && mat < objects.size() ){
-				std::stringstream ss; ss << "mat" << mat;
-				// TODO export
-			}
+//			int mat = objects[i]->app.material;
+//			if( mat >= 0 && mat < objects.size() ){
+//				std::stringstream ss; ss << "mat" << mat;
+//				// TODO export
+//			}
 		}
 
 		// Loop over materials, let the name be the index
@@ -113,7 +113,7 @@ void SceneManager::save( std::string xmlfile, int mode ){
 
 } // end save
 
-
+/*
 void SceneManager::build_bvh( std::string split_mode ){
 
 	split_mode = parse::to_lower(split_mode);
@@ -137,8 +137,9 @@ std::shared_ptr<BVHNode> SceneManager::SceneManager::get_bvh( bool recompute, st
 	if( recompute || root_bvh==NULL ){ build_bvh( type ); }
 	return root_bvh;
 }
+*/
 
-
+/*
 void SceneManager::get_vertex_pool( VertexPool &pool, bool dynamic_only, bool recompute ){
 
 	if( !recompute && vertex_pool.valid ){ pool = vertex_pool; return; }
@@ -147,16 +148,22 @@ void SceneManager::get_vertex_pool( VertexPool &pool, bool dynamic_only, bool re
 	// Make a new vertex pool
 	for( int i=0; i<objects.size(); ++i ){
 		if( dynamic_only && !(objects[i]->app.dynamic) ){ continue; }
+		float *vertices, *normals, *texcoords;
+		int *indices;
+		int num_v, num_n, num_t, num_i, material;
+		Prim type = Prim::Any;
+		objects[i]->get_data( type, vertices, num_v, normals, num_n, texcoords, num_t, indices, num_i );
+
 		BaseObject::AppData *app = &objects[i]->app;
 
-		vertex_pool.vertices.push_back( app->vertices );
-		vertex_pool.num_vertices.push_back( app->num_vertices );
-		vertex_pool.normals.push_back( app->normals );
-		vertex_pool.num_normals.push_back( app->num_normals );
-		vertex_pool.texcoords.push_back( app->texcoords );
-		vertex_pool.num_texcoords.push_back( app->num_texcoords );
-		vertex_pool.faces.push_back( app->faces );
-		vertex_pool.num_faces.push_back( app->num_faces );
+		vertex_pool.vertices.push_back( vertices );
+		vertex_pool.num_vertices.push_back( num_v );
+		vertex_pool.normals.push_back( normals );
+		vertex_pool.num_normals.push_back( num_n );
+		vertex_pool.texcoords.push_back( texcoords );
+		vertex_pool.num_texcoords.push_back( num_t );
+//		vertex_pool.faces.push_back( indices );
+//		vertex_pool.num_faces.push_back( num_i );
 		vertex_pool.index.push_back( i );
 
 	} // end loop objects
@@ -164,7 +171,7 @@ void SceneManager::get_vertex_pool( VertexPool &pool, bool dynamic_only, bool re
 	pool = vertex_pool;
 
 } // end get vertex pool
-
+*/
 
 void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 

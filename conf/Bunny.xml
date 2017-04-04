@@ -5,8 +5,6 @@
 		<File value="bunny.ply" />
 		<Scale value="1 1 1" />
 		<Material value="CyanPlastic" />
-		<wireframe value="1" />
-		<flat_shading value="1" />
 	</Object>
 <!--
 	<Object name="obj1" type="box" >

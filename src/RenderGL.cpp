@@ -34,21 +34,47 @@ static inline std::string fullpath( std::string file ){
 
 static inline float lerp(float a, float b, float f){ return a + f * (b - a); }
 
-static void trimesh_copy( std::shared_ptr<mcl::TriangleMesh> &to_mesh, trimesh::TriMesh *from_mesh ){
-	for( int i=0; i<from_mesh->vertices.size(); ++i ){ to_mesh->vertices.push_back( mcl::Vec3f( from_mesh->vertices[i][0], from_mesh->vertices[i][1], from_mesh->vertices[i][2] ) ); }
-	for( int i=0; i<from_mesh->faces.size(); ++i ){ to_mesh->faces.push_back( mcl::Vec3i( from_mesh->faces[i][0], from_mesh->faces[i][1], from_mesh->faces[i][2] ) ); }
-	for( int i=0; i<from_mesh->texcoords.size(); ++i ){ to_mesh->texcoords.push_back( mcl::Vec2f( from_mesh->texcoords[i][0], from_mesh->texcoords[i][1] ) ); }
-	to_mesh->update();
+//static void trimesh_copy( std::shared_ptr<mcl::TriangleMesh> &to_mesh, trimesh::TriMesh *from_mesh ){
+//	for( int i=0; i<from_mesh->vertices.size(); ++i ){ to_mesh->vertices.push_back( mcl::Vec3f( from_mesh->vertices[i][0], from_mesh->vertices[i][1], from_mesh->vertices[i][2] ) ); }
+//	for( int i=0; i<from_mesh->faces.size(); ++i ){ to_mesh->faces.push_back( mcl::Vec3i( from_mesh->faces[i][0], from_mesh->faces[i][1], from_mesh->faces[i][2] ) ); }
+//	for( int i=0; i<from_mesh->texcoords.size(); ++i ){ to_mesh->texcoords.push_back( mcl::Vec2f( from_mesh->texcoords[i][0], from_mesh->texcoords[i][1] ) ); }
+//	to_mesh->update();
+//}
+
+//static void trimesh_copy( trimesh::TriMesh *to_mesh, mcl::RenderGL::RenderMesh *from_mesh ){
+//	to_mesh->vertices.clear(); to_mesh->vertices.reserve( from_mesh->num_vertices );
+//	to_mesh->faces.clear(); to_mesh->faces.reserve( from_mesh->num_faces );
+//	to_mesh->texcoords.clear(); to_mesh->texcoords.reserve( from_mesh->num_texcoords );
+//	for( int i=0; i<from_mesh->num_vertices; ++i ){ to_mesh->vertices.push_back( trimesh::vec( from_mesh->vertices[i*3+0], from_mesh->vertices[i*3+1], from_mesh->vertices[i*3+2] ) ); }
+//	for( int i=0; i<from_mesh->num_faces; ++i ){ to_mesh->faces.push_back( trimesh::TriMesh::Face( from_mesh->faces[i*3+0], from_mesh->faces[i*3+1], from_mesh->faces[i*3+2] ) ); }
+//	for( int i=0; i<from_mesh->num_texcoords; ++i ){ to_mesh->texcoords.push_back( trimesh::vec2( from_mesh->texcoords[i*2+0], from_mesh->texcoords[i*2+1] ) ); }
+//}
+
+RenderGL::RenderMesh::RenderMesh() : RenderMesh(NULL) {}
+
+RenderGL::RenderMesh::RenderMesh( std::shared_ptr<BaseObject> obj ) :
+	vertices(0), normals(0), texcoords(0), faces(0), edges(0),
+	num_vertices(0), num_normals(0), num_texcoords(0), num_faces(0), num_edges(0),
+	verts_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), wire_ibo(0), tris_vao(0),
+	object(obj) {
+	update();
 }
 
-static void trimesh_copy( trimesh::TriMesh *to_mesh, BaseObject::AppData *from_mesh ){
-	to_mesh->vertices.clear(); to_mesh->vertices.reserve( from_mesh->num_vertices );
-	to_mesh->faces.clear(); to_mesh->faces.reserve( from_mesh->num_faces );
-	to_mesh->texcoords.clear(); to_mesh->texcoords.reserve( from_mesh->num_texcoords );
-	for( int i=0; i<from_mesh->num_vertices; ++i ){ to_mesh->vertices.push_back( trimesh::vec( from_mesh->vertices[i*3+0], from_mesh->vertices[i*3+1], from_mesh->vertices[i*3+2] ) ); }
-	for( int i=0; i<from_mesh->num_faces; ++i ){ to_mesh->faces.push_back( trimesh::TriMesh::Face( from_mesh->faces[i*3+0], from_mesh->faces[i*3+1], from_mesh->faces[i*3+2] ) ); }
-	for( int i=0; i<from_mesh->num_texcoords; ++i ){ to_mesh->texcoords.push_back( trimesh::vec2( from_mesh->texcoords[i*2+0], from_mesh->texcoords[i*2+1] ) ); }
+void RenderGL::RenderMesh::update(){
+	if( object == NULL ){ return; }
+
+	bool success = object->get_vertices(
+		vertices, num_vertices,
+		normals, num_normals,
+		texcoords, num_texcoords );
+	if( !success ){ num_vertices = 0; }
+
+	success = object->get_primitives( Prim::Tri, faces, num_faces );
+
+	if( !success ){ num_faces = 0; }
+	object->get_primitives( Prim::Edge, edges, num_edges );
 }
+
 
 // RenderQuad() Renders a 1x1 quad in NDC, best used for framebuffer color targets
 void RenderGL::RenderQuad(){
@@ -315,13 +341,19 @@ void RenderGL::draw_objects( bool update_vbo ){
 	//
 	for( int i=0; i<scene->objects.size(); ++i ){
 
+		if( i >= render_meshes.size() ){
+			render_meshes.push_back( RenderMesh( scene->objects[i] ) );
+		}
+
 		// Only update the VBOs if we have to
-		BaseObject::AppData *mesh = &scene->objects[i]->app;
+		RenderMesh *mesh = &render_meshes[i];
 		if( mesh->faces_ibo > 0 && mesh->tris_vao > 0 && !update_vbo ){ continue; }
 
 		// Skip invisibles
-		if( mesh->material == MATERIAL_INVISIBLE ){ continue; }
+		if( mesh->object->flags & BaseObject::INVISIBLE ){ continue; }
 
+		load_mesh_buffers( mesh );
+/*
 		// TODO: Subdivide AND flat shading
 		if( mesh->subdivide_mesh>0 ){
 
@@ -381,8 +413,9 @@ void RenderGL::draw_objects( bool update_vbo ){
 			mesh->num_edges = tempmesh.edges.size();
 			load_mesh_buffers( mesh );
 
-		} else { load_mesh_buffers( mesh ); }
-
+		}
+		else {  }
+*/
 	} // end update vbos
 
 	//
@@ -417,14 +450,14 @@ void RenderGL::geometry_pass( Camera *camera ){
 	for( int i=0; i<scene->objects.size(); ++i ){
 
 		// Get the mesh
-		BaseObject::AppData *mesh = &scene->objects[i]->app;
+		RenderMesh *mesh = &render_meshes[i];
 		if( mesh->num_vertices <= 0 || mesh->num_faces <= 0 ){ continue; }
-		if( mesh->material == MATERIAL_INVISIBLE ){ continue; }
+		if( mesh->object->flags & BaseObject::INVISIBLE ){ continue; }
 
 		// Get the material
 		Material *mat = 0;
-		if( mesh->material == MATERIAL_NOTSET ){ mat = &defaultMat; }
-		else{ mat = scene->materials[mesh->material].get(); } // could segfault!
+		if( mesh->object->material == MATERIAL_NOTSET ){ mat = &defaultMat; }
+		else{ mat = scene->materials[mesh->object->material].get(); } // could segfault!
 
 		// Textures
 		GLuint texture_id = 0;
@@ -456,7 +489,7 @@ void RenderGL::geometry_pass( Camera *camera ){
 			glBindVertexArray(0);
 		}
 
-		if( mesh->wireframe ){
+		if( mesh->object->flags & BaseObject::WIREFRAME ){
 			glUniform4f( shaderGeometryPass.uniform("diff_color"), 0.f, 0.f, 0.f, mat->app.amb.norm() );
 			glUniform4f( shaderGeometryPass.uniform("spec_color"), 0.f, 0.f, 0.f, 1.f );
 			glBindVertexArray(mesh->tris_vao);
@@ -571,15 +604,15 @@ void RenderGL::lighting_pass( Camera *cam ){
 }
 
 
-bool RenderGL::load_mesh_buffers( BaseObject::AppData *mesh ){
+bool RenderGL::load_mesh_buffers( RenderMesh *mesh ){
 
 	// Check
 	if( mesh->num_vertices<=0 || mesh->num_normals<=0 || mesh->num_faces<=0 ){ return false; }
 
 	GLenum draw_mode = GL_STATIC_DRAW;
-	if( mesh->dynamic ){ draw_mode = GL_DYNAMIC_DRAW; }
+	if( mesh->object->flags & BaseObject::DYNAMIC ){ draw_mode = GL_DYNAMIC_DRAW; }
 
-	size_t stride = mesh->vertex_stride();
+	size_t stride = sizeof(float)*3;
 
 	if( !mesh->verts_vbo ){ // Create the buffer for vertices
 		glGenBuffers(1, &mesh->verts_vbo);
@@ -603,17 +636,17 @@ bool RenderGL::load_mesh_buffers( BaseObject::AppData *mesh ){
 	if( !mesh->texcoords_vbo ){
 		glGenBuffers(1, &mesh->texcoords_vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->texcoords_vbo);
-		glBufferData(GL_ARRAY_BUFFER, mesh->num_texcoords*mesh->texcoord_stride(), mesh->texcoords, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, mesh->num_texcoords*sizeof(float)*2, mesh->texcoords, GL_STATIC_DRAW);
 	}
 
 	// Create the buffer for indices, these won't change
 	if( !mesh->faces_ibo ){
 		glGenBuffers(1, &mesh->faces_ibo);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->faces_ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->num_faces*mesh->face_stride(), mesh->faces, GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->num_faces*sizeof(int)*3, mesh->faces, GL_STATIC_DRAW);
 	}
 
-	if( !mesh->wire_ibo && mesh->wireframe ){
+	if( !mesh->wire_ibo && ( mesh->object->flags & BaseObject::WIREFRAME ) ){
 		glGenBuffers(1, &mesh->wire_ibo);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->wire_ibo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->num_edges*sizeof(int)*2, mesh->edges, GL_STATIC_DRAW);
@@ -641,7 +674,7 @@ bool RenderGL::load_mesh_buffers( BaseObject::AppData *mesh ){
 		// location=2 is the tex coord
 		glEnableVertexAttribArray(2);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->texcoords_vbo);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, mesh->texcoord_stride(), 0);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float)*3, 0);
 
 		// Done setting data for the vao
 		glBindVertexArray(0);

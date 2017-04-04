@@ -89,7 +89,7 @@ namespace factory {
 
 static inline std::shared_ptr<TriangleMesh> factory::make_trimesh( SceneManager *scene ){
 	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
-	mesh->update();
+//	mesh->update();
 	if( scene != nullptr ){
 		scene->object_params.push_back( std::vector<Param>() );
 		scene->objects.push_back( mesh );
@@ -99,7 +99,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_trimesh( SceneManager 
 
 static inline std::shared_ptr<TetMesh> factory::make_tetmesh( SceneManager *scene ){
 	std::shared_ptr<TetMesh> mesh( new TetMesh() );
-	mesh->update();
+//	mesh->update();
 	if( scene != nullptr ){
 		scene->object_params.push_back( std::vector<Param>() );
 		scene->objects.push_back( mesh );
@@ -150,7 +150,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_sphere( Vec3f center, 
 	trimesh::xform t_xf = trimesh::xform::trans(center[0],center[1],center[2]);
 	mesh->apply_xform( t_xf );
 
-	mesh->update();
+//	mesh->update();
 
 	// Add to SceneManager
 	if( scene != nullptr ){
@@ -205,11 +205,11 @@ static inline std::shared_ptr<TriangleMesh> factory::make_beam( int chunks, int 
 	}
 
 	mesh->collapse_points(0.1f);
-	mesh->update();
+//	mesh->update();
 
 	// Add to SceneManager
 	if( scene != nullptr ){
-		mesh->app.flat_shading = true;
+//		mesh->app.flat_shading = true;
 		std::vector< Param > params;
 		params.push_back( Param( "radius", t_to_str(chunks) ) );
 		params.push_back( Param( "tess", t_to_str(tess) ) );
@@ -346,10 +346,10 @@ static inline std::shared_ptr<TriangleMesh> factory::make_cube( int tess, SceneM
 		}
 	}
 
-	mesh->update();
+//	mesh->update();
 
 	if( scene != nullptr ){
-		mesh->app.flat_shading = true;
+//		mesh->app.flat_shading = true;
 		std::vector< Param > params;
 		params.push_back( Param( "tess", t_to_str(tess) ) );
 		params.push_back( Param( "flat_shading", "1" ) );
@@ -432,7 +432,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_plane( int tess_x, int
 		mesh->texcoords.push_back( Vec2f(u,v) );
 	}
 
-	mesh->update();
+//	mesh->update();
 	if( scene != nullptr ){
 		std::vector< Param > params;
 		params.push_back( Param( "tess_x", t_to_str(tess_x) ) );
@@ -517,7 +517,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_cyl(int tess_c, int te
 	for (int i = 0; i < tess_c; i++)
 		mkface(mesh, base+i, base+((i+1)%tess_c), base+tess_c);
 
-	mesh->update();
+//	mesh->update();
 	if( scene != nullptr ){
 		std::vector< Param > params;
 		params.push_back( Param( "radius", t_to_str(r) ) );

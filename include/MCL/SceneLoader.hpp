@@ -165,7 +165,7 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 					if( mat_param_index >= 0 ){
 						std::string material_name = parse::to_lower( params[mat_param_index].as_string() );
 						if( material_map.count(material_name) > 0 ){
-							obj->app.material = material_map[material_name];
+//							obj->app.material = material_map[material_name];
 						} // is a named material
 						else if( material_name == "invisible" ){} // handled by parse object
 						else {
@@ -173,8 +173,7 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 							if( mat != NULL ){
 								int idx = scene->materials.size();
 								scene->materials.push_back( mat );
-//								scene->material_params.push_back( std::vector<Param>() );
-								obj->app.material = idx;
+//								obj->app.material = idx;
 							}
 						} // is a material preset
 					} // end check material
@@ -350,10 +349,10 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 	//
 	if( new_obj != NULL ){
 		new_obj->apply_xform( x_form );
-		new_obj->app.flat_shading = flat_shading;
-		new_obj->app.subdivide_mesh = (unsigned int)subdivide_mesh;
-		new_obj->app.wireframe = wireframe;
-		if( invis_material ){ new_obj->app.material = MATERIAL_INVISIBLE; }
+//		new_obj->app.flat_shading = flat_shading;
+//		new_obj->app.subdivide_mesh = (unsigned int)subdivide_mesh;
+//		new_obj->app.wireframe = wireframe;
+//		if( invis_material ){ new_obj->app.material = MATERIAL_INVISIBLE; }
 		return new_obj;
 	} else {
 		std::cerr << "**Error: I don't know how to create an object of type " << type << std::endl;

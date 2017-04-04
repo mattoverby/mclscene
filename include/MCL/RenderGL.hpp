@@ -34,6 +34,22 @@ namespace mcl {
 
 class RenderGL  {
 public:
+	// A wrapper for base-class objects to store render info
+	// for faster lookup.
+	class RenderMesh {
+	public:
+		float *vertices, *normals, *texcoords;
+		int *faces, *edges;
+		int num_vertices, num_normals, num_texcoords, num_faces, num_edges;
+		unsigned int verts_vbo, normals_vbo, texcoords_vbo, faces_ibo, wire_ibo, tris_vao;
+		std::shared_ptr<BaseObject> object; // Index into SceneManager::objects
+		void update();
+		RenderMesh();
+		RenderMesh( std::shared_ptr<BaseObject> obj );
+	};
+
+	std::vector<RenderMesh> render_meshes; // SceneManager::object -> render meshes
+
 	// Initialize shaders. Must be called after
 	// OpenGL context has been created.
 	bool init( mcl::SceneManager *scene_, int win_width, int win_height );
@@ -62,7 +78,7 @@ private:
 	// Texture coordinates and face ibo are NOT updated.
 	// If the IBOs have already been generated, they are instead overwritten.
 	// Returns true on success
-	bool load_mesh_buffers( BaseObject::AppData *mesh );
+	bool load_mesh_buffers( RenderMesh *mesh );
 
 	Material defaultMat;
 	std::unordered_map< std::string, int > textures; // file->texture_id

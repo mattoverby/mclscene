@@ -32,7 +32,7 @@
 //	a pointer to vertices with indices (which I use for my physics implementaitons).
 //
 namespace mcl {
-
+/*
 //
 //	BVH Node class that the tree is made up of
 //
@@ -119,32 +119,8 @@ public:
 	// Skip stride is the start and end indices of the faces to skip in the ray trace.
 //	static bool closest_hit_dbl( const BVHNode *node, const raycast::rtRay<double> *ray, raycast::rtPayload<double> *payload, Vec2i skip_stride, Vec3i *face_hit, Vec3i *closest_face );
 };
-
+*/
 
 } // end namespace mcl
-
-
-
-
-
-
-//
-//	BVH Initializer class for creating the tree and logging
-//
-/*
-class BVHInit {
-public:
-	BVHInit() : max_depth(10), n_nodes(0), avg_balance(0.f), runtime_s(0.f) {}
-	BVHInit( int max_depth_ ) : max_depth(max_depth_), n_nodes(0), avg_balance(0.f), runtime_s(0.f) {}
-
-	// Setup:
-	int max_depth; // The max depth of the tree => 2^(max_depth) nodes
-
-	// Logging (set by BVHBuilder):
-	int n_nodes; // number of nodes in the created tree
-	float avg_balance; // the "balance" of the last-created tree (lousy metric, but whatever)
-	float runtime_s; // time it took to build the bvh (seconds)
-};
-*/
 
 #endif

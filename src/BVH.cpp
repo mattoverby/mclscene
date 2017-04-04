@@ -26,6 +26,8 @@
 
 using namespace mcl;
 
+/*
+
 namespace helper {
 	// use: bool is_one = helper::check_bit( myInt, bit_position );
 	static inline bool check_bit( BVHBuilder::morton_type variable, int bit ){
@@ -411,6 +413,7 @@ bool BVHTraversal::any_hit( const BVHNode* node, const raycast::Ray *ray, raycas
 	return false;
 
 } // end ray intersect
+*/
 
 /*
 bool BVHTraversal::closest_hit_dbl( const BVHNode *node, const raycast::rtRay<double> *ray,
@@ -457,6 +460,7 @@ bool BVHTraversal::closest_hit_dbl( const BVHNode *node, const raycast::rtRay<do
 } // return closest hit double
 */
 
+/*
 void BVHNode::get_edges( std::vector<Vec3f> &edges, bool add_children ){
 
 	{
@@ -495,3 +499,4 @@ void BVHNode::get_edges( std::vector<Vec3f> &edges, bool add_children ){
 	if( left_child != nullptr && add_children ){ left_child->get_edges( edges ); }
 	if( right_child != nullptr && add_children ){ right_child->get_edges( edges ); }
 }
+*/

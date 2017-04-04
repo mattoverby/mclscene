@@ -8,7 +8,7 @@
 using namespace mcl;
 
 
-
+/*
 #include "TriMesh_algo.h"
 #include "MCL/TriangleMesh.hpp"
 static void trimesh_copy( std::shared_ptr<mcl::TriangleMesh> &to_mesh, trimesh::TriMesh *from_mesh ){
@@ -26,7 +26,7 @@ static void trimesh_copy( trimesh::TriMesh *to_mesh, BaseObject::AppData *from_m
 	for( int i=0; i<from_mesh->num_texcoords; ++i ){ to_mesh->texcoords.push_back( trimesh::vec2( from_mesh->texcoords[i*2+0], from_mesh->texcoords[i*2+1] ) ); }
 }
 
-
+*/
 
 
 int main(int argc, char *argv[]){
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]){
 	if( !scene.load( std::string(argv[1]) ) ){ return 0; }
 	else{ printf( "Successfully loaded xml file: %fms\n", t.elapsed_ms() ); }
 
-
+/*
 	std::shared_ptr<TriangleMesh> mesh = std::dynamic_pointer_cast<TriangleMesh>( scene.objects[0] );
 	std::shared_ptr<mcl::TriangleMesh> newmesh( new TriangleMesh() );
 	trimesh::TriMesh tmesh;
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]){
 	t.reset();
 	scene.get_bvh();
 	printf( "BVH Build time: %fs\n", t.elapsed_s() );
-
+*/
 	Application gui( &scene );
 	gui.display();
 
