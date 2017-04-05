@@ -63,13 +63,11 @@ public:
 	int flags;
 	enum {
 		// Index replacements:
-		INVISIBLE = -2,
 		NOTSET = -1,
 		// Material flags:
 		RED_BACKFACE = 1 << 0, // Color backfacing triangles red
-		LASTFLAG = 1 << 0, // Color backfacing triangles red
+		LASTFLAG = 1 << 1, // Color backfacing triangles red
 	};
-
 };
 
 

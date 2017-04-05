@@ -66,10 +66,7 @@ void TriangleMesh::need_normals( bool recompute ){
 	if( normals.size() != vertices.size() ){ normals.resize( vertices.size() ); }
 	const int nv = normals.size();
 
-#pragma omp parallel for
-	for( int i = 0; i < nv; ++i ){
-		normals[i][0] = 0.f; normals[i][1] = 0.f; normals[i][2] = 0.f;
-	}
+	std::fill( normals.begin(), normals.end(), Vec3f(0,0,0) );
 
 	int nf = faces.size();
 //#pragma omp parallel for

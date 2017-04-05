@@ -52,6 +52,9 @@ public:
 		float* &normals, int &num_normals,
 		float* &texcoords, int &num_texcoords ) = 0;
 
+	// Compute normals (need to be called on vertex update for physics sims)
+	virtual void need_normals( bool recompute=false ){}
+
 	// Get primitive data, returns true on success
 	// Prim type is the type of primitive being requested, as objects
 	// may be meshes of multiple primitives/simplexes

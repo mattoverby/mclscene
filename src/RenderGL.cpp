@@ -674,7 +674,7 @@ bool RenderGL::load_mesh_buffers( RenderMesh *mesh ){
 		// location=2 is the tex coord
 		glEnableVertexAttribArray(2);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->texcoords_vbo);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float)*3, 0);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, 0);
 
 		// Done setting data for the vao
 		glBindVertexArray(0);

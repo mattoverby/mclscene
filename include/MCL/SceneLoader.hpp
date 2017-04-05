@@ -348,7 +348,7 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 		if( flat_shading ){ new_obj->flags = new_obj->flags | BaseObject::FLAT; }
 		if( subdivide_mesh ){ new_obj->flags = new_obj->flags | BaseObject::SUBDIVIDE; }
 		if( wireframe ){ new_obj->flags = new_obj->flags | BaseObject::WIREFRAME; }
-		if( invis_material ){ new_obj->material = Material::INVISIBLE; }
+		if( invis_material ){ new_obj->flags = new_obj->flags | BaseObject::INVISIBLE; }
 		return new_obj;
 	} else {
 		std::cerr << "**Error: I don't know how to create an object of type " << type << std::endl;
