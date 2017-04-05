@@ -78,7 +78,7 @@ class SceneManager {
 		// If dynamic_only is true, only objects marked with the "DYNAMIC" flag
 		// will be added to the pool.
 		//
-//		void get_vertex_pool( VertexPool &pool, bool dynamic_only, bool recompute=false );
+		void get_vertex_pool( VertexPool &pool, bool dynamic_only, bool recompute=false );
 
 		//
 		// For an initial eye position and scene center, creates a 3pt lighting rig.
@@ -115,7 +115,7 @@ class SceneManager {
 		Vec3f last_center;
 
 		// Cached VertexPool
-//		VertexPool vertex_pool;
+		VertexPool vertex_pool;
 
 }; // end class SceneManager
 

@@ -33,11 +33,14 @@ If you *don't* want a specific object to be rendered, use the material name "inv
 
 # todo
 
+- Point cloud rendering
+- Update BVH
 - Cleanup headers and make it header-only
+- Refactor Param.hpp
 - Support for texture wrapping
 - Mesh instancing
 - Export to other renderers (e.g., mitsuba, blender)
-- Replace glew?
+- Replace glew/soil
 
 # license
 

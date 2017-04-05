@@ -37,18 +37,12 @@ SceneManager::~SceneManager(){ clear(); }
 
 
 void SceneManager::clear(){
-
 	objects.clear();
 	cameras.clear();
 	lights.clear();
 	materials.clear();
 	object_params.clear();
-//	material_params.clear();
-//	camera_params.clear();
-//	light_params.clear();
-
-//	vertex_pool.clear();
-//	root_bvh.reset(new BVHNode);
+	vertex_pool.clear();
 }
 
 
@@ -73,11 +67,11 @@ void SceneManager::save( std::string xmlfile, int mode ){
 		// Loop over objects
 		for( int i=0; i<objects.size(); ++i ){
 			xml << "\n" << objects[i]->get_xml( mode );
-//			int mat = objects[i]->app.material;
-//			if( mat >= 0 && mat < objects.size() ){
-//				std::stringstream ss; ss << "mat" << mat;
-//				// TODO export
-//			}
+			int mat = objects[i]->material;
+			if( mat >= 0 && mat < objects.size() ){
+				std::stringstream ss; ss << "mat" << mat;
+				// TODO export
+			}
 		}
 
 		// Loop over materials, let the name be the index
@@ -139,7 +133,7 @@ std::shared_ptr<BVHNode> SceneManager::SceneManager::get_bvh( bool recompute, st
 }
 */
 
-/*
+
 void SceneManager::get_vertex_pool( VertexPool &pool, bool dynamic_only, bool recompute ){
 
 	if( !recompute && vertex_pool.valid ){ pool = vertex_pool; return; }
@@ -147,14 +141,11 @@ void SceneManager::get_vertex_pool( VertexPool &pool, bool dynamic_only, bool re
 
 	// Make a new vertex pool
 	for( int i=0; i<objects.size(); ++i ){
-		if( dynamic_only && !(objects[i]->app.dynamic) ){ continue; }
-		float *vertices, *normals, *texcoords;
-		int *indices;
-		int num_v, num_n, num_t, num_i, material;
-		Prim type = Prim::Any;
-		objects[i]->get_data( type, vertices, num_v, normals, num_n, texcoords, num_t, indices, num_i );
+		if( dynamic_only && !(objects[i]->flags & BaseObject::DYNAMIC) ){ continue; }
 
-		BaseObject::AppData *app = &objects[i]->app;
+		float *vertices, *normals, *texcoords;
+		int num_v, num_n, num_t;
+		objects[i]->get_vertices( vertices, num_v, normals, num_n, texcoords, num_t );
 
 		vertex_pool.vertices.push_back( vertices );
 		vertex_pool.num_vertices.push_back( num_v );
@@ -162,8 +153,6 @@ void SceneManager::get_vertex_pool( VertexPool &pool, bool dynamic_only, bool re
 		vertex_pool.num_normals.push_back( num_n );
 		vertex_pool.texcoords.push_back( texcoords );
 		vertex_pool.num_texcoords.push_back( num_t );
-//		vertex_pool.faces.push_back( indices );
-//		vertex_pool.num_faces.push_back( num_i );
 		vertex_pool.index.push_back( i );
 
 	} // end loop objects
@@ -171,7 +160,7 @@ void SceneManager::get_vertex_pool( VertexPool &pool, bool dynamic_only, bool re
 	pool = vertex_pool;
 
 } // end get vertex pool
-*/
+
 
 void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 
@@ -184,7 +173,6 @@ void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 	Vec3f v = w.cross(u);
 
 	lights.clear();
-//	light_params.clear();
 
 	std::vector<Param> params;
 	std::shared_ptr<Light> key = parse_light( "spot", params );
@@ -193,9 +181,6 @@ void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 	lights.push_back( key );
 	lights.push_back( fill );
 	lights.push_back( back );
-//	light_params.push_back( params );
-//	light_params.push_back( params );
-//	light_params.push_back( params );
 
 	float half_d = distance/2.f;
 	float quart_d = distance/4.f;

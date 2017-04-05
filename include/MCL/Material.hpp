@@ -26,17 +26,15 @@
 #include <cassert>
 #include "MCL/Param.hpp"
 
-///
-///	Simple object types
-///
 namespace mcl {
 
 //
 //	Base material class
+//	TODO OpenGL Shader class that derives from Material
 //
 class Material {
 public:
-	Material(){}
+	Material() : flags(0) {}
 	Material( Vec3f amb, Vec3f diff, Vec3f spec, float shini ) {
 		app.amb = amb; app.diff = diff; app.spec = spec; app.shini = shini; }
 
@@ -44,17 +42,6 @@ public:
 
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode ){
-/*
-		std::stringstream xml;
-		xml << "\t<Material type=\"blinnphong\" >\n";
-		xml << "\t\t<Ambient value=\"" << app.amb.str() << "\" />\n";
-		xml << "\t\t<Diffuse value=\"" << app.diff.str() << "\" />\n";
-		xml << "\t\t<Specular value=\"" << app.spec.str() << "\" />\n";
-		xml << "\t\t<Shininess  value=\"" << app.shini << "\" />\n";
-		if( app.texture.size() ){ xml << "\t\t<texture value=\"" << app.texture << "\" />\n"; }
-		xml << "\t</Material>";
-		return xml.str();
-*/
 		std::cout << "TODO: Material::get_xml" << std::endl;
 		return "";
 	}
@@ -64,12 +51,24 @@ public:
 	// Colors should be between 0 and 1.
 	// Shininess should be between 0 and 1 (and multiplied by 128 later)
 	struct AppData {
-		AppData() : amb(0,0,0), diff(1,0,0), spec(0,0,0), shini(1), texture(""), flags(0) {}
+		AppData() : amb(0,0,0), diff(1,0,0), spec(0,0,0), shini(1), texture("") {}
 		Vec3f amb, diff, spec;
 		float shini;
 		std::string texture;
-		int flags;
 	} app ;
+
+	// Several flags can be tied to an object, to check them:
+	//	bool has_flag = obj->flags & BaseObject::SOME_FLAG
+	// You can add your own flag by using any bits past LASTFLAG
+	int flags;
+	enum {
+		// Index replacements:
+		INVISIBLE = -2,
+		NOTSET = -1,
+		// Material flags:
+		RED_BACKFACE = 1 << 0, // Color backfacing triangles red
+		LASTFLAG = 1 << 0, // Color backfacing triangles red
+	};
 
 };
 

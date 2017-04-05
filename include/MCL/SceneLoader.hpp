@@ -99,11 +99,8 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 	scene->objects.reserve(num_objects);
 	scene->object_params.reserve(num_objects);
 	scene->materials.reserve(num_materials);
-//	scene->material_params.reserve(num_materials);
 	scene->cameras.reserve(num_cameras);
-//	scene->camera_params.reserve(num_cameras);
 	scene->lights.reserve(num_lights);
-//	scene->light_params.reserve(num_lights);
 
 	//
 	// Now parse scene information and create components
@@ -165,7 +162,7 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 					if( mat_param_index >= 0 ){
 						std::string material_name = parse::to_lower( params[mat_param_index].as_string() );
 						if( material_map.count(material_name) > 0 ){
-//							obj->app.material = material_map[material_name];
+							obj->material = material_map[material_name];
 						} // is a named material
 						else if( material_name == "invisible" ){} // handled by parse object
 						else {
@@ -173,7 +170,7 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 							if( mat != NULL ){
 								int idx = scene->materials.size();
 								scene->materials.push_back( mat );
-//								obj->app.material = idx;
+								obj->material = idx;
 							}
 						} // is a material preset
 					} // end check material
@@ -187,7 +184,6 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 				if( mat != NULL ){
 					int idx = scene->materials.size();
 					scene->materials.push_back( mat );
-//					scene->material_params.push_back( params );
 				}
 			} // end build material
 
@@ -349,10 +345,10 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 	//
 	if( new_obj != NULL ){
 		new_obj->apply_xform( x_form );
-//		new_obj->app.flat_shading = flat_shading;
-//		new_obj->app.subdivide_mesh = (unsigned int)subdivide_mesh;
-//		new_obj->app.wireframe = wireframe;
-//		if( invis_material ){ new_obj->app.material = MATERIAL_INVISIBLE; }
+		if( flat_shading ){ new_obj->flags = new_obj->flags | BaseObject::FLAT; }
+		if( subdivide_mesh ){ new_obj->flags = new_obj->flags | BaseObject::SUBDIVIDE; }
+		if( wireframe ){ new_obj->flags = new_obj->flags | BaseObject::WIREFRAME; }
+		if( invis_material ){ new_obj->material = Material::INVISIBLE; }
 		return new_obj;
 	} else {
 		std::cerr << "**Error: I don't know how to create an object of type " << type << std::endl;
@@ -398,7 +394,7 @@ static inline std::shared_ptr<mcl::Material> mcl::parse_material( std::string ty
 			else if( tag=="texture" ){ mat->app.texture = params[i].as_string(); }
 			else if( tag=="shininess" || tag=="exponent" ){ mat->app.shini=params[i].as_int(); }
 			else if( tag=="red_back" ){
-				if( params[i].as_int()>0 ){ mat->app.flags = mat->app.flags | MATERIAL_RED_BACKFACE; }
+				if( params[i].as_int()>0 ){ mat->flags = mat->flags | Material::RED_BACKFACE; }
 			}
 		}
 		std::shared_ptr<Material> new_mat( mat );

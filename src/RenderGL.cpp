@@ -456,7 +456,7 @@ void RenderGL::geometry_pass( Camera *camera ){
 
 		// Get the material
 		Material *mat = 0;
-		if( mesh->object->material == MATERIAL_NOTSET ){ mat = &defaultMat; }
+		if( mesh->object->material == Material::NOTSET ){ mat = &defaultMat; }
 		else{ mat = scene->materials[mesh->object->material].get(); } // could segfault!
 
 		// Textures
@@ -472,13 +472,13 @@ void RenderGL::geometry_pass( Camera *camera ){
 			glUniformMatrix4fv(shaderGeometryPassTextured.uniform("view"), 1, GL_FALSE, camera->app.view);
 			glUniformMatrix4fv(shaderGeometryPassTextured.uniform("model"), 1, GL_FALSE, model);
 			glUniform4f( shaderGeometryPassTextured.uniform("spec_color"), mat->app.spec[0], mat->app.spec[1], mat->app.spec[2], mat->app.shini );
-			glUniform1i( shaderGeometryPassTextured.uniform("red_back"), int(mat->app.flags & MATERIAL_RED_BACKFACE) );
+			glUniform1i( shaderGeometryPassTextured.uniform("red_back"), int(mat->flags & Material::RED_BACKFACE) );
 		}
 		else{
 			// Set material diffuse color
 			glUniform4f( shaderGeometryPass.uniform("diff_color"), mat->app.diff[0], mat->app.diff[1], mat->app.diff[2], mat->app.amb.norm() );
 			glUniform4f( shaderGeometryPass.uniform("spec_color"), mat->app.spec[0], mat->app.spec[1], mat->app.spec[2], mat->app.shini );
-			glUniform1i( shaderGeometryPass.uniform("red_back"), int(mat->app.flags & MATERIAL_RED_BACKFACE) );
+			glUniform1i( shaderGeometryPass.uniform("red_back"), int(mat->flags & Material::RED_BACKFACE) );
 		}
 
 		{ // Draw mesh triangles
