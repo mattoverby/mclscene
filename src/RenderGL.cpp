@@ -41,14 +41,19 @@ static inline float lerp(float a, float b, float f){ return a + f * (b - a); }
 //	to_mesh->update();
 //}
 
-//static void trimesh_copy( trimesh::TriMesh *to_mesh, mcl::RenderGL::RenderMesh *from_mesh ){
-//	to_mesh->vertices.clear(); to_mesh->vertices.reserve( from_mesh->num_vertices );
-//	to_mesh->faces.clear(); to_mesh->faces.reserve( from_mesh->num_faces );
-//	to_mesh->texcoords.clear(); to_mesh->texcoords.reserve( from_mesh->num_texcoords );
-//	for( int i=0; i<from_mesh->num_vertices; ++i ){ to_mesh->vertices.push_back( trimesh::vec( from_mesh->vertices[i*3+0], from_mesh->vertices[i*3+1], from_mesh->vertices[i*3+2] ) ); }
-//	for( int i=0; i<from_mesh->num_faces; ++i ){ to_mesh->faces.push_back( trimesh::TriMesh::Face( from_mesh->faces[i*3+0], from_mesh->faces[i*3+1], from_mesh->faces[i*3+2] ) ); }
-//	for( int i=0; i<from_mesh->num_texcoords; ++i ){ to_mesh->texcoords.push_back( trimesh::vec2( from_mesh->texcoords[i*2+0], from_mesh->texcoords[i*2+1] ) ); }
-//}
+static void trimesh_copy( trimesh::TriMesh *to_mesh, std::shared_ptr<mcl::BaseObject> from_mesh ){
+	float *vertices, *normals, *texcoords;
+	int num_vertices=0, num_normals=0, num_texcoords=0;
+	int *faces, num_faces=0;
+	from_mesh->get_vertices( vertices, num_vertices, normals, num_normals, texcoords, num_texcoords );
+	from_mesh->get_primitives( Prim::Tri, faces, num_faces );
+	to_mesh->vertices.clear(); to_mesh->vertices.reserve( num_vertices );
+	to_mesh->faces.clear(); to_mesh->faces.reserve( num_faces );
+	to_mesh->texcoords.clear(); to_mesh->texcoords.reserve( num_texcoords );
+	for( int i=0; i<num_vertices; ++i ){ to_mesh->vertices.push_back( trimesh::vec( vertices[i*3+0], vertices[i*3+1], vertices[i*3+2] ) ); }
+	for( int i=0; i<num_faces; ++i ){ to_mesh->faces.push_back( trimesh::TriMesh::Face( faces[i*3+0], faces[i*3+1], faces[i*3+2] ) ); }
+	for( int i=0; i<num_texcoords; ++i ){ to_mesh->texcoords.push_back( trimesh::vec2( texcoords[i*2+0], texcoords[i*2+1] ) ); }
+}
 
 RenderGL::RenderMesh::RenderMesh() : RenderMesh(NULL) {}
 
@@ -352,17 +357,13 @@ void RenderGL::draw_objects( bool update_vbo ){
 		// Skip invisibles
 		if( mesh->object->flags & BaseObject::INVISIBLE ){ continue; }
 
-		load_mesh_buffers( mesh );
-/*
 		// TODO: Subdivide AND flat shading
-		if( mesh->subdivide_mesh>0 ){
+		if( mesh->object->flags & BaseObject::SUBDIVIDE ){
 
 			// Do subdivision with trimesh
 			trimesh::TriMesh tempmesh;
-			trimesh_copy( &tempmesh, mesh );
-			for( int si=0; si<mesh->subdivide_mesh; ++si ){
-				trimesh::subdiv( &tempmesh ); // creates faces
-			}
+			trimesh_copy( &tempmesh, mesh->object );
+			trimesh::subdiv( &tempmesh ); // creates faces
 			tempmesh.need_normals(true);
 
 			// We will use the app data stored with that object.
@@ -376,25 +377,32 @@ void RenderGL::draw_objects( bool update_vbo ){
 			mesh->num_texcoords = tempmesh.texcoords.size();
 			load_mesh_buffers( mesh );
 
-		} else if( mesh->flat_shading ){
+		} else if( mesh->object->flags & BaseObject::FLAT ){
 
 			// Loop through faces and store redundant vertices
 			// and normals for each face to do flat shading.
+
+			float *vertices, *normals, *texcoords;
+			int num_vertices=0, num_normals=0, num_texcoords=0;
+			int *faces, num_faces=0;
+			mesh->object->get_vertices( vertices, num_vertices, normals, num_normals, texcoords, num_texcoords );
+			mesh->object->get_primitives( Prim::Tri, faces, num_faces );
+
 			TriangleMesh tempmesh;
-			tempmesh.vertices.reserve( mesh->num_vertices );
-			tempmesh.faces.reserve( mesh->num_faces );
-			tempmesh.texcoords.reserve( mesh->num_texcoords );
-			for( int i=0; i<mesh->num_faces; ++i ){
-				Vec3i f( mesh->faces[i*3], mesh->faces[i*3+1], mesh->faces[i*3+2] );
+			tempmesh.vertices.reserve( num_vertices );
+			tempmesh.faces.reserve( num_faces );
+			tempmesh.texcoords.reserve( num_texcoords );
+			for( int i=0; i<num_faces; ++i ){
+				Vec3i f( faces[i*3], faces[i*3+1], faces[i*3+2] );
 				int v_idx = tempmesh.vertices.size();
-				tempmesh.vertices.push_back( Vec3f( mesh->vertices[f[0]*3], mesh->vertices[f[0]*3+1], mesh->vertices[f[0]*3+2] ) );
-				tempmesh.vertices.push_back( Vec3f( mesh->vertices[f[1]*3], mesh->vertices[f[1]*3+1], mesh->vertices[f[1]*3+2] ) );
-				tempmesh.vertices.push_back( Vec3f( mesh->vertices[f[2]*3], mesh->vertices[f[2]*3+1], mesh->vertices[f[2]*3+2] ) );
+				tempmesh.vertices.push_back( Vec3f( vertices[f[0]*3], vertices[f[0]*3+1], vertices[f[0]*3+2] ) );
+				tempmesh.vertices.push_back( Vec3f( vertices[f[1]*3], vertices[f[1]*3+1], vertices[f[1]*3+2] ) );
+				tempmesh.vertices.push_back( Vec3f( vertices[f[2]*3], vertices[f[2]*3+1], vertices[f[2]*3+2] ) );
 				tempmesh.faces.push_back( Vec3i(v_idx,v_idx+1,v_idx+2) );
-				if( mesh->num_texcoords ){
-					tempmesh.texcoords.push_back( Vec2f( mesh->texcoords[f[0]*2], mesh->texcoords[f[0]*2+1] ) );
-					tempmesh.texcoords.push_back( Vec2f( mesh->texcoords[f[1]*2], mesh->texcoords[f[1]*2+1] ) );
-					tempmesh.texcoords.push_back( Vec2f( mesh->texcoords[f[2]*2], mesh->texcoords[f[2]*2+1] ) );
+				if( num_texcoords ){
+					tempmesh.texcoords.push_back( Vec2f( texcoords[f[0]*2], texcoords[f[0]*2+1] ) );
+					tempmesh.texcoords.push_back( Vec2f( texcoords[f[1]*2], texcoords[f[1]*2+1] ) );
+					tempmesh.texcoords.push_back( Vec2f( texcoords[f[2]*2], texcoords[f[2]*2+1] ) );
 				}
 			}
 			tempmesh.need_normals(true);
@@ -414,8 +422,8 @@ void RenderGL::draw_objects( bool update_vbo ){
 			load_mesh_buffers( mesh );
 
 		}
-		else {  }
-*/
+		else { load_mesh_buffers( mesh ); }
+
 	} // end update vbos
 
 	//
