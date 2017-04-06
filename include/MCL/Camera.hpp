@@ -167,23 +167,22 @@ public:
 
 	void update_view(){
 		using namespace trimesh;
-
-		// Update rotation
-		fxform xf = fxform::rot(rotx,v) * fxform::rot(roty,u);
+		fxform xf = fxform::rot(rotx, Vec3f(0,1,0)) * fxform::rot(roty,u);
 		rotx = 0.f;
 		roty = 0.f;
-		u = xf * u;
-		v = xf * v;
-		w = xf * w;
-
+		Vec3f tmpv = v;
+		tmpv = xf * v;
+		if( tmpv[1] > 1e-3 ){
+			w = xf * w;
+			u = xf * u;
+			v = tmpv;
+		}
 		lookat += v*pany;
 		lookat -= u*panx;
 		pany = 0.f;
 		panx = 0.f;
-
 		float rad = (lookat-eye).norm();
 		eye = w*rad + lookat;
-
 		this->app.view = make_view( eye, u, v, w );
 	}
 
