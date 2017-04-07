@@ -72,17 +72,28 @@ namespace mcl {
 
 //
 //	Camera base class
-//	TODO: Replace top half of Camera functions with bottom half
 //
 class Camera {
 public:
+	Camera() : view_needs_update(true) {}
+
+	bool view_needs_update;
+	trimesh::fxform &get_view(){ if(view_needs_update){ update_view(); } return view; }
+	trimesh::fxform &get_projection(){ return projection; }
+
 	virtual ~Camera(){}
 
 	// Return eye world location
 	virtual Vec3f get_eye() = 0;
 
+	// Return camera direction
+	virtual Vec3f get_dir() = 0;
+
 	// Returns a string containing xml code for saving to a scenefile.
 	virtual std::string get_xml( int mode ){ return ""; }
+
+	// Window resize
+	virtual void resize( int width, int height ){}
 
 	// Zoom (move forward/backward)
 	virtual void zoom( float dz ){}
@@ -93,37 +104,15 @@ public:
 	// Pan (input is right-drag x and y amount from screen)
 	virtual void pan( float dx, float dy ){}
 
-	// Update the view matrix
-	virtual void update_view(){}
-
-	// Update the projection matrix
-	virtual void update_proj( float aspect_ratio ){}
-
-	// Used by mcl::Application
-	// This data is used by the mclscene OpenGL renderer
-	struct AppData {
-		trimesh::fxform view, projection;
-	} app ;
-
-
-	virtual bool has_key_cb(){ return false; }
-	virtual void key_callback(void*, int key, int scancode, int action, int mods){}
-
-	virtual bool has_framebuffer_size_cb(){ return false; }
-	virtual void framebuffer_size_callback(void*, int width, int height){}
-
-	virtual bool has_scroll_cb(){ return false; }
-	virtual void scroll_callback(void*, double x, double y){}
-
-	virtual bool has_cursor_position_cb(){ return false; }
-	virtual void cursor_position_callback(void*, double x, double y){}
-
-	virtual bool has_mouse_button_cb(){ return false; }
-	virtual void mouse_button_callback(void*, int button, int action, int mods){}
-
+protected:
+	trimesh::fxform view, projection;
+	virtual void update_view(){};
 };
 
 
+//
+//	Not really a trackball camera but whatever
+//
 class Trackball : public Camera {
 public:
 	Vec3f lookat, eye, u, v, w;
@@ -141,6 +130,8 @@ public:
 
 	Vec3f get_eye(){ return eye; }
 
+	Vec3f get_dir(){ return mcl::normalized<float>(lookat-eye); }
+
 	void update_basis(){
 		Vec3f up(0,1,0);
 		Vec3f dir = lookat - eye;
@@ -153,17 +144,27 @@ public:
 
 	void zoom( float dz ){
 		eye -= w*dz;
+		this->view_needs_update = true;
 	}
 
 	void rotate( float dx, float dy ){
 		rotx -= dx;
 		roty -= dy;
+		this->view_needs_update = true;
 	}
 
 	void pan( float dx, float dy ){
 		panx += dx;
 		pany += dy;
+		this->view_needs_update = true;
 	}
+
+	void resize( int width, int height ){
+		float aspect = std::fmaxf( (float)width / (float)height, 1e-6f );
+		this->projection = trimesh::fxform::persp( fov_deg, aspect, clipping[0], clipping[1] );
+	}
+
+protected:
 
 	void update_view(){
 		using namespace trimesh;
@@ -183,11 +184,7 @@ public:
 		panx = 0.f;
 		float rad = (lookat-eye).norm();
 		eye = w*rad + lookat;
-		this->app.view = make_view( eye, u, v, w );
-	}
-
-	void update_proj( float aspect ){
-		this->app.projection = trimesh::fxform::persp( fov_deg, aspect, clipping[0], clipping[1] );
+		this->view = make_view( eye, u, v, w );
 	}
 };
 

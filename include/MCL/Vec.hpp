@@ -48,6 +48,8 @@ namespace mcl {
 	typedef Vec3<int> Vec3i;
 	typedef Vec2<int> Vec2i;
 
+	template <typename T> static inline Vec3<T> normalized(const Vec3<T> &v){ Vec3<T> t=v; t.normalize(); return t; }
+
 	// Temporary quick fix for interop. Will remove once I wean off trimesh.
 	static inline Vec3f to_Vec3f(trimesh::vec p){ return Vec3f(p[0],p[1],p[2]); }
 

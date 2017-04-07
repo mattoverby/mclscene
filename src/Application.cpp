@@ -19,7 +19,6 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#include "SOIL2.h"
 #include "MCL/Application.hpp"
 #include <png.h>
 
@@ -51,7 +50,6 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 		cam->clipping = Vec2f( scene_radius*0.1f, scene_radius*20.f );
 		scene->cameras.push_back( cam );
 //		scene->camera_params.push_back( std::vector<Param>() );
-		cam->update_view();
 	}
 	current_cam = scene->cameras[0].get();
 
@@ -63,7 +61,6 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 	cursorY = 0.f;
 	left_mouse_drag = false;
 	right_mouse_drag = false;
-	update_view = false;
 
 	// Add callbacks to the input class
 	using namespace std::placeholders;    // adds visibility of _1, _2, _3,...
@@ -73,23 +70,6 @@ Application::Application( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(s
 	Input::cursor_position_callbacks.push_back( std::bind( &Application::cursor_position_callback, this, _1, _2, _3 ) );
 	Input::scroll_callbacks.push_back( std::bind( &Application::scroll_callback, this, _1, _2, _3 ) );
 	Input::framebuffer_size_callbacks.push_back( std::bind( &Application::framebuffer_size_callback, this, _1, _2, _3 ) );
-
-
-	if( current_cam->has_key_cb() ){
-		Input::key_callbacks.push_back( std::bind( &Camera::key_callback, current_cam, _1, _2, _3, _4, _5 ) );
-	}
-	if( current_cam->has_mouse_button_cb() ){
-		Input::mouse_button_callbacks.push_back( std::bind( &Camera::mouse_button_callback, current_cam, _1, _2, _3, _4 ) );
-	}
-	if( current_cam->has_cursor_position_cb() ){
-		Input::cursor_position_callbacks.push_back( std::bind( &Camera::cursor_position_callback, current_cam, _1, _2, _3 ) );
-	}
-	if( current_cam->has_scroll_cb() ){
-		Input::scroll_callbacks.push_back( std::bind( &Camera::scroll_callback, current_cam, _1, _2, _3 ) );
-	}
-	if( current_cam->has_framebuffer_size_cb() ){
-		Input::framebuffer_size_callbacks.push_back( std::bind( &Camera::framebuffer_size_callback, current_cam, _1, _2, _3 ) );
-	}
 }
 
 
@@ -112,12 +92,12 @@ int Application::display(){
 
 	// Get the monitor max window size
 	const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-//	int max_width = 1024;
-//	int max_height = 768;
-	int max_width = mode->width;
-	int max_height = mode->height;
-	if( max_width >= 1920 ){ max_width=1920; max_height=1080; } // just use 1080 if they have it
-	else{ max_width=1366; max_height=768; }
+	int max_width = 1024;
+	int max_height = 768;
+//	int max_width = mode->width;
+//	int max_height = mode->height;
+//	if( max_width >= 1920 ){ max_width=1920; max_height=1080; } // just use 1080 if they have it
+//	else{ max_width=1366; max_height=768; }
 
 	// Create the glfw window
 	window = glfwCreateWindow(max_width, max_height, "Viewer", NULL, NULL);
@@ -141,7 +121,7 @@ int Application::display(){
 
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
-	framebuffer_size_callback(window, width, height); // sets the projection matrix
+	Input::framebuffer_size_callback(window, width, height); // sets the projection matrix
 
 	if( !renderer.init( scene, width, height ) ){ glfwTerminate(); return EXIT_FAILURE; } // creates shaders
 
@@ -152,6 +132,8 @@ int Application::display(){
 
 	// Game loop
 	float t_old = glfwGetTime();
+	float lastTime = t_old;
+	int num_frames = 0;
 	screen_dt = 0.f;
 	while( !glfwWindowShouldClose(window) && !close_window ){
 
@@ -162,6 +144,12 @@ int Application::display(){
 		float t = glfwGetTime();
 		screen_dt = t - t_old;
 		t_old = t;
+//		num_frames++;
+//		if( t - lastTime >= 1.f ){
+//			printf("%f ms/frame\n", 1000.f/float(num_frames));
+//			num_frames = 0;
+///			lastTime += 1.f;
+//		}
 
 		// Simulation engine:
 		if( sim && settings.run_simulation ){
@@ -169,24 +157,16 @@ int Application::display(){
 			run_simulator_step();
 		}
 
-		{ // Update camera
-			if( update_view ){ current_cam->update_view(); update_view = false; }
-		}
-
 		//
 		//	Render
 		//
+		renderer.draw_objects( update_mesh_buffers );
+		for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, current_cam, screen_dt ); }
+		update_mesh_buffers = false;
 
-		{ // Render scene stuff
-			renderer.draw_objects( update_mesh_buffers );
-			for( int i=0; i<render_callbacks.size(); ++i ){ render_callbacks[i]( window, current_cam, screen_dt ); }
-			update_mesh_buffers = false;
-		}
-
-		{ // Finalize:
-			glfwSwapBuffers(window);
-			glfwPollEvents();
-		}
+		// Finalize:
+		glfwSwapBuffers(window);
+		glfwPollEvents();
 
 	} // end game loop
 
@@ -254,11 +234,9 @@ void Application::cursor_position_callback(GLFWwindow* window, double x, double 
 
 	if( left_mouse_drag ){
 		current_cam->rotate( (x-cursorX)/100.f, (y-cursorY)/100.f );
-		update_view = true;
 	}
 	else if( right_mouse_drag ){
 		current_cam->pan( float(x-cursorX)/100.f, float(y-cursorY)/100.f );
-		update_view = true;
 	}
 	cursorX = x;
 	cursorY = y;
@@ -267,17 +245,12 @@ void Application::cursor_position_callback(GLFWwindow* window, double x, double 
 
 void Application::scroll_callback(GLFWwindow* window, double x, double y){
 	current_cam->zoom( float(y)*scene_radius );
-	update_view = true;
 }
 
 
 void Application::framebuffer_size_callback(GLFWwindow* window, int width, int height){
-
-	float scene_d = std::fmaxf( scene_radius*2.f, 0.2f );
-	float aspect_ratio = 1.f;
-	if( height > 0 ){ aspect_ratio = std::fmaxf( (float)width / (float)height, 1e-6f ); }
 	glViewport(0, 0, width, height);
-	current_cam->update_proj( aspect_ratio );
+	current_cam->resize( width, height );
 	renderer.update_window_size( width, height );
 }
 
@@ -304,71 +277,70 @@ static inline void flip_image (int w, int h, unsigned char *pixels) {
 // Write an image buffer to a PNG file
 static inline void save_png (const char *filename, int width, int height,
 	       unsigned char *pixels, bool has_alpha) {
-    FILE* file = fopen(filename, "wb");
-    if (!file) {
+	FILE* file = fopen(filename, "wb");
+	if (!file) {
 	printf("Couldn't open file %s for writing.\n", filename);
 	return;
-    }
-    // initialize the PNG structures
-    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,
-	                                          NULL, NULL);
-    if (!png_ptr) {
+	}
+	// initialize the PNG structures
+	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,
+		                                  NULL, NULL);
+	if (!png_ptr) {
 	printf("Couldn't create a PNG write structure.\n");
 	fclose(file);
 	return;
-    }
-    png_infop info_ptr = png_create_info_struct(png_ptr);
-    if (!info_ptr) {
+	}
+	png_infop info_ptr = png_create_info_struct(png_ptr);
+	if (!info_ptr) {
 	printf("Couldn't create a PNG info structure.\n");
 	png_destroy_write_struct(&png_ptr, NULL);
 	fclose(file);
 	return;
-    }
-    if (setjmp(png_jmpbuf(png_ptr))) {
+	}
+	if (setjmp(png_jmpbuf(png_ptr))) {
 	printf("Had a problem writing %s.\n", filename);
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 	fclose(file);
 	return;
-    }
-    png_init_io(png_ptr, file);
-    png_set_IHDR(png_ptr, info_ptr, width, height, 8,
-	         has_alpha ? PNG_COLOR_TYPE_RGBA : PNG_COLOR_TYPE_RGB,
-	         PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
-	         PNG_FILTER_TYPE_DEFAULT);
-    // set the pixel data
-    int channels = has_alpha ? 4 : 3;
-    png_bytep* row_pointers = (png_bytep*) new unsigned char*[height];
-    for (int y = 0; y < height; y++)
+	}
+	png_init_io(png_ptr, file);
+	png_set_IHDR(png_ptr, info_ptr, width, height, 8,
+		 has_alpha ? PNG_COLOR_TYPE_RGBA : PNG_COLOR_TYPE_RGB,
+		 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
+		 PNG_FILTER_TYPE_DEFAULT);
+	// set the pixel data
+	int channels = has_alpha ? 4 : 3;
+	png_bytep* row_pointers = (png_bytep*) new unsigned char*[height];
+	for (int y = 0; y < height; y++)
 	row_pointers[y] = (png_bytep) &pixels[y*width*channels];
-    png_set_rows(png_ptr, info_ptr, row_pointers);
-    // write the file
-    png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
-    // clean up
-    delete[] row_pointers;
-    png_destroy_write_struct(&png_ptr, &info_ptr);
-    fclose(file);
+	png_set_rows(png_ptr, info_ptr, row_pointers);
+	// write the file
+	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+	// clean up
+	delete[] row_pointers;
+	png_destroy_write_struct(&png_ptr, &info_ptr);
+	fclose(file);
 }
+
 
 int frame_num = 0;
 void Application::save_screenshot(GLFWwindow* window){
-	std::string MY_DATE_FORMAT = "h%H_m%M_s%S";
-	const int MY_DATE_SIZE = 20;
-	static char name[MY_DATE_SIZE];
-	time_t now = time(0);
-	strftime(name, sizeof(name), MY_DATE_FORMAT.c_str(), localtime(&now));
+
 	std::stringstream filename;
-//	filename << MCLSCENE_BUILD_DIR << "/screenshot_" << name << ".png";
 	filename << MCLSCENE_BUILD_DIR << "/"; filename << std::setfill('0') << std::setw(5) << frame_num << ".png";
+
 	int w=256, h=256;
 	glfwGetFramebufferSize(window, &w, &h);
 	unsigned char *pixels = new unsigned char[w*h*3];
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glReadPixels(0,0, w,h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+
 	flip_image(w,h, pixels);
 	save_png(filename.str().c_str(), w,h, pixels,false);
 	delete[] pixels;
 	frame_num++;
 }
+
 
 void Application::run_simulator_step(){
 
@@ -376,10 +348,6 @@ void Application::run_simulator_step(){
 
 	sim->step( scene, screen_dt );
 	sim->update( scene );
-
-	// Probably don't need to do this
-//	Vec3f unused;
-//	scene->get_bsphere(&unused,&scene_radius,true);
 
 	// Update geometry on device
 	update_mesh_buffers = true;

@@ -448,8 +448,8 @@ void RenderGL::geometry_pass( Camera *camera ){
 
 	// Camera transforms
 	trimesh::fxform model;
-	glUniformMatrix4fv(shaderGeometryPass.uniform("projection"), 1, GL_FALSE, camera->app.projection);
-	glUniformMatrix4fv(shaderGeometryPass.uniform("view"), 1, GL_FALSE, camera->app.view);
+	glUniformMatrix4fv(shaderGeometryPass.uniform("projection"), 1, GL_FALSE, camera->get_projection());
+	glUniformMatrix4fv(shaderGeometryPass.uniform("view"), 1, GL_FALSE, camera->get_view());
 	glUniformMatrix4fv(shaderGeometryPass.uniform("model"), 1, GL_FALSE, model);
 
 	//
@@ -476,8 +476,8 @@ void RenderGL::geometry_pass( Camera *camera ){
 		        glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, texture_id);
 
-			glUniformMatrix4fv(shaderGeometryPassTextured.uniform("projection"), 1, GL_FALSE, camera->app.projection);
-			glUniformMatrix4fv(shaderGeometryPassTextured.uniform("view"), 1, GL_FALSE, camera->app.view);
+			glUniformMatrix4fv(shaderGeometryPassTextured.uniform("projection"), 1, GL_FALSE, camera->get_projection());
+			glUniformMatrix4fv(shaderGeometryPassTextured.uniform("view"), 1, GL_FALSE, camera->get_view());
 			glUniformMatrix4fv(shaderGeometryPassTextured.uniform("model"), 1, GL_FALSE, model);
 			glUniform4f( shaderGeometryPassTextured.uniform("spec_color"), mat->app.spec[0], mat->app.spec[1], mat->app.spec[2], mat->app.shini );
 			glUniform1i( shaderGeometryPassTextured.uniform("red_back"), int(mat->flags & Material::RED_BACKFACE) );
@@ -510,8 +510,8 @@ void RenderGL::geometry_pass( Camera *camera ){
 		if( texture_id>0 ){
 			glBindTexture( GL_TEXTURE_2D, 0 );
 			shaderGeometryPass.enable();
-			glUniformMatrix4fv(shaderGeometryPass.uniform("projection"), 1, GL_FALSE, camera->app.projection);
-			glUniformMatrix4fv(shaderGeometryPass.uniform("view"), 1, GL_FALSE, camera->app.view);
+			glUniformMatrix4fv(shaderGeometryPass.uniform("projection"), 1, GL_FALSE, camera->get_projection());
+			glUniformMatrix4fv(shaderGeometryPass.uniform("view"), 1, GL_FALSE, camera->get_view());
 			glUniformMatrix4fv(shaderGeometryPass.uniform("model"), 1, GL_FALSE, model);
 		}
 	}
@@ -532,8 +532,8 @@ void RenderGL::lighting_pass( Camera *cam ){
 
 	// Camera transforms
 	trimesh::fxform model;
-	trimesh::fxform &view = cam->app.view;
-	trimesh::fxform &projection = cam->app.projection;
+	trimesh::fxform &view = cam->get_view();
+	trimesh::fxform &projection = cam->get_projection();
 
         // 2. Create SSAO texture
         glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
@@ -773,11 +773,11 @@ void RenderGL::draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *came
 	// Set the camera matrices
 	trimesh::fxform model;
 	glUniformMatrix4fv( curr_shader->uniform("model"), 1, GL_FALSE, model );
-	glUniformMatrix4fv( curr_shader->uniform("view"), 1, GL_FALSE, camera->app.view );
-	glUniformMatrix4fv( curr_shader->uniform("projection"), 1, GL_FALSE, camera->app.projection );
+	glUniformMatrix4fv( curr_shader->uniform("view"), 1, GL_FALSE, camera->get_view() );
+	glUniformMatrix4fv( curr_shader->uniform("projection"), 1, GL_FALSE, camera->get_projection() );
 	Vec3f eyepos = camera->get_eye();
 	glUniform3f( curr_shader->uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
-//	trimesh::XForm<float> eyepos = trimesh::inv( (camera->app.projection) * (camera->app.view) * (model) );
+//	trimesh::XForm<float> eyepos = trimesh::inv( (camera->get_projection()) * (camera->get_view()) * (model) );
 //	glUniform3f( curr_shader->uniform("eye"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
 
 	// Set material properties
