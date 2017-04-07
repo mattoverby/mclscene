@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -160,11 +160,8 @@ bool TetMesh::get_primitives( const Prim &type, int* &indices, int &num_prims ){
 void TetMesh::apply_xform( const trimesh::xform &xf ){
 
 	int nv = vertices.size();
-#pragma omp parallel for
 	for (int i = 0; i < nv; i++){ vertices[i] = xf * vertices[i]; }
-
 	need_normals(true);
-
 	aabb.valid = false;
 	for( int f=0; f<faces.size(); ++f ){
 		aabb += vertices[ faces[f][0] ];

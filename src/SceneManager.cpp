@@ -42,7 +42,6 @@ void SceneManager::clear(){
 	lights.clear();
 	materials.clear();
 	object_params.clear();
-	vertex_pool.clear();
 }
 
 
@@ -132,35 +131,6 @@ std::shared_ptr<BVHNode> SceneManager::SceneManager::get_bvh( bool recompute, st
 	return root_bvh;
 }
 */
-
-
-void SceneManager::get_vertex_pool( VertexPool &pool, bool dynamic_only, bool recompute ){
-
-	if( !recompute && vertex_pool.valid ){ pool = vertex_pool; return; }
-	vertex_pool.clear();
-
-	// Make a new vertex pool
-	for( int i=0; i<objects.size(); ++i ){
-		if( dynamic_only && !(objects[i]->flags & BaseObject::DYNAMIC) ){ continue; }
-
-		float *vertices, *normals, *texcoords;
-		int num_v, num_n, num_t;
-		objects[i]->get_vertices( vertices, num_v, normals, num_n, texcoords, num_t );
-
-		vertex_pool.vertices.push_back( vertices );
-		vertex_pool.num_vertices.push_back( num_v );
-		vertex_pool.normals.push_back( normals );
-		vertex_pool.num_normals.push_back( num_n );
-		vertex_pool.texcoords.push_back( texcoords );
-		vertex_pool.num_texcoords.push_back( num_t );
-		vertex_pool.index.push_back( i );
-
-	} // end loop objects
-
-	pool = vertex_pool;
-
-} // end get vertex pool
-
 
 void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 

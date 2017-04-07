@@ -73,14 +73,6 @@ class SceneManager {
 		void get_bsphere( Vec3f *center, float *radius, bool recompute=false );
 
 		//
-		// Generates a Vertex Pool (pointers to mesh data) and caches the result,
-		// subsequent calls will return this cached pool.
-		// If dynamic_only is true, only objects marked with the "DYNAMIC" flag
-		// will be added to the pool.
-		//
-		void get_vertex_pool( VertexPool &pool, bool dynamic_only, bool recompute=false );
-
-		//
 		// For an initial eye position and scene center, creates a 3pt lighting rig.
 		// Camera is assumed to be pointed at center (basically a lookat).
 		// The distance between eye and center is used to determined the light locations.
@@ -113,9 +105,6 @@ class SceneManager {
 		// Cached bounding sphere stats:
 		float last_radius;
 		Vec3f last_center;
-
-		// Cached VertexPool
-		VertexPool vertex_pool;
 
 }; // end class SceneManager
 

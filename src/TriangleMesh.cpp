@@ -69,7 +69,6 @@ void TriangleMesh::need_normals( bool recompute ){
 	std::fill( normals.begin(), normals.end(), Vec3f(0,0,0) );
 
 	int nf = faces.size();
-//#pragma omp parallel for
 	for( int i = 0; i < nf; ++i ){
 		const Vec3f &p0 = vertices[faces[i][0]];
 		const Vec3f &p1 = vertices[faces[i][1]];
@@ -84,7 +83,6 @@ void TriangleMesh::need_normals( bool recompute ){
 		normals[faces[i][2]] += facenormal * (1.0f / (l2c * l2b));
 	}
 
-#pragma omp parallel for
 	for (int i = 0; i < nv; i++){ normals[i].normalize(); }
 
 } // end compute normals
@@ -134,7 +132,6 @@ bool TriangleMesh::get_primitives( const Prim &type, int* &indices, int &num_pri
 void TriangleMesh::apply_xform( const trimesh::xform &xf ){
 
 	int nv = vertices.size();
-#pragma omp parallel for
 	for (int i = 0; i < nv; i++){ vertices[i] = xf * vertices[i]; }
 
 	aabb.valid = false;
@@ -186,11 +183,8 @@ bool TriangleMesh::load( std::string filename ){
 		texcoords.resize( newmesh->texcoords.size() );
 		faces.resize( newmesh->faces.size() );
 
-		#pragma omp parallel for
 		for( int i=0; i<vertices.size(); ++i ){ vertices[i] = Vec3f( newmesh->vertices[i][0], newmesh->vertices[i][1], newmesh->vertices[i][2] ); }
-		#pragma omp parallel for
 		for( int i=0; i<texcoords.size(); ++i ){ texcoords[i] = Vec2f( newmesh->texcoords[i][0], newmesh->texcoords[i][1] ); }
-		#pragma omp parallel for
 		for( int i=0; i<faces.size(); ++i ){ faces[i] = Vec3i( newmesh->faces[i][0], newmesh->faces[i][1], newmesh->faces[i][2] ); }
 
 		delete newmesh;
