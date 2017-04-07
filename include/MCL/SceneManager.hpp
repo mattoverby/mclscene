@@ -59,14 +59,6 @@ class SceneManager {
 		void clear();
 
 		//
-		// Computes bounding volume heirarchy (AABB). Eventually I will add better heuristics.
-		// Type is:
-		// 	spatial = object median (slower, better balanced)
-		//	linear = parallel build w/ morton codes (probably has an error somewhere)
-		//
-//		std::shared_ptr<BVHNode> get_bvh( bool recompute=false, std::string type="spatial" );
-
-		//
 		// Computes an exact bounding sphere, excluding cameras and lights.
 		// Calls each object's bounds function, so may be costly for dynamic scenes.
 		//
@@ -95,12 +87,15 @@ class SceneManager {
 		//
 		std::vector< std::vector<Param> > object_params;
 
-	protected:
+		//
+		// Adds an object to the scene
+		//
+		void add( std::shared_ptr<BaseObject> obj ){
+			objects.push_back( obj );
+			object_params.push_back( std::vector<Param>() );
+		}
 
-		// Root bvh is created by build_bvh.
-		// build_bvh is called by get_bvh.
-//		void build_bvh( std::string split_mode );
-//		std::shared_ptr<BVHNode> root_bvh;
+	protected:
 
 		// Cached bounding sphere stats:
 		float last_radius;

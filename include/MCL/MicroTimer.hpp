@@ -36,13 +36,13 @@
 //	double elapsed_seconds = timer.elapsed_s();
 //
 //	Notes:
-//	   You may want to change the clock type based on application
+//		You may want to change the clock type based on application
 //
 namespace mcl {
 
 class MicroTimer {
-	typedef std::chrono::high_resolution_clock C;
-//	typedef std::chrono::steady_clock C;
+//	typedef std::chrono::high_resolution_clock C;
+	typedef std::chrono::steady_clock C;
 	public:
 
 		MicroTimer() : start_time( C::now() ){}

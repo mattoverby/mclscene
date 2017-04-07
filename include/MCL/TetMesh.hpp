@@ -31,6 +31,11 @@ namespace mcl {
 //
 class TetMesh : public BaseObject {
 public:
+	static inline std::shared_ptr<TetMesh> create(){
+		return std::shared_ptr<TetMesh>( new TetMesh() );
+	}
+
+	// Data
 	std::vector< Vec4i > tets; // all elements
 	std::vector< Vec3f > vertices; // all vertices in the tet mesh
 	std::vector< Vec3f > normals; // zero length for all non-surface normals
@@ -68,10 +73,13 @@ public:
 	// Transform the mesh by the given matrix
 	void apply_xform( const trimesh::xform &xf );
 
+	// Compute surface edges
 	void need_edges();
 
+	// Get bounds
 	void get_bounds( Vec3f &bmin, Vec3f &bmax );
 
+	// Get the vertices that make up the surface faces
 	void get_surface_vertices( std::vector<int> *indices );
 
 	// When stitching meshes together, this function will

@@ -32,6 +32,11 @@ namespace mcl {
 //
 class TriangleMesh : public BaseObject {
 public:
+	static inline std::shared_ptr<TriangleMesh> create(){
+		return std::shared_ptr<TriangleMesh>( new TriangleMesh() );
+	}
+
+	// Data
 	std::vector< Vec3f > vertices; // all vertices in the mesh
 	std::vector< Vec3f > normals; // zero length for all non-surface normals
 	std::vector< Vec3i > faces; // surface triangles

@@ -29,13 +29,11 @@
 
 namespace mcl {
 
+//	Much of the code in this file comes from:
+//		trimesh2 by Szymon Rusinkiewicz (gfx.cs.princeton.edu/proj/trimesh2)
 //	
 //	Factory functions for creating objects/materials/lights/cameras
-//	TODO Remove the DefaultBuilders and replace with these functions
-//
 //	If a pointer to SceneManager is passed, the obj/mat/light/cam is added.
-//
-//	Most of the make_something functions come from Trimesh2 by Szymon Rusinkiewicz (GNU GPL, version 2).
 //	Unless otherwise noted, objects are centered at origin.
 //
 namespace factory {
@@ -68,7 +66,7 @@ namespace factory {
 	static inline std::shared_ptr<TriangleMesh> make_torus( int tess, float inner_rad, float outer_rad, SceneManager *scene=nullptr );
 
 
-	// Helpers
+	// Helpers from trimesh2
 	static inline void mkpoint(std::shared_ptr<TriangleMesh> mesh, float x, float y, float z);
 	static inline void mkface(std::shared_ptr<TriangleMesh> mesh, int v1, int v2, int v3);
 	static inline void mkquad(std::shared_ptr<TriangleMesh> mesh, int ll, int lr, int ul, int ur);
@@ -79,7 +77,6 @@ namespace factory {
 	static inline void remap_verts(TriangleMesh *mesh, const std::vector<int> &remap_table);
 	static inline void reorder_verts(TriangleMesh *mesh);
 	template <typename T> static inline T sqr( T val ){ return val*val; }
-	template <typename T> static inline std::string t_to_str( T val ); // scalar to string
 
 }; // end namespace factory
 
@@ -89,7 +86,7 @@ namespace factory {
 
 static inline std::shared_ptr<TriangleMesh> factory::make_trimesh( SceneManager *scene ){
 	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
-//	mesh->update();
+
 	if( scene != nullptr ){
 		scene->object_params.push_back( std::vector<Param>() );
 		scene->objects.push_back( mesh );
@@ -99,7 +96,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_trimesh( SceneManager 
 
 static inline std::shared_ptr<TetMesh> factory::make_tetmesh( SceneManager *scene ){
 	std::shared_ptr<TetMesh> mesh( new TetMesh() );
-//	mesh->update();
+
 	if( scene != nullptr ){
 		scene->object_params.push_back( std::vector<Param>() );
 		scene->objects.push_back( mesh );
@@ -150,14 +147,14 @@ static inline std::shared_ptr<TriangleMesh> factory::make_sphere( Vec3f center, 
 	trimesh::xform t_xf = trimesh::xform::trans(center[0],center[1],center[2]);
 	mesh->apply_xform( t_xf );
 
-//	mesh->update();
+
 
 	// Add to SceneManager
 	if( scene != nullptr ){
 		std::vector< Param > params;
 		params.push_back( Param( "center", to_str(center) ) );
-		params.push_back( Param( "radius", t_to_str(radius) ) );
-		params.push_back( Param( "tess", t_to_str(tess) ) );
+		params.push_back( Param( "radius", std::to_string(radius) ) );
+		params.push_back( Param( "tess", std::to_string(tess) ) );
 		scene->object_params.push_back( params );
 		scene->objects.push_back( mesh );
 	}
@@ -205,14 +202,14 @@ static inline std::shared_ptr<TriangleMesh> factory::make_beam( int chunks, int 
 	}
 
 	mesh->collapse_points(0.1f);
-//	mesh->update();
+
 
 	// Add to SceneManager
 	if( scene != nullptr ){
-//		mesh->app.flat_shading = true;
+		mesh->flags = mesh->flags | BaseObject::FLAT;
 		std::vector< Param > params;
-		params.push_back( Param( "radius", t_to_str(chunks) ) );
-		params.push_back( Param( "tess", t_to_str(tess) ) );
+		params.push_back( Param( "radius", std::to_string(chunks) ) );
+		params.push_back( Param( "tess", std::to_string(tess) ) );
 		scene->object_params.push_back( params );
 		scene->objects.push_back( mesh );
 	}
@@ -346,12 +343,12 @@ static inline std::shared_ptr<TriangleMesh> factory::make_cube( int tess, SceneM
 		}
 	}
 
-//	mesh->update();
+
 
 	if( scene != nullptr ){
-//		mesh->app.flat_shading = true;
+		mesh->flags = mesh->flags | BaseObject::FLAT;
 		std::vector< Param > params;
-		params.push_back( Param( "tess", t_to_str(tess) ) );
+		params.push_back( Param( "tess", std::to_string(tess) ) );
 		params.push_back( Param( "flat_shading", "1" ) );
 		scene->object_params.push_back( params );
 		scene->objects.push_back( mesh );
@@ -432,11 +429,11 @@ static inline std::shared_ptr<TriangleMesh> factory::make_plane( int tess_x, int
 		mesh->texcoords.push_back( Vec2f(u,v) );
 	}
 
-//	mesh->update();
+
 	if( scene != nullptr ){
 		std::vector< Param > params;
-		params.push_back( Param( "tess_x", t_to_str(tess_x) ) );
-		params.push_back( Param( "tess_y", t_to_str(tess_y) ) );
+		params.push_back( Param( "tess_x", std::to_string(tess_x) ) );
+		params.push_back( Param( "tess_y", std::to_string(tess_y) ) );
 		scene->object_params.push_back( params );
 		scene->objects.push_back( mesh );
 	}
@@ -517,12 +514,12 @@ static inline std::shared_ptr<TriangleMesh> factory::make_cyl(int tess_c, int te
 	for (int i = 0; i < tess_c; i++)
 		mkface(mesh, base+i, base+((i+1)%tess_c), base+tess_c);
 
-//	mesh->update();
+
 	if( scene != nullptr ){
 		std::vector< Param > params;
-		params.push_back( Param( "radius", t_to_str(r) ) );
-		params.push_back( Param( "tess_c", t_to_str(tess_c) ) );
-		params.push_back( Param( "tess_l", t_to_str(tess_l) ) );
+		params.push_back( Param( "radius", std::to_string(r) ) );
+		params.push_back( Param( "tess_c", std::to_string(tess_c) ) );
+		params.push_back( Param( "tess_l", std::to_string(tess_l) ) );
 		scene->object_params.push_back( params );
 		scene->objects.push_back( mesh );
 	}
@@ -661,12 +658,6 @@ static inline void factory::remove_faces(TriangleMesh *mesh, const std::vector<b
 
 	mesh->faces.erase(mesh->faces.begin() + next, mesh->faces.end());
 }
-
-
-template <typename T> static inline std::string factory::t_to_str( T val ){
-	std::stringstream ss; ss << val; return ss.str();
-}
-
 
 
 // Remap vertices according to the given table

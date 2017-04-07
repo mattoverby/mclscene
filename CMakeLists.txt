@@ -121,7 +121,7 @@ set( MCLSCENE_SRCS
 	include/MCL/Camera.hpp
 	include/MCL/Light.hpp
 	include/MCL/AABB.hpp
-	include/MCL/Sampler.hpp
+	include/MCL/Sample.hpp
 	include/MCL/Projection.hpp
 	include/MCL/Material.hpp
 	include/MCL/Simulator.hpp

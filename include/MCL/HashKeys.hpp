@@ -26,30 +26,27 @@
 // See TetMesh.cpp for an example.
 //
 
-#ifndef MCLSCENE_VERTEXSORT_H
-#define MCLSCENE_VERTEXSORT_H 1
-
+#ifndef MCLSCENE_HASHKEYS_H
+#define MCLSCENE_HASHKEYS_H 1
 #include <unordered_map>
 
 namespace mcl {
+namespace hashkey {
 
 	template<typename T>
-	void swap_if_greater(T& a, T& b)
-	{
-	    if (a > b)
-	    {
-		T tmp(a);
-		a = b;
-		b = tmp;
-	    }
+	void swap_if_greater(T& a, T& b){
+		if (a > b){
+			T tmp(a);
+			a = b;
+			b = tmp;
+		}
 	}
 
 	template<typename T>
-	void sort(T& a, T& b, T& c)
-	{
-	    swap_if_greater(a, b);
-	    swap_if_greater(a, c);
-	    swap_if_greater(b, c);
+	void sort(T& a, T& b, T& c){
+		swap_if_greater(a, b);
+		swap_if_greater(a, c);
+		swap_if_greater(b, c);
 	}
 
 
@@ -94,11 +91,12 @@ namespace mcl {
 		int orig_v[2]; // original vertices
 	};
 
+} // end namespace hashkey
 } // end namespace mcl
 
 namespace std {
-	template <> struct hash<mcl::int3> {
-		size_t operator()(const mcl::int3& v) const	{
+	template <> struct hash<mcl::hashkey::int3> {
+		size_t operator()(const mcl::hashkey::int3& v) const	{
 			int a[3] = { v.sorted_v[0], v.sorted_v[1], v.sorted_v[2] };
 			unsigned char *in = reinterpret_cast<unsigned char*>(a);
 			unsigned int ret = 2654435761u;
@@ -107,8 +105,8 @@ namespace std {
 			return ret;
 		}
 	};
-	template <> struct hash<mcl::int2> {
-		size_t operator()(const mcl::int2& v) const	{
+	template <> struct hash<mcl::hashkey::int2> {
+		size_t operator()(const mcl::hashkey::int2& v) const	{
 			int a[2] = { v.sorted_v[0], v.sorted_v[1] };
 			unsigned char *in = reinterpret_cast<unsigned char*>(a);
 			unsigned int ret = 2654435761u;

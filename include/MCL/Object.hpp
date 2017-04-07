@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -23,21 +23,24 @@
 #define MCLSCENE_OBJECT_H 1
 
 #include <memory>
-#include "XForm.h"
-#include "Raycast.hpp"
+#include "MCL/Vec.hpp"
 
 namespace mcl {
 
-//
-//	Primitive type declaration
-//
-enum class Prim { Any, Tri, Tet, Edge, Point };
+
+enum class Prim {
+	// Point: stride 1
+	// Edge: stride 2
+	// Triangle: stride 3
+	// Tet: stride 4
+	Tri, Tet, Edge, Point
+};
 
 
 //
 //	Base, pure virtual
 //
-class BaseObject : public std::enable_shared_from_this<BaseObject> {
+class BaseObject {
 public:
 	BaseObject() : material(-1), flags(0) {}
 	virtual ~BaseObject(){}
@@ -61,7 +64,7 @@ public:
 	virtual bool get_primitives( const Prim &type, int* &indices, int &num_prims ) = 0;
 
 	// Apply a transformation matrix to the object. Most objects will
-	// just apply the transform directly. Others (instances) will just store the xform.
+	// just apply the transform directly. Others (e.g. instances) will just store the xform.
 	virtual void apply_xform( const trimesh::xform &xf ){}
 
 	// Returns a string containing xml code for saving to a scenefile.

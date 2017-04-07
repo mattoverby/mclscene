@@ -49,13 +49,13 @@ public:
 		return *this;
 	}
 
-	AABB& operator+=(const trimesh::vec& tmp){
-		Vec3f p(tmp[0],tmp[1],tmp[2]);
-		if( valid ){ minp( min, p ); maxp( max, p ); }
-		else{ min = p; max = p; valid = true; }
-		return *this;
-	}
-
+//	AABB& operator+=(const trimesh::vec& tmp){
+//		Vec3f p(tmp[0],tmp[1],tmp[2]);
+//		if( valid ){ minp( min, p ); maxp( max, p ); }
+//		else{ min = p; max = p; valid = true; }
+///		return *this;
+//	}
+//
 	static inline void minp( Vec3f &m, const Vec3f &b ){
 		for( int i=0; i<3; ++i ){ m[i] = m[i] < b[i] ? m[i] : b[i]; }
 	}

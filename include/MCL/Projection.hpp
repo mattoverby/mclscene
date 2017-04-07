@@ -17,8 +17,7 @@
 // IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 // OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// By Matt Overby (http://www.mattoverby.net) and
-// some collision code from ArcSim (http://graphics.berkeley.edu/resources/ARCSim)
+// By Matt Overby (http://www.mattoverby.net)
 
 
 #ifndef MCLSCENE_PROJECTION_H
@@ -33,40 +32,27 @@ namespace mcl {
 //	Several static functions for projecting a point onto a geometric surface.
 //	Will return a point on the surface that is nearest to the one given.
 //
-//	NOTE:
-//	    I was having trouble with template type deduction. I'll have to figure out the right
-//	    way to do this later. For now, there are just a few duplicate functions
-//	    to wrap the implementation for different types.
-//
-//
 //	Example usage:
-//
-//		Vec3f pt_on_tri = projection::point_triangle( some_point, vertex1, vertex2, vertex3 );
-//		Vec3d pt_on_sphere = projection::point_sphere( some_point, center, radius );
-//		float dist_to_aabb = projection::point_aabb( some_point, aabb_min, aabb_max );
+//		Vec3f pt_on_tri = projection::point_triangle<float>( some_point, vertex1, vertex2, vertex3 );
+//		Vec3d pt_on_sphere = projection::point_sphere<double>( some_point, center, radius );
+//		float dist_to_aabb = projection::point_aabb_dist<float>( some_point, aabb_min, aabb_max );
 //
 namespace projection {
 
 	//
 	//	Projection on Triangle
 	//
-	template <typename T> static inline Vec3<T> Triangle( const Vec3<T> &point, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 );
-	static inline Vec3f point_triangle( const Vec3f &point, const Vec3f &p1, const Vec3f &p2, const Vec3f &p3 ){ return Triangle<float>(point,p1,p2,p3); }
-	static inline Vec3d point_triangle( const Vec3d &point, const Vec3d &p1, const Vec3d &p2, const Vec3d &p3 ){ return Triangle<double>(point,p1,p2,p3); }
+	template <typename T> static inline Vec3<T> point_triangle( const Vec3<T> &point, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 );
 
 	//
 	//	Projection on Sphere
 	//
-	template <typename T> static inline Vec3<T> Sphere( const Vec3<T> &point, const Vec3<T> &center, const T &rad );
-	static inline Vec3f point_sphere( const Vec3f &point, const Vec3f &center, const float &rad ){ return Sphere<float>(point,center,rad); }
-	static inline Vec3d point_sphere( const Vec3d &point, const Vec3d &center, const double &rad ){ return Sphere<double>(point,center,rad); }
+	template <typename T> static inline Vec3<T> point_sphere( const Vec3<T> &point, const Vec3<T> &center, const T &rad );
 
 	//
-	//	Instead of projection, point_aabb returns squared, unsigned distance from a point to the AABB
+	//	Instead of projection, point_aabb returns squared unsigned distance from a point to the AABB
 	//
-	template <typename T> static inline T AABB_dist( const Vec3<T> &point, const Vec3<T> &min, const Vec3<T> &max );
-	static inline float point_aabb_dist( const Vec3f &point, const Vec3f &min, const Vec3f &max ){ return AABB_dist<float>(point,min,max); }
-	static inline double point_aabb_dist( const Vec3d &point, const Vec3d &min, const Vec3d &max ){ return AABB_dist<double>(point,min,max); }
+	template <typename T> static inline T point_aabb_dist( const Vec3<T> &point, const Vec3<T> &min, const Vec3<T> &max );
 
 	//
 	//	Point in whatever
@@ -86,7 +72,7 @@ namespace projection {
 //	Implementation
 //
 
-template <typename T> static inline Vec3<T> projection::Triangle( const Vec3<T> &point, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 ){
+template <typename T> static inline Vec3<T> projection::point_triangle( const Vec3<T> &point, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 ){
 
 	Vec3<T> edge0 = p2 - p1;
 	Vec3<T> edge1 = p3 - p1;
@@ -171,14 +157,14 @@ template <typename T> static inline Vec3<T> projection::Triangle( const Vec3<T> 
 } // end project triangle
 
 
-template <typename T> static inline Vec3<T> projection::Sphere( const Vec3<T> &point, const Vec3<T> &center, const T &rad ){
+template <typename T> static inline Vec3<T> projection::point_sphere( const Vec3<T> &point, const Vec3<T> &center, const T &rad ){
 	Vec3<T> dir = point-center;
 	dir.normalize();
 	return ( center + dir*rad );
 } // end project sphere
 
 
-template <typename T> static inline T projection::AABB_dist( const Vec3<T> &point, const Vec3<T> &min, const Vec3<T> &max ){
+template <typename T> static inline T projection::point_aabb_dist( const Vec3<T> &point, const Vec3<T> &min, const Vec3<T> &max ){
 	T sqDist(0);
 	for( int i=0; i<3; ++i ){
 		if( point[i] < min[i] ){ sqDist += (min[i]-point[i])*(min[i]-point[i]); }

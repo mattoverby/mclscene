@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -20,38 +20,35 @@
 // By Matt Overby (http://www.mattoverby.net)
 
 
-#ifndef MCLSCENE_SAMPLER_H
-#define MCLSCENE_SAMPLER_H 1
+#ifndef MCLSCENE_SAMPLE_H
+#define MCLSCENE_SAMPLE_H 1
 
 #include <math.h>
+#include "MCL/Vec.hpp"
 
 namespace mcl {
 	
 // Randoms (u1, u2, etc...): 0 to 1
-namespace Sampler {
+namespace sample {
 
 	//
 	//	Uniform Cone
 	//
-	static void uniform_cone( float u1, float u2, float max_theta, float *vec_3f ){
-		float cos_theta = (1.f - u1) + u1 * cos(max_theta);
-		float sin_theta = sqrtf(1.f - cos_theta*cos_theta);
-		float phi = u2 * 2.f * M_PI;
-		vec_3f[0]=cosf(phi)*sin_theta;
-		vec_3f[1]=sinf(phi)*sin_theta;
-		vec_3f[2]=cos_theta;
+	template<typename T> static inline Vec3<T> uniform_cone( T u1, T u2, T max_theta ){
+		T cos_theta = (1 - u1) + u1 * cos(max_theta);
+		T sin_theta = std::sqrt(1 - cos_theta*cos_theta);
+		T phi = u2 * 2 * M_PI;
+		return Vec3<T>( cosf(phi)*sin_theta, sinf(phi)*sin_theta, cos_theta );
 	}
 
 
 	//
 	//	Cosine Hemisphere
 	//
-	static void cosine_hemisphere( float u1, float u2, float *vec_3f ){
-		float r = sqrt( u1 );
-		float theta = 2.f * M_PI * u2;
-		vec_3f[0] = r * cosf(theta);
-		vec_3f[1] = r * sinf(theta);
-		vec_3f[2] = sqrt( fmaxf(0.f, 1.f-u1) );
+	template<typename T> static inline Vec3<T> cosine_hemisphere( T u1, T u2 ){
+		T r = std::sqrt( u1 );
+		T theta = 2 * M_PI * u2;
+		return Vec3<T>( r * cosf(theta), r * sinf(theta), std::sqrt( fmaxf(0.f, 1.f-u1) ) );
 	}
 
 }; // end namespace Sampler

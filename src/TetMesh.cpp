@@ -405,6 +405,7 @@ bool TetMesh::load_mesh( std::string filename ){
 bool TetMesh::need_surface(){
 
 	if( faces.size()>0 ){ return true; }
+	using namespace hashkey;
 
 	// vertex ids -> number of faces using these indices
 	std::unordered_map< int3, int > face_ids;

@@ -23,9 +23,7 @@
 #define MCLSCENE_VEC3_H 1
 
 #include <Eigen/Geometry> // needed for cross product
-#include "Vec.h" // trimesh's vec
 #include "XForm.h" // trimesh transforms
-#include <vector>
 
 //
 //	You can replace the internal vector type
@@ -50,15 +48,13 @@ namespace mcl {
 
 	template <typename T> static inline Vec3<T> normalized(const Vec3<T> &v){ Vec3<T> t=v; t.normalize(); return t; }
 
-	// Temporary quick fix for interop. Will remove once I wean off trimesh.
-	static inline Vec3f to_Vec3f(trimesh::vec p){ return Vec3f(p[0],p[1],p[2]); }
-
 	// Just for formatting output
 	template <typename T> static inline std::string to_str(const Vec3<T> &v){
 		std::stringstream ss; ss << v[0] << ' ' << v[1] << ' ' << v[2];
 		return ss.str();
 	}
 
+	// Compute barycentric coords for a point on a triangle
 	template <typename T> static inline Vec3<T> barycoords(const Vec3<T> &p, const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2){
 		Vec3<T> v0 = p1 - p0, v1 = p2 - p0, v2 = p - p0;
 		T d00 = v0.dot(v0);
