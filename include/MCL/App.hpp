@@ -39,9 +39,10 @@ public:
 		bool save_frames; // saves every render frame to a timestamped png in your build directory
 		bool run_simulation; // run the simulator every frame
 		bool gamma_correction;
+		bool enable_rotate; // enable camera rotate
 		Vec3f clear_color;
 		Settings() : save_frames(false), run_simulation(false),
-			gamma_correction(false), clear_color(1,1,1) {}
+			gamma_correction(false), enable_rotate(true), clear_color(1,1,1) {}
 	} settings;
 
 	// Initializes the the Input singleton so callbacks can be added
@@ -66,7 +67,7 @@ public:
 
 	// You can set a render callback that is called every frame
 	// or an event callback that is called for each event
-	std::function<void(sf::RenderWindow*, Camera*, float dt)> *render_callback;
+	std::function<void(sf::RenderWindow*, Camera*, float dt)> render_callback;
 	std::function<void(sf::RenderWindow*, sf::Event*)> event_callback;
 
 protected:

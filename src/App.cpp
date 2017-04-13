@@ -28,7 +28,6 @@ using namespace mcl;
 //	App
 //
 App::App( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_),
-	render_callback(nullptr),
 	update_mesh_buffers(true), in_focus(true), close_window(false), save_frame_num(0),
 	left_mouse_drag(false), right_mouse_drag(false),
 	window_size( 1280, 960 ) {
@@ -112,6 +111,7 @@ int App::display(){
 		// Render:
 		renderer.draw_objects( update_mesh_buffers );
 		update_mesh_buffers = false;
+		if( render_callback ){ render_callback(&window,current_cam,screen_dt); }
 
 		// Display frame:
 		window.display();
@@ -129,7 +129,7 @@ inline void App::process_mouse( sf::RenderWindow &window ) {
 	bool in_window = curr_pos.x > 0 && curr_pos.x < window_size.x && curr_pos.y > 0 && curr_pos.y < window_size.y;
 
 	// If we're not in the window, return
-	if( !in_window ){
+	if( !in_window || !settings.enable_rotate ){
 		left_mouse_drag = false;
 		right_mouse_drag = false;
 		mouse_pos = curr_pos;
