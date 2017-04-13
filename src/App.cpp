@@ -88,7 +88,7 @@ int App::display(){
 		screen_dt = clock.restart().asSeconds();
 		elapsed_dt += screen_dt;
 		if( elapsed_dt > 1.f ){
-			std::cout << "FPS: " << ceil(1.f/screen_dt) << std::endl;
+//			std::cout << "FPS: " << ceil(1.f/screen_dt) << std::endl;
 			elapsed_dt = 0.f;
 		}
 

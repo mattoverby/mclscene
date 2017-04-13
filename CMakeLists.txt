@@ -32,17 +32,13 @@ set( CMAKE_BUILD_TYPE Release )
 #
 
 option(MCL_BUILD_SAMPLES "Build mcl library samples" ON)
-#option(MCL_BUILD_RENDERING "Build mclscene rendering classes" ON)
-option(MCL_ENABLE_TETGEN "Enable tetgen for auto-tetrahedralization of meshes" OFF) # tet gen increases compile time
+option(MCL_ENABLE_TETGEN "Enable tetgen for auto-tetrahedralization of meshes" OFF) # slow to compile
 option(MCL_FORCE_CLONE "Clone fresh dependencies" OFF)
 option(MCL_USE_GLEW "Compile with glew instead of core" ON)
-add_definitions( -DMCL_USE_GLEW )
 
 # If you do not have the core arb headers, you need an extensions library like glew.
 #if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 #	option(MCL_USE_GLEW "Compile with glew instead of core" OFF)
-#else()
-#	add_definitions( -DMCL_USE_GLEW )
 #endif()
 
 #
@@ -54,9 +50,9 @@ include(ExternalProject)
 
 # OpenMP
 find_package(OpenMP)
-if (OPENMP_FOUND)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+if(OPENMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
 # trimesh, included in deps/
@@ -77,27 +73,20 @@ include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeEigen3.cmake ) # Eigen3
 include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeSFML.cmake ) # SFML
 find_package(OpenGL 4) # OpenGL
 
-# Attempt to find a local install of GLFW 3. If not found, clone
-# a copy from git and link it locally.
-#	include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeGLFW.cmake )
-
 # Only use GLEW if we have to
 if(MCL_USE_GLEW)
 	set(GLEW_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/glew )
 	set(GLEW_SRCS ${GLEW_DIR}/src/glew.c ${GLEW_DIR}/include/GL/glew.h)
 	set(GLEW_INCLUDE_DIR ${GLEW_DIR}/include)
+	set(MCLSCENE_DEFINITIONS -DMCL_USE_GLEW)
 else()
 	set(GLEW_SRCS "")
 	set(GLEW_INCLUDE_DIR "")
 endif(MCL_USE_GLEW)
 
-#find_package(PNG)
-
 # soil2, included in deps/
 set( SOIL2_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/soil2" )
 add_subdirectory( ${SOIL2_DIR} ) # sets SOIL2_INCLUDE and SOIL2_SRCS
-
-#endif(MCL_BUILD_RENDERING)
 
 #
 #	mclscene library
@@ -112,13 +101,13 @@ set( MCLSCENE_SRCS
 	src/TetMesh.cpp
 	src/TriangleMesh.cpp
 	src/PointCloud.cpp
-#	src/BVH.cpp
+	src/BVH.cpp
 	src/App.cpp
 	src/RenderGL.cpp
 	${GLEW_SRCS}
 	${TRIMESH_SRCS}
 	${SOIL2_SRCS}
-#	${TETGEN_SRCS}
+	${TETGEN_SRCS}
 )
 
 # Create the library
@@ -134,38 +123,12 @@ set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} ${TRIMESH_INCLUDE} ${EIGEN3_
 include_directories( ${MCLSCENE_INCLUDE_DIRS} )
 add_library( mclscene ${MCLSCENE_SRCS} )
 
-# If we want to build with mclscene rendering support, add the window source files
-# and add the libraries/includes to the build variables.
-#if(MCL_BUILD_RENDERING)
-#	set( MCLSCENE_SRCS ${MCLSCENE_SRCS} ${SOIL2_SRCS} ${GLEW_SRCS}
-#		include/MCL/Application.hpp src/Application.cpp
-#		include/MCL/RenderGL.hpp src/RenderGL.cpp
-#		include/MCL/Shader.hpp
-#	)
-#	set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} ${OPENGL_LIBRARIES} ${GLFW_LIBRARIES} ${PNG_LIBRARY} )
-#	set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} ${SOIL2_INCLUDE} ${OPENGL_INCLUDE_DIR} ${GLFW_INCLUDE_DIR} ${GLEW_INCLUDE_DIR} ${PNG_INCLUDE_DIR} )
-#	if(MCL_USE_GLEW)
-#		set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} ${GLEW_LIBRARIES} )
-#		set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} ${GLEW_INCLUDE_DIR} )
-#		add_definitions( -DMCL_USE_GLEW )
-#	else()
-#		add_definitions( -DGLFW_INCLUDE_GLCOREARB ) # let glfw include the extensions
-#	endif(MCL_USE_GLEW)
-#endif(MCL_BUILD_RENDERING)
-
-# Finally, include our needed files and add the library
-#include_directories( ${MCLSCENE_INCLUDE_DIRS} )
-#add_library( mclscene ${TRIMESH_SRCS} ${TETGEN_SRCS} ${MCLSCENE_SRCS} )
-
-#if(GLFW_CLONED)
-#	add_dependencies(mclscene glfw)
-#endif()
-
 # Set the libraries variable in parent scope if exists
 get_directory_property(HasParent PARENT_DIRECTORY)
 if(HasParent)
 	set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} PARENT_SCOPE )
 	set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} PARENT_SCOPE )
+	set( MCLSCENE_DEFINITIONS ${MCLSCENE_DEFINITIONS} PARENT_SCOPE )
 endif(HasParent)
 
 #
@@ -174,24 +137,15 @@ endif(HasParent)
 
 if(MCL_BUILD_SAMPLES)
 
+	add_definitions( ${OPENGL_DEFINITIONS} ${MCLSCENE_DEFINITIONS} )
+
 	# sample loader
 	add_executable( load_test samples/LoadTest.cpp )
 	target_link_libraries( load_test ${MCLSCENE_LIBRARIES} )
 
-#	add_executable( testbvh samples/BVHTest.cpp )
-#	target_link_libraries( testbvh ${MCLSCENE_LIBRARIES} )
-
-	# viewer samples
-#	if(MCL_BUILD_RENDERING)
-
-		add_definitions( ${OPENGL_DEFINITIONS} )
-
-		add_executable( mesh_viewer samples/MeshViewer.cpp )
-		target_link_libraries( mesh_viewer mclscene ${MCLSCENE_LIBRARIES} )
-
-#		add_executable( bvh_viewer samples/BVHViewer.cpp )
-#		target_link_libraries( bvh_viewer ${MCLSCENE_LIBRARIES} )
-
-#	endif(MCL_BUILD_RENDERING)
+	add_executable( mesh_viewer samples/MeshViewer.cpp )
+	target_link_libraries( mesh_viewer mclscene ${MCLSCENE_LIBRARIES} )
 
 endif(MCL_BUILD_SAMPLES)
+
+
