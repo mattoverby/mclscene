@@ -79,6 +79,7 @@ if(MCL_USE_GLEW)
 	set(GLEW_SRCS ${GLEW_DIR}/src/glew.c ${GLEW_DIR}/include/GL/glew.h)
 	set(GLEW_INCLUDE_DIR ${GLEW_DIR}/include)
 	set(MCLSCENE_DEFINITIONS -DMCL_USE_GLEW)
+	add_definitions(-DMCL_USE_GLEW)
 else()
 	set(GLEW_SRCS "")
 	set(GLEW_INCLUDE_DIR "")
@@ -92,9 +93,7 @@ add_subdirectory( ${SOIL2_DIR} ) # sets SOIL2_INCLUDE and SOIL2_SRCS
 #	mclscene library
 #
 
-# Set up the library, add gui sources if opengl/glfw are found
-# We don't really need to include the header only classes in MCLSCENE_SRCS
-# but will for now.
+# Set up the library
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 set( MCLSCENE_SRCS
 	src/SceneManager.cpp

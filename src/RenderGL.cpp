@@ -316,15 +316,13 @@ void RenderGL::load_textures(){
 			GLuint texture_id = SOIL_load_OGL_texture( mat->app.texture.c_str(), &tex_width, &tex_height, &channels, SOIL_LOAD_AUTO, 0, 0 );
 			if( texture_id == 0 ){ std::cerr << "\n**Texture::load Error: Failed to load file " << mat->app.texture << std::endl; continue; }
 
-/*
-			sf::Texture texture;
-			if( !texture.loadFromFile( mat->app.texture.c_str() ) ){
-				std::cerr << "\n**Texture::load Error: Failed to load file " << mat->app.texture << std::endl;
-				continue;
-			}
-			loaded_textures.push_back( texture );
-			int texture_id = texture.getNativeHandle();
-*/
+//			loaded_textures.push_back( sf::Texture() );
+//			if( !loaded_textures.back().loadFromFile( mat->app.texture.c_str() ) ){
+//				std::cerr << "\n**Texture::load Error: Failed to load file " << mat->app.texture << std::endl;
+//				continue;
+//			}
+//			GLuint texture_id = loaded_textures.back().getNativeHandle();
+
 			// Add some filters to this texture
 			glBindTexture(GL_TEXTURE_2D, texture_id);
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
