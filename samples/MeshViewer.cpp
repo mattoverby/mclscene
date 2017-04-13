@@ -1,6 +1,6 @@
 
 #include "MCL/SceneManager.hpp"
-#include "MCL/Application.hpp"
+#include "MCL/App.hpp"
 #include "MCL/MicroTimer.hpp"
 #include "MCL/ShapeFactory.hpp"
 #include "MCL/KDTree.hpp"
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]){
 	scene.get_bvh();
 	printf( "BVH Build time: %fs\n", t.elapsed_s() );
 */
-	Application gui( &scene );
+	App gui( &scene );
 	gui.display();
 
 	return 0;

@@ -34,13 +34,6 @@ static inline std::string fullpath( std::string file ){
 
 static inline float lerp(float a, float b, float f){ return a + f * (b - a); }
 
-//static void trimesh_copy( std::shared_ptr<mcl::TriangleMesh> &to_mesh, trimesh::TriMesh *from_mesh ){
-//	for( int i=0; i<from_mesh->vertices.size(); ++i ){ to_mesh->vertices.push_back( mcl::Vec3f( from_mesh->vertices[i][0], from_mesh->vertices[i][1], from_mesh->vertices[i][2] ) ); }
-//	for( int i=0; i<from_mesh->faces.size(); ++i ){ to_mesh->faces.push_back( mcl::Vec3i( from_mesh->faces[i][0], from_mesh->faces[i][1], from_mesh->faces[i][2] ) ); }
-//	for( int i=0; i<from_mesh->texcoords.size(); ++i ){ to_mesh->texcoords.push_back( mcl::Vec2f( from_mesh->texcoords[i][0], from_mesh->texcoords[i][1] ) ); }
-//	to_mesh->update();
-//}
-
 static void trimesh_copy( trimesh::TriMesh *to_mesh, std::shared_ptr<mcl::BaseObject> from_mesh ){
 	float *vertices, *normals, *texcoords;
 	int num_vertices=0, num_normals=0, num_texcoords=0;
@@ -323,6 +316,15 @@ void RenderGL::load_textures(){
 			GLuint texture_id = SOIL_load_OGL_texture( mat->app.texture.c_str(), &tex_width, &tex_height, &channels, SOIL_LOAD_AUTO, 0, 0 );
 			if( texture_id == 0 ){ std::cerr << "\n**Texture::load Error: Failed to load file " << mat->app.texture << std::endl; continue; }
 
+/*
+			sf::Texture texture;
+			if( !texture.loadFromFile( mat->app.texture.c_str() ) ){
+				std::cerr << "\n**Texture::load Error: Failed to load file " << mat->app.texture << std::endl;
+				continue;
+			}
+			loaded_textures.push_back( texture );
+			int texture_id = texture.getNativeHandle();
+*/
 			// Add some filters to this texture
 			glBindTexture(GL_TEXTURE_2D, texture_id);
 			glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
