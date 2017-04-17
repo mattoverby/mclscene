@@ -29,7 +29,6 @@ using namespace mcl;
 //
 App::App( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_),
 	update_mesh_buffers(true), in_focus(true), close_window(false), save_frame_num(0),
-	left_mouse_drag(false), right_mouse_drag(false),
 	window_size( 1280, 960 ) {
 
 	scene->get_bsphere(&scene_center,&scene_radius,true);
@@ -55,7 +54,7 @@ int App::display(){
 
 	// Create the main window and OpenGL context
 	sf::ContextSettings glSettings;
-//	glSettings.antialiasingLevel = 4; using FXAA instead
+//	glSettings.antialiasingLevel = 4; // using FXAA instead
 	glSettings.majorVersion = 3;
 	glSettings.minorVersion = 3;
 	sf::RenderWindow window(sf::VideoMode(window_size.x, window_size.y), "Application", sf::Style::Default, glSettings);
@@ -130,24 +129,16 @@ inline void App::process_mouse( sf::RenderWindow &window ) {
 
 	// If we're not in the window, return
 	if( !in_window || !settings.enable_rotate ){
-		left_mouse_drag = false;
-		right_mouse_drag = false;
 		mouse_pos = curr_pos;
 		return;
 	}
 
 	// Otherwise check left and right mouse buttons
 	if( sf::Mouse::isButtonPressed(sf::Mouse::Left) && in_focus ){
-		left_mouse_drag = true;
 		current_cam->rotate( float(curr_pos.x-mouse_pos.x)/100.f, float(curr_pos.y-mouse_pos.y)/100.f );
 	}
 	else if( sf::Mouse::isButtonPressed(sf::Mouse::Right) && in_focus ){
-		right_mouse_drag = true;
 		current_cam->pan( float(curr_pos.x-mouse_pos.x)/100.f, float(curr_pos.y-mouse_pos.y)/100.f );
-	}
-	else{
-		left_mouse_drag = false;
-		right_mouse_drag = false;
 	}
 
 	mouse_pos = curr_pos;

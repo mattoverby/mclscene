@@ -4,7 +4,6 @@
 	<Object name="bunny_562" type="trimesh" >
 		<File value="bunny.ply" />
 		<Scale value="1 1 1" />
-		<Material value="CyanPlastic" />
 	</Object>
 <!--
 	<Object name="obj1" type="box" >

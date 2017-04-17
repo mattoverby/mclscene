@@ -25,7 +25,6 @@
 #include "MCL/Simulator.hpp"
 #include "MCL/SceneManager.hpp"
 #include "RenderGL.hpp"
-//#include <functional>
 
 namespace mcl {
 
@@ -83,7 +82,6 @@ protected:
 	sf::Vector2i mouse_pos;
 	sf::Vector2i window_size;
 	bool in_focus, close_window;
-	bool left_mouse_drag, right_mouse_drag;
 	int save_frame_num;
 	float screen_dt;
 	bool update_mesh_buffers; // set to true on run_simulator_step
