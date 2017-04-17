@@ -34,6 +34,7 @@ App::App( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_
 
 	scene->get_bsphere(&scene_center,&scene_radius,true);
 	std::cout << "Scene Radius: " << scene_radius << std::endl;
+	std::cout << "Scene Center: " << scene_center.transpose() << std::endl;
 
 	// Make camera if one was not loaded
 	if( scene->cameras.size()==0 ){

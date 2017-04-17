@@ -103,6 +103,7 @@ set( MCLSCENE_SRCS
 	src/BVH.cpp
 	src/App.cpp
 	src/RenderGL.cpp
+	src/SimpleRenderGL.cpp
 	${GLEW_SRCS}
 	${TRIMESH_SRCS}
 	${SOIL2_SRCS}
