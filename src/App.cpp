@@ -20,6 +20,7 @@
 // By Matt Overby (http://www.mattoverby.net)
 
 #include "MCL/App.hpp"
+#include <png.h>
 
 using namespace mcl;
 
@@ -99,6 +100,7 @@ GLFWwindow* window;
 	// Create the glfw window
 	window = glfwCreateWindow(max_width, max_height, "Viewer", NULL, NULL);
 	if( !window ){ glfwTerminate(); return EXIT_FAILURE; }
+//	if( !settings.vsync ){ glfwSwapInterval(0); }
 
 	// Bind callbacks to the window
 	glfwSetKeyCallback(window, &Input::key_callback);
@@ -120,6 +122,7 @@ GLFWwindow* window;
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
 	framebuffer_size_callback(window, width, height); // sets the projection matrix
+	bool has_render_cb( render_callback );
 
 	if( !renderer.init( scene, width, height ) ){ glfwTerminate(); return EXIT_FAILURE; } // creates shaders
 
@@ -134,6 +137,8 @@ GLFWwindow* window;
 	float elapsed_dt = 0.f;
 	while( !glfwWindowShouldClose(window) && !close_window ){
 
+		glfwSwapBuffers(window);
+
 		//
 		//	Update
 		//
@@ -147,11 +152,12 @@ GLFWwindow* window;
 		}
 
 		// Handle events
-		glfwPollEvents();
+		if( settings.run_simulation ){ glfwPollEvents(); }
+		else{ glfwWaitEvents(); }
 
 		// Simulation engine:
 		if( sim && settings.run_simulation ){
-//			if( settings.save_frames ){ save_screenshot(window); }
+			if( settings.save_frames ){ save_screenshot(window); }
 			run_simulator_step();
 		}
 
@@ -160,7 +166,7 @@ GLFWwindow* window;
 		//
 		renderer.draw_objects( update_mesh_buffers );
 		update_mesh_buffers = false;
-		glfwSwapBuffers(window);
+		if( has_render_cb ){ render_callback(window,current_cam,screen_dt); }
 
 	} // end game loop
 
@@ -183,17 +189,7 @@ inline void App::run_simulator_step(){
 	update_mesh_buffers = true;
 }
 
-/*
-inline void App::save_screenshot( sf::RenderWindow &window ){
 
-	std::stringstream filename;
-	filename << MCLSCENE_BUILD_DIR << "/" << std::setfill('0') << std::setw(5) << save_frame_num << ".png";
-//	sf::Image screen = window.capture();
-	std::cout << "TODO: App:save_screenshot" << std::endl;
-//	screen.saveToFile( filename.str() );
-	save_frame_num++;
-}
-*/
 
 
 void App::mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
@@ -229,7 +225,7 @@ void App::key_callback(GLFWwindow* window, int key, int scancode, int action, in
 		settings.run_simulation = !settings.run_simulation;
 		break;
 	case GLFW_KEY_P:
-//		if( settings.save_frames ){ save_screenshot(window); }
+		if( settings.save_frames ){ save_screenshot(window); }
 		run_simulator_step();
 		break;
 	case GLFW_KEY_T:
@@ -274,3 +270,96 @@ void App::framebuffer_size_callback(GLFWwindow* window, int width, int height){
 	current_cam->resize( width, height );
 	renderer.update_window_size( width, height );
 }
+
+
+
+
+
+
+
+
+
+// Swap pixel locations
+static inline void swapchar( unsigned char &p1, unsigned char &p2 ){
+	unsigned char temp = p1;
+	p1 = p2;
+	p2 = temp;
+}
+
+// Flip storage order of image rows
+static inline void flip_image (int w, int h, unsigned char *pixels) {
+
+    for (int j = 0; j < h/2; j++)
+	for (int i = 0; i < w; i++)
+	    for (int c = 0; c < 3; c++)
+	        swapchar(pixels[(i+w*j)*3+c], pixels[(i+w*(h-1-j))*3+c]);
+
+}
+
+// Write an image buffer to a PNG file
+static inline void save_png (const char *filename, int width, int height,
+	       unsigned char *pixels, bool has_alpha) {
+    FILE* file = fopen(filename, "wb");
+    if (!file) {
+	printf("Couldn't open file %s for writing.\n", filename);
+	return;
+    }
+    // initialize the PNG structures
+    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,
+	                                          NULL, NULL);
+    if (!png_ptr) {
+	printf("Couldn't create a PNG write structure.\n");
+	fclose(file);
+	return;
+    }
+    png_infop info_ptr = png_create_info_struct(png_ptr);
+    if (!info_ptr) {
+	printf("Couldn't create a PNG info structure.\n");
+	png_destroy_write_struct(&png_ptr, NULL);
+	fclose(file);
+	return;
+    }
+    if (setjmp(png_jmpbuf(png_ptr))) {
+	printf("Had a problem writing %s.\n", filename);
+	png_destroy_write_struct(&png_ptr, &info_ptr);
+	fclose(file);
+	return;
+    }
+    png_init_io(png_ptr, file);
+    png_set_IHDR(png_ptr, info_ptr, width, height, 8,
+	         has_alpha ? PNG_COLOR_TYPE_RGBA : PNG_COLOR_TYPE_RGB,
+	         PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
+	         PNG_FILTER_TYPE_DEFAULT);
+    // set the pixel data
+    int channels = has_alpha ? 4 : 3;
+    png_bytep* row_pointers = (png_bytep*) new unsigned char*[height];
+    for (int y = 0; y < height; y++)
+	row_pointers[y] = (png_bytep) &pixels[y*width*channels];
+    png_set_rows(png_ptr, info_ptr, row_pointers);
+    // write the file
+    png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
+    // clean up
+    delete[] row_pointers;
+    png_destroy_write_struct(&png_ptr, &info_ptr);
+    fclose(file);
+}
+
+
+inline void App::save_screenshot( GLFWwindow *window ){
+
+	int w=256, h=256;
+	glfwGetFramebufferSize(window, &w, &h);
+	unsigned char *pixels = new unsigned char[w*h*3];
+
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(0,0, w,h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+	flip_image(w,h, pixels);
+
+	std::stringstream filename;
+	filename << MCLSCENE_BUILD_DIR << "/"; filename << std::setfill('0') << std::setw(5) << save_frame_num << ".png";
+	save_png(filename.str().c_str(), w,h, pixels,false);
+
+	delete[] pixels;
+	save_frame_num++;
+}
+

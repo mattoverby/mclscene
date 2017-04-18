@@ -21,7 +21,7 @@
 
 cmake_minimum_required(VERSION 3.1)
 project(mclscene C CXX)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 add_definitions( -DMCLSCENE_BUILD_DIR="${CMAKE_BINARY_DIR}" ) # root build dir
@@ -72,13 +72,13 @@ add_subdirectory( ${TRIMESH_DIR} ) # sets TRIMESH_INCLUDE and TRIMESH_SRCS
 include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeEigen3.cmake ) # Eigen3
 include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeGLFW.cmake ) # GLFW
 find_package(OpenGL 3) # OpenGL
+find_package(PNG) # for saving frames to png
 
-# Only use GLEW if we have to
+# Add GLEW
 if(MCL_USE_GLEW)
 	set(GLEW_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/glew )
 	set(GLEW_SRCS ${GLEW_DIR}/src/glew.c ${GLEW_DIR}/include/GL/glew.h)
 	set(GLEW_INCLUDE_DIR ${GLEW_DIR}/include)
-	set(MCLSCENE_DEFINITIONS -DMCL_USE_GLEW)
 	add_definitions(-DMCL_USE_GLEW)
 else()
 	set(GLEW_SRCS "")
@@ -103,7 +103,7 @@ set( MCLSCENE_SRCS
 	src/BVH.cpp
 	src/App.cpp
 	src/RenderGL.cpp
-#	src/SimpleRenderGL.cpp
+	src/SimpleRenderGL.cpp
 	${GLEW_SRCS}
 	${TRIMESH_SRCS}
 	${SOIL2_SRCS}
@@ -115,9 +115,9 @@ set( MCLSCENE_LIBRARIES mclscene )
 set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include )
 
 # Add dependencies
-set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} )
+set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} ${PNG_LIBRARY} )
 set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} ${TRIMESH_INCLUDE} ${EIGEN3_INCLUDE_DIR}
-	${GLEW_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${GLFW_INCLUDE_DIR} ${SOIL2_INCLUDE} )
+	${GLEW_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${GLFW_INCLUDE_DIR} ${SOIL2_INCLUDE} ${PNG_INCLUDE_DIR} )
 
 # Create the library
 include_directories( ${MCLSCENE_INCLUDE_DIRS} )
@@ -128,7 +128,6 @@ get_directory_property(HasParent PARENT_DIRECTORY)
 if(HasParent)
 	set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} PARENT_SCOPE )
 	set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} PARENT_SCOPE )
-	set( MCLSCENE_DEFINITIONS ${MCLSCENE_DEFINITIONS} PARENT_SCOPE )
 endif(HasParent)
 
 #
@@ -137,7 +136,7 @@ endif(HasParent)
 
 if(MCL_BUILD_SAMPLES)
 
-	add_definitions( ${OPENGL_DEFINITIONS} ${MCLSCENE_DEFINITIONS} )
+	add_definitions( ${OPENGL_DEFINITIONS} )
 
 	# sample loader
 	add_executable( load_test samples/LoadTest.cpp )

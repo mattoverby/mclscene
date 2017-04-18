@@ -38,9 +38,10 @@ public:
 		bool save_frames; // saves every render frame to a timestamped png in your build directory
 		bool run_simulation; // run the simulator every frame
 		bool gamma_correction;
+		bool vsync;
 		Vec3f clear_color;
 		Settings() : save_frames(false), run_simulation(false),
-			gamma_correction(false), clear_color(1,1,1) {}
+			gamma_correction(false), vsync(false), clear_color(1,1,1) {}
 	} settings;
 
 	// Initializes the the Input singleton so callbacks can be added
@@ -65,11 +66,10 @@ public:
 
 	// You can set a render callback that is called every frame
 	// or an event callback that is called for each event
-//	std::function<void(sf::RenderWindow*, Camera*, float dt)> render_callback;
+	std::function<void(GLFWwindow*, Camera*, float dt)> render_callback;
 
 protected:
 	// Callbacks:
-	std::vector< std::function<void ( GLFWwindow* window, Camera *cam, float screen_dt )> > render_callbacks;
 	void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 	void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 	void cursor_position_callback(GLFWwindow* window, double x, double y);
@@ -77,6 +77,7 @@ protected:
 	void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 	inline void run_simulator_step();
+	inline void save_screenshot( GLFWwindow *window );
 
 	SceneManager *scene;
 	Simulator *sim;
@@ -98,7 +99,7 @@ protected:
 
 //
 //	A bit hacky and hurts performance, but allows us to use class functions as input callbacks.
-//	This will have to do for now.
+//	This will have to do for now until I include an event-based library for GLFW.
 //	E.g.
 //		using namespace std::placeholders; // adds visibility of _1, _2, _3,...
 //		Input::key_callbacks.push_back( std::bind(&MyClass::key_callback,myClassPtr,_1,_2,_3,_4,_5) );

@@ -26,8 +26,7 @@
 #include <GL/glew.h>
 #endif
 
-#include <SFML/OpenGL.hpp>
-#include <SFML/Graphics.hpp>
+#include <GLFW/glfw3.h>
 #include "MCL/Shader.hpp"
 #include "MCL/SceneManager.hpp"
 #include <random>
