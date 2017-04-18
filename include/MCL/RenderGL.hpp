@@ -25,9 +25,7 @@
 #ifdef MCL_USE_GLEW
 #include <GL/glew.h>
 #endif
-
-#include <SFML/OpenGL.hpp>
-#include <SFML/Graphics.hpp>
+#include <GLFW/glfw3.h>
 #include "MCL/Shader.hpp"
 #include "MCL/SceneManager.hpp"
 #include <random>
@@ -76,7 +74,6 @@ private:
 
 	// Load textures from SceneManager materials.
 	void load_textures();
-	std::vector<sf::Texture> loaded_textures;
 
 	// Texture coordinates and face ibo are NOT updated.
 	// If the IBOs have already been generated, they are instead overwritten.

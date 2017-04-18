@@ -69,10 +69,9 @@ add_subdirectory( ${TRIMESH_DIR} ) # sets TRIMESH_INCLUDE and TRIMESH_SRCS
 	set( TETGEN_SRCS "" )
 #endif(MCL_ENABLE_TETGEN)
 
-
 include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeEigen3.cmake ) # Eigen3
-include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeSFML.cmake ) # SFML
-find_package(OpenGL 4) # OpenGL
+include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeGLFW.cmake ) # GLFW
+find_package(OpenGL 3) # OpenGL
 
 # Only use GLEW if we have to
 if(MCL_USE_GLEW)
@@ -104,7 +103,7 @@ set( MCLSCENE_SRCS
 	src/BVH.cpp
 	src/App.cpp
 	src/RenderGL.cpp
-	src/SimpleRenderGL.cpp
+#	src/SimpleRenderGL.cpp
 	${GLEW_SRCS}
 	${TRIMESH_SRCS}
 	${SOIL2_SRCS}
@@ -116,9 +115,9 @@ set( MCLSCENE_LIBRARIES mclscene )
 set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include )
 
 # Add dependencies
-set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} ${SFML_LIBRARIES} ${OPENGL_LIBRARIES} )
+set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} )
 set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} ${TRIMESH_INCLUDE} ${EIGEN3_INCLUDE_DIR}
-	${GLEW_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${SFML_INCLUDE_DIR} ${SOIL2_INCLUDE} )
+	${GLEW_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${GLFW_INCLUDE_DIR} ${SOIL2_INCLUDE} )
 
 # Create the library
 include_directories( ${MCLSCENE_INCLUDE_DIRS} )

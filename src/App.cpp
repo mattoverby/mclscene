@@ -23,17 +23,29 @@
 
 using namespace mcl;
 
+//
+//	Initialize static members
+//
+std::vector< std::function<void ( GLFWwindow* window, int key, int scancode, int action, int mods )> > mcl::Input::key_callbacks;
+std::vector< std::function<void ( GLFWwindow* window, int button, int action, int mods )> > mcl::Input::mouse_button_callbacks;
+std::vector< std::function<void ( GLFWwindow* window, double x, double y )> > mcl::Input::cursor_position_callbacks;
+std::vector< std::function<void ( GLFWwindow* window, double x, double y )> > mcl::Input::scroll_callbacks;
+std::vector< std::function<void ( GLFWwindow* window, int width, int height )> > mcl::Input::framebuffer_size_callbacks;
 
 //
 //	App
 //
 App::App( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_),
-	update_mesh_buffers(true), in_focus(true), close_window(false), save_frame_num(0),
-	window_size( 1280, 960 ) {
+	update_mesh_buffers(true), in_focus(true), close_window(false), save_frame_num(0) {
+	Input &input = Input::getInstance(); // initialize Input
 
 	scene->get_bsphere(&scene_center,&scene_radius,true);
 	std::cout << "Scene Radius: " << scene_radius << std::endl;
 	std::cout << "Scene Center: " << scene_center.transpose() << std::endl;
+
+	// Init runtime vars
+	left_mouse_drag = false;
+	right_mouse_drag = false;
 
 	// Make camera if one was not loaded
 	if( scene->cameras.size()==0 ){
@@ -46,6 +58,15 @@ App::App( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_
 
 	// Add lights if not described in scene
 	if( scene->lights.size()==0 ){ scene->make_3pt_lighting( current_cam->get_eye(), scene_center ); }
+
+	// Add callbacks to the input class
+	using namespace std::placeholders;    // adds visibility of _1, _2, _3,...
+	Input::clear(); // clear existing callbacks
+	Input::key_callbacks.push_back( std::bind( &App::key_callback, this, _1, _2, _3, _4, _5 ) );
+	Input::mouse_button_callbacks.push_back( std::bind( &App::mouse_button_callback, this, _1, _2, _3, _4 ) );
+	Input::cursor_position_callbacks.push_back( std::bind( &App::cursor_position_callback, this, _1, _2, _3 ) );
+	Input::scroll_callbacks.push_back( std::bind( &App::scroll_callback, this, _1, _2, _3 ) );
+	Input::framebuffer_size_callbacks.push_back( std::bind( &App::framebuffer_size_callback, this, _1, _2, _3 ) );
 }
 
 
@@ -53,13 +74,42 @@ App::App( mcl::SceneManager *scene_ ) : App(scene_,nullptr) {}
 
 int App::display(){
 
-	// Create the main window and OpenGL context
-	sf::ContextSettings glSettings;
-	glSettings.antialiasingLevel = 4;
-//	glSettings.attributeFlags = 0;
-	glSettings.majorVersion = 3;
-	glSettings.minorVersion = 3;
-	sf::RenderWindow window( sf::VideoMode(window_size.x, window_size.y), "Application", sf::Style::Default, glSettings );
+GLFWwindow* window;
+	glfwSetErrorCallback(&Input::error_callback);
+
+	// Initialize the window
+	if (!glfwInit()){ return EXIT_FAILURE; }
+	glfwWindowHint(GLFW_SRGB_CAPABLE, settings.gamma_correction); // gamma correction
+
+	// Ask for OpenGL 3.3
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+	// Get the monitor max window size
+	const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+	int max_width = 1280;
+	int max_height = 960;
+//	int max_width = mode->width;
+//	int max_height = mode->height;
+//	if( max_width >= 1920 ){ max_width=1920; max_height=1080; } // just use 1080 if they have it
+//	else{ max_width=1366; max_height=768; }
+
+	// Create the glfw window
+	window = glfwCreateWindow(max_width, max_height, "Viewer", NULL, NULL);
+	if( !window ){ glfwTerminate(); return EXIT_FAILURE; }
+
+	// Bind callbacks to the window
+	glfwSetKeyCallback(window, &Input::key_callback);
+	glfwSetMouseButtonCallback(window, &Input::mouse_button_callback);
+	glfwSetCursorPosCallback(window, &Input::cursor_position_callback);
+	glfwSetScrollCallback(window, &Input::scroll_callback);
+	glfwSetFramebufferSizeCallback(window, &Input::framebuffer_size_callback);
+
+	// Make current
+	glfwMakeContextCurrent(window);
+	glfwSwapInterval(1);
 
 	// Init glew
 	#ifdef MCL_USE_GLEW
@@ -67,144 +117,59 @@ int App::display(){
 	glewInit();
 	#endif
 
-	// Init OpenGL
-	glViewport(0, 0, window_size.x, window_size.y);
+	int width, height;
+	glfwGetFramebufferSize(window, &width, &height);
+	framebuffer_size_callback(window, width, height); // sets the projection matrix
+
+	if( !renderer.init( scene, width, height ) ){ glfwTerminate(); return EXIT_FAILURE; } // creates shaders
+
+	// Initialize OpenGL
 	glEnable(GL_DEPTH_TEST);
 	if( settings.gamma_correction ){ glEnable(GL_FRAMEBUFFER_SRGB); } // gamma correction
 	glClearColor(settings.clear_color[0],settings.clear_color[1],settings.clear_color[2],1.f);
 
-	// Init other things
-	current_cam->resize( window_size.x, window_size.y );
-	if( !renderer.init( scene, window_size.x, window_size.y ) ){ return EXIT_FAILURE; } // creates shaders
-	mouse_pos = sf::Mouse::getPosition();
-
-	// Start the game loop
-	sf::Clock clock;
+	// Game loop
+	float t_old = glfwGetTime();
 	screen_dt = 0.f;
 	float elapsed_dt = 0.f;
-	window.setActive();
-	while( window.isOpen() && !close_window ){
+	while( !glfwWindowShouldClose(window) && !close_window ){
 
-		// Update clock
-		screen_dt = clock.restart().asSeconds();
+		//
+		//	Update
+		//
+		float t = glfwGetTime();
+		screen_dt = t - t_old;
+		t_old = t;
 		elapsed_dt += screen_dt;
 		if( elapsed_dt > 1.f ){
 //			std::cout << "FPS: " << ceil(1.f/screen_dt) << std::endl;
 			elapsed_dt = 0.f;
 		}
 
-		// Process event:
-		sf::Event event;
-		while( window.pollEvent(event) ){
-			process_event(event,window);
-			if( event_callback ){ event_callback(&window,&event); }
-		} // end poll event
-
-		// Mouse events:
-		process_mouse(window);
+		// Handle events
+		glfwPollEvents();
 
 		// Simulation engine:
-		if( settings.run_simulation ){
-			if( settings.save_frames ){ save_screenshot(window); }
+		if( sim && settings.run_simulation ){
+//			if( settings.save_frames ){ save_screenshot(window); }
 			run_simulator_step();
 		}
 
-		// Render:
+		//
+		//	Render
+		//
 		renderer.draw_objects( update_mesh_buffers );
 		update_mesh_buffers = false;
-		if( render_callback ){ render_callback(&window,current_cam,screen_dt); }
-
-		// Display frame:
-		window.display();
+		glfwSwapBuffers(window);
 
 	} // end game loop
+
+	glfwDestroyWindow(window);
+	glfwTerminate();
 
 	return EXIT_SUCCESS;
 
 } // end display
-
-
-inline void App::process_mouse( sf::RenderWindow &window ) {
-
-	sf::Vector2i curr_pos = sf::Mouse::getPosition(window);
-	bool in_window = curr_pos.x > 0 && curr_pos.x < window_size.x && curr_pos.y > 0 && curr_pos.y < window_size.y;
-
-	// If we're not in the window, return
-	if( !in_window || !settings.enable_rotate ){
-		mouse_pos = curr_pos;
-		return;
-	}
-
-	// Otherwise check left and right mouse buttons
-	if( sf::Mouse::isButtonPressed(sf::Mouse::Left) && in_focus ){
-		current_cam->rotate( float(curr_pos.x-mouse_pos.x)/100.f, float(curr_pos.y-mouse_pos.y)/100.f );
-	}
-	else if( sf::Mouse::isButtonPressed(sf::Mouse::Right) && in_focus ){
-		current_cam->pan( float(curr_pos.x-mouse_pos.x)/100.f, float(curr_pos.y-mouse_pos.y)/100.f );
-	}
-
-	mouse_pos = curr_pos;
-
-} // end process mouse
-
-
-inline void App::process_event( sf::Event &event, sf::RenderWindow &window ){
-
-	switch( event.type ){
-
-		default: break;
-
-		//
-		//	Window Focus
-		//
-		case sf::Event::LostFocus: { in_focus = false; } break;
-		case sf::Event::GainedFocus: { in_focus = true; } break;
-	
-		//
-		//	Window closed
-		//
-		case sf::Event::Closed: { window.close(); } break;
-
-		//
-		//	Window resized
-		//
-		case sf::Event::Resized: {
-			window_size.x = event.size.width;
-			window_size.y = event.size.height;
-			glViewport(0, 0, window_size.x, window_size.y );
-			current_cam->resize( window_size.x, window_size.y );
-			renderer.update_window_size( window_size.x, window_size.y );
-		} break;
-
-		//
-		//	Key Pressed
-		//
-		case sf::Event::KeyPressed: {
-			if( event.key.code == sf::Keyboard::Escape ){ window.close(); }
-			else if( event.key.code == sf::Keyboard::P ){ run_simulator_step(); }
-			else if( event.key.code == sf::Keyboard::F1 ){ save_screenshot(window); }
-			else if( event.key.code == sf::Keyboard::Space ){ settings.run_simulation = !settings.run_simulation; }
-			else if( event.key.code == sf::Keyboard::T ){
-				settings.save_frames = !settings.save_frames;
-				std::cout << "save screenshots: " << (int)settings.save_frames << std::endl;
-			}
-			else if( event.key.code == sf::Keyboard::S ){
-				std::stringstream xml_file; xml_file << MCLSCENE_BUILD_DIR << "/currscene.xml";
-				scene->save( xml_file.str() );
-				std::cout << "exporting scene: " << xml_file.str() << std::endl;
-			}
-		} break;
-
-		//
-		//	Mouse Wheel
-		//
-		case sf::Event::MouseWheelMoved: {
-			current_cam->zoom( float(event.mouseWheel.delta)*scene_radius );
-		} break;
-
-	} // end switch event type
-
-} // end process event
 
 
 inline void App::run_simulator_step(){
@@ -218,6 +183,7 @@ inline void App::run_simulator_step(){
 	update_mesh_buffers = true;
 }
 
+/*
 inline void App::save_screenshot( sf::RenderWindow &window ){
 
 	std::stringstream filename;
@@ -227,4 +193,84 @@ inline void App::save_screenshot( sf::RenderWindow &window ){
 //	screen.saveToFile( filename.str() );
 	save_frame_num++;
 }
+*/
 
+
+void App::mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
+
+	if( action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_LEFT ){
+		glfwGetCursorPos(window, &mouse_pos[0], &mouse_pos[1]);
+		left_mouse_drag = true;
+		right_mouse_drag = false;
+	}
+	else if(  action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_RIGHT ){
+		glfwGetCursorPos(window, &mouse_pos[0], &mouse_pos[1]);
+		right_mouse_drag = true;
+		left_mouse_drag = false;
+	}
+	else{
+		left_mouse_drag = false;
+		right_mouse_drag = false;
+	}
+
+}
+
+
+
+void App::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+
+	if (action != GLFW_PRESS){ return; }
+
+	switch(key){
+	case GLFW_KEY_ESCAPE:
+		glfwSetWindowShouldClose(window, true);
+		break;
+	case GLFW_KEY_SPACE:
+		settings.run_simulation = !settings.run_simulation;
+		break;
+	case GLFW_KEY_P:
+//		if( settings.save_frames ){ save_screenshot(window); }
+		run_simulator_step();
+		break;
+	case GLFW_KEY_T:
+		settings.save_frames=!settings.save_frames;
+		std::cout << "save screenshots: " << (int)settings.save_frames << std::endl;
+		break;
+	case GLFW_KEY_S:{
+		std::stringstream xml_file; xml_file << MCLSCENE_BUILD_DIR << "/currscene.xml";
+		scene->save( xml_file.str() );
+		std::cout << "exporting scene: " << xml_file.str() << std::endl;
+		} break;
+	default:
+		break;
+	}
+}
+
+
+void App::cursor_position_callback(GLFWwindow* window, double x, double y){
+
+	if( left_mouse_drag ){
+		current_cam->rotate( (x-mouse_pos[0])/100.f, (y-mouse_pos[1])/100.f );
+	}
+	else if( right_mouse_drag ){
+		current_cam->pan( float(x-mouse_pos[0])/100.f, float(y-mouse_pos[1])/100.f );
+	}
+	mouse_pos[0] = x;
+	mouse_pos[1] = y;
+}
+
+
+void App::scroll_callback(GLFWwindow* window, double x, double y){
+	current_cam->zoom( float(y)*scene_radius );
+}
+
+
+void App::framebuffer_size_callback(GLFWwindow* window, int width, int height){
+
+	float scene_d = std::fmaxf( scene_radius*2.f, 0.2f );
+	float aspect_ratio = 1.f;
+	if( height > 0 ){ aspect_ratio = std::fmaxf( (float)width / (float)height, 1e-6f ); }
+	glViewport(0, 0, width, height);
+	current_cam->resize( width, height );
+	renderer.update_window_size( width, height );
+}

@@ -38,10 +38,9 @@ public:
 		bool save_frames; // saves every render frame to a timestamped png in your build directory
 		bool run_simulation; // run the simulator every frame
 		bool gamma_correction;
-		bool enable_rotate; // enable camera rotate
 		Vec3f clear_color;
 		Settings() : save_frames(false), run_simulation(false),
-			gamma_correction(false), enable_rotate(true), clear_color(1,1,1) {}
+			gamma_correction(false), clear_color(1,1,1) {}
 	} settings;
 
 	// Initializes the the Input singleton so callbacks can be added
@@ -66,21 +65,26 @@ public:
 
 	// You can set a render callback that is called every frame
 	// or an event callback that is called for each event
-	std::function<void(sf::RenderWindow*, Camera*, float dt)> render_callback;
-	std::function<void(sf::RenderWindow*, sf::Event*)> event_callback;
+//	std::function<void(sf::RenderWindow*, Camera*, float dt)> render_callback;
 
 protected:
-	inline void process_event( sf::Event &event, sf::RenderWindow &window );
-	inline void process_mouse( sf::RenderWindow &window );
-	inline void save_screenshot( sf::RenderWindow &window );
+	// Callbacks:
+	std::vector< std::function<void ( GLFWwindow* window, Camera *cam, float screen_dt )> > render_callbacks;
+	void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+	void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	void cursor_position_callback(GLFWwindow* window, double x, double y);
+	void scroll_callback(GLFWwindow* window, double x, double y);
+	void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+
 	inline void run_simulator_step();
 
 	SceneManager *scene;
 	Simulator *sim;
 
 	// Runtime stuff:
-	sf::Vector2i mouse_pos;
-	sf::Vector2i window_size;
+	Vec2d mouse_pos;
+	Vec2i window_size;
+	bool left_mouse_drag, right_mouse_drag;
 	bool in_focus, close_window;
 	int save_frame_num;
 	float screen_dt;
@@ -90,6 +94,63 @@ protected:
 	Vec3f scene_center; // set once in constructor
 
 }; // end class App
+
+
+//
+//	A bit hacky and hurts performance, but allows us to use class functions as input callbacks.
+//	This will have to do for now.
+//	E.g.
+//		using namespace std::placeholders; // adds visibility of _1, _2, _3,...
+//		Input::key_callbacks.push_back( std::bind(&MyClass::key_callback,myClassPtr,_1,_2,_3,_4,_5) );
+//
+class Input {
+public:
+	static Input& getInstance(){ // Singleton is accessed via getInstance()
+		static Input instance; // lazy singleton, instantiated on first use
+		return instance;
+	}
+
+	static void framebuffer_size_callback(GLFWwindow* window, int width, int height){
+		for( int i=0; i<framebuffer_size_callbacks.size(); ++i ){ framebuffer_size_callbacks[i](window,width,height); }
+	}
+
+	static void scroll_callback(GLFWwindow* window, double x, double y){
+		for( int i=0; i<scroll_callbacks.size(); ++i ){ scroll_callbacks[i](window,x,y); }
+	}
+
+	static void cursor_position_callback(GLFWwindow* window, double x, double y){
+		for( int i=0; i<cursor_position_callbacks.size(); ++i ){ cursor_position_callbacks[i](window,x,y); }
+	}
+
+	static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
+		for( int i=0; i<mouse_button_callbacks.size(); ++i ){ mouse_button_callbacks[i](window,button,action,mods); }
+	}
+
+	static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+		for( int i=0; i<key_callbacks.size(); ++i ){ key_callbacks[i](window,key,scancode,action,mods); }
+	}
+
+	static void error_callback(int error, const char* description){ fprintf(stderr, "Error: %s\n", description); }
+
+	static std::vector< std::function<void ( GLFWwindow* window, int key, int scancode, int action, int mods )> > key_callbacks;
+	static std::vector< std::function<void ( GLFWwindow* window, int button, int action, int mods )> > mouse_button_callbacks;
+	static std::vector< std::function<void ( GLFWwindow* window, double x, double y )> > cursor_position_callbacks;
+	static std::vector< std::function<void ( GLFWwindow* window, double x, double y )> > scroll_callbacks;
+	static std::vector< std::function<void ( GLFWwindow* window, int width, int height )> > framebuffer_size_callbacks;
+
+	static void clear(){
+		key_callbacks.clear();
+		mouse_button_callbacks.clear();
+		cursor_position_callbacks.clear();
+		scroll_callbacks.clear();
+		framebuffer_size_callbacks.clear();
+	}
+
+private:
+	Input(void){}
+	Input(Input const&); // prevent copies
+	void operator=(Input const&); // prevent assignments
+};
 
 } // end namespace mcl
 
