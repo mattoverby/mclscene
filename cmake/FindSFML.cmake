@@ -83,7 +83,7 @@ set(FIND_SFML_PATHS
 # find the SFML include directory
 find_path(SFML_INCLUDE_DIR SFML/Config.hpp
           PATH_SUFFIXES include
-          PATHS ${FIND_SFML_PATHS} NO_DEFAULT_PATH)
+          PATHS ${FIND_SFML_PATHS} )
 
 # check the version number
 set(SFML_VERSION_OK TRUE)
@@ -136,13 +136,13 @@ foreach(FIND_SFML_COMPONENT ${SFML_FIND_COMPONENTS})
     find_library(SFML_${FIND_SFML_COMPONENT_UPPER}_LIBRARY_DEBUG
                  NAMES ${FIND_SFML_COMPONENT_NAME}-d
                  PATH_SUFFIXES lib64 lib
-                 PATHS ${FIND_SFML_PATHS} NO_DEFAULT_PATH)
+                 PATHS ${FIND_SFML_PATHS} )
 
     # release library
     find_library(SFML_${FIND_SFML_COMPONENT_UPPER}_LIBRARY_RELEASE
                  NAMES ${FIND_SFML_COMPONENT_NAME}
                  PATH_SUFFIXES lib64 lib
-                 PATHS ${FIND_SFML_PATHS} NO_DEFAULT_PATH)
+                 PATHS ${FIND_SFML_PATHS} )
 
     if (SFML_${FIND_SFML_COMPONENT_UPPER}_LIBRARY_DEBUG OR SFML_${FIND_SFML_COMPONENT_UPPER}_LIBRARY_RELEASE)
         # library found

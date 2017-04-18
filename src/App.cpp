@@ -55,11 +55,11 @@ int App::display(){
 
 	// Create the main window and OpenGL context
 	sf::ContextSettings glSettings;
-//	glSettings.antialiasingLevel = 4; // using FXAA instead
+	glSettings.antialiasingLevel = 4;
+//	glSettings.attributeFlags = 0;
 	glSettings.majorVersion = 3;
 	glSettings.minorVersion = 3;
-	sf::RenderWindow window(sf::VideoMode(window_size.x, window_size.y), "Application", sf::Style::Default, glSettings);
-	window.setFramerateLimit(100);
+	sf::RenderWindow window( sf::VideoMode(window_size.x, window_size.y), "Application", sf::Style::Default, glSettings );
 
 	// Init glew
 	#ifdef MCL_USE_GLEW
@@ -82,6 +82,7 @@ int App::display(){
 	sf::Clock clock;
 	screen_dt = 0.f;
 	float elapsed_dt = 0.f;
+	window.setActive();
 	while( window.isOpen() && !close_window ){
 
 		// Update clock
@@ -221,8 +222,9 @@ inline void App::save_screenshot( sf::RenderWindow &window ){
 
 	std::stringstream filename;
 	filename << MCLSCENE_BUILD_DIR << "/" << std::setfill('0') << std::setw(5) << save_frame_num << ".png";
-	sf::Image screen = window.capture();
-	screen.saveToFile( filename.str().c_str() );
+//	sf::Image screen = window.capture();
+	std::cout << "TODO: App:save_screenshot" << std::endl;
+//	screen.saveToFile( filename.str() );
 	save_frame_num++;
 }
 

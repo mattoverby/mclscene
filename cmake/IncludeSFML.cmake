@@ -24,8 +24,10 @@
 # cloning from github, etc... This is just a placeholder script for now.
 
 set(SFML_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/deps/SFML/linux64)
-find_package(SFML 2.3 COMPONENTS system window graphics)
-
+#set(SFML_STATIC_LIBRARIES TRUE)
+find_package(SFML 2.3.2 COMPONENTS graphics window system)
+#set(SFML_LIBRARIES ${SFML_LIBRARIES} ${SFML_DEPENDENCIES})
+#message("${SFML_}")
 if(NOT SFML_FOUND)
 	message("SFML 2.3 not found!")
 endif()

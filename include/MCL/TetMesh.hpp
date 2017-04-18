@@ -22,7 +22,9 @@
 #ifndef MCLSCENE_TETMESH_H
 #define MCLSCENE_TETMESH_H 1
 
-#include "MCL/TriangleMesh.hpp"
+#include <vector>
+#include "Object.hpp"
+#include "AABB.hpp"
 
 namespace mcl {
 

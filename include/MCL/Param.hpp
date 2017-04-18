@@ -24,6 +24,7 @@
 
 #include <string>
 #include <sstream>
+#include <vector>
 #include "Vec.hpp"
 #include <unordered_map>
 #include "../../deps/pugixml/pugixml.hpp"

@@ -22,6 +22,7 @@
 #ifndef MCLSCENE_TRIANGLEMESH_H
 #define MCLSCENE_TRIANGLEMESH_H 1
 
+#include <vector>
 #include "Object.hpp"
 #include "AABB.hpp"
 
