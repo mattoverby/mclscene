@@ -24,6 +24,7 @@
 #include "MCL/MicroTimer.hpp"
 #include "TriMesh_algo.h"
 #include "MCL/TriangleMesh.hpp"
+#include "MCL/Texture.hpp"
 
 using namespace mcl;
 
