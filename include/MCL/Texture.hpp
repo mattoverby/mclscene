@@ -32,14 +32,19 @@ namespace mcl {
 //
 class Texture {
 public:
-	Texture() : gl_handle(0), smooth(true), repeated(true) {}
+	Texture() : width(0), height(0), smooth(true), repeated(true), gl_handle(0) {}
+
+	// TODO release texture if GL version low
+	~Texture(){}
 
 	// Returns the OpenGL handle
 	inline unsigned int handle() const { return gl_handle; }
 
-	inline bool load_from_file( const std::string &filename );
+	// Creates a texture from file
+	inline bool create_from_file( const std::string &filename );
  
-//	bool loadFromMemory (const void *data, size_t size)
+	// Creates a texture from memory
+	inline bool create_from_memory( int width_, int height_, float *data, bool transparency=false );
 
 	// Turn smoothing off or on
 	inline void set_smooth( bool s );
@@ -47,25 +52,59 @@ public:
 	// Sets repeated on or off
 	inline void set_repeated( bool r );
 
+	// Returns size in pixels of the loaded texture
+	inline Vec2i get_size() const { return Vec2i(width,height); }
+
 private:
+	int width, height;
 	bool smooth, repeated;
 	unsigned int gl_handle;
 };
+
 
 //
 //	Implementation
 //
 
-inline bool Texture::load_from_file( const std::string &filename ){
 
-	// TODO replace with my own loader
-	int channels, tex_width, tex_height;
-	GLuint texture_id = SOIL_load_OGL_texture( mat->app.texture.c_str(), &tex_width, &tex_height, &channels, SOIL_LOAD_AUTO, 0, 0 );
-	if( texture_id == 0 ){ std::cerr << "\n**Texture::load Error: Failed to load file " << mat->app.texture << std::endl; continue; }
+inline bool Texture::create_from_file( const std::string &filename ){
+	int channels;
+	gl_handle = SOIL_load_OGL_texture( filename.c_str(), &width, &height,
+		&channels, SOIL_LOAD_AUTO, 0, 0 );
+	if( gl_handle == 0 ){ std::cerr << "\n**Texture::create Error: Failed to load file " <<
+		filename << std::endl; return false; }
+//	glGenTextures( 1, &gl_handle );
+	return true;
+}
+
+
+inline bool Texture::create_from_memory( int width_, int height_, float *data, bool transparency ){
 
 	glGenTextures( 1, &gl_handle );
+	if( gl_handle == 0 ){ std::cerr << "\n**Texture::create Error: Failed to gen" << std::endl; return false; }
 
+	width = width_;
+	height = height_;
+	glBindTexture( GL_TEXTURE_2D, gl_handle );
+
+	if( smooth ){ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); }
+	else { glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); }
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	if( repeated ){
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	} else {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+
+	int mode = GL_RGBA;
+	if( !transparency ){ mode = GL_RGB; }
+	glTexImage2D( GL_TEXTURE_2D, 0, mode, width, height, 0, mode, GL_FLOAT, data );
+	glBindTexture( GL_TEXTURE_2D, 0 );
 }
+
 
 inline void Texture::set_smooth( bool s ){
 	bool update = ( s != smooth );
@@ -98,7 +137,6 @@ inline void Texture::set_repeated( bool r ){
 
 
 } // end namespace mcl
-
 
 
 #endif
