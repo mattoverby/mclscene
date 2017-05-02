@@ -55,7 +55,8 @@ namespace mcl {
 	}
 
 	// Compute barycentric coords for a point on a triangle
-	template <typename T> static inline Vec3<T> barycoords(const Vec3<T> &p, const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2){
+	template <typename T>
+	static inline Vec3<T> barycoords(const Vec3<T> &p, const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2){
 		Vec3<T> v0 = p1 - p0, v1 = p2 - p0, v2 = p - p0;
 		T d00 = v0.dot(v0);
 		T d01 = v0.dot(v1);
@@ -92,7 +93,8 @@ namespace mcl {
 //
 namespace trimesh {
 
-	template <typename T, typename U> static inline mcl::Vec3<T> operator*(const trimesh::XForm<U> &m, const mcl::Vec3<T> &v){
+	template <typename T, typename U>
+	static inline mcl::Vec3<T> operator*(const trimesh::XForm<U> &m, const mcl::Vec3<T> &v){
 		mcl::Vec3<T> r;
 		r[0] = m[0]*v[0]+m[4]*v[1]+m[8]*v[2]+m[12];
 		r[1] = m[1]*v[0]+m[5]*v[1]+m[9]*v[2]+m[13];
@@ -100,7 +102,8 @@ namespace trimesh {
 		return r;
 	}
 
-	template <typename T, typename U> static inline mcl::Vec4<T> operator*(const trimesh::XForm<U> &m, const mcl::Vec4<T> &v){
+	template <typename T, typename U>
+	static inline mcl::Vec4<T> operator*(const trimesh::XForm<U> &m, const mcl::Vec4<T> &v){
 		mcl::Vec4<T> r;
 		r[0] = m[0]*v[0]+m[4]*v[1]+m[8]*v[2]+m[12]*v[3];
 		r[1] = m[1]*v[0]+m[5]*v[1]+m[9]*v[2]+m[13]*v[3];
