@@ -349,17 +349,31 @@ inline void App::save_screenshot( GLFWwindow *window ){
 
 	int w=256, h=256;
 	glfwGetFramebufferSize(window, &w, &h);
-	unsigned char *pixels = new unsigned char[w*h*3];
-
+//	unsigned char *pixels = new unsigned char[w*h*3];
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0,0, w,h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-	flip_image(w,h, pixels);
+
+	std::vector<unsigned char> temp_rgbdata(3*w*h);
+	glReadPixels(0,0,w,h,GL_RGB,GL_UNSIGNED_BYTE, &temp_rgbdata[0]);
+
+		std::vector< unsigned char > rgbdata(3*w*h);
+		for (int i=0; i < h; i++){ // Doesn't matter the order now
+		memcpy(&rgbdata[i*w*3],                    // address of destination
+		&temp_rgbdata[(h-i-1)*w*3], // address of source
+		w*3*sizeof(unsigned char) );        // number of bytes to copy
+		}
+
+	temp_rgbdata.clear(); // Clear the temporary array
+
+
+
+//	glReadPixels(0,0, w,h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+//	flip_image(w,h, pixels);
 
 	std::stringstream filename;
 	filename << MCLSCENE_BUILD_DIR << "/"; filename << std::setfill('0') << std::setw(5) << save_frame_num << ".png";
-	save_png(filename.str().c_str(), w,h, pixels,false);
+	save_png(filename.str().c_str(), w,h, &rgbdata[0],false);
 
-	delete[] pixels;
+//	delete[] pixels;
 	save_frame_num++;
 }
 

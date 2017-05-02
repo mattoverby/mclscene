@@ -34,12 +34,12 @@ class ColorMap {
 public:
 	// Preset ramps
 	enum {
-		GRAYSCALE, // grayscale
+		GRAYSCALE,
 		COLD_HOT, // blue -> red
 		BLACKBODY, // black -> yellow
 	};
 
-	ColorMap(){ load(GRAYSCALE); }
+	ColorMap(){ use_preset(GRAYSCALE); }
 
 	// Value is between 0 and 1
 	// The avg value is used for 3-color gradients, with the
@@ -89,7 +89,7 @@ private:
 
 mcl::Vec3f ColorMap::get( float value ){
 
-	if( colors.size()==0 ){ load(GRAYSCALE); }
+	if( colors.size()==0 ){ use_preset(GRAYSCALE); }
 
 	// Check min/max
 	if( value >= 1.f ){ return colors.back().c; }
@@ -144,7 +144,7 @@ void ColorMap::use_preset( int preset ){
 		case COLD_HOT:{
 			add( 0.f, Vec3f(0,1,1) );
 			add( 0.45f, Vec3f(0,0,1) );
-			add( 0.5f, Vec3f(0,0,0.50196) );
+			add( 0.5f, Vec3f(1,1,1) );
 			add( 0.55f, Vec3f(1,0,0) );
 			add( 1.f, Vec3f(1,1,0) );
 		} break;
