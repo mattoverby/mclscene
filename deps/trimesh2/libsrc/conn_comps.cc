@@ -213,4 +213,4 @@ void select_small_comps(TriMesh *mesh,
 	remove_unused_vertices(mesh);
 }
 
-}; // namespace trimesh
+} // namespace trimesh

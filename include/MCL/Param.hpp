@@ -43,18 +43,18 @@ namespace parse {
 	}
 
 	// Returns file extention
-	static std::string get_ext( std::string fname ){
-		size_t pos = fname.find_last_of('.');
-		return (std::string::npos == pos) ? "" : fname.substr(pos+1,fname.size());
-	}
+//	static std::string get_ext( std::string fname ){
+//		size_t pos = fname.find_last_of('.');
+//		return (std::string::npos == pos) ? "" : fname.substr(pos+1,fname.size());
+//	}
 
 	// Returns file name without extention or directory
 	// TODO some basic error checking
-	static std::string get_fname( std::string fname ){
-		std::string dir = fileDir( fname );
-		std::string ext = get_ext( fname );
-		return fname.substr( dir.size(), fname.size()-ext.size()-dir.size()-1 );
-	}
+//	static std::string get_fname( std::string fname ){
+//		std::string dir = fileDir( fname );
+//		std::string ext = get_ext( fname );
+//		return fname.substr( dir.size(), fname.size()-ext.size()-dir.size()-1 );
+//	}
 
 	static std::string get_timestamp(){
 		std::string MY_DATE_FORMAT = "h%H_m%M_s%S";
@@ -105,7 +105,7 @@ public:
 // see if one with a particular tag exists. Returns index of param, -1 otherwise
 static int param_index( std::string tag, const std::vector<Param> &params ){
 	tag = parse::to_lower(tag);
-	for( int i=0; i<params.size(); ++i ){ if( parse::to_lower(params[i].tag) == tag ){ return i; } }
+	for( size_t i=0; i<params.size(); ++i ){ if( parse::to_lower(params[i].tag) == tag ){ return i; } }
 	return -1;
 }
 

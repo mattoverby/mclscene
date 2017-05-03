@@ -178,4 +178,4 @@ float TriMesh::feature_size()
 	return sqrt(samples[samples.size()/2]);
 }
 
-}; // namespace trimesh
+} // namespace trimesh

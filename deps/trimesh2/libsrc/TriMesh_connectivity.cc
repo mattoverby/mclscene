@@ -133,4 +133,4 @@ void TriMesh::need_across_edge()
 //	dprintf("Done.\n");
 }
 
-}; // namespace trimesh
+} // namespace trimesh

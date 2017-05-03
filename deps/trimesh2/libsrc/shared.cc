@@ -70,4 +70,4 @@ void shared(TriMesh *mesh, float tol)
 	orient(mesh);
 }
 
-}; // namespace trimesh
+} // namespace trimesh

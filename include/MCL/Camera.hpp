@@ -90,19 +90,19 @@ public:
 	virtual Vec3f get_dir() = 0;
 
 	// Returns a string containing xml code for saving to a scenefile.
-	virtual std::string get_xml( int mode ){ return ""; }
+	virtual std::string get_xml( int /*mode*/ ){ return ""; }
 
 	// Window resize
-	virtual void resize( int width, int height ){}
+	virtual void resize( int /*width*/, int /*height*/ ){}
 
 	// Zoom (move forward/backward)
-	virtual void zoom( float dz ){}
+	virtual void zoom( float /*dz*/ ){}
 
 	// Rotate (input is left-drag x and y amount from screen)
-	virtual void rotate( float dx, float dy ){}
+	virtual void rotate( float /*dx*/, float /*dy*/ ){}
 
 	// Pan (input is right-drag x and y amount from screen)
-	virtual void pan( float dx, float dy ){}
+	virtual void pan( float /*dx*/, float /*dy*/ ){}
 
 protected:
 	trimesh::fxform view, projection;
@@ -115,7 +115,7 @@ protected:
 //
 class Trackball : public Camera {
 public:
-	Vec3f lookat, eye, u, v, w;
+	Vec3f eye, lookat, u, v, w;
 	float rotx, roty, panx, pany;
 	float fov_deg;
 	Vec2f clipping; // clipping plane for proj. matrix

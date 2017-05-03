@@ -36,7 +36,7 @@ public:
 	virtual ~Light(){}
 
 	// Returns a string containing xml code for saving to a scenefile.
-	std::string get_xml( int mode ){
+	virtual std::string get_xml( int /*mode*/ ){
 /*
 		std::stringstream xml;
 		if( app.type==0 ){

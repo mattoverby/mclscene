@@ -139,4 +139,4 @@ void remove_sliver_faces(TriMesh *mesh)
 	remove_faces(mesh, toremove);
 }
 
-}; // namespace trimesh
+} // namespace trimesh

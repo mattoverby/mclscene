@@ -255,4 +255,4 @@ static void collect_tris_in_strips(vector<int> &tstrips)
 
 }
 
-}; // namespace trimesh
+} // namespace trimesh

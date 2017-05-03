@@ -118,4 +118,4 @@ void find_overlap(TriMesh *mesh1, TriMesh *mesh2,
 	delete kd1;
 }
 
-}; // namespace trimesh
+} // namespace trimesh

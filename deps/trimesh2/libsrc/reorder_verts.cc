@@ -230,4 +230,4 @@ void reorder_verts(TriMesh *mesh)
 	dprintf("Done.\n");
 }
 
-}; // namespace trimesh
+} // namespace trimesh

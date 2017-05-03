@@ -100,7 +100,7 @@ namespace std {
 			int a[3] = { v.sorted_v[0], v.sorted_v[1], v.sorted_v[2] };
 			unsigned char *in = reinterpret_cast<unsigned char*>(a);
 			unsigned int ret = 2654435761u;
-			for(int i = 0; i < (3 * sizeof(int)); ++i)
+			for(unsigned int i = 0; i < (3 * sizeof(int)); ++i)
 				ret = (ret * 2654435761u) ^ *in++;
 			return ret;
 		}
@@ -110,7 +110,7 @@ namespace std {
 			int a[2] = { v.sorted_v[0], v.sorted_v[1] };
 			unsigned char *in = reinterpret_cast<unsigned char*>(a);
 			unsigned int ret = 2654435761u;
-			for(int i = 0; i < (2 * sizeof(int)); ++i)
+			for(unsigned int i = 0; i < (2 * sizeof(int)); ++i)
 				ret = (ret * 2654435761u) ^ *in++;
 			return ret;
 		}

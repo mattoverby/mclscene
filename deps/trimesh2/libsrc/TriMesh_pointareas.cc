@@ -79,4 +79,4 @@ void TriMesh::need_pointareas()
 	dprintf("Done.\n");
 }
 
-}; // namespace trimesh
+} // namespace trimesh

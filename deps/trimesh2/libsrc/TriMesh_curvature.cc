@@ -328,4 +328,4 @@ void TriMesh::need_dcurv()
 	dprintf("Done.\n");
 }
 
-}; // namespace trimesh
+} // namespace trimesh

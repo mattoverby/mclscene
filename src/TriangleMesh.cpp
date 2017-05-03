@@ -31,7 +31,8 @@ namespace trimesh_helper {
 
 void TriangleMesh::get_bounds( Vec3f &bmin, Vec3f &bmax ){
 	if( !aabb.valid ){
-		for( int f=0; f<faces.size(); ++f ){
+		size_t n_faces = faces.size();
+		for( size_t f=0; f<n_faces; ++f ){
 			aabb += vertices[ faces[f][0] ];
 			aabb += vertices[ faces[f][1] ];
 			aabb += vertices[ faces[f][2] ];
@@ -41,8 +42,8 @@ void TriangleMesh::get_bounds( Vec3f &bmin, Vec3f &bmax ){
 }
 
 
-Vec3f TriangleMesh::trinorm( unsigned int f){
-	if( f >= faces.size() ){ return Vec3f(0,0,0); }
+Vec3f TriangleMesh::trinorm(unsigned int f){
+	if( f >= (unsigned int)faces.size() ){ return Vec3f(0,0,0); }
 	Vec3f &v0 = vertices[faces[f][0]];
 	Vec3f &v1 = vertices[faces[f][1]];
 	Vec3f &v2 = vertices[faces[f][2]];
@@ -91,7 +92,8 @@ void TriangleMesh::need_edges( bool recompute ){
 
 	if( edges.size()>0 && !recompute ){ return; }
 	edges.clear();
-	for( int f=0; f<faces.size(); ++f ){
+	size_t n_faces = faces.size();
+	for( size_t f=0; f<n_faces; ++f ){
 		edges.push_back( Vec2i(faces[f][0],faces[f][1]) );
 		edges.push_back( Vec2i(faces[f][0],faces[f][2]) );
 		edges.push_back( Vec2i(faces[f][1],faces[f][2]) );
@@ -135,7 +137,8 @@ void TriangleMesh::apply_xform( const trimesh::xform &xf ){
 	for (int i = 0; i < nv; i++){ vertices[i] = xf * vertices[i]; }
 
 	aabb.valid = false;
-	for( int f=0; f<faces.size(); ++f ){
+	size_t n_faces = faces.size();
+	for( size_t f=0; f<n_faces; ++f ){
 		aabb += vertices[ faces[f][0] ];
 		aabb += vertices[ faces[f][1] ];
 		aabb += vertices[ faces[f][2] ];
@@ -183,9 +186,9 @@ bool TriangleMesh::load( std::string filename ){
 		texcoords.resize( newmesh->texcoords.size() );
 		faces.resize( newmesh->faces.size() );
 
-		for( int i=0; i<vertices.size(); ++i ){ vertices[i] = Vec3f( newmesh->vertices[i][0], newmesh->vertices[i][1], newmesh->vertices[i][2] ); }
-		for( int i=0; i<texcoords.size(); ++i ){ texcoords[i] = Vec2f( newmesh->texcoords[i][0], newmesh->texcoords[i][1] ); }
-		for( int i=0; i<faces.size(); ++i ){ faces[i] = Vec3i( newmesh->faces[i][0], newmesh->faces[i][1], newmesh->faces[i][2] ); }
+		for( size_t i=0; i<vertices.size(); ++i ){ vertices[i] = Vec3f( newmesh->vertices[i][0], newmesh->vertices[i][1], newmesh->vertices[i][2] ); }
+		for( size_t i=0; i<texcoords.size(); ++i ){ texcoords[i] = Vec2f( newmesh->texcoords[i][0], newmesh->texcoords[i][1] ); }
+		for( size_t i=0; i<faces.size(); ++i ){ faces[i] = Vec3i( newmesh->faces[i][0], newmesh->faces[i][1], newmesh->faces[i][2] ); }
 
 		delete newmesh;
 
@@ -194,7 +197,8 @@ bool TriangleMesh::load( std::string filename ){
 	// Remake the triangle refs and aabb
 //	make_tri_refs();
 	aabb.valid = false;
-	for( int f=0; f<faces.size(); ++f ){
+	size_t n_faces = faces.size();
+	for( size_t f=0; f<n_faces; ++f ){
 		aabb += vertices[ faces[f][0] ];
 		aabb += vertices[ faces[f][1] ];
 		aabb += vertices[ faces[f][2] ];
@@ -248,7 +252,7 @@ void TriangleMesh::save( std::string filename ){
 	for( int i=0; i<nt; ++i ){
 		fs << "\nvt " << texcoords[i][0] << ' ' << texcoords[i][1];
 	}
-	for( int i=0; i<faces.size(); ++i ){
+	for( size_t i=0; i<faces.size(); ++i ){
 		Vec3i f = faces[i]; f[0]+=1; f[1]+=1; f[2]+=1;
 
 		if( nn==0 && nt==0 ){ // no normals or texcoords
@@ -269,7 +273,8 @@ void TriangleMesh::save( std::string filename ){
 
 void TriangleMesh::make_ccw(){
 
-	for( int i=0; i<faces.size(); ++i ){
+	size_t n_faces = faces.size();
+	for( size_t i=0; i<n_faces; ++i ){
 		Vec3i f = faces[i];
 		faces[i] = Vec3i( f[0], f[2], f[1] );
 	}
@@ -335,7 +340,7 @@ bool TriangleMesh::load_obj( std::string file ){
 			if( tok == "v" ){ // Vertex
 				float x, y, z; ss >> x >> y >> z; // vertices
 				vertices.push_back( Vec3f(x,y,z) );
-				float cx, cy, cz; // colors
+//				float cx, cy, cz; // colors
 //				if( ss >> cx >> cy >> cz ){ colors.push_back( Vec3f(cx,cy,cz) ); }
 			}
 
@@ -394,9 +399,10 @@ void TriangleMesh::collapse_points( float distance ){
 	std::unordered_map< int, std::vector<int> > same_as;
 
 	// Make a map of nodes that overlap
-	for( int i=0; i<vertices.size(); ++i ){
+	size_t n_verts = vertices.size();
+	for( size_t i=0; i<n_verts; ++i ){
 		same_as[i] = std::vector<int>();
-		for( int j=0; j<vertices.size(); ++j ){
+		for( size_t j=0; j<n_verts; ++j ){
 			if( i==j ){ continue; }
 			float dist = (vertices[i]-vertices[j]).squaredNorm();
 			if( dist < dx ){
@@ -408,7 +414,7 @@ void TriangleMesh::collapse_points( float distance ){
 	// Remove duplicates
 	std::unordered_map< int, std::vector<int> >::iterator it = same_as.begin();
 	for( ; it != same_as.end(); ++it ){
-		for( int i=0; i<it->second.size(); ++i ){
+		for( size_t i=0; i<it->second.size(); ++i ){
 			same_as.erase( it->second[i] );
 		}
 	}
@@ -423,7 +429,7 @@ void TriangleMesh::collapse_points( float distance ){
 		int new_idx = vertices.size();
 		vertex_map[ orig_idx ] = new_idx;
 		if( same_as.count(orig_idx)>0 ){
-			for( int i=0; i<same_as[orig_idx].size(); ++i ){
+			for( size_t i=0; i<same_as[orig_idx].size(); ++i ){
 				vertex_map[ same_as[orig_idx][i] ] = new_idx;
 			}
 		}
@@ -431,7 +437,7 @@ void TriangleMesh::collapse_points( float distance ){
 	}
 
 	// Update faces
-	for( int i=0; i<faces.size(); ++i ){
+	for( size_t i=0; i<faces.size(); ++i ){
 		for( int j=0; j<3; ++j ){
 			faces[i][j] = vertex_map[ faces[i][j] ];
 		}

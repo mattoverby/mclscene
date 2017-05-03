@@ -174,4 +174,4 @@ void edgeflip(TriMesh *mesh)
 	dprintf("Done.\n");
 }
 
-}; // namespace trimesh
+} // namespace trimesh

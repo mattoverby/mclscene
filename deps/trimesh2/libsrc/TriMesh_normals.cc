@@ -193,4 +193,4 @@ using namespace std;
 }
 
 
-}; // namespace trimesh
+} // namespace trimesh

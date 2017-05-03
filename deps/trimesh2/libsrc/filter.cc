@@ -506,4 +506,4 @@ void noisify(TriMesh *mesh, float amount)
 		mesh->vertices[i] += disp[i];
 }
 
-}; // namespace trimesh
+} // namespace trimesh

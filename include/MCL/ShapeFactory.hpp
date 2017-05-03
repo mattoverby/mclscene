@@ -179,7 +179,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_beam( int chunks, int 
 
 		// Remove faces on the -x and +x
 		std::vector<bool> toremove( box->faces.size(), false );
-		for( int f=0; f<box->faces.size(); ++f ){
+		for( size_t f=0; f<box->faces.size(); ++f ){
 			if( b > 0 ){ // remove -x
 				if( box->trinorm(f).dot( Vec3f(-1.f,0.f,0.f) ) > 0.f ){ toremove[f]=true; }
 			}
@@ -193,8 +193,8 @@ static inline std::shared_ptr<TriangleMesh> factory::make_beam( int chunks, int 
 
 		int prev_verts = mesh->vertices.size();
 
-		for( int i=0; i<box->vertices.size(); ++i ){ mesh->vertices.push_back( box->vertices[i] ); }
-		for( int i=0; i<box->faces.size(); ++i ){
+		for( size_t i=0; i<box->vertices.size(); ++i ){ mesh->vertices.push_back( box->vertices[i] ); }
+		for( size_t i=0; i<box->faces.size(); ++i ){
 			for( int j=0; j<3; ++j ){ box->faces[i][j] += prev_verts; }
 			mesh->faces.push_back( box->faces[i] );
 		}
@@ -382,8 +382,8 @@ static inline std::shared_ptr<TriangleMesh> factory::make_plane( int tess_x, int
 
 	int n_verts = (tess_x+1)*(tess_y+1)+(tess_x*tess_y);
 	mesh->vertices.reserve(n_verts);
-	double y_step = 1.0 / tess_y;
-	double x_step = 1.0 / tess_x;
+//	double y_step = 1.0 / tess_y;
+//	double x_step = 1.0 / tess_x;
 
 	// Make grid of vertices
 	for( int x=0; x<(tess_x+1); ++x ){
@@ -422,7 +422,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_plane( int tess_x, int
 
 	// Make texture coordinates
 	mesh->texcoords.reserve( mesh->vertices.size() );
-	for( int i=0; i<mesh->vertices.size(); ++i ){
+	for( size_t i=0; i<mesh->vertices.size(); ++i ){
 		Vec3f p = mesh->vertices[i];
 		float u = (p[0]+1.f)/2.f;
 		float v = 1.f-(p[1]+1.f)/2.f;
@@ -529,7 +529,8 @@ static inline std::shared_ptr<TriangleMesh> factory::make_cyl(int tess_c, int te
 
 
 static inline std::shared_ptr<TriangleMesh> factory::make_torus( int tess, float inner_rad, float outer_rad, SceneManager *scene ){
-std::cout << "TODO: make_torus" << std::endl;
+(void)(scene);
+std::cout << "TODO: make_torus: " << tess << " " << inner_rad << " " << outer_rad << std::endl;
 return NULL;
 /*
 	if (tess < 3) tess = 3;
@@ -674,12 +675,13 @@ static inline void factory::remap_verts(TriangleMesh *mesh, const std::vector<in
 	}
 
 	// Check what we're doing
-	bool removing_verts = false, any_left = false;
+//	bool removing_verts = false;
+	bool any_left = false;
 	int last = -1;
 	int nv = mesh->vertices.size();
 	for (int i = 0; i < nv; i++) {
 		if (remap_table[i] < 0) {
-			removing_verts = true;
+//			removing_verts = true;
 		} else {
 			any_left = true;
 			if (remap_table[i] > last)
@@ -693,7 +695,7 @@ static inline void factory::remap_verts(TriangleMesh *mesh, const std::vector<in
 	}
 
 	// Figure out what we have sitting around, so we can remap/recompute
-	bool have_faces = !mesh->faces.empty();
+//	bool have_faces = !mesh->faces.empty();
 	bool have_normals = !mesh->normals.empty();
 
 	// Remap the vertices and per-vertex properties

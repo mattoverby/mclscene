@@ -304,7 +304,8 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 void RenderGL::load_textures(){
 
 	// Load the materials and textures
-	for( int i=0; i<scene->materials.size(); ++i ){
+	size_t n_mats = scene->materials.size();
+	for( size_t i=0; i<n_mats; ++i ){
 
 		// Get the app information of the material
 		std::shared_ptr< Material > mat = scene->materials[i];
@@ -327,7 +328,8 @@ void RenderGL::draw_objects( bool update_vbo ){
 	//
 	//	Update VBOs
 	//
-	for( int i=0; i<scene->objects.size(); ++i ){
+	size_t n_objs = scene->objects.size();
+	for( size_t i=0; i<n_objs; ++i ){
 
 		if( i >= render_meshes.size() ){
 			render_meshes.push_back( RenderMesh( scene->objects[i] ) );
@@ -438,7 +440,8 @@ void RenderGL::geometry_pass( Camera *camera ){
 	//
 	//	Geometry pass is for each object
 	//
-	for( int i=0; i<scene->objects.size(); ++i ){
+	size_t n_objs = scene->objects.size();
+	for( size_t i=0; i<n_objs; ++i ){
 
 		// Get the mesh
 		RenderMesh *mesh = &render_meshes[i];
@@ -515,7 +518,7 @@ void RenderGL::lighting_pass( Camera *cam ){
 
 	// Camera transforms
 	trimesh::fxform model;
-	trimesh::fxform &view = cam->get_view();
+//	trimesh::fxform &view = cam->get_view();
 	trimesh::fxform &projection = cam->get_projection();
 
         // 2. Create SSAO texture
@@ -530,7 +533,7 @@ void RenderGL::lighting_pass( Camera *cam ){
 	glBindTexture(GL_TEXTURE_2D, noiseTexture);
 
 	// Send kernel + rotation 
-	for (GLuint i = 0; i < (size_t)ssaoKernel.size(); ++i){
+	for (size_t i = 0; i < ssaoKernel.size(); ++i){
 		glUniform3fv(shaderSSAO.uniform(("samples[" + std::to_string(i) + "]").c_str()), 1, &ssaoKernel[i][0]);
 	}
 	glUniform1f(shaderSSAO.uniform("radius"), ssao_radius);
@@ -562,7 +565,7 @@ void RenderGL::lighting_pass( Camera *cam ){
 
 	// Setup lighting
 	glUniform1i( shaderLightingPass.uniform("num_lights"), scene->lights.size() );
-	for( int l=0; l<scene->lights.size(); ++l ){
+	for( size_t l=0; l<scene->lights.size(); ++l ){
 		Light::AppData *light = &scene->lights[l]->app;
 		std::stringstream array_ss; array_ss << "lights[" << l << "].";
 		std::string array_str = array_ss.str();
@@ -727,7 +730,7 @@ void RenderGL::draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *came
 	if( mat->app.mode == 2 ){ return; }
 
 	// Check for valid mesh data
-	if( mesh->num_vertices <= 0 || mesh->num_faces <= 0 ){ return; }
+	if( mesh->num_vertices <= 0 	|| mesh->num_faces <= 0 ){ return; }
 
 	// Otherwise check if we need to do an update
 	if( mesh->faces_ibo <= 0 || mesh->tris_vao <=0 || update_vbo ){

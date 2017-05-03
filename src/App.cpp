@@ -40,11 +40,12 @@ std::vector< std::function<void ( GLFWwindow* window, int width, int height )> >
 //
 App::App( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_),
 	update_mesh_buffers(true), in_focus(true), close_window(false), save_frame_num(0) {
-	Input &input = Input::getInstance(); // initialize Input
+//	Input &input = Input::getInstance(); // initialize Input
+	Input::getInstance();
 
 	scene->get_bsphere(&scene_center,&scene_radius,true);
 	std::cout << "Scene Radius: " << scene_radius << std::endl;
-	std::cout << "Scene Center: " << scene_center.transpose() << std::endl;
+	std::cout << "Scene Center: " << scene_center[0] << ' ' << scene_center[1] << ' ' << scene_center[2] << std::endl;
 
 	// Init runtime vars
 	left_mouse_drag = false;
@@ -91,7 +92,7 @@ GLFWwindow* window;
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 	// Get the monitor max window size
-	const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+//	const GLFWvidmode * mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 	int max_width = 1280;
 	int max_height = 960;
 //	int max_width = mode->width;
@@ -195,6 +196,7 @@ inline void App::run_simulator_step(){
 
 
 void App::mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
+	(void)mods;
 
 	if( action == GLFW_PRESS && button == GLFW_MOUSE_BUTTON_LEFT ){
 		glfwGetCursorPos(window, &mouse_pos[0], &mouse_pos[1]);
@@ -215,7 +217,7 @@ void App::mouse_button_callback(GLFWwindow* window, int button, int action, int 
 
 
 
-void App::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
+void App::key_callback(GLFWwindow* window, int key, int /*scancode*/, int action, int /*mods*/){
 
 	if (action != GLFW_PRESS){ return; }
 
@@ -245,7 +247,7 @@ void App::key_callback(GLFWwindow* window, int key, int scancode, int action, in
 }
 
 
-void App::cursor_position_callback(GLFWwindow* window, double x, double y){
+void App::cursor_position_callback(GLFWwindow* /*window*/, double x, double y){
 
 	if( left_mouse_drag ){
 		current_cam->rotate( (x-mouse_pos[0])/100.f, (y-mouse_pos[1])/100.f );
@@ -258,21 +260,16 @@ void App::cursor_position_callback(GLFWwindow* window, double x, double y){
 }
 
 
-void App::scroll_callback(GLFWwindow* window, double x, double y){
+void App::scroll_callback(GLFWwindow* /*window*/, double /*x*/, double y){
 	current_cam->zoom( float(y)*scene_radius );
 }
 
 
-void App::framebuffer_size_callback(GLFWwindow* window, int width, int height){
-
-	float scene_d = std::fmaxf( scene_radius*2.f, 0.2f );
-	float aspect_ratio = 1.f;
-	if( height > 0 ){ aspect_ratio = std::fmaxf( (float)width / (float)height, 1e-6f ); }
+void App::framebuffer_size_callback(GLFWwindow* /*window*/, int width, int height){
 	glViewport(0, 0, width, height);
 	current_cam->resize( width, height );
 	renderer.update_window_size( width, height );
 }
-
 
 
 inline void App::save_screenshot( GLFWwindow *window ){
@@ -288,7 +285,7 @@ inline void App::save_screenshot( GLFWwindow *window ){
 
 	// loop and swap rows (invert vertical)
 	for (int i=0; i < h; i++){
-		memcpy( &rgbdata[i*w*3], &temp_rgbdata[(h-i-1)*w*3], row_stride );
+		std::memcpy( &rgbdata[i*w*3], &temp_rgbdata[(h-i-1)*w*3], row_stride );
 	}
 	temp_rgbdata.clear();
 

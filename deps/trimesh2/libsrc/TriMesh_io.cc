@@ -2294,4 +2294,4 @@ void TriMesh::eprintf(const char *format, ...)
 	}
 }
 
-}; // namespace trimesh
+} // namespace trimesh

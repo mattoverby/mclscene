@@ -383,4 +383,4 @@ void KDtree::find_k_closest_to_pt(std::vector<const float *> &knn,
 		knn[i] = ti.knn[i].second;
 }
 
-}; // namespace trimesh
+} // namespace trimesh

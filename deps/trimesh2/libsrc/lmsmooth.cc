@@ -87,4 +87,4 @@ void lmsmooth(TriMesh *mesh, int niters)
 	mesh->bsphere.valid = false;
 }
 
-}; // namespace trimesh
+} // namespace trimesh

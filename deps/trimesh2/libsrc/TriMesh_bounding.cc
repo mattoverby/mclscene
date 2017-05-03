@@ -126,4 +126,4 @@ void TriMesh::need_bsphere()
 
 #endif
 
-}; // namespace trimesh
+} // namespace trimesh

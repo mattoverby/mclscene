@@ -439,4 +439,4 @@ template void diffuse_vector< Vec<2,float> >(TriMesh *, vector< Vec<2,float> > &
 template void diffuse_vector< Vec<3,float> >(TriMesh *, vector< Vec<3,float> > &, float);
 template void diffuse_vector< Vec<4,float> >(TriMesh *, vector< Vec<4,float> > &, float);
 
-}; // namespace trimesh
+} // namespace trimesh

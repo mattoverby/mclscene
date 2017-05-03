@@ -64,27 +64,27 @@ void SceneManager::save( std::string xmlfile, int mode ){
 		xml << "<mclscene>";
 
 		// Loop over objects
-		for( int i=0; i<objects.size(); ++i ){
+		for( size_t i=0; i<objects.size(); ++i ){
 			xml << "\n" << objects[i]->get_xml( mode );
 			int mat = objects[i]->material;
-			if( mat >= 0 && mat < objects.size() ){
+			if( mat >= 0 && mat < (int)objects.size() ){
 				std::stringstream ss; ss << "mat" << mat;
 				// TODO export
 			}
 		}
 
 		// Loop over materials, let the name be the index
-		for( int i=0; i<materials.size(); ++i ){
+		for( size_t i=0; i<materials.size(); ++i ){
 			xml << "\n" << materials[i]->get_xml( mode );
 		}
 
 		// Loop over cameras
-		for( int i=0; i<cameras.size(); ++i ){
+		for( size_t i=0; i<cameras.size(); ++i ){
 			xml << "\n" << cameras[i]->get_xml( mode );
 		}
 
 		// Loop over lights
-		for( int i=0; i<lights.size(); ++i ){
+		for( size_t i=0; i<lights.size(); ++i ){
 			xml << "\n" << lights[i]->get_xml( mode );
 		}
 
@@ -153,7 +153,7 @@ void SceneManager::make_3pt_lighting( const Vec3f &eye, const Vec3f &center ){
 	lights.push_back( back );
 
 	float half_d = distance/2.f;
-	float quart_d = distance/4.f;
+//	float quart_d = distance/4.f;
 
 	// Set positions
 	key->app.position = center + w*distance + v*half_d - u*distance;
@@ -185,7 +185,7 @@ void SceneManager::get_bsphere( Vec3f *center, float *radius, bool recompute ){
 
 	if( last_radius <= 0.f || recompute ){
 		trimesh::Miniball<3,float> mb;
-		for( int i=0; i<objects.size(); ++i ){
+		for( size_t i=0; i<objects.size(); ++i ){
 			Vec3f min, max;
 			objects[i]->get_bounds( min, max );
 			mb.check_in( trimesh::vec(min[0],min[1],min[2]) ); mb.check_in( trimesh::vec(max[0],max[1],max[2]) );

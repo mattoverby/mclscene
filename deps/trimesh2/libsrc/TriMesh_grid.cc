@@ -107,4 +107,4 @@ void TriMesh::triangulate_grid(bool remove_slivers /* = true */)
 	dprintf("  ");
 }
 
-}; // namespace trimesh
+} // namespace trimesh

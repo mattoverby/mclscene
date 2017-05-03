@@ -36,15 +36,17 @@ namespace tetmesh_helper {
 	}
 	static std::string to_lower( std::string s ){ std::transform( s.begin(), s.end(), s.begin(), ::tolower ); return s; }
 
+#ifdef MCLSCENE_ENABLE_TETGEN
 	static char **make_argv( const std::vector<std::string> &s ){
 		char **args;
 		args = new char *[s.size()];
-		for( int i = 0; i < s.size(); ++i ){
+		for( size_t i = 0; i < s.size(); ++i ){
 			args[i] = new char[s[i].length() + 1];
 			strcpy( args[i], s[i].c_str());
 		} 
 		return args;
 	}
+#endif
 } // end helper functions
 
 
@@ -163,7 +165,7 @@ void TetMesh::apply_xform( const trimesh::xform &xf ){
 	for (int i = 0; i < nv; i++){ vertices[i] = xf * vertices[i]; }
 	need_normals(true);
 	aabb.valid = false;
-	for( int f=0; f<faces.size(); ++f ){
+	for( size_t f=0; f<faces.size(); ++f ){
 		aabb += vertices[ faces[f][0] ];
 		aabb += vertices[ faces[f][1] ];
 		aabb += vertices[ faces[f][2] ];
@@ -194,7 +196,7 @@ bool TetMesh::load_node( std::string filename ){
 
 		std::stringstream lineSS(line);
 		double x, y, z;
-		int idx;
+		size_t idx;
 		lineSS >> idx >> x >> y >> z;
 
 		// Check for 1-indexed
@@ -210,7 +212,7 @@ bool TetMesh::load_node( std::string filename ){
 	}
 	filestream.close();
 
-	for( int i=0; i<vertex_set.size(); ++i ){
+	for( size_t i=0; i<vertex_set.size(); ++i ){
 		if( vertex_set[i] == 0 ){ std::cerr << "\n**TetMesh Error: Your indices are bad for file " << node_file.str() << std::endl; return false; }
 	}
 
@@ -240,7 +242,7 @@ bool TetMesh::load_ele( std::string filename ){
 		getline( filestream, line );
 
 		std::stringstream lineSS(line);
-		int idx;
+		size_t idx;
 		int node_ids[4];
 		lineSS >> idx >> node_ids[0] >> node_ids[1] >> node_ids[2] >> node_ids[3];
 //		lineSS >> idx >> node_ids[0] >> node_ids[2] >> node_ids[1] >> node_ids[3];
@@ -261,7 +263,7 @@ bool TetMesh::load_ele( std::string filename ){
 	}
 	filestream.close();
 
-	for( int i=0; i<tet_set.size(); ++i ){
+	for( size_t i=0; i<tet_set.size(); ++i ){
 		if( tet_set[i] == 0 ){ std::cerr << "\n**TetMesh Error: Your indices are bad for file " << ele_file.str() << std::endl; return false; }
 	}
 
@@ -381,15 +383,15 @@ bool TetMesh::load_mesh( std::string filename ){
 			float x, y, z; int idx=-1;
 			ss >> x >> y >> z >> idx;
 			idx--;
-			if( idx < 0 || idx >= vertices.size() )
-			vertices[idx] = Vec3f(x,y,z);
+			if( idx < 0 || idx >= (int)vertices.size() )
+				vertices[idx] = Vec3f(x,y,z);
 		} else if( parsing_tets ){
 			std::stringstream ss(line);
 			int x, y, z, w; int idx=-1;
 			ss >> x >> y >> z >> w >> idx;
 			idx--; x--; y--; z--; w--;
-			if( idx < 0 || idx >= tets.size() )
-			tets[idx] = Vec4i(x,y,z,w);
+			if( idx < 0 || idx >= (int)tets.size() )
+				tets[idx] = Vec4i(x,y,z,w);
 		}
 
 	} // end loop file
@@ -411,7 +413,8 @@ bool TetMesh::need_surface(){
 	std::unordered_map< int3, int > face_ids;
 
 	// Loop over tets and store face information
-	for( int t=0; t<tets.size(); ++t ){
+	size_t n_tets = tets.size();
+	for( size_t t=0; t<n_tets; ++t ){
 
 		// Indices that make up the tetrahedra
 		int p0 = tets[t][0];
@@ -455,7 +458,8 @@ void TetMesh::get_surface_vertices( std::vector<int> *indices ){
 	if( !has_faces ){ need_surface(); }
 
 	std::map<int, bool> vertlist; // Sorted
-	for( int i=0; i<faces.size(); ++i ){
+	size_t n_faces = faces.size();
+	for( size_t i=0; i<n_faces; ++i ){
 		for( int j=0; j<3; ++j ){ vertlist[ faces[i][j] ] = true; }
 	}
 
@@ -492,7 +496,8 @@ void TetMesh::need_edges(){
 	if( faces.size()==0 ){ need_surface(); }
 
 	edges.reserve( faces.size()*3 );
-	for( int f=0; f<faces.size(); ++f ){
+	size_t n_faces = faces.size();
+	for( size_t f=0; f<n_faces; ++f ){
 		edges.push_back( Vec2i(faces[f][0],faces[f][1]) );
 		edges.push_back( Vec2i(faces[f][0],faces[f][2]) );
 		edges.push_back( Vec2i(faces[f][1],faces[f][2]) );
@@ -505,7 +510,8 @@ void TetMesh::need_edges(){
 
 void TetMesh::get_bounds( Vec3f &bmin, Vec3f &bmax ){
 	if( !aabb.valid ){
-		for( int f=0; f<faces.size(); ++f ){
+		size_t n_faces = faces.size();
+		for( size_t f=0; f<n_faces; ++f ){
 			aabb += vertices[ faces[f][0] ];
 			aabb += vertices[ faces[f][1] ];
 			aabb += vertices[ faces[f][2] ];
@@ -524,10 +530,10 @@ void TetMesh::save( std::string filename ){
 		std::ofstream filestream;
 		filestream.open( filename.c_str() );
 		filestream << "tet " << vertices.size() << ' ' << tets.size();
-		for( int i=0; i<vertices.size(); ++i ){
+		for( size_t i=0; i<vertices.size(); ++i ){
 			filestream << "\n" << vertices[i][0] << ' ' << vertices[i][1] << ' ' << vertices[i][2];
 		}
-		for( int i=0; i<tets.size(); ++i ){
+		for( size_t i=0; i<tets.size(); ++i ){
 			filestream << "\n" << tets[i][0] << ' ' << tets[i][1] << ' ' << tets[i][2] << ' ' << tets[i][3];
 		}
 
@@ -550,7 +556,7 @@ void TetMesh::save( std::string filename ){
 			std::ofstream filestream;
 			filestream.open( elefn.str().c_str() );
 			filestream << tets.size() << " 4 0\n";
-			for( int i=0; i<tets.size(); ++i ){
+			for( size_t i=0; i<tets.size(); ++i ){
 				filestream << "\t" << i << ' ' << tets[i][0] << ' ' << tets[i][1] << ' ' << tets[i][2] << ' ' << tets[i][3] << "\n";
 			}
 			filestream << "# Generated by mclscene (www.mattoverby.net)";
@@ -572,7 +578,7 @@ void TetMesh::save( std::string filename ){
 			std::ofstream filestream;
 			filestream.open( nodefn.str().c_str() );
 			filestream << vertices.size() << " 3 0 0\n";
-			for( int i=0; i<vertices.size(); ++i ){
+			for( size_t i=0; i<vertices.size(); ++i ){
 				filestream << "\t" << i << ' ' << to_str(vertices[i]) << "\n";
 			}
 			filestream << "# Generated by mclscene (www.mattoverby.net)";
@@ -698,6 +704,7 @@ std::string TetMesh::make_tetmesh( std::string filename ){
 
 	#else
 
+	(void)filename;
 	return "";
 
 	#endif
@@ -711,9 +718,9 @@ void TetMesh::collapse_points( float distance ){
 	std::unordered_map< int, std::vector<int> > same_as;
 
 	// Make a map of nodes that overlap
-	for( int i=0; i<vertices.size(); ++i ){
+	for( size_t i=0; i<vertices.size(); ++i ){
 		same_as[i] = std::vector<int>();
-		for( int j=0; j<vertices.size(); ++j ){
+		for( size_t j=0; j<vertices.size(); ++j ){
 			if( i==j ){ continue; }
 			float dist = (vertices[i]-vertices[j]).squaredNorm();
 			if( dist < dx ){
@@ -725,7 +732,7 @@ void TetMesh::collapse_points( float distance ){
 	// Remove duplicates
 	std::unordered_map< int, std::vector<int> >::iterator it = same_as.begin();
 	for( ; it != same_as.end(); ++it ){
-		for( int i=0; i<it->second.size(); ++i ){
+		for( size_t i=0; i<it->second.size(); ++i ){
 			same_as.erase( it->second[i] );
 		}
 	}
@@ -740,7 +747,7 @@ void TetMesh::collapse_points( float distance ){
 		int new_idx = vertices.size();
 		vertex_map[ orig_idx ] = new_idx;
 		if( same_as.count(orig_idx)>0 ){
-			for( int i=0; i<same_as[orig_idx].size(); ++i ){
+			for( size_t i=0; i<same_as[orig_idx].size(); ++i ){
 				vertex_map[ same_as[orig_idx][i] ] = new_idx;
 			}
 		}
@@ -748,14 +755,14 @@ void TetMesh::collapse_points( float distance ){
 	}
 
 	// Update faces
-	for( int i=0; i<faces.size(); ++i ){
+	for( size_t i=0; i<faces.size(); ++i ){
 		for( int j=0; j<3; ++j ){
 			faces[i][j] = vertex_map[ faces[i][j] ];
 		}
 	}
 
 	// Update tets
-	for( int i=0; i<tets.size(); ++i ){
+	for( size_t i=0; i<tets.size(); ++i ){
 		for( int j=0; j<4; ++j ){
 			tets[i][j] = vertex_map[ tets[i][j] ];
 		}

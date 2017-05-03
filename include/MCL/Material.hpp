@@ -41,7 +41,7 @@ public:
 	virtual ~Material(){}
 
 	// Returns a string containing xml code for saving to a scenefile.
-	virtual std::string get_xml( int mode ){
+	virtual std::string get_xml( int /*mode*/ ){
 		std::cout << "TODO: Material::get_xml" << std::endl;
 		return "";
 	}

@@ -28,6 +28,11 @@ add_definitions( -DMCLSCENE_BUILD_DIR="${CMAKE_BINARY_DIR}" ) # root build dir
 add_definitions( -DMCLSCENE_SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}" )
 set( CMAKE_BUILD_TYPE Release )
 
+# TODO eventually go through and clean up warnings
+#if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+#	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-long-long")
+#endif()
+
 #
 #	compilation options
 #
@@ -69,6 +74,7 @@ add_subdirectory( ${TRIMESH_DIR} ) # sets TRIMESH_INCLUDE and TRIMESH_SRCS
 	set( TETGEN_SRCS "" )
 #endif(MCL_ENABLE_TETGEN)
 
+set( STB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/stb" ) # STB, header only
 include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeEigen3.cmake ) # Eigen3
 include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeGLFW.cmake ) # GLFW
 find_package(OpenGL 3) # OpenGL
@@ -84,13 +90,6 @@ else()
 	set(GLEW_INCLUDE_DIR "")
 endif(MCL_USE_GLEW)
 
-# soil2, included in deps/
-#set( SOIL2_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/soil2" )
-#add_subdirectory( ${SOIL2_DIR} ) # sets SOIL2_INCLUDE and SOIL2_SRCS
-
-# STB, included in deps/
-set( STB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/stb" )
-
 #
 #	mclscene library
 #
@@ -105,10 +104,8 @@ set( MCLSCENE_SRCS
 	src/BVH.cpp
 	src/App.cpp
 	src/RenderGL.cpp
-#	src/SimpleRenderGL.cpp
 	${GLEW_SRCS}
 	${TRIMESH_SRCS}
-#	${SOIL2_SRCS}
 	${TETGEN_SRCS}
 )
 

@@ -79,7 +79,8 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 	//
 	// Preliminary loop to create the name to index mappings
 	//
-	for( int i=0; i<children.size(); ++i ){
+	size_t n_child = children.size();
+	for( size_t i=0; i<n_child; ++i ){
 		std::string tag = parse::to_lower(children[i].name());
 		std::string name = parse::to_lower(children[i].attribute("name").as_string());
 		if( name.size() > 0 ){
@@ -106,7 +107,7 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 	// Now parse scene information and create components
 	// Not parallelized to maintain correct file-to-index order
 	//
-	for( int child=0; child<children.size(); ++child ){
+	for( size_t child=0; child<n_child; ++child ){
 
 		pugi::xml_node curr_node = children[child];
 		std::string type = curr_node.attribute("type").as_string();
@@ -122,7 +123,7 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 		{
 			load_params( params, curr_node );
 			// If any parameters are "file" or "texture" give it the path name from the current execution directory
-			for( int i=0; i<params.size(); ++i ){
+			for( size_t i=0; i<params.size(); ++i ){
 				if( parse::to_lower(params[i].tag) == "file" || parse::to_lower(params[i].tag) == "texture" ){
 					params[i].value = xmldir + params[i].as_string();
 				}
@@ -182,7 +183,6 @@ static inline bool mcl::load_mclscene( std::string filename, SceneManager *scene
 			if( tag == "material" ){
 				std::shared_ptr<Material> mat = parse_material( type, params );
 				if( mat != NULL ){
-					int idx = scene->materials.size();
 					scene->materials.push_back( mat );
 				}
 			} // end build material
@@ -208,6 +208,7 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 	//
 	//	First build the transform and other common params
 	//
+	int n_params = params.size();
 	bool flat_shading = false;
 	int subdivide_mesh = 0;
 	bool invis_material = false;
@@ -215,7 +216,7 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 	int tess = 3;
 	trimesh::xform x_form;
 	std::string filename = "";
-	for( int i=0; i<params.size(); ++i ){
+	for( int i=0; i<n_params; ++i ){
 		std::string tag = parse::to_lower(params[i].tag);
 		if( tag=="translate" ){ x_form = params[i].as_xform() * x_form; }
 		else if( tag=="scale" ){ x_form = params[i].as_xform() * x_form; }
@@ -242,7 +243,7 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 		Vec3f center(0,0,0);
 		int tess = 3;
 
-		for( int i=0; i<params.size(); ++i ){
+		for( int i=0; i<n_params; ++i ){
 			if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_double(); }
 			else if( parse::to_lower(params[i].tag)=="center" ){ center=params[i].as_vec3(); }
 			else if( parse::to_lower(params[i].tag)=="tess" ){ tess=params[i].as_int(); }
@@ -268,7 +269,7 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 	else if( type == "plane" ){
 		int tess_x = 10;
 		int tess_y = 10;
-		for( int i=0; i<params.size(); ++i ){
+		for( int i=0; i<n_params; ++i ){
 			std::string tag = parse::to_lower(params[i].tag);
 			if( tag=="width" || tag=="tess_x" ){ tess_x=params[i].as_int(); }
 			else if( tag=="length" || tag=="tess_y" ){ tess_y=params[i].as_int(); }
@@ -282,7 +283,7 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 	//
 	else if( type == "beam" ){
 		int chunks = 5;
-		for( int i=0; i<params.size(); ++i ){
+		for( int i=0; i<n_params; ++i ){
 			if( parse::to_lower(params[i].tag)=="chunks" ){ chunks=params[i].as_int(); }
 		}
 		new_obj = factory::make_beam( chunks, tess );
@@ -296,7 +297,7 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 	else if( type == "cylinder" ){
 		float radius = 1.f;
 		int tess_l=10, tess_c=10;
-		for( int i=0; i<params.size(); ++i ){
+		for( int i=0; i<n_params; ++i ){
 			if( parse::to_lower(params[i].tag)=="tess_l" ){ tess_l=params[i].as_int(); }
 			if( parse::to_lower(params[i].tag)=="tess_c" ){ tess_c=params[i].as_int(); }
 			else if( parse::to_lower(params[i].tag)=="radius" ){ radius=params[i].as_float(); }
@@ -311,7 +312,7 @@ static inline std::shared_ptr<mcl::BaseObject> mcl::parse_object( std::string ty
 	else if( type == "torus" ){
 		float inner_rad = 0.25f;
 		float outer_rad = 1.f; // doesn't do anything?
-		for( int i=0; i<params.size(); ++i ){
+		for( int i=0; i<n_params; ++i ){
 			if( parse::to_lower(params[i].tag)=="inner_radius" ){ inner_rad=params[i].as_float(); }
 		}
 		new_obj = factory::make_torus( tess, inner_rad, outer_rad );
@@ -375,7 +376,7 @@ static inline std::shared_ptr<mcl::Material> mcl::parse_material( std::string ty
 		std::shared_ptr<Material> mat( new Material() );
 
 		// Loop again for a change in params
-		for( int i=0; i<params.size(); ++i ){
+		for( size_t i=0; i<params.size(); ++i ){
 
 			std::string tag = parse::to_lower(params[i].tag);
 
@@ -423,7 +424,7 @@ static inline std::shared_ptr<mcl::Light> mcl::parse_light( std::string type, st
 	//
 	//	Common light parameters
 	//
-	for( int i=0; i<params.size(); ++i ){
+	for( size_t i=0; i<params.size(); ++i ){
 		std::string tag = parse::to_lower(params[i].tag);
 		if( tag=="intensity" || tag=="color" ){
 			params[i].fix_color();
@@ -479,7 +480,7 @@ static inline std::shared_ptr<mcl::Camera> mcl::parse_camera( std::string type, 
 	//
 	//	Common camera parameters
 	//
-	for( int i=0; i<params.size(); ++i ){
+	for( size_t i=0; i<params.size(); ++i ){
 		std::string tag = parse::to_lower(params[i].tag);
 		if( tag=="eye" || tag=="position" ){ eye=params[i].as_vec3(); }
 		else if( tag=="direction" ){

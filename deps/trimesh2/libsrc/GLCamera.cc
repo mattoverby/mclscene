@@ -425,4 +425,4 @@ void GLCamera::setupGL(const point &scene_center, float scene_size) const
 */
 }
 
-}; // namespace trimesh
+} // namespace trimesh

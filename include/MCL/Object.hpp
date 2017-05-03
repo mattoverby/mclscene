@@ -56,7 +56,7 @@ public:
 		float* &texcoords, int &num_texcoords ) = 0;
 
 	// Compute normals (need to be called on vertex update for physics sims)
-	virtual void need_normals( bool recompute=false ){}
+	virtual void need_normals( bool /*recompute*/ ){}
 
 	// Get primitive data, returns true on success
 	// Prim type is the type of primitive being requested, as objects
@@ -65,10 +65,10 @@ public:
 
 	// Apply a transformation matrix to the object. Most objects will
 	// just apply the transform directly. Others (e.g. instances) will just store the xform.
-	virtual void apply_xform( const trimesh::xform &xf ){}
+	virtual void apply_xform( const trimesh::xform& /*xf*/ ){}
 
 	// Returns a string containing xml code for saving to a scenefile.
-	virtual std::string get_xml( int mode=0 ){ return ""; }
+	virtual std::string get_xml( int /*mode*/ ){ return ""; }
 
 	// The material index into SceneManager::materials
 	int material;

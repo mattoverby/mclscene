@@ -86,7 +86,7 @@ public:
 	} // end getter
 
 	// Return true on exists and overwrites value, false otherwise.
-	template< typename T > const bool get( const std::string label, T *result ) const {
+	template< typename T > bool get( const std::string label, T *result ) const {
 		if( exists(label) ){
 			std::stringstream ss; ss << args.at( label );
 			ss >> *result; return true;

@@ -863,4 +863,4 @@ float ICP(TriMesh *s1, TriMesh *s2, const xform &xf1, xform &xf2,
 	return icperr;
 }
 
-}; // namespace trimesh
+} // namespace trimesh

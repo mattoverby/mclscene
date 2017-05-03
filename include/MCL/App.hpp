@@ -83,13 +83,13 @@ protected:
 	Simulator *sim;
 
 	// Runtime stuff:
+	bool update_mesh_buffers; // set to true on run_simulator_step
+	bool in_focus, close_window;
+	int save_frame_num;
 	Vec2d mouse_pos;
 	Vec2i window_size;
 	bool left_mouse_drag, right_mouse_drag;
-	bool in_focus, close_window;
-	int save_frame_num;
 	float screen_dt;
-	bool update_mesh_buffers; // set to true on run_simulator_step
 
 	float scene_radius; // recomputed on simulation step
 	Vec3f scene_center; // set once in constructor
@@ -112,26 +112,26 @@ public:
 	}
 
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height){
-		for( int i=0; i<framebuffer_size_callbacks.size(); ++i ){ framebuffer_size_callbacks[i](window,width,height); }
+		for( size_t i=0; i<framebuffer_size_callbacks.size(); ++i ){ framebuffer_size_callbacks[i](window,width,height); }
 	}
 
 	static void scroll_callback(GLFWwindow* window, double x, double y){
-		for( int i=0; i<scroll_callbacks.size(); ++i ){ scroll_callbacks[i](window,x,y); }
+		for( size_t i=0; i<scroll_callbacks.size(); ++i ){ scroll_callbacks[i](window,x,y); }
 	}
 
 	static void cursor_position_callback(GLFWwindow* window, double x, double y){
-		for( int i=0; i<cursor_position_callbacks.size(); ++i ){ cursor_position_callbacks[i](window,x,y); }
+		for( size_t i=0; i<cursor_position_callbacks.size(); ++i ){ cursor_position_callbacks[i](window,x,y); }
 	}
 
 	static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods){
-		for( int i=0; i<mouse_button_callbacks.size(); ++i ){ mouse_button_callbacks[i](window,button,action,mods); }
+		for( size_t i=0; i<mouse_button_callbacks.size(); ++i ){ mouse_button_callbacks[i](window,button,action,mods); }
 	}
 
 	static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
-		for( int i=0; i<key_callbacks.size(); ++i ){ key_callbacks[i](window,key,scancode,action,mods); }
+		for( size_t i=0; i<key_callbacks.size(); ++i ){ key_callbacks[i](window,key,scancode,action,mods); }
 	}
 
-	static void error_callback(int error, const char* description){ fprintf(stderr, "Error: %s\n", description); }
+	static void error_callback(int error, const char* description){ fprintf(stderr, "Error: %d = %s\n", error, description); }
 
 	static std::vector< std::function<void ( GLFWwindow* window, int key, int scancode, int action, int mods )> > key_callbacks;
 	static std::vector< std::function<void ( GLFWwindow* window, int button, int action, int mods )> > mouse_button_callbacks;

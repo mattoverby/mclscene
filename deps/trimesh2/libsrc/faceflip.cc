@@ -31,4 +31,4 @@ void faceflip(TriMesh *mesh)
 		mesh->need_tstrips();
 }
 
-}; // namespace trimesh
+} // namespace trimesh

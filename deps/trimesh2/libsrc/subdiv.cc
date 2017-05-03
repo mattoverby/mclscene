@@ -405,4 +405,4 @@ void subdiv(TriMesh *mesh, int scheme /* = SUBDIV_LOOP */)
 	dprintf("Done.\n");
 }
 
-}; // namespace trimesh
+} // namespace trimesh
