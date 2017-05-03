@@ -23,7 +23,7 @@ what is actually implemented for the conversions:
 
 #include "Vec.h"
 #ifndef M_TWOPIf
-# define M_TWOPIf 6.2831855f
+	#define M_TWOPIf 6.2831855
 #endif
 
 

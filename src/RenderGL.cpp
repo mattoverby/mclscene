@@ -21,7 +21,6 @@
 
 #include "MCL/RenderGL.hpp"
 #include "MCL/MicroTimer.hpp"
-#include "TriMesh_algo.h"
 #include "MCL/TriangleMesh.hpp"
 #include "MCL/Texture.hpp"
 
@@ -33,7 +32,7 @@ static inline std::string fullpath( std::string file ){
 }
 
 static inline float lerp(float a, float b, float f){ return a + f * (b - a); }
-
+/*
 static void trimesh_copy( trimesh::TriMesh *to_mesh, std::shared_ptr<mcl::BaseObject> &from_mesh ){
 	float *vertices, *normals, *texcoords;
 	int num_vertices=0, num_normals=0, num_texcoords=0;
@@ -47,33 +46,7 @@ static void trimesh_copy( trimesh::TriMesh *to_mesh, std::shared_ptr<mcl::BaseOb
 	for( int i=0; i<num_faces; ++i ){ to_mesh->faces.push_back( trimesh::TriMesh::Face( faces[i*3+0], faces[i*3+1], faces[i*3+2] ) ); }
 	for( int i=0; i<num_texcoords; ++i ){ to_mesh->texcoords.push_back( trimesh::vec2( texcoords[i*2+0], texcoords[i*2+1] ) ); }
 }
-
-RenderGL::RenderMesh::RenderMesh() : RenderMesh(NULL) {}
-
-RenderGL::RenderMesh::RenderMesh( std::shared_ptr<BaseObject> obj ) :
-	vertices(0), normals(0), texcoords(0), faces(0), edges(0),
-	num_vertices(0), num_normals(0), num_texcoords(0), num_faces(0), num_edges(0),
-	verts_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), wire_ibo(0), tris_vao(0),
-	object(obj) {
-	update();
-}
-
-void RenderGL::RenderMesh::update(){
-	if( object == NULL ){ return; }
-
-	bool success = object->get_vertices(
-		vertices, num_vertices,
-		normals, num_normals,
-		texcoords, num_texcoords );
-	if( !success ){ num_vertices = 0; }
-
-	success = object->get_primitives( Prim::Tri, faces, num_faces );
-
-	if( !success ){ num_faces = 0; }
-	object->get_primitives( Prim::Edge, edges, num_edges );
-}
-
-
+*/
 // RenderQuad() Renders a 1x1 quad in NDC, best used for framebuffer color targets
 void RenderGL::RenderQuad(){
 
@@ -332,7 +305,7 @@ void RenderGL::draw_objects( bool update_vbo ){
 	for( size_t i=0; i<n_objs; ++i ){
 
 		if( i >= render_meshes.size() ){
-			render_meshes.push_back( RenderMesh( scene->objects[i] ) );
+			render_meshes.push_back( RenderMesh( scene->objects[i], NULL ) );
 		}
 
 		// Only update the VBOs if we have to
@@ -342,6 +315,8 @@ void RenderGL::draw_objects( bool update_vbo ){
 		// Skip invisibles
 		if( mesh->object->flags & BaseObject::INVISIBLE ){ continue; }
 
+		mesh->load_buffers();
+/*
 		// TODO: Subdivide AND flat shading
 		if( mesh->object->flags & BaseObject::SUBDIVIDE ){
 
@@ -360,8 +335,7 @@ void RenderGL::draw_objects( bool update_vbo ){
 			mesh->num_normals = tempmesh.normals.size();
 			mesh->num_faces = tempmesh.faces.size();
 			mesh->num_texcoords = tempmesh.texcoords.size();
-			load_mesh_buffers( mesh );
-
+			mesh->load_buffers();
 		} else if( mesh->object->flags & BaseObject::FLAT ){
 
 			// Loop through faces and store redundant vertices
@@ -404,11 +378,13 @@ void RenderGL::draw_objects( bool update_vbo ){
 			mesh->num_faces = tempmesh.faces.size();
 			mesh->num_texcoords = tempmesh.texcoords.size();
 			mesh->num_edges = tempmesh.edges.size();
-			load_mesh_buffers( mesh );
-
+			mesh->load_buffers();
 		}
-		else { load_mesh_buffers( mesh ); }
+		else {
 
+	mesh->load_buffers();
+}
+*/
 	} // end update vbos
 
 	//
@@ -600,100 +576,10 @@ void RenderGL::lighting_pass( Camera *cam ){
 }
 
 
-bool RenderGL::load_mesh_buffers( RenderMesh *mesh ){
-
-	// Check
-	if( mesh->num_vertices<=0 || mesh->num_normals<=0 || mesh->num_faces<=0 ){ return false; }
-
-	GLenum draw_mode = GL_STATIC_DRAW;
-	if( mesh->object->flags & BaseObject::DYNAMIC ){ draw_mode = GL_DYNAMIC_DRAW; }
-
-	size_t stride = sizeof(float)*3;
-
-	if( !mesh->verts_vbo ){ // Create the buffer for vertices
-		glGenBuffers(1, &mesh->verts_vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->verts_vbo);
-		glBufferData(GL_ARRAY_BUFFER, mesh->num_vertices*stride, mesh->vertices, draw_mode);
-	} else { // Otherwise update
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->verts_vbo);
-		glBufferSubData( GL_ARRAY_BUFFER, 0, mesh->num_vertices*stride, mesh->vertices );
-	}
-
-	if( !mesh->normals_vbo ){ // Create the buffer for normals
-		glGenBuffers(1, &mesh->normals_vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->normals_vbo);
-		glBufferData(GL_ARRAY_BUFFER, mesh->num_normals*stride, mesh->normals, draw_mode);
-	} else { // Otherwise update
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->normals_vbo);
-		glBufferSubData( GL_ARRAY_BUFFER, 0, mesh->num_normals*stride, mesh->normals );
-	}
-
-	 // Create the buffer for tex coords, these won't change
-	if( !mesh->texcoords_vbo ){
-		glGenBuffers(1, &mesh->texcoords_vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->texcoords_vbo);
-		glBufferData(GL_ARRAY_BUFFER, mesh->num_texcoords*sizeof(float)*2, mesh->texcoords, GL_STATIC_DRAW);
-	}
-
-	// Create the buffer for indices, these won't change
-	if( !mesh->faces_ibo ){
-		glGenBuffers(1, &mesh->faces_ibo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->faces_ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->num_faces*sizeof(int)*3, mesh->faces, GL_STATIC_DRAW);
-	}
-
-	if( !mesh->wire_ibo && ( mesh->object->flags & BaseObject::WIREFRAME ) ){
-		glGenBuffers(1, &mesh->wire_ibo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->wire_ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->num_edges*sizeof(int)*2, mesh->edges, GL_STATIC_DRAW);
-	}
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-	// Create the VAO
-	if( !mesh->tris_vao ){
-
-		glGenVertexArrays(1, &mesh->tris_vao);
-		glBindVertexArray(mesh->tris_vao);
-
-		// location=0 is the vertex
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->verts_vbo);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, 0);
-
-		// location=1 is the normal
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->normals_vbo);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, 0);
-
-		// location=2 is the tex coord
-		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->texcoords_vbo);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, 0);
-
-		// Done setting data for the vao
-		glBindVertexArray(0);
-	}
-
-	return true;
-
-}
-
-
-
 
 RenderGL::~RenderGL(){
 	// Apparently in modern GL, textures are released when OpenGL context is
 	// destroyed. Unless I missunderstood something...
-
-	// Release texture memory
-//	std::unordered_map< std::string, int >::iterator it = textures.begin();
-//	for( ; it != textures.end(); ++it ){
-//		GLuint texid = it->second;
-//		glDeleteTextures(1, &texid);
-//	}
-
 	// Release ssao buffers
 //	glDeleteTextures(1, &gPosition);
 //	glDeleteTextures(1, &gNormal);
@@ -704,23 +590,6 @@ RenderGL::~RenderGL(){
 //	glDeleteTextures(1, &ssaoColorBufferBlur);
 }
 
-
-
-// Color blending, saved for reference:
-/*
-	// From: https://stackoverflow.com/questions/1700211/to-dynamically-increment-from-blue-to-red-using-c
-	static inline float blend(float a, float b, float alpha){ return (1.f - alpha) * a + alpha * b; }
-
-	// gradient should be 0-1. blended needs to be a 3-element array
-	// From https://stackoverflow.com/questions/1700211/to-dynamically-increment-from-blue-to-red-using-c
-	static inline void colorBlend( float *blended, float a[3], float b[3], float gradient ){
-		if( gradient > 1.f ){ gradient = 1.f; }
-		if( gradient < 0.f ){ gradient = 0.f; }
-		blended[0] = blend( a[0], b[0], gradient );
-		blended[1] = blend( a[1], b[1], gradient );
-		blended[2] = blend( a[2], b[2], gradient );
-	}
-*/
 
 /*
 // Old draw mesh function, saved for reference

@@ -106,7 +106,7 @@ static inline std::shared_ptr<TetMesh> factory::make_tetmesh( SceneManager *scen
 
 static inline std::shared_ptr<TriangleMesh> factory::make_sphere( Vec3f center, float radius, int tess, SceneManager *scene ){
 
-	float M_TWOPIf = M_PI*2.f;
+	float m_2pi = M_PI*2.f;
 	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
 
 	mesh->vertices.reserve(2+tess*(tess-1));
@@ -116,7 +116,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_sphere( Vec3f center, 
 		float z = -cos(th);
 		float r = sin(th);
 		for (int i = 0; i < tess; i++) {
-			float ph = M_TWOPIf * i / tess;
+			float ph = m_2pi * i / tess;
 			mkpoint(mesh, r*cos(ph), r*sin(ph), z);
 		}
 	}
@@ -444,7 +444,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_plane( int tess_x, int
 
 static inline std::shared_ptr<TriangleMesh> factory::make_cyl(int tess_c, int tess_l, float r, SceneManager *scene){
 
-	float M_TWOPIf = M_PI*2.f;
+	float m_2pi = M_PI*2.f;
 	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
 
 	if (tess_c < 3)
@@ -458,7 +458,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_cyl(int tess_c, int te
 	for (int j = 1; j <= tess_l; j++) {
 		float rr = r * j / tess_l;
 		for (int i = 0; i < tess_c; i++) {
-			float th = M_TWOPIf * i / tess_c;
+			float th = m_2pi * i / tess_c;
 			mkpoint(mesh, rr*cos(th), rr*sin(th), -1);
 		}
 	}
@@ -466,7 +466,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_cyl(int tess_c, int te
 	for (int j = 1; j < tess_l; j++) {
 		float z = -1.0f + 2.0f * j / tess_l;
 		for (int i = 0; i < tess_c; i++) {
-			float th = M_TWOPIf * i / tess_c;
+			float th = m_2pi * i / tess_c;
 			mkpoint(mesh, r*cos(th), r*sin(th), z);
 		}
 	}
@@ -474,7 +474,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_cyl(int tess_c, int te
 	for (int j = tess_l; j > 0; j--) {
 		float rr = r * j / tess_l;
 		for (int i = 0; i < tess_c; i++) {
-			float th = M_TWOPIf * i / tess_c;
+			float th = m_2pi * i / tess_c;
 			mkpoint(mesh, rr*cos(th), rr*sin(th), 1);
 		}
 	}
@@ -548,10 +548,10 @@ return NULL;
 	float r = inner_rad;
 
 	for (int j = 0; j < tess; j++) {
-		float th = M_TWOPIf * j / tess;
+		float th = m_2pi * j / tess;
 		Vec3f circlepos(cos(th), sin(th), 0);
 		for (int i = 0; i < tess; i++) {
-			float ph = M_TWOPIf * i / tess;
+			float ph = m_2pi * i / tess;
 			mesh->vertices[i+j*tess] = circlepos +
 						      cosf(ph)*r*circlepos +
 						      sinf(ph)*r*vec(0,0,-1);

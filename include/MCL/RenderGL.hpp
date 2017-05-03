@@ -29,26 +29,13 @@
 #include "MCL/Texture.hpp"
 #include "MCL/Shader.hpp"
 #include "MCL/SceneManager.hpp"
+#include "MCL/RenderMesh.hpp"
 #include <random>
 
 namespace mcl {
 
 class RenderGL  {
 public:
-	// A wrapper for base-class objects to store render info
-	// for faster lookup.
-	class RenderMesh {
-	public:
-		float *vertices, *normals, *texcoords;
-		int *faces, *edges;
-		int num_vertices, num_normals, num_texcoords, num_faces, num_edges;
-		unsigned int verts_vbo, normals_vbo, texcoords_vbo, faces_ibo, wire_ibo, tris_vao;
-		std::shared_ptr<BaseObject> object; // Index into SceneManager::objects
-		void update();
-		RenderMesh();
-		RenderMesh( std::shared_ptr<BaseObject> obj );
-	};
-
 	std::vector<RenderMesh> render_meshes; // SceneManager::object -> render meshes
 
 	// Initialize shaders. Must be called after
@@ -75,11 +62,6 @@ private:
 
 	// Load textures from SceneManager materials.
 	void load_textures();
-
-	// Texture coordinates and face ibo are NOT updated.
-	// If the IBOs have already been generated, they are instead overwritten.
-	// Returns true on success
-	bool load_mesh_buffers( RenderMesh *mesh );
 
 	Material defaultMat;
 	std::unordered_map< std::string, mcl::Texture > textures; // file->texture_id
