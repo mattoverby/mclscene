@@ -27,13 +27,15 @@ namespace mcl {
 
 //
 //	ColorMap is for obtaining value-to-color gradients
+//	TODO: Add optional transparency
 //
 class ColorMap {
+private: struct cpair { float v; mcl::Vec3f c; };
 public:
 	// Preset ramps: mapping goes from
 	// 0 = first color, 1 = last color
 	enum {
-		GRAYSCALE, // grayscale
+		GRAYSCALE, // black to white
 		COLD_HOT, // blue to red
 		BLACKBODY, // black, yellow, white
 	};
@@ -47,8 +49,7 @@ public:
 	}
 
 	// Value is between 0 and 1
-	// The avg value is used for 3-color gradients, with the
-	// middle color being the average.
+	// Returns an RGB (0-1) color on the gradient.
 	mcl::Vec3f get( float value );
 
 	// Adds a color to the current ramp at position (0-1) val
@@ -57,7 +58,7 @@ public:
 	// Load a preset map. The "avg" argument is used
 	// to set the middle of the ramp which is only used
 	// for some gradients (e.g. hot cold).
-	void use_preset( int preset, float avg=0.5 );
+	void use_preset( int preset, float avg=0.5f );
 
 	// Clears current gradient
 	void clear(){ colors->clear(); }
@@ -75,10 +76,6 @@ public:
 //	void set( std::string new_map );
 
 private:
-	struct cpair {
-		cpair( float v_, mcl::Vec3f c_ ){ c=c_; v=v_; }
-		float v; mcl::Vec3f c;	
-	};
 	std::vector<cpair> *colors; // currently loaded color map
 	std::unordered_map<std::string, std::vector<cpair> > gradlist;
 
@@ -122,7 +119,8 @@ void ColorMap::add( float val, const mcl::Vec3f &c ){
 	if( val < 0.f ){ val = 0.f; }
 
 	// Add and sort with lambda. Doesn't work well with many inserts
-	colors->push_back( cpair(val,c) );
+	cpair newpair; newpair.v=val; newpair.c=c;
+	colors->push_back( newpair );
 	std::sort(colors->begin(), colors->end(), []( const cpair &left, cpair &right) {
 		return left.v < right.v;
 	});
