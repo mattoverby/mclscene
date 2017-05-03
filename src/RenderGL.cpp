@@ -20,7 +20,6 @@
 // By Matt Overby (http://www.mattoverby.net)
 
 #include "MCL/RenderGL.hpp"
-#include "SOIL2.h"
 #include "MCL/MicroTimer.hpp"
 #include "TriMesh_algo.h"
 #include "MCL/TriangleMesh.hpp"
@@ -313,11 +312,8 @@ void RenderGL::load_textures(){
 		// Load the texture if it hasn't been loaded already.
 		if( mat->app.texture.size() && textures.count(mat->app.texture)==0 ){
 
-			mcl::Texture t;
-			if( !t.create_from_file( mat->app.texture ) ){ continue; }
-
-			// Store it for later use
-			textures[ mat->app.texture ] = t.handle();//texture_id;
+			textures[ mat->app.texture ] = mcl::Texture();
+			if( !textures[ mat->app.texture ].create_from_file( mat->app.texture ) ){ continue; }
 		}
 	}	
 
@@ -459,7 +455,7 @@ void RenderGL::geometry_pass( Camera *camera ){
 		if( textures.count(mat->app.texture)>0 ){
 
 			shaderGeometryPassTextured.enable();
-			texture_id = textures[ mat->app.texture ];
+			texture_id = textures[ mat->app.texture ].handle();
 		        glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, texture_id);
 

@@ -20,7 +20,9 @@
 // By Matt Overby (http://www.mattoverby.net)
 
 #include "MCL/App.hpp"
-#include <png.h>
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 using namespace mcl;
 
@@ -273,107 +275,31 @@ void App::framebuffer_size_callback(GLFWwindow* window, int width, int height){
 
 
 
-
-
-
-
-
-
-// Swap pixel locations
-static inline void swapchar( unsigned char &p1, unsigned char &p2 ){
-	unsigned char temp = p1;
-	p1 = p2;
-	p2 = temp;
-}
-
-// Flip storage order of image rows
-static inline void flip_image (int w, int h, unsigned char *pixels) {
-
-    for (int j = 0; j < h/2; j++)
-	for (int i = 0; i < w; i++)
-	    for (int c = 0; c < 3; c++)
-	        swapchar(pixels[(i+w*j)*3+c], pixels[(i+w*(h-1-j))*3+c]);
-
-}
-
-// Write an image buffer to a PNG file
-static inline void save_png (const char *filename, int width, int height,
-	       unsigned char *pixels, bool has_alpha) {
-    FILE* file = fopen(filename, "wb");
-    if (!file) {
-	printf("Couldn't open file %s for writing.\n", filename);
-	return;
-    }
-    // initialize the PNG structures
-    png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL,
-	                                          NULL, NULL);
-    if (!png_ptr) {
-	printf("Couldn't create a PNG write structure.\n");
-	fclose(file);
-	return;
-    }
-    png_infop info_ptr = png_create_info_struct(png_ptr);
-    if (!info_ptr) {
-	printf("Couldn't create a PNG info structure.\n");
-	png_destroy_write_struct(&png_ptr, NULL);
-	fclose(file);
-	return;
-    }
-    if (setjmp(png_jmpbuf(png_ptr))) {
-	printf("Had a problem writing %s.\n", filename);
-	png_destroy_write_struct(&png_ptr, &info_ptr);
-	fclose(file);
-	return;
-    }
-    png_init_io(png_ptr, file);
-    png_set_IHDR(png_ptr, info_ptr, width, height, 8,
-	         has_alpha ? PNG_COLOR_TYPE_RGBA : PNG_COLOR_TYPE_RGB,
-	         PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
-	         PNG_FILTER_TYPE_DEFAULT);
-    // set the pixel data
-    int channels = has_alpha ? 4 : 3;
-    png_bytep* row_pointers = (png_bytep*) new unsigned char*[height];
-    for (int y = 0; y < height; y++)
-	row_pointers[y] = (png_bytep) &pixels[y*width*channels];
-    png_set_rows(png_ptr, info_ptr, row_pointers);
-    // write the file
-    png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
-    // clean up
-    delete[] row_pointers;
-    png_destroy_write_struct(&png_ptr, &info_ptr);
-    fclose(file);
-}
-
-
 inline void App::save_screenshot( GLFWwindow *window ){
 
 	int w=256, h=256;
 	glfwGetFramebufferSize(window, &w, &h);
-//	unsigned char *pixels = new unsigned char[w*h*3];
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	int row_stride = w*sizeof(unsigned char)*3;
 
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	std::vector<unsigned char> rgbdata(3*w*h);
 	std::vector<unsigned char> temp_rgbdata(3*w*h);
 	glReadPixels(0,0,w,h,GL_RGB,GL_UNSIGNED_BYTE, &temp_rgbdata[0]);
 
-		std::vector< unsigned char > rgbdata(3*w*h);
-		for (int i=0; i < h; i++){ // Doesn't matter the order now
-		memcpy(&rgbdata[i*w*3],                    // address of destination
-		&temp_rgbdata[(h-i-1)*w*3], // address of source
-		w*3*sizeof(unsigned char) );        // number of bytes to copy
-		}
-
-	temp_rgbdata.clear(); // Clear the temporary array
-
-
-
-//	glReadPixels(0,0, w,h, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-//	flip_image(w,h, pixels);
+	// loop and swap rows (invert vertical)
+	for (int i=0; i < h; i++){
+		memcpy( &rgbdata[i*w*3], &temp_rgbdata[(h-i-1)*w*3], row_stride );
+	}
+	temp_rgbdata.clear();
 
 	std::stringstream filename;
 	filename << MCLSCENE_BUILD_DIR << "/"; filename << std::setfill('0') << std::setw(5) << save_frame_num << ".png";
-	save_png(filename.str().c_str(), w,h, &rgbdata[0],false);
 
-//	delete[] pixels;
+	// Write to file
+	// stb is not as fast/quality as libpng, but with only one include it's easier to include
+	int comp = 3; // RGB, for alpha, comp=4
+	stbi_write_png(filename.str().c_str(), w, h, comp, &rgbdata[0], row_stride);
+
 	save_frame_num++;
 }
 

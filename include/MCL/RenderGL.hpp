@@ -26,6 +26,7 @@
 #include <GL/glew.h>
 #endif
 #include <GLFW/glfw3.h>
+#include "MCL/Texture.hpp"
 #include "MCL/Shader.hpp"
 #include "MCL/SceneManager.hpp"
 #include <random>
@@ -81,7 +82,7 @@ private:
 	bool load_mesh_buffers( RenderMesh *mesh );
 
 	Material defaultMat;
-	std::unordered_map< std::string, int > textures; // file->texture_id
+	std::unordered_map< std::string, mcl::Texture > textures; // file->texture_id
 
 	Shader shaderGeometryPass;
 	Shader shaderGeometryPassTextured;

@@ -22,8 +22,11 @@
 #ifndef MCLSCENE_TEXTURE_H
 #define MCLSCENE_TEXTURE_H 1
 
-#include "MCL/Vec.hpp"
-#include "SOIL2.h"
+// TODO OpenGL includes
+#include <string>
+#include <stdio.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 namespace mcl {
 
@@ -34,17 +37,20 @@ class Texture {
 public:
 	Texture() : width(0), height(0), smooth(true), repeated(true), gl_handle(0) {}
 
-	// TODO release texture if GL version low
-	~Texture(){}
+	// Destructor frees texture mem
+	~Texture(){ if(gl_handle>0){ glDeleteTextures(1, &gl_handle); } }
+
+	// Returns whether the texture is valid or not
+	inline bool valid(){ return gl_handle!=0; }
 
 	// Returns the OpenGL handle
 	inline unsigned int handle() const { return gl_handle; }
 
 	// Creates a texture from file
-	inline bool create_from_file( const std::string &filename );
+	inline bool create_from_file( const std::string &filename, bool alpha=false );
  
 	// Creates a texture from memory
-	inline bool create_from_memory( int width_, int height_, float *data, bool transparency=false );
+	inline bool create_from_memory( int width_, int height_, float *data, bool alpha=false );
 
 	// Turn smoothing off or on
 	inline void set_smooth( bool s );
@@ -53,7 +59,7 @@ public:
 	inline void set_repeated( bool r );
 
 	// Returns size in pixels of the loaded texture
-	inline Vec2i get_size() const { return Vec2i(width,height); }
+	inline void get_size( int *w, int *h ) const { *w=width; *h=height; }
 
 private:
 	int width, height;
@@ -67,70 +73,71 @@ private:
 //
 
 
-inline bool Texture::create_from_file( const std::string &filename ){
-	int channels;
-	gl_handle = SOIL_load_OGL_texture( filename.c_str(), &width, &height,
-		&channels, SOIL_LOAD_AUTO, 0, 0 );
-	if( gl_handle == 0 ){ std::cerr << "\n**Texture::create Error: Failed to load file " <<
-		filename << std::endl; return false; }
-//	glGenTextures( 1, &gl_handle );
+inline bool Texture::create_from_file( const std::string &filename, bool alpha ){
+
+	glGenTextures( 1, &gl_handle );
+	if( gl_handle == 0 ){
+		printf("\n**Texture::create Error: Failed to gen");
+		return false;
+	}
+
+	int comp;
+	int mode = STBI_rgb;
+	if( alpha ){ mode = STBI_rgb_alpha; }
+	unsigned char* image = stbi_load(filename.c_str(), &width, &height, &comp, mode);
+	if( image == NULL ){ return false; }
+
+	glBindTexture(GL_TEXTURE_2D, gl_handle);
+	glTexImage2D(GL_TEXTURE_2D, 0, alpha?GL_RGBA:GL_RGB, width, height, 0, alpha?GL_RGBA:GL_RGB, GL_UNSIGNED_BYTE, image);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, repeated?GL_REPEAT:GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, repeated?GL_REPEAT:GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, smooth?GL_LINEAR:GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smooth?GL_LINEAR:GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	stbi_image_free(image);
 	return true;
 }
 
 
-inline bool Texture::create_from_memory( int width_, int height_, float *data, bool transparency ){
+inline bool Texture::create_from_memory( int width_, int height_, float *data, bool alpha ){
 
 	glGenTextures( 1, &gl_handle );
-	if( gl_handle == 0 ){ std::cerr << "\n**Texture::create Error: Failed to gen" << std::endl; return false; }
+	if( gl_handle == 0 ){ printf("\n**Texture::create Error: Failed to gen"); return false; }
 
 	width = width_;
 	height = height_;
-	glBindTexture( GL_TEXTURE_2D, gl_handle );
-
-	if( smooth ){ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); }
-	else { glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); }
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	if( repeated ){
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	} else {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	}
-
 	int mode = GL_RGBA;
-	if( !transparency ){ mode = GL_RGB; }
+	if( !alpha ){ mode = GL_RGB; }
+	glBindTexture( GL_TEXTURE_2D, gl_handle );
 	glTexImage2D( GL_TEXTURE_2D, 0, mode, width, height, 0, mode, GL_FLOAT, data );
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, repeated?GL_REPEAT:GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, repeated?GL_REPEAT:GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, smooth?GL_LINEAR:GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smooth?GL_LINEAR:GL_NEAREST);
 	glBindTexture( GL_TEXTURE_2D, 0 );
 }
 
 
 inline void Texture::set_smooth( bool s ){
-	bool update = ( s != smooth );
+	bool update = ( s != smooth ) && gl_handle != 0;
 	smooth = s;
-	if( update && gl_handle != 0 ){
+	if( update ){
 		glBindTexture( GL_TEXTURE_2D, gl_handle );
-		if( smooth ){ glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); }
-		else { glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); }
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, smooth?GL_LINEAR:GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, smooth?GL_LINEAR:GL_NEAREST);
 		glBindTexture( GL_TEXTURE_2D, 0 );
 	}
 } // end set smooth
 
 
 inline void Texture::set_repeated( bool r ){
-	bool update = ( r != repeated );
+	bool update = ( r != repeated ) && gl_handle != 0;
 	repeated = r;
-	if( update && gl_handle != 0 ){
+	if( update ){
 		glBindTexture( GL_TEXTURE_2D, gl_handle );
-		if( repeated ){
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		} else {
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		}
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, repeated?GL_REPEAT:GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, repeated?GL_REPEAT:GL_CLAMP_TO_EDGE);
 		glBindTexture( GL_TEXTURE_2D, 0 );
 	}
 } // end set repeated
