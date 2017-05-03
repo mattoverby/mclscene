@@ -48,7 +48,7 @@ public:
 	// Return the bounding box of the object
 	virtual void get_bounds( Vec3f &bmin, Vec3f &bmax ) = 0;
 
-	// Get per-vertex data. Some pointers may be left null if the object
+	// Get per-vertex data. Some pointers may be left unset if the object
 	// does not have values for them. Returns true on success.
 	virtual bool get_vertices(
 		float* &vertices, int &num_vertices,

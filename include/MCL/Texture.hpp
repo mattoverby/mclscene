@@ -35,7 +35,7 @@ namespace mcl {
 //
 class Texture {
 public:
-	Texture() : width(0), height(0), smooth(true), repeated(true), gl_handle(0) {}
+	Texture() : width(0), height(0), smooth(true), repeated(false), transparency(false), gl_handle(0) {}
 
 	// Destructor frees texture mem
 	~Texture(){ if(gl_handle>0){ glDeleteTextures(1, &gl_handle); } }
@@ -47,7 +47,7 @@ public:
 	inline unsigned int handle() const { return gl_handle; }
 
 	// Creates a texture from file
-	inline bool create_from_file( const std::string &filename, bool alpha=false );
+	inline bool create_from_file( const std::string &filename );
  
 	// Creates a texture from memory
 	inline bool create_from_memory( int width_, int height_, float *data, bool alpha=false );
@@ -63,7 +63,7 @@ public:
 
 private:
 	int width, height;
-	bool smooth, repeated;
+	bool smooth, repeated, transparency;
 	unsigned int gl_handle;
 };
 
@@ -73,7 +73,7 @@ private:
 //
 
 
-inline bool Texture::create_from_file( const std::string &filename, bool alpha ){
+inline bool Texture::create_from_file( const std::string &filename ){
 
 	glGenTextures( 1, &gl_handle );
 	if( gl_handle == 0 ){
@@ -81,12 +81,16 @@ inline bool Texture::create_from_file( const std::string &filename, bool alpha )
 		return false;
 	}
 
+	// Load the image with stbi
 	int comp;
-	int mode = STBI_rgb;
-	if( alpha ){ mode = STBI_rgb_alpha; }
-	unsigned char* image = stbi_load(filename.c_str(), &width, &height, &comp, mode);
+	unsigned char* image = stbi_load(filename.c_str(), &width, &height, &comp, 0);
 	if( image == NULL ){ return false; }
 
+	// See if loaded image had transparency
+	bool alpha = false;
+	if( comp==4 ){ transparency = alpha = true; }
+
+	// Copy to GPU and set params
 	glBindTexture(GL_TEXTURE_2D, gl_handle);
 	glTexImage2D(GL_TEXTURE_2D, 0, alpha?GL_RGBA:GL_RGB, width, height, 0, alpha?GL_RGBA:GL_RGB, GL_UNSIGNED_BYTE, image);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, repeated?GL_REPEAT:GL_CLAMP_TO_EDGE);
