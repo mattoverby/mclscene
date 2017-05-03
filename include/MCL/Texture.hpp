@@ -111,10 +111,9 @@ inline bool Texture::create_from_memory( int width_, int height_, float *data, b
 
 	width = width_;
 	height = height_;
-	int mode = GL_RGBA;
-	if( !alpha ){ mode = GL_RGB; }
+	transparency = alpha;
 	glBindTexture( GL_TEXTURE_2D, gl_handle );
-	glTexImage2D( GL_TEXTURE_2D, 0, mode, width, height, 0, mode, GL_FLOAT, data );
+	glTexImage2D( GL_TEXTURE_2D, 0, alpha?GL_RGBA:GL_RGB, width, height, 0, alpha?GL_RGBA:GL_RGB, GL_FLOAT, data );
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, repeated?GL_REPEAT:GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, repeated?GL_REPEAT:GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, smooth?GL_LINEAR:GL_NEAREST);

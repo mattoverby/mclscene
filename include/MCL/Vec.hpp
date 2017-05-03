@@ -31,11 +31,10 @@
 //
 namespace mcl {
 
+	// Common vecs that I don't feel like typing out all the time:
 	template <typename T> using Vec4 = Eigen::Matrix<T,4,1>;
 	template <typename T> using Vec3 = Eigen::Matrix<T,3,1>;
 	template <typename T> using Vec2 = Eigen::Matrix<T,2,1>;
-
-	// Common vecs that I don't feel like typing out all the time:
 	typedef Vec4<float> Vec4f;
 	typedef Vec3<float> Vec3f;
 	typedef Vec2<float> Vec2f;

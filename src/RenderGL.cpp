@@ -533,7 +533,8 @@ void RenderGL::lighting_pass( Camera *cam ){
 	glBindTexture(GL_TEXTURE_2D, noiseTexture);
 
 	// Send kernel + rotation 
-	for (size_t i = 0; i < ssaoKernel.size(); ++i){
+	int ks = ssaoKernel.size();
+	for (size_t i = 0; i < ks; ++i){
 		glUniform3fv(shaderSSAO.uniform(("samples[" + std::to_string(i) + "]").c_str()), 1, &ssaoKernel[i][0]);
 	}
 	glUniform1f(shaderSSAO.uniform("radius"), ssao_radius);
@@ -564,8 +565,9 @@ void RenderGL::lighting_pass( Camera *cam ){
         glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
 
 	// Setup lighting
-	glUniform1i( shaderLightingPass.uniform("num_lights"), scene->lights.size() );
-	for( size_t l=0; l<scene->lights.size(); ++l ){
+	int nl = scene->lights.size();
+	glUniform1i( shaderLightingPass.uniform("num_lights"), nl );
+	for( size_t l=0; l<nl; ++l ){
 		Light::AppData *light = &scene->lights[l]->app;
 		std::stringstream array_ss; array_ss << "lights[" << l << "].";
 		std::string array_str = array_ss.str();

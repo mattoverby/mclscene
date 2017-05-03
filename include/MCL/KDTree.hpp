@@ -213,12 +213,13 @@ template <typename T> static inline void kdtree::axis_median_split( KDNode<T> *n
 	node->axis = split_axis;
 	node->median = node->aabb.center()[ split_axis ];
 	const int min_items = 8; // Don't need to go too deep...
+	size_t nq = queue.size();
 
 	// See if we're a leaf
 	if( queue.size()==0 ){ return; }
 	else if( queue.size()<min_items || max_depth <= 0 ){
-		node->m_indices.reserve( queue.size() );
-		for( int i=0; i<queue.size(); ++i ){ node->m_indices.push_back(queue[i]); }
+		node->m_indices.reserve( nq );
+		for( size_t i=0; i<nq; ++i ){ node->m_indices.push_back(queue[i]); }
 		return;
 	}
 
@@ -227,7 +228,7 @@ template <typename T> static inline void kdtree::axis_median_split( KDNode<T> *n
 
 	// If faces = nullptr, then we're building a KD tree on vertices
 	if( node->mode == 0 ){
-		for( int i=0; i<queue.size(); ++i ){
+		for( size_t i=0; i<nq; ++i ){
 			int v_idx = queue[i];
 			double vc = node->vertices[v_idx*3 + split_axis];
 			if( vc < node->median ){ left_queue.push_back( queue[i] ); }
@@ -238,7 +239,7 @@ template <typename T> static inline void kdtree::axis_median_split( KDNode<T> *n
 	// Build a kd tree on faces
 	else if( node->mode == 1 ){
 		// Split faces: Note that a triangle may be added to both children!
-		for( int i=0; i<queue.size(); ++i ){
+		for( size_t i=0; i<nq; ++i ){
 			int f_idx = queue[i]*3;
 			const Vec3i f( node->indices[f_idx], node->indices[f_idx+1], node->indices[f_idx+2] );
 			AABB faceAABB; // probably not necessary to use an AABB here, but whatevs
@@ -251,7 +252,7 @@ template <typename T> static inline void kdtree::axis_median_split( KDNode<T> *n
 	// Build a kd tree on tets
 	else if( node->mode == 3 ){
 		// Split faces: Note that a triangle may be added to both children!
-		for( int i=0; i<queue.size(); ++i ){
+		for( size_t i=0; i<nq; ++i ){
 			int t_idx = queue[i]*4;
 			const Vec4i f( node->indices[t_idx], node->indices[t_idx+1], node->indices[t_idx+2], node->indices[t_idx+3] );
 			AABB tetAABB; // probably not necessary to use an AABB here, but whatevs
@@ -391,13 +392,14 @@ template <typename T> static inline bool kdtree::closest_face( const KDNode<T> *
 	bool obj_found = false;
 	double dist = (point-projection).norm(); // current closest obj
 	const int nf = node->m_indices.size();
+	int nr = range.size();
 	for( int i=0; i<nf; ++i ){
 		int fidx = node->m_indices[i];
 
 		// See if we should skip this face
 		bool face_in_range = false;
-		for( int j=0; j<range.size(); ++j ){ if( fidx >= range[j][0] && fidx < range[j][1] ){ face_in_range=true; } }
-		if( !face_in_range && range.size()>0 ){ continue; }
+		for( int j=0; j<nr; ++j ){ if( fidx >= range[j][0] && fidx < range[j][1] ){ face_in_range=true; } }
+		if( !face_in_range && nr>0 ){ continue; }
 
 		// Extract the face from the buffers
 		const Vec3i f( node->indices[fidx*3+0], node->indices[fidx*3+1], node->indices[fidx*3+2] );
@@ -504,13 +506,15 @@ template <typename T> static inline bool kdtree::closest_hit( const KDNode<T> *n
 
 	// For a leaf node
 	bool obj_hit = false;
-	for( int i=0; i<node->m_indices.size(); ++i ){
+	int nr = range.size();
+	int ni = node->m_indices.size();
+	for( int i=0; i<ni; ++i ){
 		int fidx = node->m_indices[i];
 
 		// See if we should skip this face
 		bool face_in_range = false;
-		for( int j=0; j<range.size(); ++j ){ if( fidx >= range[j][0] && fidx < range[j][1] ){ face_in_range=true; } }
-		if( !face_in_range && range.size()>0 ){ continue; }
+		for( int j=0; j<nr; ++j ){ if( fidx >= range[j][0] && fidx < range[j][1] ){ face_in_range=true; } }
+		if( !face_in_range && nr>0 ){ continue; }
 
 		// Extract the face from the buffers
 		const Vec3i f( node->indices[fidx*3+0], node->indices[fidx*3+1], node->indices[fidx*3+2] );
@@ -547,7 +551,8 @@ template <typename T> static inline bool kdtree::point_in_tet( const KDNode<T> *
 	if( left_hit || right_hit ){ return true; }
 
 	// For a leaf node
-	for( int i=0; i<node->m_indices.size(); ++i ){
+	int ni = node->m_indices.size();
+	for( int i=0; i<ni; ++i ){
 		int fidx = node->m_indices[i];
 
 		// See if we should skip this face

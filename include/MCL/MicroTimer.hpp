@@ -43,6 +43,7 @@ namespace mcl {
 class MicroTimer {
 //	typedef std::chrono::high_resolution_clock C;
 	typedef std::chrono::steady_clock C;
+	typedef double T;
 	public:
 
 		MicroTimer() : start_time( C::now() ){}
@@ -51,23 +52,23 @@ class MicroTimer {
 		void reset() { start_time = C::now(); }
 
 		// Return time elapsed in seconds
-		double elapsed_s() const {
+		T elapsed_s() const {
 			curr_time = C::now();
-			std::chrono::duration<double> durr = curr_time-start_time;
+			std::chrono::duration<T> durr = curr_time-start_time;
 			return durr.count();
 		}
 
 		// Return time elapsed in milliseconds
-		double elapsed_ms() const {
+		T elapsed_ms() const {
 			curr_time = C::now();
-			std::chrono::duration<double, std::milli> durr = curr_time-start_time;
+			std::chrono::duration<T, std::milli> durr = curr_time-start_time;
 			return durr.count();
 		}
 
 		// Return time elapsed in microseconds
-		double elapsed_us() const {
+		T elapsed_us() const {
 			curr_time = C::now();
-			std::chrono::duration<double, std::micro> durr = curr_time-start_time;
+			std::chrono::duration<T, std::micro> durr = curr_time-start_time;
 			return durr.count();
 		}
 
