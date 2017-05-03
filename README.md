@@ -7,7 +7,8 @@ mclscene is a 3D scene loader/manager for prototyping my graphics projects (e.g.
 Included are distributions of:
 trimesh2 (Szymon Rusinkiewicz, gfx.cs.princeton.edu/proj/trimesh2),
 tetgen (Hang Si, wias-berlin.de/software/tetgen),
-pugixml (Arseny Kapoulkine, pugixml.org), and
+pugixml (Arseny Kapoulkine, pugixml.org),
+glew (Nigel Stewart, glew.sourceforge.net), and
 stb (Sean Barrett, nothings.org). Additionally, much of the render code comes from Joey de Vries (learnopengl.com).
 
 There is a viewer which can render the scene using OpenGL, GLEW, and GLFW3.
