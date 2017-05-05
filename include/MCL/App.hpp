@@ -110,6 +110,7 @@ public:
 		static Input instance; // lazy singleton, instantiated on first use
 		return instance;
 	}
+	static bool in_focus;
 
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height){
 		for( size_t i=0; i<framebuffer_size_callbacks.size(); ++i ){ framebuffer_size_callbacks[i](window,width,height); }
@@ -132,6 +133,7 @@ public:
 	}
 
 	static void error_callback(int error, const char* description){ fprintf(stderr, "Error: %d = %s\n", error, description); }
+	static void window_focus_callback(GLFWwindow* window, int focused){ in_focus = focused; }
 
 	static std::vector< std::function<void ( GLFWwindow* window, int key, int scancode, int action, int mods )> > key_callbacks;
 	static std::vector< std::function<void ( GLFWwindow* window, int button, int action, int mods )> > mouse_button_callbacks;

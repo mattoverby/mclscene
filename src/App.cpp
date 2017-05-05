@@ -34,6 +34,7 @@ std::vector< std::function<void ( GLFWwindow* window, int button, int action, in
 std::vector< std::function<void ( GLFWwindow* window, double x, double y )> > mcl::Input::cursor_position_callbacks;
 std::vector< std::function<void ( GLFWwindow* window, double x, double y )> > mcl::Input::scroll_callbacks;
 std::vector< std::function<void ( GLFWwindow* window, int width, int height )> > mcl::Input::framebuffer_size_callbacks;
+bool mcl::Input::in_focus;
 
 //
 //	App
@@ -120,14 +121,14 @@ GLFWwindow* window;
 	#ifdef MCL_USE_GLEW
 	glewExperimental = GL_TRUE;
 	glewInit();
+	glGetError(); // mask the invalid enum error in glew
 	#endif
 
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
+	if( !renderer.init( scene, width, height ) ){ glfwTerminate(); return EXIT_FAILURE; } // creates shaders
 	framebuffer_size_callback(window, width, height); // sets the projection matrix
 	bool has_render_cb( render_callback );
-
-	if( !renderer.init( scene, width, height ) ){ glfwTerminate(); return EXIT_FAILURE; } // creates shaders
 
 	// Initialize OpenGL
 	glEnable(GL_DEPTH_TEST);

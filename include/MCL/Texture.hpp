@@ -22,12 +22,14 @@
 #ifndef MCLSCENE_TEXTURE_H
 #define MCLSCENE_TEXTURE_H 1
 
-// TODO OpenGL includes
 #include <string>
 #include <stdio.h>
+#include <iostream>
+#include "MCL/OpenGL.hpp"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include <stdexcept>
 namespace mcl {
 
 //
@@ -38,7 +40,7 @@ public:
 	Texture() : width(0), height(0), smooth(true), repeated(false), transparency(false), gl_handle(0) {}
 
 	// Destructor frees texture mem
-	~Texture(){ if(gl_handle>0){ glDeleteTextures(1, &gl_handle); } }
+	~Texture(){ if(gl_handle>0){ glDeleteTextures(1, &gl_handle); gl_handle=0; } }
 
 	// Returns whether the texture is valid or not
 	inline bool valid(){ return gl_handle!=0; }
@@ -75,20 +77,22 @@ private:
 
 inline bool Texture::create_from_file( const std::string &filename ){
 
+	// Load the image with stbi
+	int comp;
+	unsigned char* image = stbi_load(filename.c_str(), &width, &height, &comp, 0);
+	if( image == NULL ){ glDeleteTextures(1, &gl_handle); gl_handle=0; return false; }
+
+	// See if loaded image had transparency
+	bool alpha = false;
+	if( comp==4 ){ transparency = alpha = true; }
+
+	// Generate texture for use
+	if( gl_handle > 0 ){ glDeleteTextures(1, &gl_handle); } // Recreate if needed
 	glGenTextures( 1, &gl_handle );
 	if( gl_handle == 0 ){
 		printf("\n**Texture::create Error: Failed to gen");
 		return false;
 	}
-
-	// Load the image with stbi
-	int comp;
-	unsigned char* image = stbi_load(filename.c_str(), &width, &height, &comp, 0);
-	if( image == NULL ){ return false; }
-
-	// See if loaded image had transparency
-	bool alpha = false;
-	if( comp==4 ){ transparency = alpha = true; }
 
 	// Copy to GPU and set params
 	glBindTexture(GL_TEXTURE_2D, gl_handle);

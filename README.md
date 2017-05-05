@@ -35,6 +35,7 @@ If you *don't* want a specific object to be rendered, use the material name "inv
 
 # todo
 
+- Clean up includes
 - Point cloud rendering
 - Update BVH
 - Cleanup headers and make it header-only

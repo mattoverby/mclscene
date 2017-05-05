@@ -22,14 +22,9 @@
 #ifndef MCLSCENE_RENDERGL_H
 #define MCLSCENE_RENDERGL_H 1
 
-#ifdef MCL_USE_GLEW
-#include <GL/glew.h>
-#endif
-#include <GLFW/glfw3.h>
-#include "MCL/Texture.hpp"
+#include "MCL/RenderMesh.hpp"
 #include "MCL/Shader.hpp"
 #include "MCL/SceneManager.hpp"
-#include "MCL/RenderMesh.hpp"
 #include <random>
 
 namespace mcl {
@@ -60,11 +55,7 @@ private:
 	// For SSAO, do the lighting pass using g-buffers
 	void lighting_pass( Camera *camera );
 
-	// Load textures from SceneManager materials.
-	void load_textures();
-
-	Material defaultMat;
-	std::unordered_map< std::string, mcl::Texture > textures; // file->texture_id
+	std::shared_ptr<mcl::Material> defaultMat;
 
 	Shader shaderGeometryPass;
 	Shader shaderGeometryPassTextured;

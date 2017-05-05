@@ -29,6 +29,7 @@
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
+#include "MCL/OpenGL.hpp"
 
 //
 //	Example use:
@@ -128,7 +129,6 @@ void Shader::init(std::string vertex_source, std::string frag_source){
 	// Create the resource
 	program_id = glCreateProgram();
 	if( program_id == 0 ){ throw std::runtime_error("\n**glCreateProgram Error"); }
-	glUseProgram(program_id);
 
 	// Compile the shaders and return their id values
 	vertex_id = compile(vertex_source, GL_VERTEX_SHADER);

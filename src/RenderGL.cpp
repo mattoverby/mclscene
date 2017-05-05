@@ -32,21 +32,7 @@ static inline std::string fullpath( std::string file ){
 }
 
 static inline float lerp(float a, float b, float f){ return a + f * (b - a); }
-/*
-static void trimesh_copy( trimesh::TriMesh *to_mesh, std::shared_ptr<mcl::BaseObject> &from_mesh ){
-	float *vertices, *normals, *texcoords;
-	int num_vertices=0, num_normals=0, num_texcoords=0;
-	int *faces, num_faces=0;
-	from_mesh->get_vertices( vertices, num_vertices, normals, num_normals, texcoords, num_texcoords );
-	from_mesh->get_primitives( Prim::Tri, faces, num_faces );
-	to_mesh->vertices.clear(); to_mesh->vertices.reserve( num_vertices );
-	to_mesh->faces.clear(); to_mesh->faces.reserve( num_faces );
-	to_mesh->texcoords.clear(); to_mesh->texcoords.reserve( num_texcoords );
-	for( int i=0; i<num_vertices; ++i ){ to_mesh->vertices.push_back( trimesh::vec( vertices[i*3+0], vertices[i*3+1], vertices[i*3+2] ) ); }
-	for( int i=0; i<num_faces; ++i ){ to_mesh->faces.push_back( trimesh::TriMesh::Face( faces[i*3+0], faces[i*3+1], faces[i*3+2] ) ); }
-	for( int i=0; i<num_texcoords; ++i ){ to_mesh->texcoords.push_back( trimesh::vec2( texcoords[i*2+0], texcoords[i*2+1] ) ); }
-}
-*/
+
 // RenderQuad() Renders a 1x1 quad in NDC, best used for framebuffer color targets
 void RenderGL::RenderQuad(){
 
@@ -77,6 +63,8 @@ void RenderGL::RenderQuad(){
 
 
 bool RenderGL::init( mcl::SceneManager *scene_, int win_width, int win_height ) {
+
+	defaultMat = std::shared_ptr<Material>( new Material() );
 
 	scene = scene_;
 	quadVAO = 0;
@@ -147,9 +135,6 @@ bool RenderGL::init( mcl::SceneManager *scene_, int win_width, int win_height ) 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	// Load model textures
-	load_textures();
 
 	return true;
 
@@ -268,30 +253,9 @@ void RenderGL::update_window_size( int win_width, int win_height ){
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
 	std::cout << "Lighting Framebuffer not complete!" << std::endl; }
 
-
 	// Done
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-
-
-void RenderGL::load_textures(){
-
-	// Load the materials and textures
-	size_t n_mats = scene->materials.size();
-	for( size_t i=0; i<n_mats; ++i ){
-
-		// Get the app information of the material
-		std::shared_ptr< Material > mat = scene->materials[i];
-
-		// Load the texture if it hasn't been loaded already.
-		if( mat->app.texture.size() && textures.count(mat->app.texture)==0 ){
-
-			textures[ mat->app.texture ] = mcl::Texture();
-			if( !textures[ mat->app.texture ].create_from_file( mat->app.texture ) ){ continue; }
-		}
-	}	
-
-} // end reload materials
 
 
 void RenderGL::draw_objects( bool update_vbo ){
@@ -304,87 +268,23 @@ void RenderGL::draw_objects( bool update_vbo ){
 	size_t n_objs = scene->objects.size();
 	for( size_t i=0; i<n_objs; ++i ){
 
+		// Initialize the render meshes. Doing this here allows new meshes
+		// to be added while the scene is rendering.
 		if( i >= render_meshes.size() ){
-			render_meshes.push_back( RenderMesh( scene->objects[i], NULL ) );
+			int mat_idx = scene->objects[i]->material;
+			std::shared_ptr<mcl::Material> mat(NULL);
+			if( mat_idx == Material::NOTSET ){ mat = defaultMat; }
+			else if( mat_idx >= 0 && mat_idx < scene->materials.size() ){ mat = scene->materials[mat_idx]; }
+			render_meshes.push_back( RenderMesh( scene->objects[i], mat ) );
 		}
 
 		// Only update the VBOs if we have to
 		RenderMesh *mesh = &render_meshes[i];
 		if( mesh->faces_ibo > 0 && mesh->tris_vao > 0 && !update_vbo ){ continue; }
-
-		// Skip invisibles
-		if( mesh->object->flags & BaseObject::INVISIBLE ){ continue; }
+		if( mesh->is_invisible() ){ continue; }
 
 		mesh->load_buffers();
-/*
-		// TODO: Subdivide AND flat shading
-		if( mesh->object->flags & BaseObject::SUBDIVIDE ){
 
-			// Do subdivision with trimesh
-			trimesh::TriMesh tempmesh;
-			trimesh_copy( &tempmesh, mesh->object );
-			trimesh::subdiv( &tempmesh ); // creates faces
-			tempmesh.need_normals(true);
-
-			// We will use the app data stored with that object.
-			mesh->vertices = &tempmesh.vertices[0][0];
-			mesh->normals = &tempmesh.normals[0][0];
-			mesh->faces = &tempmesh.faces[0][0];
-			mesh->texcoords = &tempmesh.texcoords[0][0];
-			mesh->num_vertices = tempmesh.vertices.size();
-			mesh->num_normals = tempmesh.normals.size();
-			mesh->num_faces = tempmesh.faces.size();
-			mesh->num_texcoords = tempmesh.texcoords.size();
-			mesh->load_buffers();
-		} else if( mesh->object->flags & BaseObject::FLAT ){
-
-			// Loop through faces and store redundant vertices
-			// and normals for each face to do flat shading.
-
-			float *vertices, *normals, *texcoords;
-			int num_vertices=0, num_normals=0, num_texcoords=0;
-			int *faces, num_faces=0;
-			mesh->object->get_vertices( vertices, num_vertices, normals, num_normals, texcoords, num_texcoords );
-			mesh->object->get_primitives( Prim::Tri, faces, num_faces );
-
-			TriangleMesh tempmesh;
-			tempmesh.vertices.reserve( num_vertices );
-			tempmesh.faces.reserve( num_faces );
-			tempmesh.texcoords.reserve( num_texcoords );
-			for( int i=0; i<num_faces; ++i ){
-				Vec3i f( faces[i*3], faces[i*3+1], faces[i*3+2] );
-				int v_idx = tempmesh.vertices.size();
-				tempmesh.vertices.push_back( Vec3f( vertices[f[0]*3], vertices[f[0]*3+1], vertices[f[0]*3+2] ) );
-				tempmesh.vertices.push_back( Vec3f( vertices[f[1]*3], vertices[f[1]*3+1], vertices[f[1]*3+2] ) );
-				tempmesh.vertices.push_back( Vec3f( vertices[f[2]*3], vertices[f[2]*3+1], vertices[f[2]*3+2] ) );
-				tempmesh.faces.push_back( Vec3i(v_idx,v_idx+1,v_idx+2) );
-				if( num_texcoords ){
-					tempmesh.texcoords.push_back( Vec2f( texcoords[f[0]*2], texcoords[f[0]*2+1] ) );
-					tempmesh.texcoords.push_back( Vec2f( texcoords[f[1]*2], texcoords[f[1]*2+1] ) );
-					tempmesh.texcoords.push_back( Vec2f( texcoords[f[2]*2], texcoords[f[2]*2+1] ) );
-				}
-			}
-			tempmesh.need_normals(true);
-			tempmesh.need_edges(true);
-		
-			// We will use the app data stored with that object.
-			mesh->vertices = &tempmesh.vertices[0][0];
-			mesh->normals = &tempmesh.normals[0][0];
-			mesh->faces = &tempmesh.faces[0][0];
-			mesh->texcoords = &tempmesh.texcoords[0][0];
-			mesh->edges = &tempmesh.edges[0][0];
-			mesh->num_vertices = tempmesh.vertices.size();
-			mesh->num_normals = tempmesh.normals.size();
-			mesh->num_faces = tempmesh.faces.size();
-			mesh->num_texcoords = tempmesh.texcoords.size();
-			mesh->num_edges = tempmesh.edges.size();
-			mesh->load_buffers();
-		}
-		else {
-
-	mesh->load_buffers();
-}
-*/
 	} // end update vbos
 
 	//
@@ -423,20 +323,12 @@ void RenderGL::geometry_pass( Camera *camera ){
 		RenderMesh *mesh = &render_meshes[i];
 		if( mesh->num_vertices <= 0 || mesh->num_faces <= 0 ){ continue; }
 		if( mesh->object->flags & BaseObject::INVISIBLE ){ continue; }
+		Material *mat = mesh->material.get();
 
-		// Get the material
-		Material *mat = 0;
-		if( mesh->object->material == Material::NOTSET ){ mat = &defaultMat; }
-		else{ mat = scene->materials[mesh->object->material].get(); } // could segfault!
-
-		// Textures
-		GLuint texture_id = 0;
-		if( textures.count(mat->app.texture)>0 ){
-
+		if( mesh->tex_id>0 ){
 			shaderGeometryPassTextured.enable();
-			texture_id = textures[ mat->app.texture ].handle();
 		        glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, texture_id);
+			glBindTexture(GL_TEXTURE_2D, mesh->tex_id);
 
 			glUniformMatrix4fv(shaderGeometryPassTextured.uniform("projection"), 1, GL_FALSE, camera->get_projection());
 			glUniformMatrix4fv(shaderGeometryPassTextured.uniform("view"), 1, GL_FALSE, camera->get_view());
@@ -469,7 +361,7 @@ void RenderGL::geometry_pass( Camera *camera ){
 			glBindVertexArray(0);
 		}
 
-		if( texture_id>0 ){
+		if( mesh->tex_id>0 ){
 			glBindTexture( GL_TEXTURE_2D, 0 );
 			shaderGeometryPass.enable();
 			glUniformMatrix4fv(shaderGeometryPass.uniform("projection"), 1, GL_FALSE, camera->get_projection());
@@ -580,7 +472,6 @@ void RenderGL::lighting_pass( Camera *cam ){
 RenderGL::~RenderGL(){
 	// Apparently in modern GL, textures are released when OpenGL context is
 	// destroyed. Unless I missunderstood something...
-	// Release ssao buffers
 //	glDeleteTextures(1, &gPosition);
 //	glDeleteTextures(1, &gNormal);
 //	glDeleteTextures(1, &gDiffuse);
@@ -589,74 +480,4 @@ RenderGL::~RenderGL(){
 //	glDeleteTextures(1, &ssaoColorBuffer);
 //	glDeleteTextures(1, &ssaoColorBufferBlur);
 }
-
-
-/*
-// Old draw mesh function, saved for reference
-void RenderGL::draw_mesh( BaseObject::AppData *mesh, Material *mat, Camera *camera, bool update_vbo ){
-
-//	draw_mesh_new( mesh, mat, camera, update_vbo ); return;
-
-	// Check if mesh has the "invisible" material and we can just ignore it.
-	if( mat->app.mode == 2 ){ return; }
-
-	// Check for valid mesh data
-	if( mesh->num_vertices <= 0 	|| mesh->num_faces <= 0 ){ return; }
-
-	// Otherwise check if we need to do an update
-	if( mesh->faces_ibo <= 0 || mesh->tris_vao <=0 || update_vbo ){
-		if( !load_mesh_buffers( mesh ) ){ return; }
-	}
-
-	// Get material properties
-	Vec3f ambient = mat->app.amb;
-	Vec3f diffuse = mat->app.diff;
-	Vec3f specular = mat->app.spec;
-	float shininess = mat->app.shini;
-	GLuint texture_id = 0;
-	if( textures.count(mat->app.texture)>0 ){ texture_id = textures[ mat->app.texture ]; }
-
-	// Start shader
-	Shader *curr_shader = blinnphong.get();
-	if( texture_id > 0 ){ curr_shader = blinnphong_textured.get(); }
-	curr_shader->enable();
-
-	// Bind shader
-	glBindTexture( GL_TEXTURE_2D, texture_id );
-
-	// Pass lighting to shader
-	setup_lights( curr_shader );
-
-	// Set the camera matrices
-	trimesh::fxform model;
-	glUniformMatrix4fv( curr_shader->uniform("model"), 1, GL_FALSE, model );
-	glUniformMatrix4fv( curr_shader->uniform("view"), 1, GL_FALSE, camera->get_view() );
-	glUniformMatrix4fv( curr_shader->uniform("projection"), 1, GL_FALSE, camera->get_projection() );
-	Vec3f eyepos = camera->get_eye();
-	glUniform3f( curr_shader->uniform("eye"), eyepos[0], eyepos[1], eyepos[2] );
-//	trimesh::XForm<float> eyepos = trimesh::inv( (camera->get_projection()) * (camera->get_view()) * (model) );
-//	glUniform3f( curr_shader->uniform("eye"), eyepos(0,3), eyepos(1,3), eyepos(2,3) );
-
-	// Set material properties
-	glUniform3f( curr_shader->uniform("material.ambient"), ambient[0], ambient[1], ambient[2] );
-	glUniform3f( curr_shader->uniform("material.diffuse"), diffuse[0], diffuse[1], diffuse[2] );
-	glUniform3f( curr_shader->uniform("material.specular"), specular[0], specular[1], specular[2] );
-	glUniform1f( curr_shader->uniform("material.shininess"), shininess );
-
-	// Bind buffers
-	glBindVertexArray(mesh->tris_vao);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->faces_ibo);
-
-	//
-	//	Draw a solid mesh
-	//
-	glDrawElements(GL_TRIANGLES, mesh->num_faces*3, GL_UNSIGNED_INT, 0);
-
-	// Unbind
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-	curr_shader->disable();	
-}
-*/
 

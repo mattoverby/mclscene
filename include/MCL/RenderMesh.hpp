@@ -22,7 +22,6 @@
 #ifndef MCLSCENE_RENDERMESH_H
 #define MCLSCENE_RENDERMESH_H 1
 
-// TODO OpenGL includes
 #include "MCL/Object.hpp"
 #include "MCL/Material.hpp"
 #include "MCL/Texture.hpp"
@@ -40,8 +39,23 @@ public:
 	RenderMesh( std::shared_ptr<BaseObject> obj_, std::shared_ptr<Material> mat_ ) :
 		vertices(0), normals(0), texcoords(0), faces(0), edges(0),
 		num_vertices(0), num_normals(0), num_texcoords(0), num_faces(0), num_edges(0),
-		verts_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), wire_ibo(0), tris_vao(0), texture(0),
-		object(obj_), material(mat_) { update(); }
+		verts_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), wire_ibo(0), tris_vao(0), tex_id(0),
+		object(obj_), material(mat_) {
+		update();
+		if( material != NULL ){
+			if( material->app.texture.size() > 0 ){
+				texture = std::unique_ptr<Texture>( new Texture() );
+				texture->create_from_file( material->app.texture );
+				tex_id = texture->handle(); // will be zero if file failed to load.
+			}
+		}
+	} // end constructor
+
+	// Copy vertex data to GPU
+	inline bool load_buffers();
+
+	// See if the current mesh should be invisible
+	inline bool is_invisible() const { return object->flags & BaseObject::INVISIBLE; }
 
 	// Vertex data
 	float *vertices, *normals, *texcoords;
@@ -53,17 +67,14 @@ public:
 
 	// OpenGL handles
 	unsigned int verts_vbo, normals_vbo, texcoords_vbo, faces_ibo, wire_ibo, tris_vao;
-	unsigned int texture;
-
-	// Copy vertex data to GPU
-	inline bool load_buffers();
+	unsigned int tex_id;
 
 	// Pointers to the original object and material
 	std::shared_ptr<BaseObject> object;
 	std::shared_ptr<Material> material;
-//	mcl::Texture tex;
 
 private:
+	std::unique_ptr<mcl::Texture> texture;
 	inline bool update(); // update pointer data
 	inline void subdivide_mesh( trimesh::TriMesh &tempmesh );
 	inline void make_flat( TriangleMesh &tempmesh );
@@ -74,12 +85,15 @@ private:
 //
 
 inline bool RenderMesh::update(){
+
+	// Get vertex and face pointers
 	if( object == NULL ){ return false; }
 	bool success = object->get_vertices( vertices, num_vertices, normals, num_normals, texcoords, num_texcoords );
 	if( !success ){ num_vertices = 0; return false; }
 	success = object->get_primitives( Prim::Tri, faces, num_faces );
 	if( !success ){ num_faces = 0; return false; }
 	object->get_primitives( Prim::Edge, edges, num_edges );
+
 	return true;
 }
 
