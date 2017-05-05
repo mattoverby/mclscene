@@ -155,7 +155,10 @@ inline bool RenderMesh::load_buffers(){
 	if( !texcoords_vbo ){
 		glGenBuffers(1, &texcoords_vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, texcoords_vbo);
-		glBufferData(GL_ARRAY_BUFFER, num_texcoords*sizeof(float)*2, texcoords, GL_STATIC_DRAW);
+		if( num_texcoords == 0 ){ // fill with dummy tex coords if none exist
+			std::vector<float> temp_texcoords( num_vertices*2, 0.f );
+			glBufferData(GL_ARRAY_BUFFER, num_vertices*sizeof(float)*2, &temp_texcoords[0], GL_STATIC_DRAW);
+		} else { glBufferData(GL_ARRAY_BUFFER, num_texcoords*sizeof(float)*2, texcoords, GL_STATIC_DRAW); }
 	}
 
 	// Create the buffer for indices, these won't change

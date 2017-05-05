@@ -25,6 +25,7 @@
 #include "MCL/Simulator.hpp"
 #include "MCL/SceneManager.hpp"
 #include "RenderGL.hpp"
+#include "SimpleRenderGL.hpp"
 
 namespace mcl {
 
@@ -57,6 +58,7 @@ public:
 	void close(){ close_window=true; }
 
 	// You can use the renderer to draw custom objects
+//	SimpleRenderGL renderer;
 	RenderGL renderer;
 
 	// Camera

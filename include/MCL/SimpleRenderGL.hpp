@@ -22,11 +22,7 @@
 #ifndef MCLSCENE_SIMPLERENDERGL_H
 #define MCLSCENE_SIMPLERENDERGL_H 1
 
-#ifdef MCL_USE_GLEW
-#include <GL/glew.h>
-#endif
-
-#include <GLFW/glfw3.h>
+#include "MCL/RenderMesh.hpp"
 #include "MCL/Shader.hpp"
 #include "MCL/SceneManager.hpp"
 #include <random>
@@ -35,21 +31,7 @@ namespace mcl {
 
 class SimpleRenderGL  {
 public:
-	// A wrapper for base-class objects to store render info
-	// for faster lookup.
-	class RenderMesh {
-	public:
-		float *vertices, *normals, *texcoords;
-		int *faces, *edges;
-		int num_vertices, num_normals, num_texcoords, num_faces, num_edges;
-		unsigned int verts_vbo, normals_vbo, texcoords_vbo, faces_ibo, wire_ibo, tris_vao;
-		std::shared_ptr<BaseObject> object; // Index into SceneManager::objects
-		void update();
-		RenderMesh();
-		RenderMesh( std::shared_ptr<BaseObject> obj );
-	};
-
-	std::vector<RenderMesh> render_meshes; // SceneManager::object -> render meshes
+	std::vector< std::shared_ptr<RenderMesh> > render_meshes;
 
 	// Initialize shaders. Must be called after
 	// OpenGL context has been created.
@@ -61,19 +43,12 @@ public:
 	// Texture coordinates and face ibo are NOT updated.
 	void draw_objects( bool update_vbo=false );
 
-	~SimpleRenderGL();
+	void update_window_size( int width, int height ){}
 
 private:
-	void draw_mesh( SimpleRenderGL::RenderMesh *mesh, Material *mat );
-
-	// Texture coordinates and face ibo are NOT updated.
-	// If the IBOs have already been generated, they are instead overwritten.
-	// Returns true on success
-	bool load_mesh_buffers( RenderMesh *mesh );
-
-	Material defaultMat;
-	std::unordered_map< std::string, int > textures; // file->texture_id
-
+	void draw_mesh( mcl::RenderMesh *mesh ); // Draws a single rendermesh
+	std::shared_ptr<Material> defaultMat;
+	std::unique_ptr<Texture> defaultTex;
 	Shader blinnphong;
 	Vec2i window_size;
 
