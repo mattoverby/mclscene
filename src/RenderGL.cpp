@@ -275,11 +275,11 @@ void RenderGL::draw_objects( bool update_vbo ){
 			std::shared_ptr<mcl::Material> mat(NULL);
 			if( mat_idx == Material::NOTSET ){ mat = defaultMat; }
 			else if( mat_idx >= 0 && mat_idx < scene->materials.size() ){ mat = scene->materials[mat_idx]; }
-			render_meshes.push_back( RenderMesh( scene->objects[i], mat ) );
+			render_meshes.push_back( std::shared_ptr<RenderMesh>( new RenderMesh( scene->objects[i], mat ) ) );
 		}
 
 		// Only update the VBOs if we have to
-		RenderMesh *mesh = &render_meshes[i];
+		RenderMesh *mesh = render_meshes[i].get();
 		if( mesh->faces_ibo > 0 && mesh->tris_vao > 0 && !update_vbo ){ continue; }
 		if( mesh->is_invisible() ){ continue; }
 
@@ -320,7 +320,7 @@ void RenderGL::geometry_pass( Camera *camera ){
 	for( size_t i=0; i<n_objs; ++i ){
 
 		// Get the mesh
-		RenderMesh *mesh = &render_meshes[i];
+		RenderMesh *mesh = render_meshes[i].get();
 		if( mesh->num_vertices <= 0 || mesh->num_faces <= 0 ){ continue; }
 		if( mesh->object->flags & BaseObject::INVISIBLE ){ continue; }
 		Material *mat = mesh->material.get();

@@ -84,7 +84,7 @@ protected:
 
 	// Runtime stuff:
 	bool update_mesh_buffers; // set to true on run_simulator_step
-	bool in_focus, close_window;
+	bool close_window;
 	int save_frame_num;
 	Vec2d mouse_pos;
 	Vec2i window_size;

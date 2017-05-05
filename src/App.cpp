@@ -40,7 +40,7 @@ bool mcl::Input::in_focus;
 //	App
 //
 App::App( mcl::SceneManager *scene_, Simulator *sim_ ) : scene(scene_), sim(sim_),
-	update_mesh_buffers(true), in_focus(true), close_window(false), save_frame_num(0) {
+	update_mesh_buffers(true), close_window(false), save_frame_num(0) {
 //	Input &input = Input::getInstance(); // initialize Input
 	Input::getInstance();
 
@@ -112,6 +112,7 @@ GLFWwindow* window;
 	glfwSetCursorPosCallback(window, &Input::cursor_position_callback);
 	glfwSetScrollCallback(window, &Input::scroll_callback);
 	glfwSetFramebufferSizeCallback(window, &Input::framebuffer_size_callback);
+	glfwSetWindowFocusCallback(window, &Input::window_focus_callback);
 
 	// Make current
 	glfwMakeContextCurrent(window);
@@ -168,9 +169,11 @@ GLFWwindow* window;
 		//
 		//	Render
 		//
-		renderer.draw_objects( update_mesh_buffers );
-		update_mesh_buffers = false;
-		if( has_render_cb ){ render_callback(window,current_cam,screen_dt); }
+		if( mcl::Input::in_focus || settings.run_simulation ){
+			renderer.draw_objects( update_mesh_buffers );
+			update_mesh_buffers = false;
+			if( has_render_cb ){ render_callback(window,current_cam,screen_dt); }
+		}
 
 	} // end game loop
 

@@ -31,7 +31,7 @@ namespace mcl {
 
 class RenderGL  {
 public:
-	std::vector<RenderMesh> render_meshes; // SceneManager::object -> render meshes
+	std::vector< std::shared_ptr<RenderMesh> > render_meshes; // SceneManager::object -> render meshes
 
 	// Initialize shaders. Must be called after
 	// OpenGL context has been created.

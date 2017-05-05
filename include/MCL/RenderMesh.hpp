@@ -35,23 +35,19 @@ namespace mcl {
 //
 class RenderMesh {
 public:
-	RenderMesh() : RenderMesh(NULL,NULL) {}
-	RenderMesh( std::shared_ptr<BaseObject> obj_, std::shared_ptr<Material> mat_ ) :
-		vertices(0), normals(0), texcoords(0), faces(0), edges(0),
-		num_vertices(0), num_normals(0), num_texcoords(0), num_faces(0), num_edges(0),
-		verts_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), wire_ibo(0), tris_vao(0), tex_id(0),
-		object(obj_), material(mat_) {
-		update();
-		if( material != NULL ){
-			if( material->app.texture.size() > 0 ){
-				texture = std::unique_ptr<Texture>( new Texture() );
-				texture->create_from_file( material->app.texture );
-				tex_id = texture->handle(); // will be zero if file failed to load.
-			}
-		}
-	} // end constructor
+	static inline std::shared_ptr<RenderMesh> create(
+		std::shared_ptr<BaseObject> obj_=NULL, std::shared_ptr<Material> mat_=NULL ){
+		return std::shared_ptr<RenderMesh>( new RenderMesh(obj_,mat_) );
+	}
 
-	// Copy vertex data to GPU
+	// You can still use RenderMeshes by self-managing the vertex/face pointers.
+	RenderMesh() : RenderMesh(NULL,NULL) {}
+
+	// Create a RenderMesh from an Object and Material
+	RenderMesh( std::shared_ptr<BaseObject> obj_, std::shared_ptr<Material> mat_ );
+
+	// Copy vertex data to GPU. Returns true if vertex data has successfully
+	// been set from the stored Object pointer.
 	inline bool load_buffers();
 
 	// See if the current mesh should be invisible
@@ -80,9 +76,30 @@ private:
 	inline void make_flat( TriangleMesh &tempmesh );
 };
 
+
 //
 //	Implementation
 //
+
+
+// Create a RenderMesh from an Object and Material
+inline RenderMesh::RenderMesh( std::shared_ptr<BaseObject> obj_, std::shared_ptr<Material> mat_ ) :
+	vertices(0), normals(0), texcoords(0), faces(0), edges(0),
+	num_vertices(0), num_normals(0), num_texcoords(0), num_faces(0), num_edges(0),
+	verts_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), wire_ibo(0), tris_vao(0), tex_id(0),
+	object(obj_), material(mat_) {
+
+	update();
+	if( material != NULL ){
+		if( material->app.texture.size() > 0 ){
+			texture = std::unique_ptr<Texture>( new Texture() );
+			texture->create_from_file( material->app.texture );
+			tex_id = texture->handle(); // will be zero if file failed to load.
+		}
+	}
+
+} // end constructor
+
 
 inline bool RenderMesh::update(){
 
