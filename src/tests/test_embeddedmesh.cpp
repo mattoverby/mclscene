@@ -19,66 +19,48 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCL_MICROTIMER_H
-#define MCL_MICROTIMER_H 1
+#include <iostream>
+#include "MCL/EmbeddedMesh.hpp"
+#include "MCL/MeshIO.hpp"
 
-#include <chrono>
+using namespace mcl;
 
-// Example:
-//
-//	mcl::MicroTimer timer;
-//
-//	... do work ...
-//
-//	double elapsed_microseconds = timer.elapsed_us();
-//	double elapsed_milliseconds = timer.elapsed_ms();
-//	double elapsed_seconds = timer.elapsed_s();
-//
-//	Notes:
-//		You may want to change the clock type based on application
-//
-namespace mcl {
+int main(void){
 
-class MicroTimer {
-//	typedef std::chrono::high_resolution_clock C;
-	typedef std::chrono::steady_clock C;
-	typedef double T;
-	public:
+	EmbeddedMesh mesh;
 
-		MicroTimer() : start_time( C::now() ){}
+	// Lattice gen only checks vertices,
+	// so just fill the embedded mesh with random vertices
+	// and try to generate the lattice.
+	int n_verts = 10000;
 
-		// Resets the timer
-		void reset() { start_time = C::now(); }
+	for( int round=0; round<10; ++round ){
 
-		// Return time elapsed in seconds
-		T elapsed_s() const {
-			curr_time = C::now();
-			std::chrono::duration<T> durr = curr_time-start_time;
-			return durr.count();
+		mesh.embedded->vertices.resize(n_verts);
+
+		// Random vertices
+		std::random_device r;
+		std::mt19937 generator;
+		std::uniform_real_distribution<> dis(0.f, float(n_verts));
+		for( int i=0; i<n_verts; ++i ){
+			mesh.embedded->vertices[i] = Vec3f( dis(generator), dis(generator), dis(generator) );
 		}
 
-		// Return time elapsed in milliseconds
-		T elapsed_ms() const {
-			curr_time = C::now();
-			std::chrono::duration<T, std::milli> durr = curr_time-start_time;
-			return durr.count();
-		}
+		// Generate the lattice
+		if( !mesh.gen_lattice() ){ return EXIT_FAILURE; }
 
-		// Return time elapsed in microseconds
-		T elapsed_us() const {
-			curr_time = C::now();
-			std::chrono::duration<T, std::micro> durr = curr_time-start_time;
-			return durr.count();
-		}
+	}
+/*
+	std::stringstream bunnyfile;
+	bunnyfile << MCLSCENE_ROOT_DIR << "/src/data/bunny.obj";
+	mcl::meshio::load_obj( mesh.embedded.get(), bunnyfile.str() );
 
-	private:
-		std::chrono::time_point<C> start_time;
-		mutable std::chrono::time_point<C> curr_time;
+	// Generate lattices at different resolution
+	for( int i=1; i<30; ++i ){
+		if( !mesh.gen_lattice() ){ return EXIT_FAILURE; }
+	}
+*/
 
-}; // end class MicroTimer
+	return EXIT_SUCCESS;
+}
 
-
-} // end namespace mcl
-
-
-#endif

@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -19,93 +19,271 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_TETMESH_H
-#define MCLSCENE_TETMESH_H 1
+#ifndef MCL_TETMESH_H
+#define MCL_TETMESH_H
 
 #include <vector>
-#include "Object.hpp"
-#include "AABB.hpp"
+#include <memory>
+#include "XForm.hpp"
+#include "HashKeys.hpp"
 
 namespace mcl {
 
-//
-//	Tetrahedral Mesh
-//
-class TetMesh : public BaseObject {
+class TetMesh {
 public:
-	static inline std::shared_ptr<TetMesh> create(){
-		return std::shared_ptr<TetMesh>( new TetMesh() );
+	typedef std::shared_ptr<TetMesh> Ptr;
+	static std::shared_ptr<TetMesh> create(){
+		return std::make_shared<TetMesh>();
 	}
 
-	// Data
+	// Data TODO compute neighbors
 	std::vector< Vec4i > tets; // all elements
-	std::vector< Vec3f > vertices; // all vertices in the tet mesh
+	std::vector< Vec3f > vertices; // all vertices in the mesh
 	std::vector< Vec3f > normals; // zero length for all non-surface normals
 	std::vector< Vec3i > faces; // surface triangles
 	std::vector< Vec2f > texcoords; // per vertex uv coords
-	std::vector< Vec2i > edges; // contains surface edges only
+	std::vector< Vec2i > edges; // unique tet edges
 
-	// Get per-vertex data
-	bool get_vertices(
+	// Get per-vertex data.
+	// If normals have not been set, they are computed.
+	inline void get_vertex_data(
 		float* &vertices, int &num_vertices,
 		float* &normals, int &num_normals,
-		float* &texcoords, int &num_texcoords );
+		float* &texcoords, int &num_texcoords
+	);
 
-	// Get primitive data
-	bool get_primitives( const Prim &type, int* &indices, int &num_prims );
+	// Get primitive data.
+	// If edges/faces are requested but have not been set, they are computed.
+	// Dimension describes the prim type, i.e. 2 = edges, 3 = triangles, 4 = tets, etc...
+	inline void get_primitive_data( short dimension, int* &prims, int &num_prims );
 
-	// Filename is the first part of a tetmesh which must contain an .ele and .node file.
-	// Can also load a ".tet" file which is a list of vertices and eles in the same file.
-	// I'll put some docs on filetypes some day.
-	// If a ply file is supplied, tetgen will be used to tetrahedralize the mesh (however,
-	// the ply must be ascii, not binary).
-	// Returns true on success
-	bool load( std::string filename );
+	template<typename T> void apply_xform( const XForm<T,3> &xf );
 
-	// Saves the tet mesh to .ele and .node files.
-	// If extention is .tet, saves as a .tet file.
-	// Otherwise do not include extensions on the filename argument.
-	void save( std::string filename );
+	// Returns AABB
+	inline Eigen::AlignedBox<float,3> bounds();
 
-	std::string get_xml( int mode );
+	// Finds and stores the surface trianges
+	inline void need_faces( bool recompute=false );
 
-	// Compute the normals for surface vertices. The inner normals are length zero.
-	void need_normals( bool recompute=false );
+	// Computes per-vertex normals
+	inline void need_normals( bool recompute=false );
 
-	// Transform the mesh by the given matrix
-	void apply_xform( const trimesh::xform &xf );
+	// Creates unique edges of the tets or faces
+	inline void need_edges( bool recompute=false, bool surface_only=true );
 
-	// Compute surface edges
-	void need_edges();
+	// Removes vertices not indexed by a tet, and combines vertices
+	// that are within eps distance.
+	inline void refine( float eps=1e-6f );
 
-	// Get bounds
-	void get_bounds( Vec3f &bmin, Vec3f &bmax );
-
-	// Get the vertices that make up the surface faces
-	void get_surface_vertices( std::vector<int> *indices );
-
-	// When stitching meshes together, this function will
-	// join two vertices as one if they are within dist.
-	void collapse_points( float distance );
-
-private:
-	AABB aabb;
-	bool load_node( std::string filename ); // .node file
-	bool load_ele( std::string filename ); // .ele file
-	bool load_tet( std::string filename ); // .tet file
-	bool load_mesh( std::string filename ); // .mesh file
-
-	// Computes a surface mesh, called by load
-	bool need_surface();
-
-	// Uses tetgen to tetrahedralize a mesh, returning
-	// the filename of the new files (node and ele)
-	// which are generated and dumped in the same directory
-	// as the original ply.
-	// Returns an empty string on failure.
-	std::string make_tetmesh( std::string filename );
+	// Clear all mesh data
+	inline void clear();
 
 }; // end class TetMesh
+
+
+//
+//	Implementation
+//
+
+
+inline void TetMesh::get_vertex_data(
+	float* &verts, int &num_vertices,
+	float* &norms, int &num_normals,
+	float* &tex, int &num_texcoords ){
+	if( normals.size() != vertices.size() ){ need_normals(); }
+	num_vertices = vertices.size();
+	num_normals = normals.size();
+	num_texcoords = texcoords.size();
+	if( num_vertices > 0 ){ verts = &vertices[0][0]; }
+	if( num_normals > 0 ){ norms = &normals[0][0]; }
+	if( num_texcoords > 0 ){ tex = &texcoords[0][0]; }
+
+} // end get vertex data
+
+
+inline void TetMesh::get_primitive_data( short dim, int* &prims, int &num_prims ){
+	if( dim == 2 ){
+		need_edges(); // compute edges if we don't have them
+		num_prims = edges.size();
+		if( num_prims > 0 ){ prims = &edges[0][0]; }
+	}
+	else if( dim == 3 && faces.size() > 0 ){
+		num_prims = faces.size();
+		prims = &faces[0][0];
+	}
+	else if( dim == 4 && tets.size() > 0 ){
+		num_prims = tets.size();
+		prims = &tets[0][0];
+	}
+} // end get prim data
+
+
+template<typename T>
+void TetMesh::apply_xform( const XForm<T,3> &xf_ ){
+	Eigen::Transform<float,3,Eigen::Affine> xf = xf_.template cast<float>();
+	int nv = vertices.size();
+	for(int i=0; i<nv; ++i){ vertices[i] = xf * vertices[i]; }
+} // end apply xform
+
+
+inline Eigen::AlignedBox<float,3> TetMesh::bounds(){
+	size_t n_verts = vertices.size();
+	Eigen::AlignedBox<float,3> aabb;
+	for( size_t i=0; i<n_verts; ++i ){ aabb.extend( vertices[i] ); }
+	return aabb;
+}
+
+
+// Loop through all of the tets and counts the number of times a face is indexed,
+// with the indices of the face sorted from low to high. If a face only exists
+// on a tet once, it's an outer facing face.
+inline void TetMesh::need_faces( bool recompute ){
+	if( faces.size()>0 && !recompute ){ return; }
+	std::unordered_map< hashkey::sint3, int > face_ids;
+	size_t n_tets = tets.size();
+	for( size_t t=0; t<n_tets; ++t ){
+		int p0 = tets[t][0];
+		int p1 = tets[t][1];
+		int p2 = tets[t][2];
+		int p3 = tets[t][3];
+		hashkey::sint3 curr_faces[4];
+		curr_faces[0] = hashkey::sint3( p0, p1, p3 );
+		curr_faces[1] = hashkey::sint3( p0, p2, p1 );
+		curr_faces[2] = hashkey::sint3( p0, p3, p2 );
+		curr_faces[3] = hashkey::sint3( p1, p2, p3 );
+		for( int f=0; f<4; ++f ){
+			if( face_ids.count(curr_faces[f]) == 0 ){ face_ids[ curr_faces[f] ] = 1; }
+			else{ face_ids[ curr_faces[f] ] += 1; }
+		}
+	}
+	faces.clear();
+	std::unordered_map< hashkey::sint3, int >::iterator faceIt = face_ids.begin();
+	for( ; faceIt != face_ids.end(); ++faceIt ){
+		if( faceIt->second == 1 ){
+			hashkey::sint3 f = faceIt->first;
+			faces.emplace_back( Vec3i( f.orig_v[0], f.orig_v[1], f.orig_v[2] ) );
+		}
+	}
+} // end need faces
+
+
+inline void TetMesh::need_normals( bool recompute ){
+	const size_t nv = vertices.size();
+	if( nv == normals.size() && !recompute ){ return; }
+	if( nv != normals.size() ){ normals.resize( vertices.size() ); }
+	std::fill( normals.begin(), normals.end(), Vec3f(0,0,0) );
+	size_t nf = faces.size();
+	if( nf == 0 ){ need_faces(); }
+	for( size_t i = 0; i < nf; ++i ){
+		const Vec3f &p0 = vertices[faces[i][0]];
+		const Vec3f &p1 = vertices[faces[i][1]];
+		const Vec3f &p2 = vertices[faces[i][2]];
+		Vec3f a = p0-p1, b = p1-p2, c = p2-p0;
+		float l2a = a.squaredNorm(), l2b = b.squaredNorm(), l2c = c.squaredNorm();
+		if (!l2a || !l2b || !l2c){ continue; }
+		Vec3f facenormal = a.cross( b );
+		normals[faces[i][0]] += facenormal * (1.0f / (l2a * l2c));
+		normals[faces[i][1]] += facenormal * (1.0f / (l2b * l2a));
+		normals[faces[i][2]] += facenormal * (1.0f / (l2c * l2b));
+	}
+	for(size_t i=0; i<nv; ++i){
+		if( normals[i].squaredNorm() > 0 ){ normals[i].normalize(); }
+	}
+} // end compute normals
+
+
+inline void TetMesh::need_edges( bool recompute, bool surface_only ){
+	if( edges.size()>0 && !recompute ){ return; }
+	std::unordered_map< hashkey::sint2, int > edge_ids;
+	if( surface_only ){
+		need_faces();
+		int n_faces = faces.size();
+		for( int f=0; f<n_faces; ++f ){
+			edge_ids.emplace( std::make_pair( hashkey::sint2(faces[f][0],faces[f][1]), 1) );
+			edge_ids.emplace( std::make_pair( hashkey::sint2(faces[f][0],faces[f][2]), 1) );
+			edge_ids.emplace( std::make_pair( hashkey::sint2(faces[f][1],faces[f][2]), 1) );
+		}
+	} else {
+		int n_tets = tets.size();
+		for( int f=0; f<n_tets; ++f )
+		for( int i=0; i<4; ++i )
+		for( int j=0; j<4; ++j ){
+			if( i==j ){ continue; }
+			edge_ids.emplace( std::make_pair( hashkey::sint2(tets[f][i],tets[f][j]), 1) );
+		}
+	}
+	edges.clear();
+	std::unordered_map< hashkey::sint2, int >::iterator it = edge_ids.begin();
+	for( ; it != edge_ids.end(); ++it ){
+		edges.emplace_back( Vec2i(it->first[0],it->first[1]) );
+	}
+} // end compute edges
+
+
+inline void TetMesh::refine( float eps ){
+
+	eps = eps*eps; // using squaredNorm()
+	std::unordered_map< int, int > old_to_new; // old idx -> new idx
+	size_t n_tets = tets.size();
+	int vert_count = 0;
+	for( size_t i=0; i<n_tets; ++i ){
+		for( size_t j=0; j<4; ++j ){
+			int idx = tets[i][j];
+
+			// If it's newly encountered vertex:
+			if( old_to_new.count(idx)==0 ){
+				old_to_new[ idx ] = vert_count;
+				vert_count++;
+			}
+
+			// Now check if its within a eps of another existing vert:
+			Vec3f &v0 = vertices[idx];
+			std::unordered_map< int, int >::iterator it = old_to_new.begin();
+			for( ; it != old_to_new.end(); ++it ){
+				if( it->first == idx ){ continue; }
+				Vec3f &v1 = vertices[it->first];
+				if( (v0-v1).squaredNorm() < eps ){
+					old_to_new[ idx ] = it->second;
+					break;
+				}
+			}
+
+		} // end loop tet
+	} // end loop all tets
+
+	// Update vertices
+	std::vector<Vec3f> old_verts = vertices;
+	vertices.clear();
+	std::unordered_map< int, int >::iterator it = old_to_new.begin();
+	vertices.resize( old_to_new.size() );
+	for( ; it != old_to_new.end(); ++it ){
+		vertices[ it->second ] = old_verts[ it->first ];
+	}
+
+	// Update tets
+	for( size_t i=0; i<n_tets; ++i ){
+		for( int j=0; j<4; ++j ){
+			tets[i][j] = old_to_new[ tets[i][j] ];
+		}
+	}
+
+	// Remake other data if needed
+	if( faces.size() ){ need_faces(true); }
+	if( edges.size() ){ need_edges(true); }
+	if( normals.size() ){ need_normals(true); }
+
+} // end refine
+
+
+inline void TetMesh::clear(){
+	tets.clear();
+	vertices.clear();
+	normals.clear();
+	faces.clear();
+	texcoords.clear();
+	edges.clear();
+} // end clear all data
+
 
 } // end namespace mcl
 

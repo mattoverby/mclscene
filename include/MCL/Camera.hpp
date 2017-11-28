@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -17,178 +17,200 @@
 // IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 // OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// By Matt Overby (http://www.mattoverby.net)
+// Based on "here be dragons" by Simon Rodriguez (http://simonrodriguez.fr/dragon)
 
-#ifndef MCLSCENE_CAMERA_H
-#define MCLSCENE_CAMERA_H 1
+#ifndef MCL_CAMERA_H
+#define MCL_CAMERA_H
 
-
-//
-//	TODO Refactor the camera classes.
-//	Right now they are kind of a mess between old function and new
-//
-
-#include "MCL/Vec.hpp"
-#include <string>
+#include "XForm.hpp"
 
 namespace mcl {
 
-	static trimesh::fxform make_view(Vec3f eye, Vec3f u, Vec3f v, Vec3f w){
-		trimesh::fxform r;
-		for(size_t i=0; i<3; ++i){
-			r[4*i] = u[i];
-			r[4*i+1] = v[i];
-			r[4*i+2] = w[i];
-		}
-		r[12] = -eye.dot(u);
-		r[13] = -eye.dot(v);
-		r[14] = -eye.dot(w);
-		return r;
-	}
-
-	// Makes a view matrix
-	// Usage: Mat4x4 v = Mat4x4::make_view(eye, viewdir);
-	static inline trimesh::fxform make_view(const Vec3f &eye, const Vec3f &dir, const Vec3f &up_=Vec3f(0,1,0)){
-		Vec3f up = up_; up.normalize();
-		Vec3f w = dir*-1.f; w.normalize();
-		Vec3f u = up.cross(w);
-		Vec3f v = w.cross(u);
-		trimesh::fxform r;
-		for(size_t i=0; i<3; ++i){
-			r[4*i] = u[i];
-			r[4*i+1] = v[i];
-			r[4*i+2] = w[i];
-		}
-		r[12] = -eye.dot(u);
-		r[13] = -eye.dot(v);
-		r[14] = -eye.dot(w);
-		return r;
-	}
-
-	// Makes a view matrix (from a lookat point)
-	static inline trimesh::fxform make_lookat(const Vec3f &eye, const Vec3f &point, const Vec3f &up=Vec3f(0,1,0)){
-		Vec3f dir = point-eye; return make_view(eye,dir,up);
-	}
-
-//
-//	Camera base class
-//
 class Camera {
 public:
-	Camera() : view_needs_update(true) {}
+	enum {
+		MOUSE_START = 1 << 0,
+		MOUSE_MOVE = 1 << 1,
+		MOUSE_END = 1 << 2,
+		MOUSE_LEFT = 1 << 3,
+		MOUSE_RIGHT = 1 << 4,
+	};
 
-	bool view_needs_update;
-	trimesh::fxform &get_view(){ if(view_needs_update){ update_view(); } return view; }
-	trimesh::fxform &get_projection(){ return projection; }
+	Camera();
 
-	virtual ~Camera(){}
+	// Sets the camera to the default settings
+	inline void set_default();
 
-	// Return eye world location
-	virtual Vec3f get_eye() = 0;
+	// Makes the current settings default
+	inline void make_default();
 
-	// Return camera direction
-	virtual Vec3f get_dir() = 0;
+	// Update the view matrix from the UVW vectors
+	inline void update_view(float dt);
 
-	// Returns a string containing xml code for saving to a scenefile.
-	virtual std::string get_xml( int /*mode*/ ){ return ""; }
+	// Update the projection matrix from the screen size
+	inline void update_projection(int w, int h);
 
-	// Window resize
-	virtual void resize( int /*width*/, int /*height*/ ){}
+	// Perform camera movement from mouse input
+	inline void mouse(int mouse, float x, float y);
 
-	// Zoom (move forward/backward)
-	virtual void zoom( float /*dz*/ ){}
+	inline const XForm<float> &view() const { return m_view; } // returns view matrix
+	inline const XForm<float> &projection() const { return m_proj; } // returns projection matrix
+	inline Vec2f screen() const { return m_screen; } // returns screen size
+	inline Vec3f &eye() { return m_eye; } // returns eye position
+	inline Vec3f &lookat() { return m_lookat; } // returns lookat point
+	inline float &fov_deg() { return m_fov_deg; }
+	
+private:
 
-	// Rotate (input is left-drag x and y amount from screen)
-	virtual void rotate( float /*dx*/, float /*dy*/ ){}
+	bool m_first_person;
+	XForm<float> m_view;
+	XForm<float> m_proj;
+	Vec2f m_screen; // screen size
 
-	// Pan (input is right-drag x and y amount from screen)
-	virtual void pan( float /*dx*/, float /*dy*/ ){}
+	bool m_left_pressed;
+	bool m_right_pressed;
+	Vec2f m_mouse; // mouse position (-1,1)
+	Vec2f m_mouse_delta; // mouse movement (-1,1)
+	float m_move_speed, d_move_speed;
+	float m_rot_speed, d_rot_speed;
+	float m_fov_deg, d_fov_deg;
 
-protected:
-	trimesh::fxform view, projection;
-	virtual void update_view(){};
+	Vec3f m_eye, d_eye;
+	Vec3f m_lookat, d_lookat;
+	Vec3f m_up, d_up;
+	Vec3f m_tangent, d_tangent;
 };
 
-
 //
-//	Not really a trackball camera but whatever
+//	Implementation
 //
-class Trackball : public Camera {
-public:
-	Vec3f eye, lookat, u, v, w;
-	float rotx, roty, panx, pany;
-	float fov_deg;
-	Vec2f clipping; // clipping plane for proj. matrix
+/*
+inline void Camera::update_lookat( const Vec3f &lookat, float rad ){
+	m_lookat = lookat;
+	Vec3f viewdir = (m_lookat-m_eye);
+	viewdir.normalize();
+	viewdir *= rad;
+	m_eye = m_lookat - viewdir;
+	m_view = xform::make_lookat(m_eye, m_lookat, m_up);
+}
+*/
 
-	Trackball( Vec3f eye_, Vec3f lookat_ ) : eye(eye_), lookat(lookat_),
-		rotx(0.f), roty(0.f),
-		panx(0.f), pany(0.f),
-		fov_deg(30.f),
-		clipping(0.1f,1000.f) {
-		update_basis();
+Camera::Camera() : m_screen(800,600) {
+
+	m_left_pressed = false;
+	m_right_pressed = false;
+	m_first_person = false;
+
+	d_eye = Vec3f(0,0,10);
+	d_lookat = Vec3f(0,0,0);
+	d_up = Vec3f(0,1,0);
+	d_tangent = Vec3f(1,0,0);
+	m_mouse = Vec2f(0,0);
+
+	d_move_speed = 1.2f;
+	d_rot_speed = 95.f;
+	d_fov_deg = 45.f;
+
+	set_default();
+}
+
+// Sets camera defaults
+inline void Camera::set_default(){
+
+	m_left_pressed = false;
+	m_right_pressed = false;
+	m_first_person = false;
+
+	m_eye = d_eye;
+	m_lookat = d_lookat;
+	m_up = d_up;
+	m_tangent = d_tangent;
+	m_mouse = Vec2f(0,0);
+
+	m_move_speed = d_move_speed;
+	m_rot_speed = d_rot_speed;
+	m_fov_deg = d_fov_deg;
+
+	m_view = xform::make_lookat(m_eye, m_lookat, m_up);
+
+	float aspect = m_screen[0]/m_screen[1];
+	m_proj = xform::make_persp(m_fov_deg, aspect, 0.01f, 300.f);
+}
+
+inline void Camera::make_default(){
+	d_eye = m_eye;
+	d_lookat = m_lookat;
+	d_up = m_up;
+	d_tangent = m_tangent;
+
+	d_move_speed = 1.2f;
+	d_rot_speed = 95.f;
+	d_fov_deg = 45.f;
+}
+
+inline void Camera::update_view(float dt){
+
+	dt = std::max( dt, 1e-6f );
+	Vec3f viewdir = m_lookat - m_eye;
+	float scene_rad = viewdir.norm();
+	viewdir /= scene_rad;
+
+	if(m_right_pressed){
+		Vec3f move_delta = (m_mouse_delta[0]*m_tangent+m_mouse_delta[1]*m_up)*m_rot_speed * dt;
+		m_lookat -= move_delta;
+		m_eye -= move_delta;
 	}
 
-	Vec3f get_eye(){ return eye; }
-
-	Vec3f get_dir(){ return mcl::normalized<float>(lookat-eye); }
-
-	void update_basis(){
-		Vec3f up(0,1,0);
-		Vec3f dir = lookat - eye;
-		dir.normalize();
-		w = dir*-1.f;
-		u = up.cross(w);
-		v = w.cross(u);
-		update_view();
-	}
-
-	void zoom( float dz ){
-		eye -= w*dz;
-		this->view_needs_update = true;
-	}
-
-	void rotate( float dx, float dy ){
-		rotx -= dx;
-		roty -= dy;
-		this->view_needs_update = true;
-	}
-
-	void pan( float dx, float dy ){
-		panx += dx;
-		pany += dy;
-		this->view_needs_update = true;
-	}
-
-	void resize( int width, int height ){
-		float aspect = std::fmaxf( (float)width / (float)height, 1e-6f );
-		this->projection = trimesh::fxform::persp( fov_deg, aspect, clipping[0], clipping[1] );
-	}
-
-protected:
-
-	void update_view(){
-		using namespace trimesh;
-		fxform xf = fxform::rot(rotx, Vec3f(0,1,0)) * fxform::rot(roty,u);
-		rotx = 0.f;
-		roty = 0.f;
-		Vec3f tmpv = v;
-		tmpv = xf * v;
-		if( tmpv[1] > 1e-3 ){
-			w = xf * w;
-			u = xf * u;
-			v = tmpv;
+	if(m_left_pressed){
+		if( m_first_person ){
+	  		m_lookat += (m_mouse_delta[0]*m_tangent+m_mouse_delta[1]*m_up)*m_rot_speed * dt;
+	  		viewdir = m_lookat - m_eye;
+			viewdir.normalize();
+		} else {
+	  		viewdir += (m_mouse_delta[0]*m_tangent + m_mouse_delta[1]*m_up)*m_rot_speed * dt;
+			viewdir.normalize();
+			m_eye = m_lookat - viewdir*scene_rad;
 		}
-		lookat += v*pany;
-		lookat -= u*panx;
-		pany = 0.f;
-		panx = 0.f;
-		float rad = (lookat-eye).norm();
-		eye = w*rad + lookat;
-		this->view = make_view( eye, u, v, w );
 	}
-};
+
+	m_tangent = viewdir.cross(m_up);
+	m_tangent.normalize();
+	m_up = m_tangent.cross(viewdir);
+	m_up.normalize();
+	m_view = xform::make_lookat(m_eye, m_lookat, m_up);
+}
 
 
-} // end namespace mcl
+inline void Camera::mouse(int m, float x, float y){
+
+	if( m & MOUSE_END ){
+		if( m & MOUSE_LEFT ){ m_left_pressed = false; }
+		if( m & MOUSE_RIGHT ){ m_right_pressed = false; }
+		return;
+	}
+
+	Vec2f screen_xy(
+		std::max(std::min(1.f, 2.f * x/m_screen[0] - 1.f), -1.f),
+		-std::max(std::min(1.f, 2.f * y/m_screen[1] - 1.f), -1.f)
+	);
+
+	if( m & MOUSE_START ){ m_mouse = screen_xy; }
+	else if( m & MOUSE_MOVE ){
+		if( m & MOUSE_LEFT ){ m_left_pressed = true; }
+		if( m & MOUSE_RIGHT ){ m_right_pressed = true; }
+		m_mouse_delta = screen_xy - m_mouse;
+		m_mouse = screen_xy;
+	}
+
+}
+
+inline void Camera::update_projection(int w, int h){
+	m_screen[0] = float(w);
+	m_screen[1] = float(h);
+	float aspect = m_screen[0]/m_screen[1];
+	m_proj = xform::make_persp(m_fov_deg, aspect, 0.01f, 300.f);
+}
+
+} // nm mcl
 
 #endif

@@ -17,54 +17,42 @@
 // IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 // OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// By Matt Overby (http://www.mattoverby.net)
+// Much of the code in this file comes from trimesh2
+// by Szymon Rusinkiewicz (gfx.cs.princeton.edu/proj/trimesh2)
+//
 
+#ifndef MCL_FACTORY_H
+#define MCL_FACTORY_H 1
 
-#ifndef MCLSCENE_FACTORY_H
-#define MCLSCENE_FACTORY_H 1
-
-#include "MCL/TetMesh.hpp"
-#include "MCL/TriangleMesh.hpp"
-#include "MCL/SceneManager.hpp"
+#include "TriangleMesh.hpp"
+#include "TetMesh.hpp"
 
 namespace mcl {
-
-//	Much of the code in this file comes from:
-//		trimesh2 by Szymon Rusinkiewicz (gfx.cs.princeton.edu/proj/trimesh2)
-//	
-//	Factory functions for creating objects/materials/lights/cameras
-//	If a pointer to SceneManager is passed, the obj/mat/light/cam is added.
-//	Unless otherwise noted, objects are centered at origin.
-//
 namespace factory {
 
-	// An empty TriangleMesh
-	static inline std::shared_ptr<TriangleMesh> make_trimesh( SceneManager *scene=nullptr );
-
-	// An empty TetMesh
-	static inline std::shared_ptr<TetMesh> make_tetmesh( SceneManager *scene=nullptr );
-
 	// A basic sphere
-	static inline std::shared_ptr<TriangleMesh> make_sphere( Vec3f center, float radius, int tess, SceneManager *scene=nullptr );
+	static inline std::shared_ptr<TriangleMesh> make_sphere( Vec3f center, float radius, int tess );
 
 	// A 2x2x2 non-symmetric cube centered at origin
-	static inline std::shared_ptr<TriangleMesh> make_cube( int tess, SceneManager *scene=nullptr );
+	static inline std::shared_ptr<TriangleMesh> make_tri_cube( int tess );
+
+	// A 1x1x1 cube with 5 densly packed tets
+	static inline std::shared_ptr<TetMesh> make_tet_cube();
 
 	// A box with specified boxmin/boxmax
-	static inline std::shared_ptr<TriangleMesh> make_box( int tess, Vec3f boxmin, Vec3f boxmax, SceneManager *scene=nullptr );
+	static inline std::shared_ptr<TriangleMesh> make_box( int tess, Vec3f boxmin, Vec3f boxmax );
 
 	// A beam is one or more connected cubes (chunks)
-	static inline std::shared_ptr<TriangleMesh> make_beam( int chunks, int tess, SceneManager *scene=nullptr );
+//	static inline std::shared_ptr<TriangleMesh> make_beam( int chunks, int tess );
 
 	// A 2x2 plane along x/y axis
-	static inline std::shared_ptr<TriangleMesh> make_plane( int tess_x, int tess_y, SceneManager *scene=nullptr );
+	static inline std::shared_ptr<TriangleMesh> make_plane( int tess_x, int tess_y );
 
 	// Cylinder centered on z axis. tess_c is the triangle resultion at the base.
-	static inline std::shared_ptr<TriangleMesh> make_cyl( int tess_c, int tess_l, float r, SceneManager *scene=nullptr );
+	static inline std::shared_ptr<TriangleMesh> make_cyl( int tess_c, int tess_l, float r );
 
-	// TODO
-	static inline std::shared_ptr<TriangleMesh> make_torus( int tess, float inner_rad, float outer_rad, SceneManager *scene=nullptr );
-
+	// Create a torus
+//	static inline std::shared_ptr<TriangleMesh> make_torus( int tess, float inner_rad, float outer_rad );
 
 	// Helpers from trimesh2
 	static inline void mkpoint(std::shared_ptr<TriangleMesh> mesh, float x, float y, float z);
@@ -84,27 +72,7 @@ namespace factory {
 //	Implementation
 //
 
-static inline std::shared_ptr<TriangleMesh> factory::make_trimesh( SceneManager *scene ){
-	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
-
-	if( scene != nullptr ){
-		scene->object_params.push_back( std::vector<Param>() );
-		scene->objects.push_back( mesh );
-	}
-	return mesh;
-}
-
-static inline std::shared_ptr<TetMesh> factory::make_tetmesh( SceneManager *scene ){
-	std::shared_ptr<TetMesh> mesh( new TetMesh() );
-
-	if( scene != nullptr ){
-		scene->object_params.push_back( std::vector<Param>() );
-		scene->objects.push_back( mesh );
-	}
-	return mesh;
-}
-
-static inline std::shared_ptr<TriangleMesh> factory::make_sphere( Vec3f center, float radius, int tess, SceneManager *scene ){
+static inline std::shared_ptr<TriangleMesh> factory::make_sphere( Vec3f center, float radius, int tess ){
 
 	float m_2pi = M_PI*2.f;
 	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
@@ -140,40 +108,28 @@ static inline std::shared_ptr<TriangleMesh> factory::make_sphere( Vec3f center, 
 	for (int i = 0; i < tess; i++){ mkface(mesh, base+i, base+((i+1)%tess), base+tess); }
 
 	// Now scale it by the radius
-	trimesh::xform s_xf = trimesh::xform::scale(radius,radius,radius);
+	XForm<float> s_xf = xform::make_scale(radius,radius,radius);
 	mesh->apply_xform( s_xf );
 
 	// Translate so center is correct
-	trimesh::xform t_xf = trimesh::xform::trans(center[0],center[1],center[2]);
+	XForm<float> t_xf = xform::make_trans<float>(center[0],center[1],center[2]);
 	mesh->apply_xform( t_xf );
-
-
-
-	// Add to SceneManager
-	if( scene != nullptr ){
-		std::vector< Param > params;
-		params.push_back( Param( "center", to_str(center) ) );
-		params.push_back( Param( "radius", std::to_string(radius) ) );
-		params.push_back( Param( "tess", std::to_string(tess) ) );
-		scene->object_params.push_back( params );
-		scene->objects.push_back( mesh );
-	}
 
 	return mesh;
 
 } // end make sphere
 
-
-static inline std::shared_ptr<TriangleMesh> factory::make_beam( int chunks, int tess, SceneManager *scene ){
+/*
+static inline std::shared_ptr<TriangleMesh> factory::make_beam( int chunks, int tess ){
 
 	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
 
 	for( int b=0; b<chunks; ++b ){
 
-		std::shared_ptr<TriangleMesh> box = make_cube( tess );
+		std::shared_ptr<TriangleMesh> box = make_tri_cube( tess );
 
 		// Now translate box1 and box2
-		trimesh::xform xf = trimesh::xform::trans( b*2.f, 0, 0 );
+		XForm<float> xf = xform::make_trans<float>( b*2.f, 0, 0 );
 		box->apply_xform( xf );
 		box->need_normals();
 
@@ -203,24 +159,12 @@ static inline std::shared_ptr<TriangleMesh> factory::make_beam( int chunks, int 
 
 	mesh->collapse_points(0.1f);
 
-
-	// Add to SceneManager
-	if( scene != nullptr ){
-		mesh->flags = mesh->flags | BaseObject::FLAT;
-		std::vector< Param > params;
-		params.push_back( Param( "radius", std::to_string(chunks) ) );
-		params.push_back( Param( "tess", std::to_string(tess) ) );
-		scene->object_params.push_back( params );
-		scene->objects.push_back( mesh );
-	}
-
 	return mesh;
 
 } // end make beam
+*/
 
-
-
-static inline std::shared_ptr<TriangleMesh> factory::make_cube( int tess, SceneManager *scene ){
+static inline std::shared_ptr<TriangleMesh> factory::make_tri_cube( int tess ){
 
 	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
 
@@ -343,35 +287,81 @@ static inline std::shared_ptr<TriangleMesh> factory::make_cube( int tess, SceneM
 		}
 	}
 
-
-
-	if( scene != nullptr ){
-		mesh->flags = mesh->flags | BaseObject::FLAT;
-		std::vector< Param > params;
-		params.push_back( Param( "tess", std::to_string(tess) ) );
-		params.push_back( Param( "flat_shading", "1" ) );
-		scene->object_params.push_back( params );
-		scene->objects.push_back( mesh );
-	}
-
 	return mesh;
 }
 
-static inline std::shared_ptr<TriangleMesh> factory::make_box( int tess, Vec3f boxmin, Vec3f boxmax, SceneManager *scene ){
+static inline std::shared_ptr<TetMesh> factory::make_tet_cube(){
+
+	std::shared_ptr<TetMesh> mesh( new TetMesh() );
+
+	Vec3f min(-0.5,-0.5,-0.5);
+	Vec3f max(0.5,0.5,0.5);
+	Vec3f step(1,1,1);
+
+	std::vector<Vec3f> verts;
+	std::vector<Vec4i> tets;
+	// Generate the lattice
+	for( float x=min[0]; x<max[0]; x += step[0] )
+	for( float y=min[1]; y<max[1]; y += step[1] )
+	for( float z=min[2]; z<max[2]; z += step[2] ){
+
+		Vec3f lower(x,y,z);
+		Vec3f upper = lower+step;
+
+		// Verts listed in order: bottom plane, then top plane
+		Vec3f v0 = lower;
+		Vec3f v1 = lower; v1[2] = upper[2];
+		Vec3f v2 = lower; v2[2] = upper[2]; v2[0] = upper[0];
+		Vec3f v3 = lower; v3[0] = upper[0];
+		Vec3f v4 = v0; v4[1] = upper[1];
+		Vec3f v5 = v3; v5[1] = upper[1];
+		Vec3f v6 = v2; v6[1] = upper[1];
+		Vec3f v7 = v1; v7[1] = upper[1];
+		verts.emplace_back( v0 );
+		verts.emplace_back( v1 );
+		verts.emplace_back( v2 );
+		verts.emplace_back( v3 );
+		verts.emplace_back( v4 );
+		verts.emplace_back( v5 );
+		verts.emplace_back( v6 );
+		verts.emplace_back( v7 );
+
+		Vec4i t0(0,2,7,5);
+		Vec4i t1(0,7,2,1);
+		Vec4i t2(0,5,7,4);
+		Vec4i t3(0,2,5,3);
+		Vec4i t4(2,7,5,6);
+		Vec4i offset = Vec4i(1,1,1,1)*verts.size();
+		tets.emplace_back( t0+offset );
+		tets.emplace_back( t1+offset );
+		tets.emplace_back( t2+offset );
+		tets.emplace_back( t3+offset );
+		tets.emplace_back( t4+offset );
+
+	} // end loop grid
+
+	mesh->vertices = verts;
+	mesh->tets = tets;
+	mesh->refine(); // remove duplicate vertices
+	return mesh;
+
+} // end make tetmesh cube
+
+static inline std::shared_ptr<TriangleMesh> factory::make_box( int tess, Vec3f boxmin, Vec3f boxmax ){
 
 	// Just make a cube and translate/scale it
-	std::shared_ptr<TriangleMesh> box = factory::make_cube( tess, scene );
-	trimesh::xform t1 = trimesh::xform::trans( 1, 1, 1 ); // translate boxmin to origin
-	trimesh::xform scale1 = trimesh::xform::scale( 0.5, 0.5, 0.5 ); // max box 1x1x1
-	trimesh::xform scale2 = trimesh::xform::scale( boxmax[0]-boxmin[0], boxmax[1]-boxmin[1], boxmax[2]-boxmin[2] );
-	trimesh::xform t2 = trimesh::xform::trans( boxmin[0], boxmin[1], boxmin[2] ); // translate to boxmin
-	trimesh::xform xf = t2 * scale2 * scale1 * t1;
+	std::shared_ptr<TriangleMesh> box = factory::make_tri_cube( tess );
+	XForm<float> t1 = xform::make_trans<float>( 1, 1, 1 ); // translate boxmin to origin
+	XForm<float> scale1 = xform::make_scale<float>( 0.5, 0.5, 0.5 ); // max box 1x1x1
+	XForm<float> scale2 = xform::make_scale<float>( boxmax[0]-boxmin[0], boxmax[1]-boxmin[1], boxmax[2]-boxmin[2] );
+	XForm<float> t2 = xform::make_trans<float>( boxmin[0], boxmin[1], boxmin[2] ); // translate to boxmin
+	XForm<float> xf = t2 * scale2 * scale1 * t1;
 	box->apply_xform( xf );
 	return box;
 
 }
 
-static inline std::shared_ptr<TriangleMesh> factory::make_plane( int tess_x, int tess_y, SceneManager *scene ){
+static inline std::shared_ptr<TriangleMesh> factory::make_plane( int tess_x, int tess_y ){
 
 	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
 
@@ -429,20 +419,11 @@ static inline std::shared_ptr<TriangleMesh> factory::make_plane( int tess_x, int
 		mesh->texcoords.push_back( Vec2f(u,v) );
 	}
 
-
-	if( scene != nullptr ){
-		std::vector< Param > params;
-		params.push_back( Param( "tess_x", std::to_string(tess_x) ) );
-		params.push_back( Param( "tess_y", std::to_string(tess_y) ) );
-		scene->object_params.push_back( params );
-		scene->objects.push_back( mesh );
-	}
-
 	return mesh;
 
 }
 
-static inline std::shared_ptr<TriangleMesh> factory::make_cyl(int tess_c, int tess_l, float r, SceneManager *scene){
+static inline std::shared_ptr<TriangleMesh> factory::make_cyl(int tess_c, int tess_l, float r){
 
 	float m_2pi = M_PI*2.f;
 	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
@@ -513,26 +494,12 @@ static inline std::shared_ptr<TriangleMesh> factory::make_cyl(int tess_c, int te
 	int base = top_start + (tess_l-1)*tess_c;
 	for (int i = 0; i < tess_c; i++)
 		mkface(mesh, base+i, base+((i+1)%tess_c), base+tess_c);
-
-
-	if( scene != nullptr ){
-		std::vector< Param > params;
-		params.push_back( Param( "radius", std::to_string(r) ) );
-		params.push_back( Param( "tess_c", std::to_string(tess_c) ) );
-		params.push_back( Param( "tess_l", std::to_string(tess_l) ) );
-		scene->object_params.push_back( params );
-		scene->objects.push_back( mesh );
-	}
-
 	return mesh;
 }
 
-
-static inline std::shared_ptr<TriangleMesh> factory::make_torus( int tess, float inner_rad, float outer_rad, SceneManager *scene ){
-(void)(scene);
-std::cout << "TODO: make_torus: " << tess << " " << inner_rad << " " << outer_rad << std::endl;
-return NULL;
 /*
+static inline std::shared_ptr<TriangleMesh> factory::make_torus( int tess, float inner_rad, float outer_rad ){
+
 	if (tess < 3) tess = 3;
 
 	make_ccyl( mesh, tess, tess, outer_rad );
@@ -553,13 +520,13 @@ return NULL;
 		for (int i = 0; i < tess; i++) {
 			float ph = m_2pi * i / tess;
 			mesh->vertices[i+j*tess] = circlepos +
-						      cosf(ph)*r*circlepos +
-						      sinf(ph)*r*vec(0,0,-1);
+				cosf(ph)*r*circlepos +
+				sinf(ph)*r*vec(0,0,-1);
 		}
 	}
-*/
-}
 
+
+*/
 
 //
 //	Helper functions

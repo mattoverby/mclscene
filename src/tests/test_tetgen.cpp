@@ -19,66 +19,40 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCL_MICROTIMER_H
-#define MCL_MICROTIMER_H 1
+#include <iostream>
+#include "MCL/TetMesh.hpp"
+#include "MCL/MeshIO.hpp"
+#include "MCL/TetGen.hpp"
 
-#include <chrono>
+using namespace mcl;
 
-// Example:
-//
-//	mcl::MicroTimer timer;
-//
-//	... do work ...
-//
-//	double elapsed_microseconds = timer.elapsed_us();
-//	double elapsed_milliseconds = timer.elapsed_ms();
-//	double elapsed_seconds = timer.elapsed_s();
-//
-//	Notes:
-//		You may want to change the clock type based on application
-//
-namespace mcl {
+bool test_bunny();
 
-class MicroTimer {
-//	typedef std::chrono::high_resolution_clock C;
-	typedef std::chrono::steady_clock C;
-	typedef double T;
-	public:
+int main(void){
+	if( !test_bunny() ){ return EXIT_FAILURE; }
+	return EXIT_SUCCESS;
+}
 
-		MicroTimer() : start_time( C::now() ){}
+bool test_bunny(){
 
-		// Resets the timer
-		void reset() { start_time = C::now(); }
+	std::cout << "Testing bunny" << std::endl;
 
-		// Return time elapsed in seconds
-		T elapsed_s() const {
-			curr_time = C::now();
-			std::chrono::duration<T> durr = curr_time-start_time;
-			return durr.count();
-		}
+	mcl::TriangleMesh bunny;
+	std::stringstream bunnyfile;
+	bunnyfile << MCLSCENE_ROOT_DIR << "/src/data/bunny.obj";
+	mcl::meshio::load_obj( &bunny, bunnyfile.str() );
 
-		// Return time elapsed in milliseconds
-		T elapsed_ms() const {
-			curr_time = C::now();
-			std::chrono::duration<T, std::milli> durr = curr_time-start_time;
-			return durr.count();
-		}
+	std::cout << "Tri Bunny has " << bunny.vertices.size() << " verts" << std::endl;
 
-		// Return time elapsed in microseconds
-		T elapsed_us() const {
-			curr_time = C::now();
-			std::chrono::duration<T, std::micro> durr = curr_time-start_time;
-			return durr.count();
-		}
+	mcl::TetMesh tetbunny;
+	tetgen::Settings settings;
+	settings.verbose = true;
+	bool s = tetgen::make_tetmesh( tetbunny.tets, tetbunny.vertices, bunny.faces, bunny.vertices, settings );
+	if( !s ){ return false; }
 
-	private:
-		std::chrono::time_point<C> start_time;
-		mutable std::chrono::time_point<C> curr_time;
+	std::cout << "Tet bunny has " << tetbunny.vertices.size() << " verts, and " <<
+		tetbunny.tets.size() << " tets" << std::endl;
 
-}; // end class MicroTimer
+	return true;
+}
 
-
-} // end namespace mcl
-
-
-#endif

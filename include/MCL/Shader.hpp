@@ -17,33 +17,25 @@
 // IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 // OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-//	Adapted from r3dux:
-//	http://r3dux.org/2015/01/a-simple-c-opengl-shader-loader-improved
-//
+// By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_SHADER_HPP
-#define MCLSCENE_SHADER_HPP 1
-//
-// Assumes extensions header already included!
-//
-#include <fstream>
-#include <sstream>
-#include <unordered_map>
-#include "MCL/OpenGL.hpp"
-
-//
-//	Example use:
+// Example use:
 //	Shader myshader;
 //	< OpenGL context creation >
 //	myshader.init_from_files( "myshader.vert", "myshader.frag" );
+//	myshader.enable();
 //	while( rendering ){
-//		< OpenGL view stuff >
-//		myshader.enable();
-//		glUniform3f( myshader.uniform("color"), 1.f, 0.f, 0.f );
+//		glUniform3f( myshader.uniform("eye"), 0.f, 0.f, 0.f );
 //		< Draw stuff >
-//		glUseProgram(0);
 //	}
-//
+
+#ifndef MCL_SHADER_HPP
+#define MCL_SHADER_HPP 1
+
+#include <fstream>
+#include <sstream>
+#include <unordered_map>
+#include "OpenGL.hpp"
 
 namespace mcl {
 
@@ -51,22 +43,22 @@ class Shader {
 public:
 	Shader() : program_id(0) {}
 
-	~Shader(){ glDeleteProgram(program_id); }
+	~Shader(){ if( program_id ){ glDeleteProgram(program_id); } }
 
 	// Init the shader from files (must create OpenGL context first!)
-	inline void init_from_files( std::string vertex_file, std::string frag_file );
+	inline void init_from_files(const std::string &vertex_file, const std::string &frag_file);
 
 	// Init the shader from strings (must create OpenGL context first!)
-	inline void init_from_strings( std::string vertex_source, std::string frag_source ){ init(vertex_source, frag_source); }
+	inline void init_from_strings(const std::string &vertex_source, const std::string &frag_source);
 
 	// Bind the shader to set uniforms
 	inline void enable();
 
 	// Returns the bound location of a named attribute
-	inline GLuint attribute( const std::string name );
+	inline GLuint attribute(const std::string &name);
 
 	// Returns the bound location of a named uniform
-	inline GLuint uniform( const std::string name );
+	inline GLuint uniform(const std::string &name);
  
 private:
 	GLuint program_id;
@@ -77,10 +69,10 @@ private:
 	std::unordered_map<std::string, GLuint> uniforms;
 
 	// Initialize the shader, called by init_from_*
-	inline void init( std::string vertex_source, std::string frag_source );
+	inline void init( const std::string &vertex_source, const std::string &frag_source );
 
 	// Compiles the shader, called by init
-	inline GLuint compile( std::string shaderSource, GLenum type );
+	inline GLuint compile( const std::string &shaderSource, GLenum type );
 
 }; // end of shader
 
@@ -89,7 +81,7 @@ private:
 //	Implementation
 //
 
-GLuint Shader::compile( std::string source, GLenum type ){
+GLuint Shader::compile(const std::string &source, GLenum type){
 
 	// Generate a shader id
 	// Note: Shader id will be non-zero if successfully created.
@@ -124,7 +116,7 @@ GLuint Shader::compile( std::string source, GLenum type ){
 }
 
 
-void Shader::init(std::string vertex_source, std::string frag_source){
+void Shader::init(const std::string &vertex_source, const std::string &frag_source){
 
 	// Create the resource
 	program_id = glCreateProgram();
@@ -153,7 +145,7 @@ void Shader::init(std::string vertex_source, std::string frag_source){
 }
 
 
-void Shader::init_from_files( std::string vertex_file, std::string frag_file ){
+void Shader::init_from_files(const std::string &vertex_file, const std::string &frag_file){
 
 	std::string vert_string, frag_string;
 
@@ -171,13 +163,18 @@ void Shader::init_from_files( std::string vertex_file, std::string frag_file ){
 }
 
 
+void Shader::init_from_strings(const std::string &vertex_source, const std::string &frag_source){
+	init(vertex_source, frag_source);
+}
+
+
 void Shader::enable(){
 	if( program_id!=0 ){ glUseProgram(program_id); }
 	else{ throw std::runtime_error("\n**Shader Error: Can't enable, not initialized"); }
 }
 
 
-GLuint Shader::attribute(const std::string name){
+GLuint Shader::attribute(const std::string &name){
 
 	// Add the attribute to the map table if it doesn't already exist
 	if( attributes.count(name)==0 ){
@@ -188,7 +185,7 @@ GLuint Shader::attribute(const std::string name){
 }
 
 
-GLuint Shader::uniform(const std::string name){
+GLuint Shader::uniform(const std::string &name){
 
 	// Add the uniform to the map table if it doesn't already exist
 	if( uniforms.count(name)==0 ){ 

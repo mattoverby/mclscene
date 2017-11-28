@@ -19,61 +19,106 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_RENDERMESH_H
-#define MCLSCENE_RENDERMESH_H 1
+//
+//	A render mesh helps with interop between mclscene and OpenGL.
+//	TODO:
+//	- double precision base mesh
+//	- colors/materials
+//	- subdivide
+//	- make flat
+//
 
-#include "MCL/Object.hpp"
-#include "MCL/Material.hpp"
-#include "MCL/Texture.hpp"
-#include "TriMesh_algo.h" // mesh subdivision
-#include "MCL/TriangleMesh.hpp"
+#ifndef MCL_RENDERMESH_H
+#define MCL_RENDERMESH_H 1
+
+#include "Texture.hpp"
+#include "TriangleMesh.hpp"
+#include "TetMesh.hpp"
+#include "Material.hpp"
+#include <memory>
 
 namespace mcl {
 
-//
-//	A render mesh helps with interop between MCL and OpenGL
-//
 class RenderMesh {
 public:
+	enum OPTIONS {
+		DEFAULT = 1 << 0, // regular triangle mesh
+		WIREFRAME = 1 << 1, // draw as wireframe
+		INVISIBLE = 1 << 2, // don't draw mesh
+		DYNAMIC = 1 << 3, // The verts they are a-changin'
+	};
+
+	enum RELOAD {
+		ALL = 1 << 0, // reload all
+		VERTICES = 1 << 1, // reload vertices
+		NORMALS = 1 << 2, // reload norms
+		COLORS = 1 << 3, // reload colors
+	};
+
 	static inline std::shared_ptr<RenderMesh> create(
-		std::shared_ptr<BaseObject> obj_=NULL, std::shared_ptr<Material> mat_=NULL ){
-		return std::shared_ptr<RenderMesh>( new RenderMesh(obj_,mat_) );
+		std::shared_ptr<TriangleMesh> mesh, int options=DEFAULT ){
+		return std::make_shared<RenderMesh>( RenderMesh(mesh,options) );
 	}
 
-	// You can still use RenderMeshes by self-managing the vertex/face pointers.
-	RenderMesh() : RenderMesh(NULL,NULL) {}
+	static inline std::shared_ptr<RenderMesh> create(
+		std::shared_ptr<TetMesh> mesh, int options=DEFAULT ){
+		return std::make_shared<RenderMesh>( RenderMesh(mesh,options) );
+	}
 
-	// Create a RenderMesh from an Object and Material
-	RenderMesh( std::shared_ptr<BaseObject> obj_, std::shared_ptr<Material> mat_ );
+	RenderMesh( std::shared_ptr<TriangleMesh> mesh, int options=DEFAULT );
+	RenderMesh( std::shared_ptr<TetMesh> mesh, int options=DEFAULT );
 
-	// Copy vertex data to GPU. Returns true if vertex data has successfully
-	// been set from the stored Object pointer.
-	inline bool load_buffers();
+	// Copy vertex data to GPU. If the pointer'd mesh changes,
+	// it's up to you to call this function.
+	// Reload can be any number of the RELOAD enum if we are updating.
+	inline void load_buffers( int load=ALL );
 
-	// See if the current mesh should be invisible
-	inline bool is_invisible() const { return object->flags & BaseObject::INVISIBLE; }
+	// Get the model matrix.
+	inline const mcl::XForm<float> &get_model() const { return model; }
 
-	// Vertex data
-	float *vertices, *normals, *texcoords;
-	int num_vertices, num_normals, num_texcoords;
+	// Returns currently set options
+	inline int get_options() const { return m_options; }
+
+	// Returns aabb for the render mesh
+	inline Eigen::AlignedBox<float,3> bounds();
+
+	// Draws the mesh with current settings.
+	inline void draw();
+
+	// Vertex data. These are pointers to the actual
+	// data stored in a tet/tri mesh.
+	float *vertices, *normals, *colors, *texcoords;
+	int num_vertices, num_normals, num_colors, num_texcoords;
 
 	// Primitive data
-	int *faces, *edges;
-	int num_faces, num_edges;
+	int *prims;
+	int num_prims;
 
 	// OpenGL handles
-	unsigned int verts_vbo, normals_vbo, texcoords_vbo, faces_ibo, wire_ibo, tris_vao;
 	unsigned int tex_id;
+	unsigned int verts_vbo, normals_vbo, colors_vbo, texcoords_vbo, prims_ibo, vao;
 
-	// Pointers to the original object and material
-	std::shared_ptr<BaseObject> object;
-	std::shared_ptr<Material> material;
+	// Model matrix
+	XForm<float> model;
+
+	// Material info
+	material::Phong phong;
 
 private:
+	int m_options;
+	// I could use a base class for meshes, but I don't really want to.
+	std::shared_ptr<TriangleMesh> trimeshPtr;
+	std::shared_ptr<TetMesh> tetmeshPtr;
 	std::unique_ptr<mcl::Texture> texture;
-	inline bool update(); // update pointer data
-	inline void subdivide_mesh( trimesh::TriMesh &tempmesh );
-	inline void make_flat( TriangleMesh &tempmesh );
+
+	// Data that is allocated when not found in the wrapped mesh
+	std::vector<Vec2f> texcoords_data;
+	std::vector<Vec3f> colors_data;
+
+	inline void init(); // called by constructors
+	inline void get_data(); // gets data from the mesh ptr
+	inline void subdivide_mesh();
+	inline void make_flat();
 };
 
 
@@ -82,62 +127,92 @@ private:
 //
 
 
-// Create a RenderMesh from an Object and Material
-inline RenderMesh::RenderMesh( std::shared_ptr<BaseObject> obj_, std::shared_ptr<Material> mat_ ) :
-	vertices(0), normals(0), texcoords(0), faces(0), edges(0),
-	num_vertices(0), num_normals(0), num_texcoords(0), num_faces(0), num_edges(0),
-	verts_vbo(0), normals_vbo(0), texcoords_vbo(0), faces_ibo(0), wire_ibo(0), tris_vao(0), tex_id(0),
-	object(obj_), material(mat_) {
+RenderMesh::RenderMesh( std::shared_ptr<TriangleMesh> mesh, int opt ){ m_options=opt; trimeshPtr=mesh; init(); }
+RenderMesh::RenderMesh( std::shared_ptr<TetMesh> mesh, int opt ){ m_options=opt; tetmeshPtr=mesh; init(); }
 
-	update();
-	if( material != NULL ){
-		if( material->app.texture.size() > 0 ){
-			texture = std::unique_ptr<Texture>( new Texture() );
-			texture->create_from_file( material->app.texture );
-			tex_id = texture->handle(); // will be zero if file failed to load.
-		}
+inline void RenderMesh::init(){
+	vertices = nullptr;
+	num_vertices = 0;
+	normals = nullptr;
+	num_normals = 0;
+	colors = nullptr;
+	num_colors = 0;
+	texcoords = nullptr;
+	num_texcoords = 0;
+	prims = nullptr;
+	num_prims = 0;
+	tex_id = 0;
+	verts_vbo = 0;
+	normals_vbo = 0;
+	colors_vbo = 0;
+	texcoords_vbo = 0;
+	prims_ibo = 0;
+	vao = 0;
+	model.setIdentity();
+	if( m_options & WIREFRAME ){
+		phong.diff.setZero();
+		phong.amb = mcl::Vec3f(0.5,0,0);
+		phong.spec.setZero();
 	}
-
-} // end constructor
-
-
-inline bool RenderMesh::update(){
-
-	// Get vertex and face pointers
-	if( object == NULL ){ return false; }
-	bool success = object->get_vertices( vertices, num_vertices, normals, num_normals, texcoords, num_texcoords );
-	if( !success ){ num_vertices = 0; return false; }
-	success = object->get_primitives( Prim::Tri, faces, num_faces );
-	if( !success ){ num_faces = 0; return false; }
-	object->get_primitives( Prim::Edge, edges, num_edges );
-
-	return true;
+	else { phong = material::autoPhong(); }
 }
 
-
-inline bool RenderMesh::load_buffers(){
+inline void RenderMesh::get_data(){
 
 	// Update vertex pointers and double check we have valid data
-	if( !update() ){ return false; }
-	if( num_vertices<=0 || num_normals<=0 || num_faces<=0 ){ return false; }
+	if( trimeshPtr ){
+		trimeshPtr->need_normals();
+		trimeshPtr->get_vertex_data( vertices, num_vertices, normals, num_normals, texcoords, num_texcoords );
+		if( m_options & WIREFRAME ){ trimeshPtr->get_primitive_data( 2, prims, num_prims ); }
+		else { trimeshPtr->get_primitive_data( 3, prims, num_prims ); }
+	}
+	else if( tetmeshPtr ){
+		tetmeshPtr->need_normals();
+		tetmeshPtr->get_vertex_data( vertices, num_vertices, normals, num_normals, texcoords, num_texcoords );
+		if( m_options & WIREFRAME ){ tetmeshPtr->get_primitive_data( 2, prims, num_prims ); }
+		else { tetmeshPtr->get_primitive_data( 3, prims, num_prims ); }
+	}
 
-	// These are temporary meshes that stored flat or subdivided
-	// vertices and faces. Their data will be mapped to the GPU if needed.
-	TriangleMesh flatmesh;
-	trimesh::TriMesh subdivmesh;
-	if( object->flags & BaseObject::SUBDIVIDE ){ subdivide_mesh( subdivmesh ); }
-	else if( object->flags & BaseObject::FLAT ){ make_flat( flatmesh ); }
+	// Fill colors if none exist
+	if( num_colors != num_vertices ){
+		if( m_options & WIREFRAME ){ colors_data.resize( num_vertices, Vec3f(0,0,0) ); }
+		else{ colors_data.resize( num_vertices, Vec3f(1,0,0) ); }
+		colors = &colors_data[0][0];
+		num_colors = colors_data.size();
+	}
+
+	// Fill texcoords if non exist
+	if( num_texcoords != num_vertices ){
+		texcoords_data.resize( num_vertices, Vec2f(0,0) );
+		texcoords = &texcoords_data[0][0];
+		num_texcoords = texcoords_data.size();
+	}
+
+} // end get data
+
+
+inline void RenderMesh::load_buffers( int load ){
+
+	get_data();
+
+	// Check to make sure we have data
+	if( num_vertices<=0 || num_normals<=0 || num_prims<=0 ){
+		std::cerr << "**RenderMesh::update Error: No data for " <<
+			(trimeshPtr ? "trimesh " : "tetmesh ") <<
+			"(" << num_vertices << ", " << num_normals << ", " <<  num_prims << ")" << std::endl;
+		return;
+	}
 
 	// Now copy vertex and face data to GPU
 	GLenum draw_mode = GL_STATIC_DRAW;
-	if( object->flags & BaseObject::DYNAMIC ){ draw_mode = GL_DYNAMIC_DRAW; }
-	size_t stride = sizeof(float)*3;
+	if( m_options & DYNAMIC ){ draw_mode = GL_DYNAMIC_DRAW; }
+	const int stride = sizeof(float)*3;
 
 	if( !verts_vbo ){ // Create the buffer for vertices
 		glGenBuffers(1, &verts_vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, verts_vbo);
 		glBufferData(GL_ARRAY_BUFFER, num_vertices*stride, vertices, draw_mode);
-	} else { // Otherwise update
+	} else if( load & (ALL|VERTICES) ){ // Otherwise update
 		glBindBuffer(GL_ARRAY_BUFFER, verts_vbo);
 		glBufferSubData( GL_ARRAY_BUFFER, 0, num_vertices*stride, vertices );
 	}
@@ -146,69 +221,114 @@ inline bool RenderMesh::load_buffers(){
 		glGenBuffers(1, &normals_vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
 		glBufferData(GL_ARRAY_BUFFER, num_normals*stride, normals, draw_mode);
-	} else { // Otherwise update
+	} else if( load & (ALL|NORMALS) ){ // Otherwise update
 		glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
 		glBufferSubData( GL_ARRAY_BUFFER, 0, num_normals*stride, normals );
+	}
+
+	if( !colors_vbo ){ // Create the buffer for colors
+		glGenBuffers(1, &colors_vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
+		glBufferData(GL_ARRAY_BUFFER, num_colors*stride, colors, draw_mode);
+	} else if( load & (ALL|COLORS) ){ // Otherwise update
+		glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
+		glBufferSubData( GL_ARRAY_BUFFER, 0, num_colors*stride, colors );
 	}
 
 	 // Create the buffer for tex coords, these won't change
 	if( !texcoords_vbo ){
 		glGenBuffers(1, &texcoords_vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, texcoords_vbo);
-		if( num_texcoords == 0 ){ // fill with dummy tex coords if none exist
-			std::vector<float> temp_texcoords( num_vertices*2, 0.f );
-			glBufferData(GL_ARRAY_BUFFER, num_vertices*sizeof(float)*2, &temp_texcoords[0], GL_STATIC_DRAW);
-		} else { glBufferData(GL_ARRAY_BUFFER, num_texcoords*sizeof(float)*2, texcoords, GL_STATIC_DRAW); }
+		glBufferData(GL_ARRAY_BUFFER, num_texcoords*sizeof(float)*2, texcoords, GL_STATIC_DRAW);
 	}
 
-	// Create the buffer for indices, these won't change
-	if( !faces_ibo ){
-		glGenBuffers(1, &faces_ibo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, faces_ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_faces*sizeof(int)*3, faces, GL_STATIC_DRAW);
-	}
-
-	if( !wire_ibo && ( object->flags & BaseObject::WIREFRAME ) ){
-		glGenBuffers(1, &wire_ibo);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, wire_ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_edges*sizeof(int)*2, edges, GL_STATIC_DRAW);
+	// Create the buffer for indices
+	if( !prims_ibo ){
+		int dim = m_options & WIREFRAME ? 2 : 3;
+		if( !prims_ibo ){
+			glGenBuffers(1, &prims_ibo);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prims_ibo);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_prims*sizeof(int)*dim, prims, GL_STATIC_DRAW);
+		} else {
+			glBindBuffer(GL_ARRAY_BUFFER, prims_ibo);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, num_prims*sizeof(int)*dim, prims);
+		}
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 	// Create the VAO
-	if( !tris_vao ){
+	// NOTE: This has to match the shader.
+	if( !vao ){
 
-		glGenVertexArrays(1, &tris_vao);
-		glBindVertexArray(tris_vao);
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
 
 		// location=0 is the vertex
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, verts_vbo);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, 0);
 
-		// location=1 is the normal
+		// location=1 is the color
 		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, 0);
 
-		// location=2 is the tex coord
+		// location=2 is the normal
 		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, texcoords_vbo);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, normals_vbo);
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, 0);
+
+		// location=3 is the tex coord (eventually)
+//		glEnableVertexAttribArray(2);
+//		glBindBuffer(GL_ARRAY_BUFFER, texcoords_vbo);
+//		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(float)*2, 0);
 
 		// Done setting data for the vao
 		glBindVertexArray(0);
 	}
 
-	return true;
-
 } // end copy data to GPU
 
 
-inline void RenderMesh::subdivide_mesh( trimesh::TriMesh &tempmesh ){
+inline Eigen::AlignedBox<float,3> RenderMesh::bounds(){
 
+	Eigen::AlignedBox<float,3> aabb;
+
+	if( trimeshPtr ){
+		int n_verts = trimeshPtr->vertices.size();
+		for( int i=0; i<n_verts; ++i ){
+			aabb.extend( trimeshPtr->vertices[i] );
+		}
+	}
+	else if( tetmeshPtr ){
+		int n_verts = tetmeshPtr->vertices.size();
+		for( int i=0; i<n_verts; ++i ){
+			aabb.extend( tetmeshPtr->vertices[i] );
+		}
+	}
+
+	return aabb;
+}
+
+inline void RenderMesh::draw(){
+	if( !prims_ibo ){ load_buffers(); }
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prims_ibo);
+	if( m_options & WIREFRAME ){
+		glDrawElements(GL_LINES, num_prims*2, GL_UNSIGNED_INT, 0);
+	} else {
+		glDrawElements(GL_TRIANGLES, num_prims*3, GL_UNSIGNED_INT, 0);
+	}
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+}
+
+
+inline void RenderMesh::subdivide_mesh(){
+throw std::runtime_error( "**TODO: RenderMesh::subdivide_mesh" );
+/*
 	// Copy vertex data to tempmesh
 	tempmesh.vertices.clear(); tempmesh.vertices.reserve( num_vertices );
 	tempmesh.faces.clear(); tempmesh.faces.reserve( num_faces );
@@ -230,12 +350,13 @@ inline void RenderMesh::subdivide_mesh( trimesh::TriMesh &tempmesh ){
 	num_normals = tempmesh.normals.size();
 	num_faces = tempmesh.faces.size();
 	num_texcoords = tempmesh.texcoords.size();
-
+*/
 } // end subdivide mesh
 
 
-inline void RenderMesh::make_flat( TriangleMesh &tempmesh ){
-
+inline void RenderMesh::make_flat(){
+throw std::runtime_error( "**TODO: RenderMesh::make_flat" );
+/*
 	tempmesh.vertices.reserve( num_vertices );
 	tempmesh.faces.reserve( num_faces );
 	tempmesh.texcoords.reserve( num_texcoords );
@@ -266,7 +387,7 @@ inline void RenderMesh::make_flat( TriangleMesh &tempmesh ){
 	num_faces = tempmesh.faces.size();
 	num_texcoords = tempmesh.texcoords.size();
 	num_edges = tempmesh.edges.size();
-
+*/
 } // end make flat shading
 
 } // end namespace mcl

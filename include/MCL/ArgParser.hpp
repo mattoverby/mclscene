@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -19,9 +19,8 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-
-#ifndef MCLSCENE_ARGPARSER_H
-#define MCLSCENE_ARGPARSER_H 1
+#ifndef MCL_ARGPARSER_H
+#define MCL_ARGPARSER_H 1
 
 #include <sstream>
 #include <string>
@@ -82,7 +81,7 @@ public:
 			T value; ss >> value;
 			return value;
 		}
-		else{ return T(); }
+		return T();
 	} // end getter
 
 	// Return true on exists and overwrites value, false otherwise.

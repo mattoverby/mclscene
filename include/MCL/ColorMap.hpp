@@ -16,11 +16,13 @@
 // OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
 // IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 // OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_COLORMAP_H
-#define MCLSCENE_COLORMAP_H 1
+#ifndef MCL_COLORMAP_H
+#define MCL_COLORMAP_H 1
 
-#include "MCL/Vec.hpp"
+#include "Vec.hpp"
 #include <unordered_map>
 
 namespace mcl {
@@ -62,18 +64,6 @@ public:
 
 	// Clears current gradient
 	void clear(){ colors->clear(); }
-
-	// Use a labeled color gradient loaded with
-	// the "load_" function. Returns true if the gradient
-	// was successfully loaded.
-//	bool use( std::string label ){}
-
-	// Load a ParaView colormap xml file.
-//	void load_paraview( std::string xml ){}
-
-	// Javascript hex colors from colorbrewer2.org, e.g.:
-	// mymap.set("['#e5f5f9','#99d8c9','#2ca25f']");
-//	void set( std::string new_map );
 
 private:
 	std::vector<cpair> *colors; // currently loaded color map
@@ -169,18 +159,11 @@ void ColorMap::use_preset( int preset, float avg ){
 } // end namespace mcl
 
 /*
-Color Blending: saved for reference
-	// From: https://stackoverflow.com/questions/1700211/to-dynamically-increment-from-blue-to-red-using-c
-	static inline float blend(float a, float b, float alpha){ return (1.f - alpha) * a + alpha * b; }
-
 	// gradient should be 0-1. blended needs to be a 3-element array
-	// From https://stackoverflow.com/questions/1700211/to-dynamically-increment-from-blue-to-red-using-c
-	static inline void colorBlend( float *blended, float a[3], float b[3], float gradient ){
-		if( gradient > 1.f ){ gradient = 1.f; }
-		if( gradient < 0.f ){ gradient = 0.f; }
-		blended[0] = blend( a[0], b[0], gradient );
-		blended[1] = blend( a[1], b[1], gradient );
-		blended[2] = blend( a[2], b[2], gradient );
+	static inline Vec3f blend( const Vec3f &a, const Vec3f &b, float grad ){
+		if( grad > 1.f ){ grad = 1.f; }
+		if( grad < 0.f ){ grad = 0.f; }
+		return ( 1.f - grad ) * a + grad * b;
 	}
 */
 #endif

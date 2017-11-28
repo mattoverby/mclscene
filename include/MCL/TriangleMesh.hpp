@@ -1,4 +1,4 @@
-// Copyright (c) 2016 University of Minnesota
+// Copyright (c) 2017 University of Minnesota
 // 
 // MCLSCENE Uses the BSD 2-Clause License (http://www.opensource.org/licenses/BSD-2-Clause)
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -19,22 +19,22 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_TRIANGLEMESH_H
-#define MCLSCENE_TRIANGLEMESH_H 1
+#ifndef MCL_TRIANGLEMESH_H
+#define MCL_TRIANGLEMESH_H 1
 
 #include <vector>
-#include "Object.hpp"
-#include "AABB.hpp"
+#include <memory>
+#include "Vec.hpp"
+#include "XForm.hpp"
+#include "HashKeys.hpp"
 
 namespace mcl {
 
-//
-//	Just a convenient wrapper to plug into the system
-//
-class TriangleMesh : public BaseObject {
+class TriangleMesh {
 public:
-	static inline std::shared_ptr<TriangleMesh> create(){
-		return std::shared_ptr<TriangleMesh>( new TriangleMesh() );
+	typedef std::shared_ptr<TriangleMesh> Ptr;
+	static std::shared_ptr<TriangleMesh> create(){
+		return std::make_shared<TriangleMesh>();
 	}
 
 	// Data
@@ -42,61 +42,140 @@ public:
 	std::vector< Vec3f > normals; // zero length for all non-surface normals
 	std::vector< Vec3i > faces; // surface triangles
 	std::vector< Vec2f > texcoords; // per vertex uv coords
-	std::vector< Vec2i > edges;
+	std::vector< Vec2i > edges; // unique face edges
 
-	// Get per-vertex data
-	bool get_vertices(
+	// Get per-vertex data.
+	// If normals have not been set, they are computed.
+	inline void get_vertex_data(
 		float* &vertices, int &num_vertices,
 		float* &normals, int &num_normals,
-		float* &texcoords, int &num_texcoords );
+		float* &texcoords, int &num_texcoords
+	);
 
-	// Get primitive data
-	bool get_primitives( const Prim &type, int* &indices, int &num_prims );
+	// Get primitive data.
+	// If edges are requested but have not been set, they are computed.
+	// Dimension describes the prim type, i.e. 2 = edges, 3 = triangles, etc...
+	inline void get_primitive_data( short dimension, int* &prims, int &num_prims );
 
-	// Returns true on success
-	bool load( std::string filename );
+	template<typename T> void apply_xform( const XForm<T,3> &xf );
 
-	// Saves the triangle mesh to a file (obj)
-	void save( std::string filename );
+	// Returns aabb
+	inline Eigen::AlignedBox<float,3> bounds();
 
-	std::string get_xml( int mode=0 );
+	// Computes per-vertex normals
+	inline void need_normals( bool recompute=false );
 
-	void apply_xform( const trimesh::xform &xf );
-
-	void get_bounds( Vec3f &bmin, Vec3f &bmax );
-
-	void need_normals( bool recompute=false );
-
-	// Creates edges for rendering wireframe
-	void need_edges( bool recompute=false );
-
-//	void get_primitives( std::vector< std::shared_ptr<BaseObject> > &prims ){
-//		if( tri_refs.size() != faces.size() ){ make_tri_refs(); }
-//		prims.insert( prims.end(), tri_refs.begin(), tri_refs.end() );
-//	}
-
-	// Normal of face f
-	Vec3f trinorm( unsigned int f );
+	// Creates unique edges of the triangle faces
+	inline void need_edges( bool recompute=false );
 
 	// Clear all mesh data
-	void clear();
+	inline void clear();
 
-	// When stitching meshes together, this function will
-	// join two vertices as one if they are within dist.
-	void collapse_points( float distance );
+}; // end class TriangleMesh
 
-	void make_ccw();
 
-private:
-	AABB aabb;
+//
+//	Implementation
+//
 
-	// Triangle refs are used for BVH hook-in.
-//	void make_tri_refs();
-//	std::vector< std::shared_ptr<BaseObject> > tri_refs;
 
-	bool load_obj( std::string filename );
-};
+inline void TriangleMesh::get_vertex_data(
+	float* &verts, int &num_vertices,
+	float* &norms, int &num_normals,
+	float* &tex, int &num_texcoords ){
+	if( normals.size() != vertices.size() ){ need_normals(); }
+	num_vertices = vertices.size();
+	num_normals = normals.size();
+	num_texcoords = texcoords.size();
+	if( num_vertices > 0 ){ verts = &vertices[0][0]; }
+	if( num_normals > 0 ){ norms = &normals[0][0]; }
+	if( num_texcoords > 0 ){ tex = &texcoords[0][0]; }
 
+} // end get vertex data
+
+
+inline void TriangleMesh::get_primitive_data( short dim, int* &prims, int &num_prims ){
+	if( dim == 2 ){
+		need_edges(); // compute edges if we don't have them
+		num_prims = edges.size();
+		if( num_prims > 0 ){ prims = &edges[0][0]; }
+	}
+	else if( dim == 3 && faces.size() > 0 ){
+		num_prims = faces.size();
+		prims = &faces[0][0];
+	}
+} // end get prim data
+
+
+template<typename T>
+void TriangleMesh::apply_xform( const XForm<T,3> &xf_ ){
+	Eigen::Transform<float,3,Eigen::Affine> xf = xf_.template cast<float>();
+	int nv = vertices.size();
+	for(int i=0; i<nv; ++i){ vertices[i] = xf * vertices[i]; }
+} // end apply xform
+
+
+inline Eigen::AlignedBox<float,3> TriangleMesh::bounds(){
+	size_t n_verts = vertices.size();
+	Eigen::AlignedBox<float,3> aabb;
+	for( size_t i=0; i<n_verts; ++i ){ aabb.extend( vertices[i] ); }
+	return aabb;
+}
+
+inline void TriangleMesh::need_normals( bool recompute ){
+	const size_t nv = vertices.size();
+	if( nv == normals.size() && !recompute ){ return; }
+	if( nv != normals.size() ){ normals.resize( nv ); }
+	std::fill( normals.begin(), normals.end(), Vec3f(0,0,0) );
+	int nf = faces.size();
+	for( int i = 0; i < nf; ++i ){
+		const Vec3f &p0 = vertices[faces[i][0]];
+		const Vec3f &p1 = vertices[faces[i][1]];
+		const Vec3f &p2 = vertices[faces[i][2]];
+		Vec3f a = p0-p1, b = p1-p2, c = p2-p0;
+		float l2a = a.squaredNorm(), l2b = b.squaredNorm(), l2c = c.squaredNorm();
+		if(!l2a || !l2b || !l2c){ continue; }
+		Vec3f facenormal = a.cross( b );
+		normals[faces[i][0]] += facenormal * (1.0f / (l2a * l2c));
+		normals[faces[i][1]] += facenormal * (1.0f / (l2b * l2a));
+		normals[faces[i][2]] += facenormal * (1.0f / (l2c * l2b));
+	}
+	for(size_t i = 0; i < nv; ++i){
+		if( normals[i].squaredNorm() > 0 ){ normals[i].normalize(); }
+	}
+} // end compute normals
+
+
+inline void TriangleMesh::need_edges( bool recompute ){
+
+	if( edges.size()>0 && !recompute ){ return; }
+
+	// vertex ids -> number of faces using these indices
+	std::unordered_map< hashkey::sint2, int > edge_ids;
+	int n_faces = faces.size();
+	for( int f=0; f<n_faces; ++f ){
+		edge_ids.emplace( std::make_pair( hashkey::sint2(faces[f][0],faces[f][1]), 1) );
+		edge_ids.emplace( std::make_pair( hashkey::sint2(faces[f][0],faces[f][2]), 1) );
+		edge_ids.emplace( std::make_pair( hashkey::sint2(faces[f][1],faces[f][2]), 1) );
+	}
+
+	// Now copy the map into edges
+	edges.clear();
+	std::unordered_map< hashkey::sint2, int >::iterator it = edge_ids.begin();
+	for( ; it != edge_ids.end(); ++it ){
+		edges.emplace_back( Vec2i(it->first[0],it->first[1]) );
+	}
+
+} // end compute edges
+
+
+inline void TriangleMesh::clear(){
+	vertices.clear();
+	normals.clear();
+	faces.clear();
+	texcoords.clear();
+	edges.clear();
+} // end clear all data
 
 } // end namespace mcl
 

@@ -19,52 +19,31 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
+//
+// Several static functions for projecting a point onto a geometric surface.
+// Will return a point on the surface that is nearest to the one given./
+//
 
-#ifndef MCLSCENE_PROJECTION_H
-#define MCLSCENE_PROJECTION_H 1
+#ifndef MCL_PROJECTION_H
+#define MCL_PROJECTION_H 1
 
 #include <math.h>
-#include "MCL/Vec.hpp"
+#include "Vec.hpp"
 
 namespace mcl {
-
-//	
-//	Several static functions for projecting a point onto a geometric surface.
-//	Will return a point on the surface that is nearest to the one given.
-//
-//	Example usage:
-//		Vec3f pt_on_tri = projection::point_triangle<float>( some_point, vertex1, vertex2, vertex3 );
-//		Vec3d pt_on_sphere = projection::point_sphere<double>( some_point, center, radius );
-//		float dist_to_aabb = projection::point_aabb_dist<float>( some_point, aabb_min, aabb_max );
-//
 namespace projection {
 
-	//
 	//	Projection on Triangle
-	//
-	template <typename T> static inline Vec3<T> point_triangle( const Vec3<T> &point, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 );
+	template <typename T> static Vec3<T> point_on_triangle( const Vec3<T> &point, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 );
 
-	//
 	//	Projection on Sphere
-	//
-	template <typename T> static inline Vec3<T> point_sphere( const Vec3<T> &point, const Vec3<T> &center, const T &rad );
+	template <typename T> static Vec3<T> point_on_sphere( const Vec3<T> &point, const Vec3<T> &center, const T &rad );
 
-	//
-	//	Instead of projection, point_aabb returns squared unsigned distance from a point to the AABB
-	//
-	template <typename T> static inline T point_aabb_dist( const Vec3<T> &point, const Vec3<T> &min, const Vec3<T> &max );
+	//	Point in tet
+	template <typename T> static bool point_in_tet( const Vec3<T> &point, const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 );
 
-	//
-	//	Point in whatever
-	//
-	template <typename T> static inline bool point_in_aabb( const Vec3<T> &point, const Vec3<T> &min, const Vec3<T> &max );
-	template <typename T> static inline bool point_in_tet( const Vec3<T> &point, const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 );
-
-	//
 	//	Helper functions
-	//
-	template <typename T> static inline T myclamp( const T &val ){ return val < 0 ? 0 : (val > 1 ? 1 : val); }
-	template <typename T> static inline T stp( const Vec3<T> &u, const Vec3<T> &v, const Vec3<T> &w ){ return u.dot(v.cross(w)); } // scalar triple product
+	template <typename T> static T myclamp( const T &val ){ return val < 0 ? 0 : (val > 1 ? 1 : val); }
 
 }; // end namespace Projection
 
@@ -72,7 +51,8 @@ namespace projection {
 //	Implementation
 //
 
-template <typename T> static inline Vec3<T> projection::point_triangle( const Vec3<T> &point, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 ){
+template <typename T>
+Vec3<T> projection::point_on_triangle( const Vec3<T> &point, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 ){
 
 	Vec3<T> edge0 = p2 - p1;
 	Vec3<T> edge1 = p3 - p1;
@@ -157,30 +137,16 @@ template <typename T> static inline Vec3<T> projection::point_triangle( const Ve
 } // end project triangle
 
 
-template <typename T> static inline Vec3<T> projection::point_sphere( const Vec3<T> &point, const Vec3<T> &center, const T &rad ){
+template <typename T>
+Vec3<T> projection::point_on_sphere( const Vec3<T> &point, const Vec3<T> &center, const T &rad ){
 	Vec3<T> dir = point-center;
 	dir.normalize();
 	return ( center + dir*rad );
 } // end project sphere
 
 
-template <typename T> static inline T projection::point_aabb_dist( const Vec3<T> &point, const Vec3<T> &min, const Vec3<T> &max ){
-	T sqDist(0);
-	for( int i=0; i<3; ++i ){
-		if( point[i] < min[i] ){ sqDist += (min[i]-point[i])*(min[i]-point[i]); }
-		if( point[i] > max[i] ){ sqDist += (point[i]-max[i])*(point[i]-max[i]); }
-	}
-	return sqDist;
-} // end point aabb
-
-template <typename T> static inline bool projection::point_in_aabb( const Vec3<T> &point, const Vec3<T> &min, const Vec3<T> &max ){
-	for( int i=0; i<3; ++i ){
-		if( point[i] < min[i] || point[i] > max[i] ){ return false; }
-	}
-	return true;
-}
-
-template <typename T> static inline bool check_norm( const Vec3<T> &point,
+template <typename T>
+bool check_norm( const Vec3<T> &point,
 	const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 ){
 	const Vec3<T> n = (p1 - p0).cross(p2 - p0);
 	const T dp3 = n.dot(p3 - p0);
@@ -188,7 +154,8 @@ template <typename T> static inline bool check_norm( const Vec3<T> &point,
 	return (dp3*dp>0);
 }
 
-template <typename T> static inline bool projection::point_in_tet( const Vec3<T> &point,
+template <typename T>
+bool projection::point_in_tet( const Vec3<T> &point,
 	const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 ){
 	return check_norm<T>(point, p0, p1, p2, p3) && check_norm<T>(point, p1, p2, p3, p0) &&
 		check_norm<T>(point, p2, p3, p0, p1) && check_norm<T>(point, p3, p0, p1, p2);

@@ -19,69 +19,65 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_RAYINTERSECT_H
-#define MCLSCENE_RAYINTERSECT_H 1
+//
+// Several common classes and static functions related to ray tracing
+//
+
+#ifndef MCL_RAYINTERSECT_H
+#define MCL_RAYINTERSECT_H 1
 
 #include <memory>
-#include "MCL/Projection.hpp"
+#include "Vec.hpp"
 
 namespace mcl {
-
-//
-//	Several common classes and static functions related to ray tracing
-//
 namespace raycast {
 
-	//
-	//	Ray
-	//
+	// Ray
 	template<typename T> class Ray {
 	public:
-		Ray(){ origin=Vec3<T>(0,0,0); direction=Vec3<T>(0,0,-1); eps=T(1e-5); }
-		Ray( Vec3<T> o, Vec3<T> d, T e=T(1e-5) ){ origin=o; direction=d; eps=e; }
+		Ray() : origin(0,0,0), direction(0,0,-1), eps(1e-5) {}
+		Ray( Vec3<T> o, Vec3<T> d, T e=T(1e-5) ) : origin(o), direction(d), eps(e) {}
 		Vec3<T> origin, direction;
 		T eps;
 	};
 
-	//
-	//	Payload
-	//
+	// Payload
 	template<typename T> class Payload {
 	public:
-		Payload() : t_min(1e-5), t_max( std::numeric_limits<T>::max() ), bary(0,0,0) {}
-		T t_min, t_max;
-		mutable Vec3<T> bary;
-		mutable Vec3<T> n, hit_point;
-		mutable int material; // index into SceneManager::materials
+		Payload() : t_min(1e-5), t_max(std::numeric_limits<T>::max()),
+			bary(0,0,0), n(0,0,0), hit_point(0,0,0), material(-1) {}
+		mutable T t_min, t_max;
+		mutable Vec3<T> bary, n, hit_point;
+		mutable int material; // usually an index into an array
 	};
+
+	//
+	//	Intersection functions and utility
+	//
 
 	// Ideal specular reflection
 	template<typename T> static Vec3<T> reflect( const Vec3<T> &incident, const Vec3<T> &norm ){
 		return ( incident - T(2) * norm * norm.dot( incident ) );
 	}
 
-	//
-	//	Intersection functions
-	//
-
 	// ray -> axis aligned bounding box
 	// Returns true/false only and does not set the payload.
-	template<typename T> static inline bool ray_aabb( const Ray<T> *ray,
-		const Vec3<T> &min, const Vec3<T> &max, const Payload<T> *payload );
+	template<typename T> static bool ray_aabb( const Ray<T> *ray,
+		const Vec3<T> &min, const Vec3<T> &max );
 
 	// ray -> triangle without smoothed normals
-	template<typename T> static inline bool ray_triangle( const Ray<T> *ray,
+	template<typename T> static bool ray_triangle( const Ray<T> *ray,
 		const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2,
 		Payload<T> *payload );
 
 	// ray -> triangle with smoothed normals
-	template<typename T> static inline bool ray_triangle( const Ray<T> *ray,
+	template<typename T> static bool ray_triangle( const Ray<T> *ray,
 		const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2,
 		const Vec3<T> &n0, const Vec3<T> &n1, const Vec3<T> &n2,
 		Payload<T> *payload );
 
 	// ray -> sphere
-	template<typename T> static inline bool ray_sphere( const Ray<T> *ray,
+	template<typename T> static bool ray_sphere( const Ray<T> *ray,
 		const Vec3<T> &center, const T &radius,
 		Payload<T> *payload );
 
@@ -92,14 +88,14 @@ namespace raycast {
 //
 
 // ray -> axis aligned bounding box
-template<typename T> static inline bool mcl::raycast::ray_aabb( const Ray<T> *ray,
-	const Vec3<T> &min, const Vec3<T> &max, const Payload<T> *payload ){
+template<typename T> static bool mcl::raycast::ray_aabb( const Ray<T> *ray,
+	const Vec3<T> &min, const Vec3<T> &max ){
 
 	// First check if origin is inside AABB
 	bool in_box = true;
 	for( int i=0; i<3; ++i ){
-		if( ray->origin[i] > max[i] ){ in_box = false; }
-		if( ray->origin[i] < min[i] ){ in_box = false; }
+		if( ray->origin[i] > max[i] ){ in_box = false; break; }
+		if( ray->origin[i] < min[i] ){ in_box = false; break; }
 	}
 	if( in_box ){ return true; }
 
@@ -150,7 +146,7 @@ template<typename T> static inline bool mcl::raycast::ray_aabb( const Ray<T> *ra
 
 
 // ray -> triangle without smoothed normals
-template<typename T> static inline bool mcl::raycast::ray_triangle( const Ray<T> *ray,
+template<typename T> static bool mcl::raycast::ray_triangle( const Ray<T> *ray,
 	const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2, Payload<T> *payload ){
 
 	// Compute hit point
@@ -182,7 +178,7 @@ template<typename T> static inline bool mcl::raycast::ray_triangle( const Ray<T>
 
 
 // ray -> triangle with smoothed normals
-template<typename T> static inline bool mcl::raycast::ray_triangle( const Ray<T> *ray,
+template<typename T> static bool mcl::raycast::ray_triangle( const Ray<T> *ray,
 	const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2,
 	const Vec3<T> &n0, const Vec3<T> &n1, const Vec3<T> &n2, Payload<T> *payload ){
 
@@ -197,7 +193,7 @@ template<typename T> static inline bool mcl::raycast::ray_triangle( const Ray<T>
 
 
 // ray -> sphere
-template<typename T> static inline bool mcl::raycast::ray_sphere( const Ray<T> *ray,
+template<typename T> static bool mcl::raycast::ray_sphere( const Ray<T> *ray,
 	const Vec3<T> &center, const T &radius, Payload<T> *payload ){
 
 	const Vec3<T> s = ray->origin - center;

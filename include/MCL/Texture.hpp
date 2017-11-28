@@ -19,22 +19,23 @@
 //
 // By Matt Overby (http://www.mattoverby.net)
 
-#ifndef MCLSCENE_TEXTURE_H
-#define MCLSCENE_TEXTURE_H 1
+//
+// Helper class for managing OpenGL textures.
+//
+
+#ifndef MCL_TEXTURE_H
+#define MCL_TEXTURE_H 1
 
 #include <string>
 #include <stdio.h>
 #include <iostream>
-#include "MCL/OpenGL.hpp"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "OpenGL.hpp"
 
-#include <stdexcept>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
+
 namespace mcl {
 
-//
-//	Helper class for managing OpenGL textures.
-//
 class Texture {
 public:
 	Texture() : width(0), height(0), smooth(true), repeated(false), transparency(false), gl_handle(0) {}
@@ -76,7 +77,7 @@ private:
 
 
 inline bool Texture::create_from_file( const std::string &filename ){
-
+/*
 	// Load the image with stbi
 	int comp;
 	unsigned char* image = stbi_load(filename.c_str(), &width, &height, &comp, 0);
@@ -105,13 +106,16 @@ inline bool Texture::create_from_file( const std::string &filename ){
 
 	stbi_image_free(image);
 	return true;
+*/
+	std::cerr << "**TODO: Texture::create_from_file: " << filename << std::endl;
+	return false;
 }
 
 
 inline bool Texture::create_from_memory( int width_, int height_, float *data, bool alpha ){
 
 	glGenTextures( 1, &gl_handle );
-	if( gl_handle == 0 ){ printf("\n**Texture::create Error: Failed to gen"); return false; }
+	if( gl_handle == 0 ){ std::cerr << "\n**Texture::create Error: Failed to gen" << std::endl; return false; }
 
 	width = width_;
 	height = height_;

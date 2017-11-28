@@ -24,127 +24,90 @@ project(mclscene C CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-add_definitions( -DMCLSCENE_BUILD_DIR="${CMAKE_BINARY_DIR}" ) # root build dir
-add_definitions( -DMCLSCENE_SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}" )
-set( CMAKE_BUILD_TYPE Release )
+set(CMAKE_BUILD_TYPE Release)
+add_definitions( -DMCLSCENE_ROOT_DIR="${CMAKE_CURRENT_SOURCE_DIR}" )
 
-# TODO eventually go through and clean up warnings
-#if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-#	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-long-long")
-#endif()
+# MCL options
+option(MCL_BUILD_TESTS "Build MCL tests" ON)
+option(MCL_BUILD_EXAMPLES "Build MCL examples" ON)
+option(MCL_USE_GLEW "Build with GLEW" ON)
 
+# Compiler options
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-long-long")
+endif()
+
+############################################################
 #
-#	compilation options
+#	Libraries
 #
-
-option(MCL_BUILD_SAMPLES "Build mcl library samples" ON)
-option(MCL_ENABLE_TETGEN "Enable tetgen for auto-tetrahedralization of meshes" OFF) # slow to compile
-option(MCL_FORCE_CLONE "Clone fresh dependencies" OFF)
-option(MCL_USE_GLEW "Compile with glew instead of core" ON)
-
-# If you do not have the core arb headers, you need an extensions library like glew.
-#if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-#	option(MCL_USE_GLEW "Compile with glew instead of core" OFF)
-#endif()
-
-#
-#	dependencies
-#
-
-# ExternalProject will be used to make clones of dependencies from github
-include(ExternalProject)
+############################################################
 
 # OpenMP
 find_package(OpenMP)
 if(OPENMP_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
 
-# trimesh, included in deps/
-set( TRIMESH_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/trimesh2" )
-add_subdirectory( ${TRIMESH_DIR} ) # sets TRIMESH_INCLUDE and TRIMESH_SRCS
+# Eigen3 (header only)
+find_package(Eigen3 REQUIRED)
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 
-# tetgen, included in deps/
-#if(MCL_ENABLE_TETGEN)
-	#add_definitions( -DMCLSCENE_ENABLE_TETGEN )
-	#set( TETGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/tetgen" )
-	#add_subdirectory( ${TETGEN_DIR} ) # sets TETGEN_INCLUDE and TETGEN_SRCS
-#else(MCL_ENABLE_TETGEN)
-	set( TETGEN_SRCS "" )
-#endif(MCL_ENABLE_TETGEN)
-
-set( STB_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/stb" ) # STB, header only
-include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeEigen3.cmake ) # Eigen3
-include( ${CMAKE_CURRENT_SOURCE_DIR}/cmake/IncludeGLFW.cmake ) # GLFW
-find_package(OpenGL 3) # OpenGL
-
-# Add GLEW
-if(MCL_USE_GLEW)
-	set(GLEW_DIR ${CMAKE_CURRENT_SOURCE_DIR}/deps/glew )
-	set(GLEW_SRCS ${GLEW_DIR}/src/glew.c ${GLEW_DIR}/include/GL/glew.h)
-	set(GLEW_INCLUDE_DIR ${GLEW_DIR}/include)
-	add_definitions(-DMCL_USE_GLEW)
-else()
-	set(GLEW_SRCS "")
-	set(GLEW_INCLUDE_DIR "")
-endif(MCL_USE_GLEW)
-
-#
-#	mclscene library
-#
-
-# Set up the library
+# mclscene (header only), submodule in deps/
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-set( MCLSCENE_SRCS
-	src/SceneManager.cpp
-	src/TetMesh.cpp
-	src/TriangleMesh.cpp
-	src/PointCloud.cpp
-	src/BVH.cpp
-	src/App.cpp
-	src/RenderGL.cpp
-	src/SimpleRenderGL.cpp
-	${GLEW_SRCS}
-	${TRIMESH_SRCS}
-	${TETGEN_SRCS}
+
+# glfw3
+find_package(GLFW 3 REQUIRED)
+include_directories(SYSTEM ${GLFW_INCLUDE_DIR})
+
+# glew
+if(MCL_USE_GLEW)
+add_definitions(-DMCL_USE_GLEW)
+find_package(GLEW REQUIRED)
+include_directories(SYSTEM ${GLEW_INCLUDE_DIR})
+else()
+	set(GLEW_LIBRARIES "")
+endif()
+
+# opengl
+find_package(OpenGL 3.2 REQUIRED)
+include_directories(SYSTEM ${OPENGL_INCLUDE_DIR})
+
+# var to hold the libs
+set(RENDER_LIBS
+	${OPENGL_LIBRARIES}
+	${GLEW_LIBRARIES}
+	${GLFW_LIBRARIES}
 )
 
-# Create the library
-set( MCLSCENE_LIBRARIES mclscene )
-set( MCLSCENE_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include )
+# Build tests
+if(MCL_BUILD_TESTS)
 
-# Add dependencies
-set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} ${GLFW_LIBRARIES} ${OPENGL_LIBRARIES} )
-set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} ${TRIMESH_INCLUDE} ${EIGEN3_INCLUDE_DIR}
-	${GLEW_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${GLFW_INCLUDE_DIR} ${STB_DIR} )
+	# tetgen, creates library "tet"
+	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/tetgen)
+	include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/src/tetgen)
 
-# Create the library
-include_directories( ${MCLSCENE_INCLUDE_DIRS} )
-add_library( mclscene ${MCLSCENE_SRCS} )
+	enable_testing()
 
-# Set the libraries variable in parent scope if exists
-get_directory_property(HasParent PARENT_DIRECTORY)
-if(HasParent)
-	set( MCLSCENE_LIBRARIES ${MCLSCENE_LIBRARIES} PARENT_SCOPE )
-	set( MCLSCENE_INCLUDE_DIRS ${MCLSCENE_INCLUDE_DIRS} PARENT_SCOPE )
-endif(HasParent)
+	add_executable(test_graphcolor src/tests/test_graphcolor.cpp)
+	add_test(test_graphcolor test_graphcolor)
 
-#
-#	samples
-#
+	add_executable(test_embeddedmesh src/tests/test_embeddedmesh.cpp)
+	add_test(test_embeddedmesh test_embeddedmesh)
 
-if(MCL_BUILD_SAMPLES)
+	add_executable(test_tetgen src/tests/test_tetgen.cpp)
+	target_link_libraries(test_tetgen tet)
+	add_test(test_tetgen test_tetgen)
 
-	add_definitions( ${OPENGL_DEFINITIONS} )
+endif(MCL_BUILD_TESTS)
 
-	# sample loader
-	add_executable( load_test samples/LoadTest.cpp )
-	target_link_libraries( load_test ${MCLSCENE_LIBRARIES} )
+# Build examples
+if(MCL_BUILD_EXAMPLES)
 
-	add_executable( mesh_viewer samples/MeshViewer.cpp )
-	target_link_libraries( mesh_viewer mclscene ${MCLSCENE_LIBRARIES} )
+	add_executable(renderWindow src/examples/renderWindow.cpp)
+	target_link_libraries(renderWindow ${RENDER_LIBS})
 
-endif(MCL_BUILD_SAMPLES)
+endif(MCL_BUILD_EXAMPLES)
 
 
