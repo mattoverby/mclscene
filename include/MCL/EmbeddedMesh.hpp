@@ -113,7 +113,7 @@ inline bool EmbeddedMesh::gen_lattice( int tess ){
 	typedef Eigen::AlignedBox<float,3> AABB;
 	lattice->clear();
 
-	// TODO THIS WHOLE SHITTY THING
+	// TODO THIS WHOLE THING
 
 	AABB aabb;
 	const int nv = embedded->vertices.size();
