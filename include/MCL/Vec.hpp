@@ -70,11 +70,12 @@ namespace mcl {
 		return r;
 	}
 
-	// Assumes T is float or double
+	// Assumes T is float or double, and theta/phi in radians
 	template <typename T> static inline Vec3<T> spherical_to_cartesian(T theta, T phi){
-		T sin_t, cos_t, sin_p, cos_p;
-		sincosf(theta, &sin_t, &cos_t);
-		sincosf(phi, &sin_p, &cos_p);
+		T sin_t = std::sin(theta);
+		T cos_t = std::cos(theta);
+		T sin_p = std::sin(phi);
+		T cos_p = std::cos(phi);
 		return Vec3<T>( sin_t * sin_p, sin_t * cos_p, cos_t );
 	}
 
@@ -83,6 +84,8 @@ namespace mcl {
 		if(r[1] < 0){ r[1] += 2*M_PI; }
 		return r;
 	}
+
+	
 
 } // end namespace mcl
 
