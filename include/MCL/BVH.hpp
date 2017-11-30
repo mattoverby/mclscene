@@ -70,7 +70,7 @@ private:
 
 	std::unique_ptr<Node> root_node;
 
-}; // class KDNode
+}; // class aabbtree
 
 
 
