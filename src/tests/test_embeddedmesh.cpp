@@ -25,41 +25,48 @@
 
 using namespace mcl;
 
+static float volume( const std::vector<Vec3f> &verts, const mcl::Vec4i &tet ){
+	Eigen::Matrix<float,3,3> edges;
+	edges.col(0) = verts[tet[1]] - verts[tet[0]];
+	edges.col(1) = verts[tet[2]] - verts[tet[0]];
+	edges.col(2) = verts[tet[3]] - verts[tet[0]];
+	return (edges).determinant()/6.f;
+}
+
 int main(void){
 
 	EmbeddedMesh mesh;
 
-	// Lattice gen only checks vertices,
-	// so just fill the embedded mesh with random vertices
-	// and try to generate the lattice.
-	int n_verts = 10000;
-
-	for( int round=0; round<10; ++round ){
-
-		mesh.embedded->vertices.resize(n_verts);
-
-		// Random vertices
-		std::random_device r;
-		std::mt19937 generator;
-		std::uniform_real_distribution<> dis(0.f, float(n_verts));
-		for( int i=0; i<n_verts; ++i ){
-			mesh.embedded->vertices[i] = Vec3f( dis(generator), dis(generator), dis(generator) );
-		}
-
-		// Generate the lattice
-		if( !mesh.gen_lattice() ){ return EXIT_FAILURE; }
-
-	}
-/*
+	// Load the mesh
 	std::stringstream bunnyfile;
 	bunnyfile << MCLSCENE_ROOT_DIR << "/src/data/bunny.obj";
 	mcl::meshio::load_obj( mesh.embedded.get(), bunnyfile.str() );
+	XForm<float> xf = xform::make_scale<float>(10,10,10);
+	mesh.embedded->apply_xform(xf);
 
-	// Generate lattices at different resolution
-	for( int i=1; i<30; ++i ){
-		if( !mesh.gen_lattice() ){ return EXIT_FAILURE; }
+	// Generate the lattice
+	if( !mesh.gen_lattice() ){
+		std::cerr << "Failed to generate lattice" << std::endl;
+		return EXIT_FAILURE;
 	}
-*/
+
+	// Make sure no tets are inverted
+	int n_tets = mesh.lattice->tets.size();
+	for( int i=0; i<n_tets; ++i ){
+		float v = volume( mesh.lattice->vertices, mesh.lattice->tets[i] );
+		if( v <= 0 ){
+			Vec4i tet = mesh.lattice->tets[i];
+			std::cerr << "Inverted tets:\n\t volume: " << v <<
+				"\n\t tet (" << i << "): " << tet.transpose() <<
+				"\n\t v0: " << mesh.lattice->vertices[tet[0]].transpose() <<
+				"\n\t v1: " << mesh.lattice->vertices[tet[1]].transpose() <<
+				"\n\t v2: " << mesh.lattice->vertices[tet[2]].transpose() <<
+				"\n\t v3: " << mesh.lattice->vertices[tet[3]].transpose() <<
+			std::endl;
+			return EXIT_FAILURE;
+		}
+	}
+		
 
 	return EXIT_SUCCESS;
 }

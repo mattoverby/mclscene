@@ -256,30 +256,38 @@ inline Eigen::AlignedBox<float,3> EmbeddedMesh::bounds() {
 
 inline void EmbeddedMesh::gen_tets( Vec3f min, Vec3f max, std::vector<Vec3f> &verts, std::vector<Vec4i> &tets ){
 
-	// Verts listed in order: bottom plane, then top plane
-	Vec3f v0 = min;
-	Vec3f v1 = min; v1[2] = max[2];
-	Vec3f v2 = min; v2[2] = max[2]; v2[0] = max[0];
-	Vec3f v3 = min; v3[0] = max[0];
-	Vec3f v4 = v0; v4[1] = max[1];
-	Vec3f v5 = v3; v5[1] = max[1];
-	Vec3f v6 = v2; v6[1] = max[1];
-	Vec3f v7 = v1; v7[1] = max[1];
-	verts.emplace_back( v0 );
-	verts.emplace_back( v1 );
-	verts.emplace_back( v2 );
-	verts.emplace_back( v3 );
-	verts.emplace_back( v4 );
-	verts.emplace_back( v5 );
-	verts.emplace_back( v6 );
-	verts.emplace_back( v7 );
+	// Top plane, clockwise looking down
+	Vec3f a = max;
+	Vec3f b( min[0], max[1], max[2] );
+	Vec3f c( min[0], max[1], min[2] );
+	Vec3f d( max[0], max[1], min[2] );
 
-	Vec4i t0(0,2,7,5);
-	Vec4i t1(0,7,2,1);
-	Vec4i t2(0,5,7,4);
-	Vec4i t3(0,2,5,3);
-	Vec4i t4(2,7,5,6);
-	Vec4i offset = Vec4i(1,1,1,1)*verts.size();
+	// Bottom plan, clockwise looking down
+	Vec3f e( max[0], min[1], max[2] );
+	Vec3f f( min[0], min[1], max[2] );
+	Vec3f g( min[0], min[1], min[2] );
+	Vec3f h( max[0], min[1], min[2] );
+
+	// Add the verts
+	int nv = verts.size();
+	verts.emplace_back( a ); // 0
+	verts.emplace_back( b ); // 1
+	verts.emplace_back( c ); // 2
+	verts.emplace_back( d ); // 3
+	verts.emplace_back( e ); // 4
+	verts.emplace_back( f ); // 5
+	verts.emplace_back( g ); // 6
+	verts.emplace_back( h ); // 7
+
+	// Pack 5 tets into the cube
+	Vec4i t0( 0, 5, 7, 4 );
+	Vec4i t1( 5, 7, 2, 0 );
+	Vec4i t2( 5, 0, 2, 1 );
+	Vec4i t3( 7, 2, 0, 3 );
+	Vec4i t4( 5, 2, 7, 6 );
+	Vec4i offset(nv,nv,nv,nv);
+
+	// Add the tets
 	tets.emplace_back( t0+offset );
 	tets.emplace_back( t1+offset );
 	tets.emplace_back( t2+offset );
