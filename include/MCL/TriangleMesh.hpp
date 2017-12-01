@@ -68,6 +68,11 @@ public:
 	// Creates unique edges of the triangle faces
 	inline void need_edges( bool recompute=false );
 
+	// Computes area-weighted masses for each vertex.
+	// density_kgm2 is the density per unit area.
+	// Most cloth, for instance, is like 0.1 to 0.6.
+	inline void weighted_masses( std::vector<float> &m, float density_kgm2=0.4f );
+
 	// Clear all mesh data
 	inline void clear();
 
@@ -167,6 +172,24 @@ inline void TriangleMesh::need_edges( bool recompute ){
 	}
 
 } // end compute edges
+
+
+inline void TriangleMesh::weighted_masses( std::vector<float> &m, float density_kgm2 ){
+
+	m.resize( vertices.size(), 0.f );
+	int n_faces = faces.size();
+	for( int f=0; f<n_faces; ++f ){
+		Vec3i face = faces[f];
+		Vec3f edge1 = vertices[ face[1] ] - vertices[ face[0] ];
+		Vec3f edge2 = vertices[ face[2] ] - vertices[ face[0] ];
+		float area = 0.5f * (edge1.cross(edge2)).norm();
+		float tri_mass = density_kgm2 * area;
+		m[ face[0] ] += tri_mass / 3.f;
+		m[ face[1] ] += tri_mass / 3.f;
+		m[ face[2] ] += tri_mass / 3.f;
+	}
+
+} // end weighted masses
 
 
 inline void TriangleMesh::clear(){

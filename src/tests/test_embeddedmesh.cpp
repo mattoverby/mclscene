@@ -50,12 +50,16 @@ int main(void){
 		return EXIT_FAILURE;
 	}
 
-	// Make sure no tets are inverted
+
 	int n_tets = mesh.lattice->tets.size();
+	int n_verts = mesh.lattice->vertices.size();
+	std::vector<int> vert_refs( n_verts, 0 );
 	for( int i=0; i<n_tets; ++i ){
-		float v = volume( mesh.lattice->vertices, mesh.lattice->tets[i] );
+		Vec4i tet = mesh.lattice->tets[i];
+
+		// Make sure no tets are inverted
+		float v = volume( mesh.lattice->vertices, tet );
 		if( v <= 0 ){
-			Vec4i tet = mesh.lattice->tets[i];
 			std::cerr << "Inverted tets:\n\t volume: " << v <<
 				"\n\t tet (" << i << "): " << tet.transpose() <<
 				"\n\t v0: " << mesh.lattice->vertices[tet[0]].transpose() <<
@@ -63,6 +67,24 @@ int main(void){
 				"\n\t v2: " << mesh.lattice->vertices[tet[2]].transpose() <<
 				"\n\t v3: " << mesh.lattice->vertices[tet[3]].transpose() <<
 			std::endl;
+			return EXIT_FAILURE;
+		}
+
+		for( int j=0; j<4; ++j ){ vert_refs[ tet[j] ] += 1; }
+
+	} // end loop tets
+
+	// Compute masses
+	std::vector<float> masses;
+	mesh.weighted_masses( masses, 1000.f );
+
+	for( int i=0; i<n_verts; ++i ){
+		if( vert_refs[i] == 0 ){
+			std::cerr << "Had unreferenced vertices!" << std::endl;
+			return EXIT_FAILURE;
+		}
+		if( masses[i] <= 0.f ){
+			std::cerr << "Zero mass for idx " << i << std::endl;
 			return EXIT_FAILURE;
 		}
 	}

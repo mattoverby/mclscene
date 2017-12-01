@@ -26,6 +26,7 @@
 #include <memory>
 #include "XForm.hpp"
 #include "HashKeys.hpp"
+#include <iostream>
 
 namespace mcl {
 
@@ -36,7 +37,7 @@ public:
 		return std::make_shared<TetMesh>();
 	}
 
-	// Data TODO compute neighbors
+	// Data
 	std::vector< Vec4i > tets; // all elements
 	std::vector< Vec3f > vertices; // all vertices in the mesh
 	std::vector< Vec3f > normals; // zero length for all non-surface normals
@@ -72,8 +73,13 @@ public:
 	inline void need_edges( bool recompute=false, bool surface_only=true );
 
 	// Removes vertices not indexed by a tet, and combines vertices
-	// that are within eps distance.
+	// that are within eps distance (lowest index is kept).
 	inline void refine( float eps=1e-6f );
+
+	// Computes volume-weighted masses for each vertex
+	// density_kgm3 is the unit-volume density (e.g. soft rubber: 1100)
+	// See: https://www.engineeringtoolbox.com/density-solids-d_1265.html
+	inline void weighted_masses( std::vector<float> &m, float density_kgm3=1100.0 );
 
 	// Clear all mesh data
 	inline void clear();
@@ -222,48 +228,56 @@ inline void TetMesh::need_edges( bool recompute, bool surface_only ){
 
 inline void TetMesh::refine( float eps ){
 
-	eps = eps*eps; // using squaredNorm()
-	std::unordered_map< int, int > old_to_new; // old idx -> new idx
-	size_t n_tets = tets.size();
-	int vert_count = 0;
-	for( size_t i=0; i<n_tets; ++i ){
-		for( size_t j=0; j<4; ++j ){
-			int idx = tets[i][j];
+	double eps2 = double(eps)*double(eps); // so we can use squaredNorm
+	int n_tets = tets.size();
+	int n_verts_0 = vertices.size();
+	std::vector<int> vert_refs( n_verts_0, 0 );
 
-			// If it's newly encountered vertex:
-			if( old_to_new.count(idx)==0 ){
-				old_to_new[ idx ] = vert_count;
-				vert_count++;
-			}
+	for( int i=0; i<n_tets; ++i ){
+		Vec4i tet = tets[i];
+		for( int j=0; j<4; ++j ){
+			int idx = tet[j];
+			int new_idx = idx;
+			Vec3d curr_x = vertices[idx].cast<double>();
 
-			// Now check if its within a eps of another existing vert:
-			Vec3f &v0 = vertices[idx];
-			std::unordered_map< int, int >::iterator it = old_to_new.begin();
-			for( ; it != old_to_new.end(); ++it ){
-				if( it->first == idx ){ continue; }
-				Vec3f &v1 = vertices[it->first];
-				if( (v0-v1).squaredNorm() < eps ){
-					old_to_new[ idx ] = it->second;
+			// Loop through the vertices.
+			// Keep the lowest index if two vertices are within eps
+			for( int k=0; k<n_verts_0; ++k ){
+				double d2 = (vertices[k].cast<double>()-curr_x).squaredNorm();
+				if( d2 <= eps2 && k < new_idx ){
+					new_idx = k;
 					break;
 				}
 			}
 
-		} // end loop tet
-	} // end loop all tets
+			// Update tet index
+			tets[i][j] = new_idx;
+			vert_refs[ new_idx ] += 1;
+		}
+	} // end loop tets
 
-	// Update vertices
-	std::vector<Vec3f> old_verts = vertices;
+	// Now make a list of new vertices
+	std::unordered_map<int,int> old_to_new;
+	std::vector<Vec3f> old_vertices = vertices;
 	vertices.clear();
-	std::unordered_map< int, int >::iterator it = old_to_new.begin();
-	vertices.resize( old_to_new.size() );
-	for( ; it != old_to_new.end(); ++it ){
-		vertices[ it->second ] = old_verts[ it->first ];
+	int num_ref_verts = 0;
+	for( int i=0; i<n_verts_0; ++i ){
+		if( vert_refs[i] > 0 ){
+			old_to_new.insert({i,num_ref_verts});
+			vertices.emplace_back( old_vertices[i] );
+			num_ref_verts++;
+		}
 	}
 
-	// Update tets
-	for( size_t i=0; i<n_tets; ++i ){
+	// Update tet indices
+	for( int i=0; i<n_tets; ++i ){
+		Vec4i tet = tets[i];
 		for( int j=0; j<4; ++j ){
-			tets[i][j] = old_to_new[ tets[i][j] ];
+			int idx = tet[j];
+			if( old_to_new.count(idx)==0 ){
+				throw std::runtime_error("TetMesh::refine Error: Something went wrong.");
+			}
+			tets[i][j] = old_to_new[idx];
 		}
 	}
 
@@ -274,6 +288,25 @@ inline void TetMesh::refine( float eps ){
 
 } // end refine
 
+inline void TetMesh::weighted_masses( std::vector<float> &m, float density_kgm3 ){
+
+	m.resize( vertices.size(), 0.f );
+	int n_tets = tets.size();
+	for( int t=0; t<n_tets; ++t ){
+		Vec4i tet = tets[t];
+		Eigen::Matrix<float,3,3> edges;
+		edges.col(0) = vertices[tet[1]] - vertices[tet[0]];
+		edges.col(1) = vertices[tet[2]] - vertices[tet[0]];
+		edges.col(2) = vertices[tet[3]] - vertices[tet[0]];
+		float v = std::abs( (edges).determinant()/6.f );
+		float tet_mass = density_kgm3 * v;
+		m[ tet[0] ] += tet_mass / 4.f;
+		m[ tet[1] ] += tet_mass / 4.f;
+		m[ tet[2] ] += tet_mass / 4.f;
+		m[ tet[3] ] += tet_mass / 4.f;
+	}
+
+} // end weighted masses
 
 inline void TetMesh::clear(){
 	tets.clear();

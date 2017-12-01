@@ -69,6 +69,12 @@ public:
 	// Returns aabb
 	inline Eigen::AlignedBox<float,3> bounds();
 
+	// Computes volume-weighted masses for each lattice vertex.
+	// density_kgm3 is the unit-volume density (e.g. soft rubber: 1100)
+	// TODO Exact mass computation from
+	// "Fast Viscoelastic Behavior with Thin Features" (2008) by Wojtan and Turk.
+	inline void weighted_masses( std::vector<float> &m, float density_kgm3=1100.0 );
+
 private:
 	static inline void gen_tets( Vec3f min, Vec3f max, std::vector<Vec3f> &verts, std::vector<Vec4i> &tets );
 
@@ -185,7 +191,10 @@ inline bool EmbeddedMesh::gen_lattice( int tess ){
 
 	verts.clear();
 	tets.clear();
-	lattice->refine(); // remove vertices that aren't a part of a tet
+
+	// remove vertices that aren't a part of a tet
+	// and combine ones that are close
+	lattice->refine();
 
 	// Update embedded verts again
 	#pragma omp parallel for
@@ -253,6 +262,29 @@ inline Eigen::AlignedBox<float,3> EmbeddedMesh::bounds() {
 	}
 	return aabb;
 }
+
+
+inline void EmbeddedMesh::weighted_masses( std::vector<float> &m, float density_kgm3 ){
+
+	if( !lattice ){ return; }
+	m.resize( lattice->vertices.size(), 0.f );
+	int n_tets = lattice->tets.size();
+	for( int t=0; t<n_tets; ++t ){
+		Vec4i tet = lattice->tets[t];
+		Eigen::Matrix<float,3,3> edges;
+		edges.col(0) = lattice->vertices[tet[1]] - lattice->vertices[tet[0]];
+		edges.col(1) = lattice->vertices[tet[2]] - lattice->vertices[tet[0]];
+		edges.col(2) = lattice->vertices[tet[3]] - lattice->vertices[tet[0]];
+		float v = std::abs( (edges).determinant()/6.f );
+		float tet_mass = density_kgm3 * v;
+		m[ tet[0] ] += tet_mass / 4.f;
+		m[ tet[1] ] += tet_mass / 4.f;
+		m[ tet[2] ] += tet_mass / 4.f;
+		m[ tet[3] ] += tet_mass / 4.f;
+	}
+
+} // end weighted masses
+
 
 inline void EmbeddedMesh::gen_tets( Vec3f min, Vec3f max, std::vector<Vec3f> &verts, std::vector<Vec4i> &tets ){
 
