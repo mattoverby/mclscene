@@ -36,14 +36,12 @@ namespace factory {
 	// A 2x2x2 non-symmetric cube centered at origin
 	static inline std::shared_ptr<TriangleMesh> make_tri_cube( int tess );
 
-	// A 1x1x1 cube with 5 densly packed tets
-	static inline std::shared_ptr<TetMesh> make_tet_cube();
+	// Creates connected 1x1x1 cubes, each cube has 5 densly packed tets.
+	// Starts at 0,0,0 and builds in the positive axis directions.
+	static inline std::shared_ptr<TetMesh> make_tet_blocks( int cubes_x, int cubes_y, int cubes_z );
 
 	// A box with specified boxmin/boxmax
 	static inline std::shared_ptr<TriangleMesh> make_box( int tess, Vec3f boxmin, Vec3f boxmax );
-
-	// A beam is one or more connected cubes (chunks)
-//	static inline std::shared_ptr<TriangleMesh> make_beam( int chunks, int tess );
 
 	// A 2x2 plane along x/y axis
 	static inline std::shared_ptr<TriangleMesh> make_plane( int tess_x, int tess_y );
@@ -75,7 +73,7 @@ namespace factory {
 static inline std::shared_ptr<TriangleMesh> factory::make_sphere( Vec3f center, float radius, int tess ){
 
 	float m_2pi = M_PI*2.f;
-	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
+	std::shared_ptr<TriangleMesh> mesh = std::make_shared<TriangleMesh>();
 
 	mesh->vertices.reserve(2+tess*(tess-1));
 	mkpoint(mesh, 0, 0, -1);
@@ -122,7 +120,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_sphere( Vec3f center, 
 /*
 static inline std::shared_ptr<TriangleMesh> factory::make_beam( int chunks, int tess ){
 
-	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
+	std::shared_ptr<TriangleMesh> mesh = std::make_shared<TriangleMesh>();
 
 	for( int b=0; b<chunks; ++b ){
 
@@ -166,7 +164,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_beam( int chunks, int 
 
 static inline std::shared_ptr<TriangleMesh> factory::make_tri_cube( int tess ){
 
-	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
+	std::shared_ptr<TriangleMesh> mesh = std::make_shared<TriangleMesh>();
 
 	if (tess < 1)
 		tess = 1;
@@ -290,59 +288,65 @@ static inline std::shared_ptr<TriangleMesh> factory::make_tri_cube( int tess ){
 	return mesh;
 }
 
-static inline std::shared_ptr<TetMesh> factory::make_tet_cube(){
+static inline std::shared_ptr<TetMesh> factory::make_tet_blocks( int cubes_x, int cubes_y, int cubes_z ){
 
-	std::shared_ptr<TetMesh> mesh( new TetMesh() );
+	std::shared_ptr<TetMesh> mesh = std::make_shared<TetMesh>();
 
-	Vec3f min(-0.5,-0.5,-0.5);
-	Vec3f max(0.5,0.5,0.5);
-	Vec3f step(1,1,1);
+	cubes_x = std::max(1,cubes_x);
+	cubes_y = std::max(1,cubes_y);
+	cubes_z = std::max(1,cubes_z);
+	Vec3f start(0,0,0);
 
-	std::vector<Vec3f> verts;
-	std::vector<Vec4i> tets;
-	// Generate the lattice
-	for( float x=min[0]; x<max[0]; x += step[0] )
-	for( float y=min[1]; y<max[1]; y += step[1] )
-	for( float z=min[2]; z<max[2]; z += step[2] ){
+	for( int x=0; x<cubes_x; ++x ){
+	for( int y=0; y<cubes_y; ++y ){
+	for( int z=0; z<cubes_z; ++z ){
 
-		Vec3f lower(x,y,z);
-		Vec3f upper = lower+step;
+		Vec3f min = start + Vec3f(x,y,z);
+		Vec3f max = min + Vec3f(1,1,1);
 
-		// Verts listed in order: bottom plane, then top plane
-		Vec3f v0 = lower;
-		Vec3f v1 = lower; v1[2] = upper[2];
-		Vec3f v2 = lower; v2[2] = upper[2]; v2[0] = upper[0];
-		Vec3f v3 = lower; v3[0] = upper[0];
-		Vec3f v4 = v0; v4[1] = upper[1];
-		Vec3f v5 = v3; v5[1] = upper[1];
-		Vec3f v6 = v2; v6[1] = upper[1];
-		Vec3f v7 = v1; v7[1] = upper[1];
-		verts.emplace_back( v0 );
-		verts.emplace_back( v1 );
-		verts.emplace_back( v2 );
-		verts.emplace_back( v3 );
-		verts.emplace_back( v4 );
-		verts.emplace_back( v5 );
-		verts.emplace_back( v6 );
-		verts.emplace_back( v7 );
+		// Top plane, clockwise looking down
+		Vec3f a = max;
+		Vec3f b( min[0], max[1], max[2] );
+		Vec3f c( min[0], max[1], min[2] );
+		Vec3f d( max[0], max[1], min[2] );
 
-		Vec4i t0(0,2,7,5);
-		Vec4i t1(0,7,2,1);
-		Vec4i t2(0,5,7,4);
-		Vec4i t3(0,2,5,3);
-		Vec4i t4(2,7,5,6);
-		Vec4i offset = Vec4i(1,1,1,1)*verts.size();
-		tets.emplace_back( t0+offset );
-		tets.emplace_back( t1+offset );
-		tets.emplace_back( t2+offset );
-		tets.emplace_back( t3+offset );
-		tets.emplace_back( t4+offset );
+		// Bottom plan, clockwise looking down
+		Vec3f e( max[0], min[1], max[2] );
+		Vec3f f( min[0], min[1], max[2] );
+		Vec3f g( min[0], min[1], min[2] );
+		Vec3f h( max[0], min[1], min[2] );
 
-	} // end loop grid
+		// Add the verts
+		int nv = mesh->vertices.size();
+		mesh->vertices.emplace_back( a ); // 0
+		mesh->vertices.emplace_back( b ); // 1
+		mesh->vertices.emplace_back( c ); // 2
+		mesh->vertices.emplace_back( d ); // 3
+		mesh->vertices.emplace_back( e ); // 4
+		mesh->vertices.emplace_back( f ); // 5
+		mesh->vertices.emplace_back( g ); // 6
+		mesh->vertices.emplace_back( h ); // 7
 
-	mesh->vertices = verts;
-	mesh->tets = tets;
-	mesh->refine(); // remove duplicate vertices
+		// Pack 5 tets into the cube
+		Vec4i t0( 0, 5, 7, 4 );
+		Vec4i t1( 5, 7, 2, 0 );
+		Vec4i t2( 5, 0, 2, 1 );
+		Vec4i t3( 7, 2, 0, 3 );
+		Vec4i t4( 5, 2, 7, 6 );
+		Vec4i offset(nv,nv,nv,nv);
+
+		// Add the tets
+		mesh->tets.emplace_back( t0+offset );
+		mesh->tets.emplace_back( t1+offset );
+		mesh->tets.emplace_back( t2+offset );
+		mesh->tets.emplace_back( t3+offset );
+		mesh->tets.emplace_back( t4+offset );
+
+	}}} // x, y, z
+
+	// Join colocated vertices and update indices.
+	mesh->refine();
+
 	return mesh;
 
 } // end make tetmesh cube
@@ -363,7 +367,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_box( int tess, Vec3f b
 
 static inline std::shared_ptr<TriangleMesh> factory::make_plane( int tess_x, int tess_y ){
 
-	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
+	std::shared_ptr<TriangleMesh> mesh = std::make_shared<TriangleMesh>();
 
 	if (tess_x < 1)
 		tess_x = 1;
@@ -426,7 +430,7 @@ static inline std::shared_ptr<TriangleMesh> factory::make_plane( int tess_x, int
 static inline std::shared_ptr<TriangleMesh> factory::make_cyl(int tess_c, int tess_l, float r){
 
 	float m_2pi = M_PI*2.f;
-	std::shared_ptr<TriangleMesh> mesh( new TriangleMesh() );
+	std::shared_ptr<TriangleMesh> mesh = std::make_shared<TriangleMesh>();
 
 	if (tess_c < 3)
 		tess_c = 3;

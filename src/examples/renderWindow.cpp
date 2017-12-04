@@ -21,6 +21,7 @@
 
 #include "MCL/MeshIO.hpp"
 #include "MCL/RenderWindow.hpp"
+#include "MCL/ShapeFactory.hpp"
 
 using namespace mcl;
 
@@ -37,6 +38,8 @@ int main(void){
 	// Load the mesh
 	std::shared_ptr<mcl::TriangleMesh> bunny1 = mcl::TriangleMesh::create();
 	std::shared_ptr<mcl::TriangleMesh> bunny2 = mcl::TriangleMesh::create();
+	std::shared_ptr<mcl::TetMesh> box = mcl::factory::make_tet_blocks( 1, 2, 1 );
+
 
 	std::stringstream bunnyfile;
 	bunnyfile << MCLSCENE_ROOT_DIR << "/src/data/bunny.obj";
@@ -50,8 +53,9 @@ int main(void){
 	bunny2->apply_xform( scale*trans );
 
 	// Create a render mesh
-	std::shared_ptr<mcl::RenderMesh> rmBunny1( new mcl::RenderMesh(bunny1) );
-	std::shared_ptr<mcl::RenderMesh> rmBunny2( new mcl::RenderMesh(bunny2) );
+	std::shared_ptr<mcl::RenderMesh> rmBunny1 = mcl::RenderMesh::create( bunny1 );
+	std::shared_ptr<mcl::RenderMesh> rmBunny2 = mcl::RenderMesh::create( bunny2 );
+	std::shared_ptr<mcl::RenderMesh> rmBox = mcl::RenderMesh::create( box, mcl::RenderMesh::WIREFRAME );
 
 	// Create opengl context
 	RenderWindow renderWindow;
@@ -62,6 +66,7 @@ int main(void){
 	// Add the render mesh to the window
 	renderWindow.add_mesh( rmBunny1 );
 	renderWindow.add_mesh( rmBunny2 );
+	renderWindow.add_mesh( rmBox );
 
 	// Game loop
 	while( renderWindow.is_open() ){
