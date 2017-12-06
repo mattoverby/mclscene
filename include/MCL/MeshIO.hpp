@@ -283,7 +283,21 @@ static inline bool meshio::load_elenode( TetMesh *mesh, std::string file ){
 
 	}
 
-	if( mesh->vertices.size() == 0 || mesh->tets.size() == 0 ){
+	// Check for inverted tets, and reorder if needed
+	int n_tets = mesh->tets.size();
+	for( int i=0; i<n_tets; ++i ){
+		Vec4i tet = mesh->tets[i];
+		Vec3f a = mesh->vertices[tet[0]];
+		float V = (mesh->vertices[tet[1]]-a).dot(
+			(mesh->vertices[tet[2]]-a).cross(mesh->vertices[tet[3]]-a)
+		) / 6.f;
+		if( V < 0 ){ // reorder base
+			mesh->tets[i][1] = tet[2];
+			mesh->tets[i][2] = tet[1];
+		}
+	}
+
+	if( mesh->vertices.size() == 0 || n_tets == 0 ){
 		throw std::runtime_error("\n**TetMesh Error: Problem loading files" );
 	}
 

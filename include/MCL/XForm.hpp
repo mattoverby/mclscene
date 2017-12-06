@@ -57,9 +57,13 @@ namespace xform {
 		return r;
 	}
 
+	template <typename T> static XForm<T> make_trans( const Vec3<T> &t ){
+		return make_trans<T>(t[0],t[1],t[2]);
+	}
+
 	// Makes a rotation matrix
 	// Usage: Xform<float> t = xform::make_rot(45.f, Vec3f(0,1,0));
-	template <typename T> static XForm<T> make_rot(T angle_deg, Vec3<T> axis){
+	template <typename T> static XForm<T> make_rot(T angle_deg, const Vec3<T> &axis){
 		T rx = axis[0]; T ry = axis[1]; T rz = axis[2];
 		T l = sqrt(rx*rx + ry*ry + rz*rz);
 		T angle = angle_deg * M_PI / 180.f;
@@ -76,7 +80,6 @@ namespace xform {
 		std::memcpy(r.data(), mat, 16*sizeof(T));
 		return r;
 	}
-
 
 	// Makes a view matrix
 	// Usage: XForm<float> v = xform::make_view(eye, viewdir, Vec3f(0,1,0));
@@ -119,6 +122,21 @@ namespace xform {
 		r.data()[11] = -1.f;
 		r.data()[15] = 0.f;
 		return r;
+	}
+
+	template <typename T> static inline std::string to_string( const XForm<T> &xf ){
+		std::stringstream ss;
+		ss << xf.data()[0];
+		for( int i=1; i<16; ++i ){ ss << ' ' << xf.data()[i]; }
+		return ss.str();
+	}
+
+	template <typename T> static inline XForm<T> from_string( const std::string &s ){
+		std::stringstream ss; ss << s;
+		XForm<T> result;
+		// TODO some testing to make sure there are tokens left
+		for( int i=0; i<16; ++i ){ ss >> result.data()[i]; }
+		return result;
 	}
 
 } // ns xform
