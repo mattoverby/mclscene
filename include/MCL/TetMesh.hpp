@@ -37,7 +37,10 @@ public:
 		return std::make_shared<TetMesh>();
 	}
 
+	TetMesh() : flags(0) {}
+
 	// Data
+	int flags;
 	std::vector< Vec4i > tets; // all elements
 	std::vector< Vec3f > vertices; // all vertices in the mesh
 	std::vector< Vec3f > normals; // zero length for all non-surface normals

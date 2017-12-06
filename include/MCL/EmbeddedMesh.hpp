@@ -43,6 +43,7 @@ public:
 	// Copy constructor makes copies (and new pointers) of inner meshes
 	EmbeddedMesh( const EmbeddedMesh &mesh );
 
+	int flags;
 	std::shared_ptr<TriangleMesh> embedded; // the embedded surface-only mesh
 	std::shared_ptr<TetMesh> lattice; // tet mesh that embeds the surface
 	std::vector<Vec4f> barycoords; // per emb vert bary coords
@@ -82,7 +83,7 @@ private:
 
 }; // end class EmbeddedMesh
 
-EmbeddedMesh::EmbeddedMesh( const EmbeddedMesh &mesh ){
+EmbeddedMesh::EmbeddedMesh( const EmbeddedMesh &mesh ) : flags(0) {
 	embedded = std::make_shared<TriangleMesh>( *(mesh.embedded) );
 	lattice = std::make_shared<TetMesh>( *(mesh.lattice) );
 	barycoords = mesh.barycoords;

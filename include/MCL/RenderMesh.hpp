@@ -41,20 +41,6 @@ namespace mcl {
 
 class RenderMesh {
 public:
-	enum OPTIONS {
-		DEFAULT = 1 << 0, // regular triangle mesh
-		WIREFRAME = 1 << 1, // draw as wireframe
-		INVISIBLE = 1 << 2, // don't draw mesh
-		DYNAMIC = 1 << 3, // The verts they are a-changin'
-	};
-
-	enum RELOAD {
-		ALL = 1 << 0, // reload all
-		VERTICES = 1 << 1, // reload vertices
-		NORMALS = 1 << 2, // reload norms
-		COLORS = 1 << 3, // reload colors
-	};
-
 	static inline std::shared_ptr<RenderMesh> create(
 		std::shared_ptr<TriangleMesh> mesh, int options=DEFAULT ){
 		return std::make_shared<RenderMesh>( RenderMesh(mesh,options) );
@@ -65,19 +51,30 @@ public:
 		return std::make_shared<RenderMesh>( RenderMesh(mesh,options) );
 	}
 
+	enum {
+		DEFAULT = 1 << 0, // regular triangle mesh
+		WIREFRAME = 1 << 1, // draw as wireframe
+		INVISIBLE = 1 << 2, // don't draw mesh
+		DYNAMIC = 1 << 3, // The verts they are a-changin'
+	};
+	int flags;
+
 	RenderMesh( std::shared_ptr<TriangleMesh> mesh, int options=DEFAULT );
 	RenderMesh( std::shared_ptr<TetMesh> mesh, int options=DEFAULT );
 
 	// Copy vertex data to GPU. If the pointer'd mesh changes,
 	// it's up to you to call this function.
 	// Reload can be any number of the RELOAD enum if we are updating.
+	enum { // load flags:
+		ALL = 1 << 0, // reload all
+		VERTICES = 1 << 1, // reload vertices
+		NORMALS = 1 << 2, // reload norms
+		COLORS = 1 << 3, // reload colors
+	};
 	inline void load_buffers( int load=ALL );
 
 	// Get the model matrix.
 	inline const mcl::XForm<float> &get_model() const { return model; }
-
-	// Returns currently set options
-	inline int get_options() const { return m_options; }
 
 	// Returns aabb for the render mesh
 	inline Eigen::AlignedBox<float,3> bounds();
@@ -105,7 +102,7 @@ public:
 	material::Phong phong;
 
 private:
-	int m_options;
+
 	// I could use a base class for meshes, but I don't really want to.
 	std::shared_ptr<TriangleMesh> trimeshPtr;
 	std::shared_ptr<TetMesh> tetmeshPtr;
@@ -127,8 +124,8 @@ private:
 //
 
 
-RenderMesh::RenderMesh( std::shared_ptr<TriangleMesh> mesh, int opt ){ m_options=opt; trimeshPtr=mesh; init(); }
-RenderMesh::RenderMesh( std::shared_ptr<TetMesh> mesh, int opt ){ m_options=opt; tetmeshPtr=mesh; init(); }
+RenderMesh::RenderMesh( std::shared_ptr<TriangleMesh> mesh, int opt ){ flags=opt; trimeshPtr=mesh; init(); }
+RenderMesh::RenderMesh( std::shared_ptr<TetMesh> mesh, int opt ){ flags=opt; tetmeshPtr=mesh; init(); }
 
 inline void RenderMesh::init(){
 	vertices = nullptr;
@@ -149,7 +146,7 @@ inline void RenderMesh::init(){
 	prims_ibo = 0;
 	vao = 0;
 	model.setIdentity();
-	if( m_options & WIREFRAME ){
+	if( flags & WIREFRAME ){
 		phong.diff.setZero();
 		phong.amb = mcl::Vec3f(0.5,0,0);
 		phong.spec.setZero();
@@ -163,19 +160,19 @@ inline void RenderMesh::get_data(){
 	if( trimeshPtr ){
 		trimeshPtr->need_normals();
 		trimeshPtr->get_vertex_data( vertices, num_vertices, normals, num_normals, texcoords, num_texcoords );
-		if( m_options & WIREFRAME ){ trimeshPtr->get_primitive_data( 2, prims, num_prims ); }
+		if( flags & WIREFRAME ){ trimeshPtr->get_primitive_data( 2, prims, num_prims ); }
 		else { trimeshPtr->get_primitive_data( 3, prims, num_prims ); }
 	}
 	else if( tetmeshPtr ){
 		tetmeshPtr->need_normals();
 		tetmeshPtr->get_vertex_data( vertices, num_vertices, normals, num_normals, texcoords, num_texcoords );
-		if( m_options & WIREFRAME ){ tetmeshPtr->get_primitive_data( 2, prims, num_prims ); }
+		if( flags & WIREFRAME ){ tetmeshPtr->get_primitive_data( 2, prims, num_prims ); }
 		else { tetmeshPtr->get_primitive_data( 3, prims, num_prims ); }
 	}
 
 	// Fill colors if none exist
 	if( num_colors != num_vertices ){
-		if( m_options & WIREFRAME ){ colors_data.resize( num_vertices, Vec3f(0,0,0) ); }
+		if( flags & WIREFRAME ){ colors_data.resize( num_vertices, Vec3f(0,0,0) ); }
 		else{ colors_data.resize( num_vertices, Vec3f(1,0,0) ); }
 		colors = &colors_data[0][0];
 		num_colors = colors_data.size();
@@ -205,7 +202,7 @@ inline void RenderMesh::load_buffers( int load ){
 
 	// Now copy vertex and face data to GPU
 	GLenum draw_mode = GL_STATIC_DRAW;
-	if( m_options & DYNAMIC ){ draw_mode = GL_DYNAMIC_DRAW; }
+	if( flags & DYNAMIC ){ draw_mode = GL_DYNAMIC_DRAW; }
 	const int stride = sizeof(float)*3;
 
 	if( !verts_vbo ){ // Create the buffer for vertices
@@ -244,7 +241,7 @@ inline void RenderMesh::load_buffers( int load ){
 
 	// Create the buffer for indices
 	if( !prims_ibo ){
-		int dim = m_options & WIREFRAME ? 2 : 3;
+		int dim = flags & WIREFRAME ? 2 : 3;
 		if( !prims_ibo ){
 			glGenBuffers(1, &prims_ibo);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prims_ibo);
@@ -316,7 +313,7 @@ inline void RenderMesh::draw(){
 	if( !prims_ibo ){ load_buffers(); }
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prims_ibo);
-	if( m_options & WIREFRAME ){
+	if( flags & WIREFRAME ){
 		glDrawElements(GL_LINES, num_prims*2, GL_UNSIGNED_INT, 0);
 	} else {
 		glDrawElements(GL_TRIANGLES, num_prims*3, GL_UNSIGNED_INT, 0);
