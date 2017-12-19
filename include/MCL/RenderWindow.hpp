@@ -40,7 +40,8 @@ const std::string mcl_frag_src =
 ;
 }
 
-// 0 = point (TODO add more later)
+// 0 = point (TODO add more later), and a nice class
+// that manages things like sampling and whatnot
 class Light {
 public:
 	short type;
@@ -86,6 +87,9 @@ public:
 
 	// Returns bounding box for scene objects (not cam or lights)
 	inline AABB bounds() const;
+
+	// Sets the camera to a nice location based on the AABB
+	inline void nice_camera_location();
 
 	// Sets up three-point lighting for a scene with
 	// camera position (eye) and scene center (c).
@@ -216,6 +220,14 @@ inline Eigen::AlignedBox<float,3> RenderWindow::bounds() const {
 	return box;
 }
 
+inline void RenderWindow::nice_camera_location(){
+	AABB box = bounds();
+	m_camera->lookat() = box.center();
+
+	Vec3f diag = (box.max() - box.min() )*0.5;
+	diag[2] = -diag[2]*2.f; // Move out z a bit
+	m_camera->eye() = box.min() + diag;
+}
 
 inline void RenderWindow::draw(){
 

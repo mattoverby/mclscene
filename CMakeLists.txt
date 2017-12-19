@@ -109,7 +109,10 @@ if(MCL_BUILD_EXAMPLES)
 	target_link_libraries(renderWindow ${RENDER_LIBS})
 
 	add_executable(makeTetmesh src/examples/makeTetmesh.cpp)
-	target_link_libraries(makeTetmesh tet)
+	target_link_libraries(makeTetmesh tet ${RENDER_LIBS})
+
+	add_executable(tetmeshViewer src/examples/tetmeshViewer.cpp)
+	target_link_libraries(tetmeshViewer ${RENDER_LIBS})
 
 endif(MCL_BUILD_EXAMPLES)
 

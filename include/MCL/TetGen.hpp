@@ -104,6 +104,7 @@ static bool tetgen::make_tetmesh( std::vector<Vec4i> &tets, std::vector<Vec3f> &
 	else{ switches << "Q"; }
 	if( settings.quality > 0 ){ switches << "q" << settings.quality; }
 	if( maxvol > 0 ){ switches << "a" << maxvol; }
+	std::cout << "Tetgen Switches: " << switches.str() << std::endl;
 
 	char *c_switches = new char[switches.str().length()+1];
 	std::strcpy(c_switches,switches.str().c_str());
@@ -154,21 +155,29 @@ static void tetgen::make_tetgenio( tetgenio &tgio, const std::vector<Vec3i> &tri
 	// but for the sake of robustness I'll just make copies.
 
 	tgio.firstnumber = 0;
+	tgio.mesh_dim = 3;
 	tgio.numberofpoints = tri_verts.size();
 	tgio.pointlist = new double[tgio.numberofpoints * 3];
-
-	int n_verts = tri_verts.size();
-	for( int i=0; i < n_verts; ++i ){ // Copy verts
+	for( int i=0; i < tgio.numberofpoints; ++i ){ // Copy verts
 		tgio.pointlist[i*3+0] = tri_verts[i][0];
 		tgio.pointlist[i*3+1] = tri_verts[i][1];
 		tgio.pointlist[i*3+2] = tri_verts[i][2];
 	}
 
+//	Doesn't work with max volume setting?
+//	tgio.numberoftrifaces = tris.size();
+//	tgio.trifacelist = new int[tgio.numberoftrifaces * 3];
+//	for( int i=0; i < tgio.numberoftrifaces; ++i ){ // Copy verts
+//		mcl::Vec3i f = tris[i];
+//		tgio.trifacelist[i*3+0] = f[0];
+//		tgio.trifacelist[i*3+1] = f[1];
+//		tgio.trifacelist[i*3+2] = f[2];
+//	}
+
 	tgio.numberoffacets = tris.size();
 	tgio.facetlist = new tetgenio::facet[tgio.numberoffacets];
 	tgio.facetmarkerlist = new int[tgio.numberoffacets];
 
-	// From igl:
 	int n_faces = tris.size();
 	for( int i=0; i < n_faces; ++i ){ // Copy tris
 		tgio.facetmarkerlist[i] = i;
@@ -189,6 +198,7 @@ static void tetgen::make_tetgenio( tetgenio &tgio, const std::vector<Vec3i> &tri
 		p.vertexlist[2] = tris[i][2];
 	}
 }
+
 
 static bool tetgen::verify_closed( const std::vector<Vec3i> &tris, const std::vector<Vec3f> &tri_verts ){
 

@@ -149,7 +149,7 @@ inline void Controller::scroll_callback(GLFWwindow* window, double x, double y){
 	MCL_UNUSED(window);
 	MCL_UNUSED(x);
 	if( !camera ){ return; }
-	float new_fov = camera->fov_deg()-5.f*y;
+	float new_fov = camera->fov_deg()-5.f*y; // zoomies
 	camera->fov_deg() = std::min( std::max( 1e-8f, new_fov ), 179.f );
 	int w=256, h=256;
 	glfwGetFramebufferSize(window, &w, &h);

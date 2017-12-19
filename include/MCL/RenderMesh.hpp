@@ -70,6 +70,7 @@ public:
 		VERTICES = 1 << 1, // reload vertices
 		NORMALS = 1 << 2, // reload norms
 		COLORS = 1 << 3, // reload colors
+		PRIMS = 1 << 4, // reload primitives
 	};
 	inline void load_buffers( int load=ALL );
 
@@ -112,6 +113,7 @@ private:
 	std::vector<Vec2f> texcoords_data;
 	std::vector<Vec3f> colors_data;
 
+	int last_prim_size;
 	inline void init(); // called by constructors
 	inline void get_data(); // gets data from the mesh ptr
 	inline void subdivide_mesh();
@@ -145,13 +147,15 @@ inline void RenderMesh::init(){
 	texcoords_vbo = 0;
 	prims_ibo = 0;
 	vao = 0;
+	last_prim_size = 0;
 	model.setIdentity();
-	if( flags & WIREFRAME ){
-		phong.diff.setZero();
-		phong.amb = mcl::Vec3f(0.5,0,0);
-		phong.spec.setZero();
-	}
-	else { phong = material::autoPhong(); }
+//	if( flags & WIREFRAME ){
+//		phong.diff.setZero();
+//		phong.amb = mcl::Vec3f(0.5,0,0);
+//		phong.spec.setZero();
+//	}
+//	else { phong = material::autoPhong(); }
+	phong = material::autoPhong();
 }
 
 inline void RenderMesh::get_data(){
@@ -160,14 +164,26 @@ inline void RenderMesh::get_data(){
 	if( trimeshPtr ){
 		trimeshPtr->need_normals();
 		trimeshPtr->get_vertex_data( vertices, num_vertices, normals, num_normals, texcoords, num_texcoords );
-		if( flags & WIREFRAME ){ trimeshPtr->get_primitive_data( 2, prims, num_prims ); }
-		else { trimeshPtr->get_primitive_data( 3, prims, num_prims ); }
+		if( flags & WIREFRAME ){
+			trimeshPtr->get_primitive_data( 2, prims, num_prims );
+			last_prim_size = 2;
+		}
+		else {
+			trimeshPtr->get_primitive_data( 3, prims, num_prims );
+			last_prim_size = 3;
+		}
 	}
 	else if( tetmeshPtr ){
 		tetmeshPtr->need_normals();
 		tetmeshPtr->get_vertex_data( vertices, num_vertices, normals, num_normals, texcoords, num_texcoords );
-		if( flags & WIREFRAME ){ tetmeshPtr->get_primitive_data( 2, prims, num_prims ); }
-		else { tetmeshPtr->get_primitive_data( 3, prims, num_prims ); }
+		if( flags & WIREFRAME ){
+			tetmeshPtr->get_primitive_data( 2, prims, num_prims );
+			last_prim_size = 2;
+		}
+		else {
+			tetmeshPtr->get_primitive_data( 3, prims, num_prims );
+			last_prim_size = 3;
+		}
 	}
 
 	// Fill colors if none exist
@@ -198,6 +214,22 @@ inline void RenderMesh::load_buffers( int load ){
 			(trimeshPtr ? "trimesh " : "tetmesh ") <<
 			"(" << num_vertices << ", " << num_normals << ", " <<  num_prims << ")" << std::endl;
 		return;
+	}
+
+	// Create the buffer for indices
+	if( !prims_ibo || (load & (ALL|PRIMS)) ){
+		int dim = flags & WIREFRAME ? 2 : 3;
+		if( dim != last_prim_size ){
+			get_data(); // reload primitive data
+		}
+		if( !prims_ibo ){
+			glGenBuffers(1, &prims_ibo);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prims_ibo);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_prims*sizeof(int)*dim, prims, GL_STATIC_DRAW);
+		} else {
+			glBindBuffer(GL_ARRAY_BUFFER, prims_ibo);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, num_prims*sizeof(int)*dim, prims);
+		}
 	}
 
 	// Now copy vertex and face data to GPU
@@ -237,19 +269,6 @@ inline void RenderMesh::load_buffers( int load ){
 		glGenBuffers(1, &texcoords_vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, texcoords_vbo);
 		glBufferData(GL_ARRAY_BUFFER, num_texcoords*sizeof(float)*2, texcoords, GL_STATIC_DRAW);
-	}
-
-	// Create the buffer for indices
-	if( !prims_ibo ){
-		int dim = flags & WIREFRAME ? 2 : 3;
-		if( !prims_ibo ){
-			glGenBuffers(1, &prims_ibo);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prims_ibo);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_prims*sizeof(int)*dim, prims, GL_STATIC_DRAW);
-		} else {
-			glBindBuffer(GL_ARRAY_BUFFER, prims_ibo);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, num_prims*sizeof(int)*dim, prims);
-		}
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
