@@ -35,23 +35,38 @@ int main(void){
 
 bool test_bunny(){
 
-	std::cout << "Testing bunny" << std::endl;
+	std::cout << "\n\nTesting closed bunny\n\n" << std::endl;
+	{
+		mcl::TriangleMesh bunny;
+		std::stringstream bunnyfile;
+		bunnyfile << MCLSCENE_ROOT_DIR << "/src/data/bunny_closed.obj";
+		mcl::meshio::load_obj( &bunny, bunnyfile.str() );
 
-	mcl::TriangleMesh bunny;
-	std::stringstream bunnyfile;
-	bunnyfile << MCLSCENE_ROOT_DIR << "/src/data/bunny.obj";
-	mcl::meshio::load_obj( &bunny, bunnyfile.str() );
+		std::cout << "Tri Bunny has " << bunny.vertices.size() << " verts" << std::endl;
 
-	std::cout << "Tri Bunny has " << bunny.vertices.size() << " verts" << std::endl;
+		mcl::TetMesh tetbunny;
+		tetgen::Settings settings;
+		settings.verbose = true;
+		settings.maxvol_percent = 0.1;
+		bool s = tetgen::make_tetmesh( tetbunny.tets, tetbunny.vertices, bunny.faces, bunny.vertices, settings );
+		if( !s ){ return false; }
 
-	mcl::TetMesh tetbunny;
-	tetgen::Settings settings;
-	settings.verbose = true;
-	bool s = tetgen::make_tetmesh( tetbunny.tets, tetbunny.vertices, bunny.faces, bunny.vertices, settings );
-	if( !s ){ return false; }
+		std::cout << "Tet bunny has " << tetbunny.vertices.size() << " verts, and " <<
+			tetbunny.tets.size() << " tets" << std::endl;
+	}
 
-	std::cout << "Tet bunny has " << tetbunny.vertices.size() << " verts, and " <<
-		tetbunny.tets.size() << " tets" << std::endl;
+	// Test on an open bunny
+	{
+		mcl::TriangleMesh bunny;
+		std::stringstream bunnyfile;
+		bunnyfile << MCLSCENE_ROOT_DIR << "/src/data/bunny.obj";
+		mcl::meshio::load_obj( &bunny, bunnyfile.str() );
+		bool s = tetgen::verify_closed( bunny.faces, bunny.vertices );
+		if( s ){
+			std::cout << "Failed to recognize open mesh" << std::endl;
+			return false;
+		}
+	}
 
 	return true;
 }

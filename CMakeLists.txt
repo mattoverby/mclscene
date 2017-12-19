@@ -81,12 +81,12 @@ set(RENDER_LIBS
 	${GLFW_LIBRARIES}
 )
 
+# tetgen, creates library "tet"
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/tetgen)
+include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/src/tetgen)
+
 # Build tests
 if(MCL_BUILD_TESTS)
-
-	# tetgen, creates library "tet"
-	add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/tetgen)
-	include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/src/tetgen)
 
 	enable_testing()
 
@@ -107,6 +107,9 @@ if(MCL_BUILD_EXAMPLES)
 
 	add_executable(renderWindow src/examples/renderWindow.cpp)
 	target_link_libraries(renderWindow ${RENDER_LIBS})
+
+	add_executable(makeTetmesh src/examples/makeTetmesh.cpp)
+	target_link_libraries(makeTetmesh tet)
 
 endif(MCL_BUILD_EXAMPLES)
 

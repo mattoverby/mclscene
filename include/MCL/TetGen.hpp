@@ -31,6 +31,9 @@
 #define MCL_TETGEN_H
 
 #include "Vec.hpp"
+#include "HashKeys.hpp"
+#include <iostream>
+
 #define TETLIBRARY
 #include "tetgen.h"
 
@@ -48,9 +51,16 @@ namespace tetgen {
 	};
 
 	// Tetrahedralizes a triangle mesh, returns true on success.
-	static bool make_tetmesh( std::vector<Vec4i> &tets, std::vector<Vec3f> &tet_verts,
+	static inline bool make_tetmesh( std::vector<Vec4i> &tets, std::vector<Vec3f> &tet_verts,
 		const std::vector<Vec3i> &tris, const std::vector<Vec3f> &tri_verts,
 		const Settings &settings = Settings() );
+
+	// Makes a tetgenio object from a triangle mesh
+	static inline void make_tetgenio( tetgenio &tgio, const std::vector<Vec3i> &tris, const std::vector<Vec3f> &tri_verts );
+
+	// Verifies a triangle mesh is closed, returns false if not.
+	// Note that a mesh must be "clean" for this to work, i.e. all vertices are a part of a triangle.
+	static inline bool verify_closed( const std::vector<Vec3i> &tris, const std::vector<Vec3f> &tri_verts );
 
 } // end ns tetgen
 
@@ -61,31 +71,30 @@ namespace tetgen {
 static bool tetgen::make_tetmesh( std::vector<Vec4i> &tets, std::vector<Vec3f> &tet_verts,
 		const std::vector<Vec3i> &tris, const std::vector<Vec3f> &tri_verts, const Settings &settings ){
 
-	// TetGen uses double for vertices. Kind of annoying, but it's too much
-	// work to change it to allow floats. Easier to cast input to double...
-	int n_triverts = tri_verts.size();
-	std::vector<Vec3d> triverts( n_triverts );
-	Eigen::AlignedBox<float,3> aabb;
-	for( int i=0; i<n_triverts; ++i ){
-		aabb.extend( tri_verts[i] );
-		triverts[i] = tri_verts[i].cast<double>();
+	if( !verify_closed( tris, tri_verts ) ){
+		std::cerr << "**TetGen Error: Triangle mesh is not closed" << std::endl;
+		return false;
 	}
 
-	// We'll make a copy of tris too, since we want to keep the input const
-	int n_tris = tris.size();
-	std::vector<Vec3i> faces = tris;
-
+	// Make the tetgen data type
 	tetgenio in;
-	in.mesh_dim = 3;
-	in.pointlist = &triverts[0][0];
-	in.numberofpoints = n_triverts;
-	in.trifacelist = &faces[0][0];
-	in.numberoftrifaces = n_tris;
+	make_tetgenio( in, tris, tri_verts );
 
 	// Compute maxvol if we want it
 	float maxvol = settings.maxvol;
 	if( settings.maxvol_percent > 0.f ){
-		float mvp = std::min( settings.maxvol_percent, 1.f );
+
+		// Note a totally correct volume, but I'm too lazy to be precise.
+		Eigen::AlignedBox<float,3> aabb;
+		int n_triverts = tri_verts.size();
+		for( int i=0; i<n_triverts; ++i ){
+			aabb.extend( tri_verts[i] );
+		}
+		float mvp = settings.maxvol_percent;
+		if( mvp <= 0.f || mvp > 1.f ){
+			std::cerr << "**TetGen Error: maxvol_percent should be between 0 and 1" << std::endl;
+			return false;
+		}
 		maxvol = mvp * aabb.volume();
 	}
 
@@ -101,12 +110,7 @@ static bool tetgen::make_tetmesh( std::vector<Vec4i> &tets, std::vector<Vec3f> &
 
 	tetgenio out;
 	tetrahedralize(c_switches, &in, &out);
-
-	// Set tetgenio input data back to NULL so
-	// it doesn't try to deallocate.
-	in.pointlist = NULL;
-	in.trifacelist = NULL;
-	delete c_switches;
+	delete c_switches; // don't need switches anymore
 
 	// Make sure we had success
 	if( out.numberoftetrahedra == 0 || out.numberofpoints == 0 ){
@@ -115,7 +119,7 @@ static bool tetgen::make_tetmesh( std::vector<Vec4i> &tets, std::vector<Vec3f> &
 		return false;
 	}
 
-	tets.clear(); // Copy tets
+	tets.clear(); // Copy tets from tetgenio
 	tets.reserve( out.numberoftetrahedra );
 	for( int i=0; i<out.numberoftetrahedra; ++i ){
 		tets.emplace_back(
@@ -140,13 +144,75 @@ static bool tetgen::make_tetmesh( std::vector<Vec4i> &tets, std::vector<Vec3f> &
 
 } // end tetrahedralize
 
+static void tetgen::make_tetgenio( tetgenio &tgio, const std::vector<Vec3i> &tris, const std::vector<Vec3f> &tri_verts ){
+
+	// We create copies of vertices/triangle faces since TetGen likes
+	// to deallocate on its own (tetgenio destructor). We could set the
+	// ptrs to null so it doesn't attempt to deallocate, but I'm not sure
+	// if TetGen likes to do other things to the vertices/faces and if
+	// that would cause problems. I've tested it and it seems to work fine,
+	// but for the sake of robustness I'll just make copies.
+
+	tgio.firstnumber = 0;
+	tgio.numberofpoints = tri_verts.size();
+	tgio.pointlist = new double[tgio.numberofpoints * 3];
+
+	int n_verts = tri_verts.size();
+	for( int i=0; i < n_verts; ++i ){ // Copy verts
+		tgio.pointlist[i*3+0] = tri_verts[i][0];
+		tgio.pointlist[i*3+1] = tri_verts[i][1];
+		tgio.pointlist[i*3+2] = tri_verts[i][2];
+	}
+
+	tgio.numberoffacets = tris.size();
+	tgio.facetlist = new tetgenio::facet[tgio.numberoffacets];
+	tgio.facetmarkerlist = new int[tgio.numberoffacets];
+
+	// From igl:
+	int n_faces = tris.size();
+	for( int i=0; i < n_faces; ++i ){ // Copy tris
+		tgio.facetmarkerlist[i] = i;
+		tetgenio::facet &f = tgio.facetlist[i];
+
+		// Assuming we don't have holes...
+		f.numberofholes = 0;
+		f.holelist = NULL;
+
+		f.numberofpolygons = 1;
+		f.polygonlist = new tetgenio::polygon[1];
+		tetgenio::polygon &p = f.polygonlist[0];
+
+		p.numberofvertices = 3;
+		p.vertexlist = new int[3];
+		p.vertexlist[0] = tris[i][0];
+		p.vertexlist[1] = tris[i][1];
+		p.vertexlist[2] = tris[i][2];
+	}
+}
+
+static bool tetgen::verify_closed( const std::vector<Vec3i> &tris, const std::vector<Vec3f> &tri_verts ){
+
+	// We need to compute the number of UNIQUE edges.
+	// vertex ids -> number of faces using these indices
+	std::unordered_map< hashkey::sint2, int > edge_ids;
+	int n_faces = tris.size();
+	for( int f=0; f<n_faces; ++f ){
+		edge_ids.emplace( std::make_pair( hashkey::sint2(tris[f][0],tris[f][1]), 1) );
+		edge_ids.emplace( std::make_pair( hashkey::sint2(tris[f][0],tris[f][2]), 1) );
+		edge_ids.emplace( std::make_pair( hashkey::sint2(tris[f][1],tris[f][2]), 1) );
+	}
+	int n_edges = edge_ids.size();
+	int n_verts = tri_verts.size();
+	if( n_verts + n_faces - n_edges != 2 ){ return false; }
+	return true;
+}
 
 void tetgen::Settings::print() const {
 	std::cout <<
 		"\n\t verbose: " << verbose <<
 		"\n\t quality: " << quality <<
-		"\n\t maxvol: " << maxvol <<
-		"\n\t maxvol_percent: " << maxvol_percent <<
+		"\n\t maxvol: " << maxvol << ( maxvol <= 0 ? " (no constraint)" : " " ) <<
+		"\n\t maxvol_percent: " << maxvol_percent << ( maxvol_percent <= 0 ? " (no constraint)" : " " ) <<
 	std::endl;
 } // end print settings
 
