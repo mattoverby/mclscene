@@ -31,7 +31,8 @@ void help(){
 	std::stringstream ss;
 	ss << "\n==========================================\nArgs:\n" <<
 		"\t-f: .obj file of the closed mesh\n" <<
-		"\t-vol: max volume as a fraction of the total, between 0-1 (optional)\n" <<
+		"\t-fvol: max tet volume (0,1] as a fraction of the total (optional)\n" <<
+		"\t-vol: max tet volume (optional)\n" <<
 		"\t-v: verbose output (optional)\n" <<
 	"==========================================\n";
 	printf( "%s", ss.str().c_str() );
@@ -52,7 +53,9 @@ int main(int argc, char *argv[]){
 	bool verbose_output = false;
 	parser.get<bool>("-v", &verbose_output);
 	float maxvol_percent = -1.f;
-	parser.get<float>("-vol", &maxvol_percent);
+	parser.get<float>("-fvol", &maxvol_percent);
+	float maxvol = -1.f;
+	parser.get<float>("-vol", &maxvol);
 
 	// Load the triangle mesh
 	TriangleMesh trimesh;
@@ -64,6 +67,7 @@ int main(int argc, char *argv[]){
 	tetgen::Settings settings;
 	settings.verbose = verbose_output;
 	if( maxvol_percent > 0.f ){ settings.maxvol_percent = maxvol_percent; }
+	if( maxvol > 0.f ){ settings.maxvol = maxvol; }
 	success = tetgen::make_tetmesh( tetmesh.tets, tetmesh.vertices, trimesh.faces, trimesh.vertices, settings );
 	if( !success ){ return 1; }
 
