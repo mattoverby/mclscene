@@ -25,9 +25,8 @@ class SliceController : public mcl::Controller {
 public:
 	bool process_slice;
 	float slice_fraction;
-	bool wireframe;
 	bool save_single_ss;
-	SliceController() : process_slice(true), slice_fraction(0.5f), wireframe(false), save_single_ss(false) {}
+	SliceController() : process_slice(true), slice_fraction(0.5f), save_single_ss(false) {}
 
 	void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
 		mcl::Controller::key_callback(window,key,scancode,action,mods);
@@ -40,10 +39,6 @@ public:
 			case GLFW_KEY_DOWN:{
 				slice_fraction = std::max( -0.1f, slice_fraction - 0.1f );
 				process_slice = true;
-			} break;
-			case GLFW_KEY_W:{
-				wireframe = !wireframe; // toggle
-				process_slice = true; // just to redraw
 			} break;
 			case GLFW_KEY_S:{
 				save_single_ss = true;
@@ -142,7 +137,6 @@ inline void SliceViewer::slice_mesh(){
 inline bool SliceViewer::display(){
 
 	std::cout << "SliceViewer controls:" <<
-		"\n\t W to toggle wireframe" <<
 		"\n\t UP/DOWN to move the slice" <<
 		"\n\t S to save a screenshot" <<
 	std::endl;
