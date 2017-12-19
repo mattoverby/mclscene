@@ -225,8 +225,9 @@ inline void RenderWindow::nice_camera_location(){
 	m_camera->lookat() = box.center();
 
 	Vec3f diag = (box.max() - box.min() )*0.5;
-	diag[2] = -diag[2]*2.f; // Move out z a bit
+	diag[2] = -diag[2]*4.f; // Move out z a bit
 	m_camera->eye() = box.min() + diag;
+	m_camera->nearfar()[1] = ( box.max()[2] - m_camera->eye()[2] )*10.f;
 }
 
 inline void RenderWindow::draw(){

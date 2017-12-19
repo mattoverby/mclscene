@@ -68,6 +68,10 @@ int main(void){
 	renderWindow.add_mesh( rmBunny2 );
 	renderWindow.add_mesh( rmBox );
 
+	// Set the camera to a nice location based
+	// on the meshes added to the renderWindow.
+	renderWindow.nice_camera_location();
+
 	// Game loop
 	while( renderWindow.is_open() ){
 

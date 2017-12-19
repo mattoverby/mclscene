@@ -56,6 +56,7 @@ public:
 	inline const XForm<float> &view() const { return m_view; } // returns view matrix
 	inline const XForm<float> &projection() const { return m_proj; } // returns projection matrix
 	inline Vec2f screen() const { return m_screen; } // returns screen size
+	inline Vec2f &nearfar() { return m_nearfar; } // returns near/far for persp matrix
 	inline Vec3f &eye() { return m_eye; } // returns eye position
 	inline Vec3f &lookat() { return m_lookat; } // returns lookat point
 	inline float &fov_deg() { return m_fov_deg; }
@@ -66,6 +67,7 @@ private:
 	XForm<float> m_view;
 	XForm<float> m_proj;
 	Vec2f m_screen; // screen size
+	Vec2f m_nearfar;
 
 	bool m_left_pressed;
 	bool m_right_pressed;
@@ -97,6 +99,7 @@ inline void Camera::update_lookat( const Vec3f &lookat, float rad ){
 
 Camera::Camera() : m_screen(800,600) {
 
+	m_nearfar = Vec2f(0.001, 1000.f);	
 	m_left_pressed = false;
 	m_right_pressed = false;
 	m_first_person = false;
@@ -134,7 +137,7 @@ inline void Camera::set_default(){
 	m_view = xform::make_lookat(m_eye, m_lookat, m_up);
 
 	float aspect = m_screen[0]/m_screen[1];
-	m_proj = xform::make_persp(m_fov_deg, aspect, 0.01f, 300.f);
+	m_proj = xform::make_persp(m_fov_deg, aspect, m_nearfar[0], m_nearfar[1]);
 }
 
 inline void Camera::make_default(){
@@ -208,7 +211,7 @@ inline void Camera::update_projection(int w, int h){
 	m_screen[0] = float(w);
 	m_screen[1] = float(h);
 	float aspect = m_screen[0]/m_screen[1];
-	m_proj = xform::make_persp(m_fov_deg, aspect, 0.01f, 300.f);
+	m_proj = xform::make_persp(m_fov_deg, aspect, m_nearfar[0], m_nearfar[1]);
 }
 
 } // nm mcl
