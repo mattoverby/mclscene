@@ -25,20 +25,29 @@ class SliceController : public mcl::Controller {
 public:
 	bool process_slice;
 	float slice_fraction;
+	float slice_step;
 	bool save_single_ss;
-	SliceController() : process_slice(true), slice_fraction(0.5f), save_single_ss(false) {}
+	SliceController() : process_slice(true), slice_fraction(0.5f), slice_step(0.07f), save_single_ss(false) {}
 
 	void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
 		mcl::Controller::key_callback(window,key,scancode,action,mods);
 		if( action != GLFW_PRESS ){ return; }
 		switch ( key ){
 			case GLFW_KEY_UP:{
-				slice_fraction = std::min( 1.1f, slice_fraction + 0.1f );
+				slice_fraction = std::min( 0.9f, slice_fraction + slice_step );
 				process_slice = true;
 			} break;
 			case GLFW_KEY_DOWN:{
-				slice_fraction = std::max( -0.1f, slice_fraction - 0.1f );
+				slice_fraction = std::max( -0.1f, slice_fraction - slice_step );
 				process_slice = true;
+			} break;
+			case GLFW_KEY_LEFT:{
+				slice_step = std::max( 0.01f, slice_step - 0.01f );
+				std::cout << "New slice step: " << slice_step << std::endl;
+			} break;
+			case GLFW_KEY_RIGHT:{
+				slice_step = std::min( 0.3f, slice_step + 0.01f );
+				std::cout << "New slice step: " << slice_step << std::endl;
 			} break;
 			case GLFW_KEY_S:{
 				save_single_ss = true;
@@ -114,13 +123,13 @@ inline void SliceViewer::slice_mesh(){
 	int n_tets = initMesh->tets.size();
 	for( int i=0; i<n_tets; ++i ){
 		mcl::Vec4i &tet = initMesh->tets[i];
-		bool skip = false;
-		float min = cutoff[axis];
-		for( int j=0; j<4; ++j ){
-			float curr = verts[tet[j]][axis];
-			if( curr < min ){ skip = true; }
+		mcl::Vec3f center(0,0,0);
+		for( int j=0; j<4; ++j ){ center += verts[ tet[j] ]; }
+		center *= 0.25f;
+
+		if( center[axis] > cutoff[axis] ){
+			slicedMesh->tets.emplace_back( tet );
 		}
-		if( !skip ){ slicedMesh->tets.emplace_back( tet ); }
 	}
 	
 	// Update normals and faces
@@ -138,6 +147,7 @@ inline bool SliceViewer::display(){
 
 	std::cout << "SliceViewer controls:" <<
 		"\n\t UP/DOWN to move the slice" <<
+		"\n\t LEFT/RIGHT change slice step size" <<
 		"\n\t S to save a screenshot" <<
 	std::endl;
 
