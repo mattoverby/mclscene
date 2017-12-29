@@ -214,7 +214,7 @@ template<typename T> static bool mcl::raycast::ray_sphere( const Ray<T> *ray,
 	// Set payload
 	payload->t_max = t;
 	payload->hit_point = ray->origin + ray->direction*t;
-	payload->n = ( payload->hit_point - center ) * (1/radius);
+	payload->n = ( payload->hit_point - center );
 	payload->n.normalize();
 	return true;
 
