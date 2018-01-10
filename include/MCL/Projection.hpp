@@ -24,6 +24,7 @@
 // Will return a point on the surface that is nearest to the one given./
 //
 
+
 #ifndef MCL_PROJECTION_H
 #define MCL_PROJECTION_H 1
 
@@ -38,6 +39,9 @@ namespace projection {
 
 	//	Projection on Sphere
 	template <typename T> static Vec3<T> point_on_sphere( const Vec3<T> &point, const Vec3<T> &center, const T &rad );
+
+	//	Projection on a Box
+	template <typename T> static Vec3<T> point_on_box( const Vec3<T> &point, const Vec3<T> &bmin, const Vec3<T> &bmax );
 
 	//	Point in tet
 	template <typename T> static bool point_in_tet( const Vec3<T> &point, const Vec3<T> &p0, const Vec3<T> &p1, const Vec3<T> &p2, const Vec3<T> &p3 );
@@ -143,6 +147,29 @@ Vec3<T> projection::point_on_sphere( const Vec3<T> &point, const Vec3<T> &center
 	dir.normalize();
 	return ( center + dir*rad );
 } // end project sphere
+
+
+template <typename T>
+Vec3<T> projection::point_on_box( const Vec3<T> &point, const Vec3<T> &bmin, const Vec3<T> &bmax ){
+	// Loops through axes and moves point to nearest surface
+	Vec3<T> x = point;
+	T dx = std::numeric_limits<T>::max();
+	for( int i=0; i<3; ++i ){
+		T dx_max = std::abs(bmax[i]-point[i]);
+		T dx_min = std::abs(bmin[i]-point[i]);
+		if( dx_max < dx ){
+			x = point;
+			x[i] = bmax[i];
+			dx = dx_max;
+		}
+		if( dx_min < dx ){
+			x = point;
+			x[i] = bmin[i];
+			dx = dx_min;
+		}
+	}
+	return x;
+} // end project box
 
 
 template <typename T>
