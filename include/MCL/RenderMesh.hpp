@@ -41,14 +41,16 @@ namespace mcl {
 
 class RenderMesh {
 public:
+	typedef std::shared_ptr<RenderMesh> Ptr;
+
 	static inline std::shared_ptr<RenderMesh> create(
 		std::shared_ptr<TriangleMesh> mesh, int options=DEFAULT ){
-		return std::make_shared<RenderMesh>( RenderMesh(mesh,options) );
+		return std::make_shared<RenderMesh>( mesh, options );
 	}
 
 	static inline std::shared_ptr<RenderMesh> create(
 		std::shared_ptr<TetMesh> mesh, int options=DEFAULT ){
-		return std::make_shared<RenderMesh>( RenderMesh(mesh,options) );
+		return std::make_shared<RenderMesh>( mesh, options );
 	}
 
 	enum {

@@ -85,6 +85,34 @@ set(RENDER_LIBS
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src/tetgen)
 include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/src/tetgen)
 
+#
+# ILMBase, required for Alembic
+#
+FIND_PACKAGE(IlmBase)
+option(MCL_BUILD_ABC_EXAMPLES "Compile Alembic examples" on)
+if(ILMBASE_FOUND)
+	include_directories(SYSTEM ${ILMBASE_INCLUDE_DIRECTORY} )
+endif()
+
+#
+# Alembic: see http://www.alembic.io/
+#
+set(ALEMBIC_ROOT "~/Projects/libs/Abc")
+find_package(Alembic)
+if(ALEMBIC_FOUND AND ILMBASE_FOUND)
+	include_directories(SYSTEM ${ALEMBIC_INCLUDE_PATH}/../ )
+else()
+	# Turn off build of alembic examples if ILMBase/Alembic libs not found
+	set(MCL_BUILD_ABC_EXAMPLES off)
+endif()
+
+
+#
+# I know I should just use add_subdirectory and keep these
+# in a seperate CMakeLists.txt. However, it's more convenient to keep
+# them all in one while the project is still early in development.
+#
+
 # Build tests
 if(MCL_BUILD_TESTS)
 
@@ -113,6 +141,11 @@ if(MCL_BUILD_EXAMPLES)
 
 	add_executable(tetmeshViewer src/examples/tetmeshViewer.cpp)
 	target_link_libraries(tetmeshViewer ${RENDER_LIBS})
+
+	if(MCL_BUILD_ABC_EXAMPLES)
+		add_executable(alembicExport src/examples/alembicExport.cpp)
+		target_link_libraries(alembicExport ${RENDER_LIBS} ${ILMBASE_LIBS} ${ALEMBIC_LIB} )
+	endif()
 
 endif(MCL_BUILD_EXAMPLES)
 
