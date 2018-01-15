@@ -60,6 +60,7 @@ int main(int argc, char *argv[]){
 	// Create the ABC file
 	std::string abc_name = get_name( dir );
 	abc_name = abc_name + ".abc";
+	parser.get<std::string>("-o", &abc_name);
 	AlembicExporter exporter( int(1.0/dt), abc_name );
 
 	// Get the number of meshes and obs
@@ -185,6 +186,7 @@ void help(){
 	std::cout << "\n====================\nUsage:" <<
 		"\n\t -i <input directory>" <<
 		"\n\t -dt <time step>" <<
+		"\n\t -o <output file, optional>" <<
 		"\n\t -skip <frames to skip, optional>" <<
 	"\n" << std::endl;
 		
