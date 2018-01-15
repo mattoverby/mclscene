@@ -30,7 +30,7 @@
 namespace mcl {
 namespace meshio {
 
-	static inline bool load_obj( TriangleMesh *mesh, std::string file );
+	static inline bool load_obj( TriangleMesh *mesh, std::string file, bool normals=false, bool texcoords=false, bool colors=false );
 
 	static inline bool save_obj( const TriangleMesh *mesh, std::string file );
 
@@ -52,7 +52,8 @@ namespace io_helper {
 	}
 }
 
-static inline bool meshio::load_obj( TriangleMesh *mesh, std::string file ){
+static inline bool meshio::load_obj( TriangleMesh *mesh, std::string file,
+	bool normals, bool texcoords, bool colors ){
 
 	mesh->clear();
 	std::ifstream infile( file.c_str() );
@@ -69,16 +70,18 @@ static inline bool meshio::load_obj( TriangleMesh *mesh, std::string file ){
 			if( tok == "v" ){ // Vertex
 				float x, y, z; ss >> x >> y >> z; // vertices
 				mesh->vertices.emplace_back( Vec3f(x,y,z) );
-//				float cx, cy, cz; // colors
-//				if( ss >> cx >> cy >> cz ){ colors.emplace_back( Vec3f(cx,cy,cz) ); }
+				if( colors ){
+//					float cx, cy, cz; // colors
+//					if( ss >> cx >> cy >> cz ){ mesh->colors.emplace_back( Vec3f(cx,cy,cz) ); }
+				}
 			}
 
-			else if( tok == "vt" ){ // Tex coord
+			else if( tok == "vt" && texcoords ){ // Tex coord
 				float u, v; ss >> u >> v;
 				mesh->texcoords.emplace_back( Vec2f(u,v) );
 			}
 
-			else if( tok == "vn" ){ // Normal
+			else if( tok == "vn" && normals ){ // Normal
 				float x, y, z; ss >> x >> y >> z; // vertices
 				mesh->normals.emplace_back( Vec3f(x,y,z) );
 			}
@@ -106,14 +109,14 @@ static inline bool meshio::load_obj( TriangleMesh *mesh, std::string file ){
 	else { std::cerr << "\n**mcl::meshio::load_obj Error: Could not open file " << file << std::endl; return false; }
 
 	// Double check our file
-	if( mesh->texcoords.size() != mesh->vertices.size() && mesh->texcoords.size()>0 ){
+	if( mesh->texcoords.size() != mesh->vertices.size() && mesh->texcoords.size()>0 && texcoords ){
 		std::cerr << "\n**mcl::meshio::load_obj Error: Failed to load texture coordinates." << std::endl;
 		mesh->texcoords.clear();
 		return false;
 	}
 
 	// Double check our file
-	if( mesh->normals.size() != mesh->vertices.size() && mesh->normals.size()>0 ){
+	if( mesh->normals.size() != mesh->vertices.size() && mesh->normals.size()>0 && normals ){
 		std::cerr << "\n**mcl::meshio::load_obj Warning: Normals should be per-vertex (removing them)." << std::endl;
 		mesh->normals.clear();
 		return false;

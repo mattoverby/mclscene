@@ -22,7 +22,6 @@
 #ifndef MCL_ALEMBICIO_H
 #define MCL_ALEMBICIO_H
 
-#include "Vec.hpp"
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreOgawa/All.h>
 
@@ -31,6 +30,8 @@ namespace mcl {
 //
 //	A very simplified wrapper for writing out to Alembic (.abc) files.
 //	Designed for very shallow scenes.
+//	Needs a better design, since a forced exit (no call to destructor)
+//	will cause problems with the alembic output file.
 //
 class AlembicExporter {
 public:
@@ -43,14 +44,12 @@ public:
 	inline size_t add_object( std::string name = "" );
 
 	// Sets the data at this frame.
-	// Alembic uses clockwise winding order for indices, so they need to be flipped when set.
-	// If you're already using CW winding order, set the last argument to false.
+	// Assumes CCW winding order as input. Option to output in CW or CCW is provided.
 	inline void add_frame( size_t handle, const float *verts, int n_verts,
-		const int *inds, int n_prims, bool input_CCW=true );
+		const int *inds, int n_prims, bool output_CCW=false );
 
 private:
 	std::shared_ptr<Alembic::AbcGeom::OArchive> archive;
-	std::shared_ptr<Alembic::AbcCoreAbstract::TimeSampling> ts;
 	Alembic::AbcCoreAbstract::chrono_t dt;
 	std::vector<ObjPtr> objects;
 	std::vector<MeshPtr> meshes;
@@ -68,7 +67,7 @@ AlembicExporter::AlembicExporter( int framerate, const std::string &filename ) :
 	using namespace Alembic::AbcGeom;
 
 	archive = std::make_shared<OArchive>( Alembic::AbcCoreOgawa::WriteArchive(), filename );
-	ts = std::make_shared<TimeSampling>( TimeSampling(dt, 0.0) );
+	archive->addTimeSampling(  TimeSampling(dt,0.0) );
 
 } // end constructor
 
@@ -84,7 +83,7 @@ inline size_t AlembicExporter::add_object( std::string name ){
 		std::make_shared<OObject>( Alembic::AbcGeom::OObject( *archive.get(), kTop ), name.c_str() )
 	);
 	meshes.emplace_back(
-		std::make_shared<OPolyMesh>( *objects.back(), "mesh", ts)
+		std::make_shared<OPolyMesh>( *objects.back(), "mesh", archive->getTimeSampling(1) )
 	);
 
 	return handle;
@@ -92,7 +91,7 @@ inline size_t AlembicExporter::add_object( std::string name ){
 
 
 inline void AlembicExporter::add_frame( size_t handle, const float *verts, int n_verts,
-	const int *inds, int n_prims, bool input_CCW ){
+	const int *inds, int n_prims, bool output_CCW ){
 	using namespace Alembic::AbcGeom;
 
 	if( handle >= meshes.size() ){
@@ -108,7 +107,7 @@ inline void AlembicExporter::add_frame( size_t handle, const float *verts, int n
 	std::vector<int> indices(n_prims*3);
 	for( int i=0; i<n_prims; ++i ){
 		indices[i*3] = inds[i*3];
-		if( input_CCW ){
+		if( !output_CCW ){
 			indices[i*3+2] = inds[i*3+1];
 			indices[i*3+1] = inds[i*3+2];
 		} else {

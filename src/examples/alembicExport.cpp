@@ -140,11 +140,11 @@ int main(void){
 	}
 
 	// Game loop
-//	while( renderWindow.is_open() ){
-//		tController->load_verts_at_t();
-//		renderWindow.draw();
-//		glfwPollEvents();
-//	} // end game loop
+	while( renderWindow.is_open() ){
+		tController->load_verts_at_t();
+		renderWindow.draw();
+		glfwPollEvents();
+	} // end game loop
 
 	return 0;
 }

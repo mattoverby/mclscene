@@ -145,6 +145,9 @@ if(MCL_BUILD_EXAMPLES)
 	if(MCL_BUILD_ABC_EXAMPLES)
 		add_executable(alembicExport src/examples/alembicExport.cpp)
 		target_link_libraries(alembicExport ${RENDER_LIBS} ${ILMBASE_LIBS} ${ALEMBIC_LIB} )
+
+		add_executable(arcsimToAlembic src/examples/arcsimToAlembic.cpp)
+		target_link_libraries(arcsimToAlembic ${RENDER_LIBS} ${ILMBASE_LIBS} ${ALEMBIC_LIB} )
 	endif()
 
 endif(MCL_BUILD_EXAMPLES)
