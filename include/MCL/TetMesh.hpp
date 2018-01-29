@@ -84,6 +84,9 @@ public:
 	// See: https://www.engineeringtoolbox.com/density-solids-d_1265.html
 	inline void weighted_masses( std::vector<float> &m, float density_kgm3=1100.0 );
 
+	// Returns a list of vertex indices that are on the surface
+	inline void surface_inds( std::vector<int> &surf_inds );
+
 	// Clear all mesh data
 	inline void clear();
 
@@ -310,6 +313,33 @@ inline void TetMesh::weighted_masses( std::vector<float> &m, float density_kgm3 
 	}
 
 } // end weighted masses
+
+inline void TetMesh::surface_inds( std::vector<int> &surf_inds ){
+	bool had_faces = true;
+	if( faces.size()==0 ){
+		had_faces = false;
+		need_faces();
+	}
+
+	// Get a list of indices (unique)
+	std::unordered_map<int,int> ind_map;
+	int n_faces = faces.size();
+	for( int i=0; i<n_faces; ++i ){
+		ind_map[ faces[i][0] ] = 1;
+		ind_map[ faces[i][1] ] = 1;
+		ind_map[ faces[i][2] ] = 1;
+	}
+
+	// Copy map to vector
+	std::unordered_map<int,int>::iterator it = ind_map.begin();
+	for( ; it != ind_map.end(); ++it ){
+		surf_inds.emplace_back( it->first );
+	}
+
+	if( !had_faces ){
+		faces.clear();
+	}
+}
 
 inline void TetMesh::clear(){
 	tets.clear();
