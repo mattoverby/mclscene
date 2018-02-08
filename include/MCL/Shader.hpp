@@ -17,7 +17,7 @@
 // IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 // OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-// By Matt Overby (http://www.mattoverby.net)
+// By Matt Overby (http://www.mattoverby.net), adapted from (https://r3dux.org)
 
 // Example use:
 //	Shader myshader;
