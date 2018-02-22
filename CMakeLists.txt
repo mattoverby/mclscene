@@ -97,7 +97,6 @@ endif()
 #
 # Alembic: see http://www.alembic.io/
 #
-set(ALEMBIC_ROOT "~/Projects/libs/Abc")
 find_package(Alembic)
 if(ALEMBIC_FOUND AND ILMBASE_FOUND)
 	include_directories(SYSTEM ${ALEMBIC_INCLUDE_PATH}/../ )

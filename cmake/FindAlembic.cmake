@@ -41,7 +41,9 @@ SET(LIBRARY_PATHS
     ${ALEMBIC_ROOT}/lib
     ~/Library/Frameworks
     /Library/Frameworks
+    ~/Projects/libs/Abc/lib
     /usr/local/lib
+    /usr/local/lib/Abc/lib
     /usr/local
     /sw/lib
     /opt/local/lib
@@ -54,10 +56,12 @@ SET(INCLUDE_PATHS
     ${ALEMBIC_ROOT}
     ~/Library/Frameworks
     /Library/Frameworks
+    ~/Projects/libs/Abc
     /usr/local/include/Alembic
     /usr/local/include
     /usr/local
     /usr/include
+    /usr/local/lib/Abc
     /sw/include # Fink
     /opt/local/include # DarwinPorts
     /opt/csw/include # Blastwave
