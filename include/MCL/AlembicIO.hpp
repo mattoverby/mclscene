@@ -38,6 +38,8 @@ public:
 	typedef std::shared_ptr<Alembic::AbcGeom::OObject> ObjPtr;
 	typedef std::shared_ptr<Alembic::AbcGeom::OPolyMesh> MeshPtr;
 
+	AlembicExporter(){}
+
 	AlembicExporter( int framerate, const std::string &filename );
 
 	// Adds an object to the scene, returns its handle (index)

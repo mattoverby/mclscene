@@ -127,6 +127,9 @@ if(MCL_BUILD_TESTS)
 	target_link_libraries(test_tetgen tet)
 	add_test(test_tetgen test_tetgen)
 
+	add_executable(test_varmanager src/tests/test_varmanager.cpp)
+	add_test(test_varmanager test_varmanager)
+
 endif(MCL_BUILD_TESTS)
 
 # Build examples
