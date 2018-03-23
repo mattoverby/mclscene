@@ -23,6 +23,7 @@
 #define MCL_MICROTIMER_H 1
 
 #include <chrono>
+#include <unordered_map>
 
 // Example:
 //
@@ -39,43 +40,111 @@
 //
 namespace mcl {
 
+// I call it MicroTimer to avoid name clashes.
+// Also because it can do microseconds, though you'd need the hrc
+// instead of stead.
 class MicroTimer {
-//	typedef std::chrono::high_resolution_clock C;
+	//typedef std::chrono::high_resolution_clock C;
 	typedef std::chrono::steady_clock C;
 	typedef double T;
-	public:
+public:
 
-		MicroTimer() : start_time( C::now() ){}
+	MicroTimer() : start_time( C::now() ){}
 
-		// Resets the timer
-		void reset() { start_time = C::now(); }
+	// Resets the timer
+	void reset() { start_time = C::now(); }
 
-		// Return time elapsed in seconds
-		T elapsed_s() const {
-			curr_time = C::now();
-			std::chrono::duration<T> durr = curr_time-start_time;
-			return durr.count();
-		}
+	// Return time elapsed in seconds
+	T elapsed_s() const {
+		curr_time = C::now();
+		std::chrono::duration<T> durr = curr_time-start_time;
+		return durr.count();
+	}
 
-		// Return time elapsed in milliseconds
-		T elapsed_ms() const {
-			curr_time = C::now();
-			std::chrono::duration<T, std::milli> durr = curr_time-start_time;
-			return durr.count();
-		}
+	// Return time elapsed in milliseconds
+	T elapsed_ms() const {
+		curr_time = C::now();
+		std::chrono::duration<T, std::milli> durr = curr_time-start_time;
+		return durr.count();
+	}
 
-		// Return time elapsed in microseconds
-		T elapsed_us() const {
-			curr_time = C::now();
-			std::chrono::duration<T, std::micro> durr = curr_time-start_time;
-			return durr.count();
-		}
+	// Return time elapsed in microseconds
+	T elapsed_us() const {
+		curr_time = C::now();
+		std::chrono::duration<T, std::micro> durr = curr_time-start_time;
+		return durr.count();
+	}
 
-	private:
-		std::chrono::time_point<C> start_time;
-		mutable std::chrono::time_point<C> curr_time;
+private:
+	std::chrono::time_point<C> start_time;
+	mutable std::chrono::time_point<C> curr_time;
 
 }; // end class MicroTimer
+
+
+//
+// TimerManager is just a collection of named timers.
+// Eventually I'll add more functionality as needed.
+//
+class TimerManager {
+public:
+	// Default unit is millesecond
+	TimerManager() : unit(1) {}
+
+	// All timers are the same unit ("s", "ms", or "us");
+	inline void set_unit( const std::string &unit_ ){
+		if( unit_=="s"){ unit=0; }
+		else if( unit_=="s" ){ unit=1; }
+		else if( unit_=="us" ){ unit=2; }
+	}
+
+	// Begin a named timer
+	inline void start( const std::string &name ){
+		if( totals.count(name) == 0 ){
+			totals[name] = 0.0;
+			counts[name] = 0;
+		}
+		current[name] = MicroTimer();
+	}
+
+	// Stop a named timer
+	inline void stop( const std::string &name ){
+		std::unordered_map<std::string, MicroTimer>::iterator it = current.find(name);
+		if( it == current.end() ){ return; } // if the timer was never started...
+		double update = 0.0; // find current elapsed time
+		switch(unit){
+			case 0:{ update = it->second.elapsed_s(); } break;
+			case 1:{ update = it->second.elapsed_ms(); } break;
+			case 2:{ update = it->second.elapsed_us(); } break;
+		}
+		current.erase(it); // remove the ongoing timer
+		totals[name] += update;
+		counts[name] += 1;
+	}
+
+	// Prints the average of all named timers
+	inline void print_averages(){
+		std::unordered_map<std::string, double>::iterator it = totals.begin();
+		for( ; it != totals.end(); ++it ){
+			// Should never fail, totals and counts set at same time...
+			double count = (double)counts[it->first];
+			double avg = it->second / count;
+			std::cout << "Avg time " << it->first << ": " << avg;
+			switch(unit){
+				case 0:{ std::cout << "s"; } break;
+				case 1:{ std::cout << "ms"; } break;
+				case 2:{ std::cout << "us"; } break;
+			}
+			std::cout << std::endl;
+		} // end loop named times
+	}
+
+private:
+	int unit; // 0=s, 1=ms, 2=us
+	std::unordered_map<std::string, double> totals;	
+	std::unordered_map<std::string, int> counts;
+	std::unordered_map<std::string, MicroTimer> current;
+};
 
 
 } // end namespace mcl

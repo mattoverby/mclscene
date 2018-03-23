@@ -130,6 +130,9 @@ if(MCL_BUILD_TESTS)
 	add_executable(test_varmanager src/tests/test_varmanager.cpp)
 	add_test(test_varmanager test_varmanager)
 
+	add_executable(test_timer src/tests/test_timer.cpp)
+	add_test(test_timer test_timer)
+
 endif(MCL_BUILD_TESTS)
 
 # Build examples
