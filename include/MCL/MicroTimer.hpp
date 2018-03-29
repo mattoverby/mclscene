@@ -122,6 +122,21 @@ public:
 		counts[name] += 1;
 	}
 
+	// Get total elapsed time for a named timer
+	inline double total( const std::string &name ){
+		std::unordered_map<std::string, double>::iterator it = totals.find(name);
+		if( it == totals.end() ){ return 0.0; } // if the timer was never started...
+		return it->second;
+	}
+
+	// Get average elapsed time for a named timer
+	inline double average( const std::string &name ){
+		std::unordered_map<std::string, double>::iterator it = totals.find(name);
+		if( it == totals.end() ){ return 0.0; } // if the timer was never started...
+		double count = (double)counts[it->first];
+		return it->second / count;
+	}
+
 	// Prints the average of all named timers
 	inline void print_averages(){
 		std::unordered_map<std::string, double>::iterator it = totals.begin();
@@ -131,9 +146,9 @@ public:
 			double avg = it->second / count;
 			std::cout << "Avg time " << it->first << ": " << avg;
 			switch(unit){
-				case 0:{ std::cout << "s"; } break;
-				case 1:{ std::cout << "ms"; } break;
-				case 2:{ std::cout << "us"; } break;
+				case 0:{ std::cout << " s"; } break;
+				case 1:{ std::cout << " ms"; } break;
+				case 2:{ std::cout << " us"; } break;
 			}
 			std::cout << std::endl;
 		} // end loop named times
