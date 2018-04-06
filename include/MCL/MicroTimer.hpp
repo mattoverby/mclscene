@@ -122,6 +122,16 @@ public:
 		counts[name] += 1;
 	}
 
+	// Adds to a named timer
+	inline void add( const std::string &name, double t ){
+		if( totals.count(name) == 0 ){
+			totals[name] = 0.0;
+			counts[name] = 0;
+		}
+		totals[name] += t;
+		counts[name] += 1;
+	}
+
 	// Get total elapsed time for a named timer
 	inline double total( const std::string &name ){
 		std::unordered_map<std::string, double>::iterator it = totals.find(name);

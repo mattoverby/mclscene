@@ -90,7 +90,7 @@ static void graphcolor::make_directed_nodes( const SparseMat<T> &A, std::vector<
 	nodes.resize( n_nodes );
 
 	// Create neighbor list
-	#pragma omp parallel for
+	#pragma omp parallel for schedule(static)
 	for( int i=0; i<n_nodes; ++i ){
 
 		GCNode *node = &nodes[i];
@@ -125,7 +125,7 @@ static void graphcolor::color_nodes( std::vector<GCNode> &all_nodes ){
 
 	// Make queue of nodes that need to be processed
 	// and initialize their palette.
-	#pragma omp parallel for
+	#pragma omp parallel for schedule(static)
 	for( int i=0; i<n_nodes; ++i ){
 		GCNode *node = &all_nodes[ nodeq[i] ];
 		for( int j=0; j<init_palette; ++j ){ node->palette.insert(j); }
@@ -213,6 +213,7 @@ static void graphcolor::color_nodes( std::vector<GCNode> &all_nodes ){
 
 		// Feed the hungry
 		n_nodes = nodeq.size();
+		#pragma omp parallel for schedule(static)
 		for( int i=0; i<n_nodes; ++i ){
 			GCNode *node = &all_nodes[ nodeq[i] ];
 			if( node->palette.size() < 2 ){
