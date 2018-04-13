@@ -70,6 +70,9 @@ public:
 	// Must have input stream operator to work
 	inline void read( const std::string &filename );
 
+	// Returns a string of vars
+	inline std::string print() const;
+
 private:
 
 //	class Any { // Custom class to handle all kinds of variables
@@ -170,6 +173,16 @@ inline void VarManager::read( const std::string &filename ){
 			set( label, value );
 		}
 	} // end file opened
+}
+
+inline std::string VarManager::print() const {
+	std::stringstream ss;
+	std::unordered_map<std::string,std::string>::const_iterator it = string_vars.begin();
+	for( int row = 0; it != string_vars.end(); ++it, ++row ){
+		if( row > 0 ){ ss << "\n"; }
+		ss << it->first << ' ' << it->second;
+	}
+	return ss.str();
 }
 
 } // ns mcl
