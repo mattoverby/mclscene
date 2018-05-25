@@ -18,3 +18,4 @@ When using GLEW, the define "MCL_USE_GLEW" must be set.
 - More mesh IO types
 - Support for texture wrapping
 - Better rendering
+- MatrixX3 for verts
