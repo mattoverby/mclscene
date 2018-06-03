@@ -46,6 +46,7 @@ public:
 	std::vector< Vec3i > faces; // surface triangles
 	std::vector< Vec2f > texcoords; // per vertex uv coords
 	std::vector< Vec2i > edges; // unique face edges
+	std::vector< Vec2i > exterior_edges; // edges on the boundary only
 
 	// Get per-vertex data.
 	// If normals have not been set, they are computed.
@@ -70,6 +71,13 @@ public:
 
 	// Creates unique edges of the triangle faces
 	inline void need_edges( bool recompute=false );
+
+	// Creates edges as above, but only on the exterior surface
+	inline void need_exterior_edges( bool recompute=false );
+
+	// Removes vertices not indexed by a triangle, and combines vertices
+	// that are within eps distance (lowest index is kept).
+	inline void refine( float eps=1e-6f );
 
 	// Computes area-weighted masses for each vertex.
 	// density_kgm2 is the density per unit area.
@@ -176,6 +184,99 @@ inline void TriangleMesh::need_edges( bool recompute ){
 
 } // end compute edges
 
+// Loops through all of the triangles and counts the number of
+// times an edge was indexed. If once, it's a surface edge.
+inline void TriangleMesh::need_exterior_edges( bool recompute ){
+	if( edges.size()>0 && !recompute ){ return; }
+
+	std::unordered_map< hashkey::sint2, int > edge_ids;
+	size_t n_faces = faces.size();
+	for( size_t t=0; t<n_faces; ++t ){
+		int p0 = faces[t][0];
+		int p1 = faces[t][1];
+		int p2 = faces[t][2];
+		hashkey::sint2 curr_edges[3];
+		curr_edges[0] = hashkey::sint2( p0, p1 );
+		curr_edges[1] = hashkey::sint2( p0, p2 );
+		curr_edges[2] = hashkey::sint2( p1, p2 );
+		for( int f=0; f<3; ++f ){
+			if( edge_ids.count(curr_edges[f]) == 0 ){ edge_ids[ curr_edges[f] ] = 1; }
+			else{ edge_ids[ curr_edges[f] ] += 1; }
+		}
+	}
+	exterior_edges.clear();
+	std::unordered_map< hashkey::sint2, int >::iterator edgeIt = edge_ids.begin();
+	for( ; edgeIt != edge_ids.end(); ++edgeIt ){
+		if( edgeIt->second == 1 ){
+			hashkey::sint2 f = edgeIt->first;
+			exterior_edges.emplace_back( Vec2i( f.orig_v[0], f.orig_v[1] ) );
+		}
+	}
+
+} // end compute edges
+
+
+
+inline void TriangleMesh::refine( float eps ){
+
+	double eps2 = double(eps)*double(eps); // so we can use squaredNorm
+	int n_faces = faces.size();
+	int n_verts_0 = vertices.size();
+	std::vector<int> vert_refs( n_verts_0, 0 );
+
+	for( int i=0; i<n_faces; ++i ){
+		Vec3i face = faces[i];
+		for( int j=0; j<3; ++j ){
+			int idx = face[j];
+			int new_idx = idx;
+			Vec3d curr_x = vertices[idx].cast<double>();
+
+			// Loop through the vertices.
+			// Keep the lowest index if two vertices are within eps
+			for( int k=0; k<n_verts_0; ++k ){
+				double d2 = (vertices[k].cast<double>()-curr_x).squaredNorm();
+				if( d2 <= eps2 && k < new_idx ){
+					new_idx = k;
+					break;
+				}
+			}
+
+			// Update face index
+			faces[i][j] = new_idx;
+			vert_refs[ new_idx ] += 1;
+		}
+	} // end loop tets
+
+	// Now make a list of new vertices
+	std::unordered_map<int,int> old_to_new;
+	std::vector<Vec3f> old_vertices = vertices;
+	vertices.clear();
+	int num_ref_verts = 0;
+	for( int i=0; i<n_verts_0; ++i ){
+		if( vert_refs[i] > 0 ){
+			old_to_new.insert({i,num_ref_verts});
+			vertices.emplace_back( old_vertices[i] );
+			num_ref_verts++;
+		}
+	}
+
+	// Update face indices
+	for( int i=0; i<n_faces; ++i ){
+		Vec3i face = faces[i];
+		for( int j=0; j<3; ++j ){
+			int idx = face[j];
+			if( old_to_new.count(idx)==0 ){
+				throw std::runtime_error("TetMesh::refine Error: Something went wrong.");
+			}
+			faces[i][j] = old_to_new[idx];
+		}
+	}
+
+	// Remake other data if needed
+	if( edges.size() ){ need_edges(true); }
+	if( normals.size() ){ need_normals(true); }
+
+} // end refine
 
 inline void TriangleMesh::weighted_masses( std::vector<float> &m, float density_kgm2 ){
 

@@ -24,6 +24,7 @@
 
 #include "Visitor.hpp"
 #include <memory>
+#include <numeric>
 
 namespace mcl {
 namespace bvh {

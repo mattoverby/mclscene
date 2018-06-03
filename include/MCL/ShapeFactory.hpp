@@ -40,6 +40,11 @@ namespace factory {
 	// Starts at 0,0,0 and builds in the positive axis directions.
 	static inline std::shared_ptr<TetMesh> make_tet_blocks( int cubes_x, int cubes_y, int cubes_z );
 
+	// Creates connected 1x1 squares, each cube has 4 triangles (uniform build).
+	// CCW winding with normals facing +z
+	// Starts at 0,0,0 and builds in the positive x and y directions.
+	static inline std::shared_ptr<TriangleMesh> make_tri_blocks( int cubes_x, int cubes_y );
+
 	// A box with specified boxmin/boxmax
 	static inline std::shared_ptr<TriangleMesh> make_box( int tess, Vec3f boxmin, Vec3f boxmax );
 
@@ -350,6 +355,57 @@ static inline std::shared_ptr<TetMesh> factory::make_tet_blocks( int cubes_x, in
 	return mesh;
 
 } // end make tetmesh cube
+
+static inline std::shared_ptr<TriangleMesh> factory::make_tri_blocks( int cubes_x, int cubes_y ){
+
+	std::shared_ptr<TriangleMesh> mesh = std::make_shared<TriangleMesh>();
+
+	cubes_x = std::max(1,cubes_x);
+	cubes_y = std::max(1,cubes_y);
+	Vec3f start(0,0,0);
+	int z = 0;
+
+	// Adds redundant vertices than removes them with the refine method.
+	for( int x=0; x<cubes_x; ++x ){
+	for( int y=0; y<cubes_y; ++y ){
+
+		Vec3f min = start + Vec3f(x,y,z);
+		Vec3f max = min + Vec3f(1,1,z);
+		Vec3f mid = ( min + max ) * 0.5f;
+
+
+		Vec3f a = min;
+		Vec3f b( max[0], min[1], z );
+		Vec3f c = max;
+		Vec3f d( min[0], max[1], z );
+		Vec3f e = mid;
+
+		// Add the verts
+		int nv = mesh->vertices.size();
+		mesh->vertices.emplace_back( a ); // 0
+		mesh->vertices.emplace_back( b ); // 1
+		mesh->vertices.emplace_back( c ); // 2
+		mesh->vertices.emplace_back( d ); // 3
+		mesh->vertices.emplace_back( e ); // 4
+
+		// Set triangel and add to mesh
+		Vec3i t0( 3, 0, 4 );
+		Vec3i t1( 0, 1, 4 );
+		Vec3i t2( 1, 2, 4 );
+		Vec3i t3( 2, 3, 4 );
+		Vec3i offset(nv,nv,nv);
+		mesh->faces.emplace_back( t0+offset );
+		mesh->faces.emplace_back( t1+offset );
+		mesh->faces.emplace_back( t2+offset );
+		mesh->faces.emplace_back( t3+offset );
+
+	}} // x, y
+
+	// Join colocated vertices and update indices.
+	mesh->refine();
+
+	return mesh;
+}
 
 static inline std::shared_ptr<TriangleMesh> factory::make_box( int tess, Vec3f boxmin, Vec3f boxmax ){
 
